@@ -22,7 +22,8 @@ public slots:
 
 protected:
     void updateGeometries();
-
+    void setupModels();
+    void setupActions();
 private:
     TaskProgressViewPrivate* d;
 };
