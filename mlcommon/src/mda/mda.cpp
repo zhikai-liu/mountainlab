@@ -29,8 +29,8 @@ void* allocate(unsigned long nbytes)
 #endif
 }
 
-class MdaDataDouble : public MdaData<double> {
-};
+
+class MdaDataDouble : public MdaData<double> {};
 
 Mda::Mda(long N1, long N2, long N3, long N4, long N5, long N6)
 {
