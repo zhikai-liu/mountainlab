@@ -11,8 +11,6 @@
 #define MDA_MAX_DIMS 6
 
 class MdaDataFloat : public MdaData<float> {
-};
-
 Mda32::Mda32(long N1, long N2, long N3, long N4, long N5, long N6)
 {
     d = new MdaDataFloat;
