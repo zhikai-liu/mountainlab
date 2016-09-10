@@ -16,7 +16,7 @@ public:
     typedef T* pointer;
     typedef T& reference;
 
-    MdaData() : QSharedData(), m_data(0), total_size(0) {
+    MdaData() : QSharedData(), m_data(0), m_dims(1,1), total_size(0) {
         ICounterManager* manager = ObjectRegistry::getObject<ICounterManager>();
         if (manager) {
             allocatedCounter = static_cast<IIntCounter*>(manager->counter("allocated_bytes"));
@@ -82,7 +82,8 @@ public:
 
     inline long dims(size_t idx) const
     {
-        return m_dims.constData()+idx;
+        if (idx < 0 || idx >= m_dims.size()) return 0;
+        return *(m_dims.data()+idx);
     }
     void setDims(long n1, long n2, long n3, long n4, long n5, long n6)
     {
@@ -135,6 +136,9 @@ public:
     bool read_from_text_file(const QString& path)
     {
         QString txt = TextFile::read(path);
+        if (txt.isEmpty()) {
+            return false;
+        }
         QStringList lines = txt.split("\n", QString::SkipEmptyParts);
         QStringList lines2;
         for (int i = 0; i < lines.count(); i++) {
