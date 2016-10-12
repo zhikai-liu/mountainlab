@@ -769,7 +769,7 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
     PP.working_path = QDir::currentPath();
 
     qDebug() << ":::::::::::::::::::::::::::::::::::::::::"
-             << "queue_pript" << PP.force_run;
+             << "queue_pript" << PP.force_run << PP.working_path;
 
     MPDaemonInterface X;
     // ensure daemon is running

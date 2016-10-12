@@ -139,7 +139,7 @@ bool ms_metrics(QString timeseries, QString firings, QString cluster_metrics_pat
     }
 
     printf("get pairs to compare...\n");
-    QSet<QString> pairs_to_compare = get_pairs_to_compare(X, F, 5, opts);
+    QSet<QString> pairs_to_compare = get_pairs_to_compare(X, F, 10, opts);
 
     //////////////////////////////////////////////////////////////
     printf("Cluster pair metrics...\n");
@@ -231,24 +231,83 @@ QVector<double> sample(const QVector<double>& times, long num)
     return ret;
 }
 
+Mda32 compute_noise_shape(const Mda32& noise_clips, const Mda32& template0)
+{
+    int peak_channel = 0;
+    int peak_timepoint = 0;
+    double best_val = 0;
+    for (int t = 0; t < template0.N2(); t++) {
+        for (int m = 0; m < template0.N1(); m++) {
+            double val = qAbs(template0.value(m, t));
+            if (val > best_val) {
+                best_val = val;
+                peak_channel = m;
+                peak_timepoint = t;
+            }
+        }
+    }
+    Mda ret(template0.N1(), template0.N2());
+    for (long i = 0; i < noise_clips.N3(); i++) {
+        double weight = noise_clips.value(peak_channel, peak_timepoint, i) / noise_clips.N3();
+        for (int t = 0; t < template0.N2(); t++) {
+            for (int m = 0; m < template0.N1(); m++) {
+                ret.set(ret.get(m, t) + noise_clips.get(m, t, i) * weight, m, t);
+            }
+        }
+    }
+    Mda32 ret2(ret.N1(), ret.N2());
+    for (int i = 0; i < ret.totalSize(); i++) {
+        ret2.set(ret.get(i), i);
+    }
+    return ret2;
+}
+
+void regress_out_noise_shape(Mda32& clips, const Mda32& shape)
+{
+    double shape_norm = MLCompute::norm(shape.totalSize(), shape.constDataPtr());
+    for (long i = 0; i < clips.N3(); i++) {
+        Mda32 clip;
+        clips.getChunk(clip, 0, 0, i, clips.N1(), clips.N2(), 1);
+        double inner_product = MLCompute::dotProduct(clip.totalSize(), clip.constDataPtr(), shape.constDataPtr());
+        if (shape_norm) {
+            double coef = inner_product / (shape_norm * shape_norm);
+            for (int j = 0; j < clip.totalSize(); j++) {
+                clip.set(clip.get(j) - coef * shape.get(j), j);
+            }
+        }
+        clips.setChunk(clip, 0, 0, i);
+    }
+}
+
 double compute_noise_overlap(const DiskReadMda32& X, const QVector<double>& times, ms_metrics_opts opts)
 {
     int num_to_use = qMin(opts.max_num_to_use, times.count());
     QVector<double> times_subset = sample(times, num_to_use);
 
-    QVector<double> all_times = times_subset;
-    QVector<int> all_labels; //0 and 1
-
+    QVector<int> labels_subset;
     for (long i = 0; i < times_subset.count(); i++) {
-        all_labels << 1;
+        labels_subset << 1;
     }
     //equal amount of random clips
+    QVector<double> noise_times;
+    QVector<int> noise_labels;
     for (long i = 0; i < times_subset.count(); i++) {
-        all_times << random_time(X.N2(), opts.clip_size);
-        all_labels << 0;
+        noise_times << random_time(X.N2(), opts.clip_size);
+        noise_labels << 0;
     }
 
+    QVector<double> all_times = times_subset;
+    QVector<int> all_labels = labels_subset; //0 and 1
+
+    all_times.append(noise_times);
+    all_labels.append(noise_labels);
+
+    Mda32 clips = extract_clips(X, times_subset, opts.clip_size);
+    Mda32 noise_clips = extract_clips(X, noise_times, opts.clip_size);
     Mda32 all_clips = extract_clips(X, all_times, opts.clip_size);
+
+    Mda32 noise_shape = compute_noise_shape(noise_clips, compute_mean_clip(clips));
+    regress_out_noise_shape(all_clips, noise_shape);
 
     Mda32 all_clips_reshaped(all_clips.N1() * all_clips.N2(), all_clips.N3());
     long NNN = all_clips.totalSize();

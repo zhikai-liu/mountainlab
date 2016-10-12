@@ -1,12 +1,14 @@
-// Remove all rejected and MUA tags
+// Initialize
 for (var i in clusters) {
 	clusters[i].removeTag('rejected');
 	clusters[i].removeTag('MUA');
+	clusters[i].setMetric('isolation',1);
+	clusters[i].setMetric('overlap_cluster',0);
 }
 
 console.log('\nnoise_overlap');
 for (var i in clusters) {	
-	if (clusters[i].metric('noise_overlap')>0.1) {
+	if (clusters[i].metric('noise_overlap')>0.05) {
 		console.log('REJECT: '+clusters[i].k());
 		clusters[i].addTag('rejected');
 	}
@@ -28,14 +30,21 @@ for (var i in clusters) {
 	}
 }
 
-console.log('\nOverlap');
+console.log('\nIsolation');
 for (var i in clusterPairs) {
 	var CP=clusterPairs[i];
 	var overlap=CP.metric('overlap');
-	if (overlap>0.2) {
-		if (!CP.cluster1().hasTag('rejected')) {
-			console.log('MUA: '+CP.k1()+','+CP.k2()+' '+overlap);
-			CP.cluster1().addTag('MUA');
-		}
+	if (1-overlap<CP.cluster1().metric('isolation')) {
+		CP.cluster1().setMetric('isolation',1-overlap);
+		CP.cluster1().setMetric('overlap_cluster',CP.cluster2().k());
+	}
+}
+
+console.log('\nMUA');
+for (var i in clusters) {	
+	var iso=clusters[i].metric('isolation');
+	if (iso<0.95) {
+		console.log('MUA: '+clusters[i].k()+' <--> '+clusters[i].metric('overlap_cluster')+' ('+iso+')');
+		clusters[i].addTag('MUA');
 	}
 }
