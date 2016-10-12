@@ -10,10 +10,19 @@
 # inside the container matches exactly the current user (including uid!)
 
 abs_data_directory=$1
+tmp_data_directory=$2
 
 if [ -z "$abs_data_directory" ];
 then
-  echo "You must specify the absolute data directory path as the first argument."
+  echo "You must specify the absolute data path as the first argument and the temporary data path as the second argument. For example..."
+  echo "./start_prvfileserver.sh /path/to/prvdata /tmp"
+  exit -1
+fi
+
+if [ -z "$tmp_data_directory" ];
+then
+  echo "You must specify the temporary data path as the second argument. For example..."
+  echo "./start_prvfileserver.sh /path/to/prvdata /tmp"
   exit -1
 fi
 
@@ -27,7 +36,7 @@ sudo docker rm -f prv_container
 cmd="nodejs /base/prvfileserver/prvfileserver.js $abs_data_directory"
 
 # We need to map the directory where the data are
-args="--name=prv_container --net=host --pid=host -v $abs_data_directory:$abs_data_directory -v /tmp:/tmp"
+args="--name=prv_container --net=host --pid=host -v $abs_data_directory:$abs_data_directory -v $tmp_data_directory:$tmp_data_directory"
 if [ -f "$PWD/prvfileserver.user.json" ];
 then
   # if it exists, map the prvfileserver.user.json file. Note that the prvfileserver.default.json file is copied over during build
