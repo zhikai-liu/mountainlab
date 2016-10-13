@@ -704,7 +704,6 @@ QString locate_file_with_checksum(QString checksum, QString checksum1000, long s
     if (!allow_downloads)
         extra_args += "--local-only";
     QString cmd = QString("prv locate --checksum=%1 --checksum1000=%2 --size=%3 %4").arg(checksum).arg(checksum1000).arg(size).arg(extra_args);
-    qDebug() << cmd;
     return system_call_return_output(cmd);
 }
 
@@ -949,7 +948,6 @@ QString resolve_prv_file(const QString& prv_fname, bool allow_downloads, bool al
     QJsonParseError err;
     QJsonObject obj = QJsonDocument::fromJson(json.toLatin1(), &err).object();
     if (err.error != QJsonParseError::NoError) {
-        qDebug() << json;
         qWarning() << "Error parsing json." << err.errorString();
         return "";
     }
@@ -1069,5 +1067,16 @@ QString locate_prv(const QJsonObject& obj)
     QString checksum0 = obj["original_checksum"].toString();
     QString checksum0_1000 = obj["original_checksum_1000"].toString();
     long size0 = obj["original_size"].toVariant().toLongLong();
-    return locate_file_with_checksum(checksum0, checksum0_1000, size0, false);
+    QString ret = locate_file_with_checksum(checksum0, checksum0_1000, size0, false);
+    if (ret.isEmpty()) {
+        if (QFile::exists(path0)) {
+            if (QFileInfo(path0).size() == size0) {
+                if (MLUtil::computeSha1SumOfFile(path0) == checksum0) {
+                    qWarning() << "Using original path----- " + path0;
+                    return path0;
+                }
+            }
+        }
+    }
+    return ret;
 }

@@ -180,7 +180,6 @@ QJsonObject timeseries_map_to_object_for_mv2(const QMap<QString, TimeseriesStruc
     QStringList keys = TT.keys();
     foreach (QString key, keys) {
         QJsonObject obj;
-        qDebug() << "-0------------------------------------------" << key << TT[key].name << TT[key].data.makePath() << TT[key].data.toPrvObject();
         obj["data"] = TT[key].data.toPrvObject();
         obj["name"] = TT[key].name;
         ret[key] = obj;
@@ -801,7 +800,6 @@ void MVContext::loadClusterPairMetricsFromFile(QString csv_file_path)
                 }
                 obj["metrics"] = metrics;
                 this->setClusterPairAttributes(ClusterPair(k1, k2), obj);
-                qDebug() << k1 << k2 << this->clusterPairAttributes(ClusterPair(k1, k2));
             }
         }
     }

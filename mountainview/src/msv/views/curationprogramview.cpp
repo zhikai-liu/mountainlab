@@ -101,7 +101,6 @@ QString CurationProgramView::applyCurationProgram(MVContext* mv_context)
     engine.globalObject().setProperty("_CP", CP);
 
     QString js = TextFile::read(":msv/views/curationprogram.js");
-    qDebug() << js;
     engine.evaluate(js);
 
     //QString program = d->m_input_editor->toPlainText();

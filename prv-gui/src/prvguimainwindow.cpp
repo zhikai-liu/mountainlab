@@ -154,9 +154,9 @@ void PrvGuiMainWindow::setPrvFileName(QString fname)
     emit prvFileNameChanged();
 }
 
-void PrvGuiMainWindow::searchAgain(QString checksum, long size, QString server)
+void PrvGuiMainWindow::searchAgain(QString checksum, long size, QString original_path, QString server)
 {
-    d->m_tree->searchAgain(checksum, size, server);
+    d->m_tree->searchAgain(checksum, size, original_path, server);
 }
 
 void PrvGuiMainWindow::closeEvent(QCloseEvent* evt)

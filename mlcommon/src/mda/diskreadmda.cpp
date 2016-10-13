@@ -647,7 +647,7 @@ bool DiskReadMdaPrivate::open_file_if_needed()
             printf("Even though this file does exist.\n");
         }
         else {
-            qDebug() << "File does not exist: " + m_path;
+            qWarning() << "File does not exist: " + m_path;
         }
         m_file_open_failed = true; //we don't want to try this more than once
         return false;

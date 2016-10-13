@@ -123,6 +123,7 @@ void PrvGuiMainControlWidget::slot_upload()
             if (uploader) {
                 uploader->setProperty("checksum", prvs[i].checksum);
                 uploader->setProperty("size", (long long)prvs[i].size);
+                uploader->setProperty("original_path", prvs[i].original_path);
                 uploader->setProperty("server", dlg.selectedServer());
                 QObject::connect(uploader, SIGNAL(finished()), this, SLOT(slot_uploader_finished));
             }
@@ -176,8 +177,9 @@ void PrvGuiMainControlWidget::slot_uploader_finished()
         return;
     QString checksum = uploader->property("checksum").toString();
     long size = uploader->property("checksum").toLongLong();
+    QString original_path = uploader->property("original_path").toString();
     QString server = uploader->property("server").toString();
-    d->m_main_window->searchAgain(checksum, size, server);
+    d->m_main_window->searchAgain(checksum, size, original_path, server);
 }
 
 void PrvGuiMainControlWidgetPrivate::update_enabled()
@@ -251,8 +253,8 @@ QString run_process(PrvProcessRecord& P, QString& output_pname)
 
     QString fname = outputs0[output_pname].toString();
     if (!QFile::exists(fname)) {
-        qWarning() << "+++++++++++++++++ Problem in run_process. File does not exist: " + fname;
         qDebug() << outputs0 << output_pname;
+        qWarning() << "+++++++++++++++++ Problem in run_process. File does not exist: " + fname;
         return "";
     }
 

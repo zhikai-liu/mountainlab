@@ -300,8 +300,8 @@ QString PrvRecord::find_local_file() const
     args << "--checksum=" + this->checksum;
     args << "--checksum1000=" + this->checksum1000;
     args << QString("--size=%1").arg(this->size);
+    args << QString("--original_path=%1").arg(this->original_path);
     args << "--local-only";
-    qDebug() << "find_local_file" << cmd + " " + args.join(" ");
     QString output = exec_process_and_return_output(cmd, args);
     return output;
 }

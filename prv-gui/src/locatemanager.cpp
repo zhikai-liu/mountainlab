@@ -26,11 +26,12 @@ LocateManager::~LocateManager()
     delete d;
 }
 
-void LocateManager::startSearchForPrv(QString checksum, long size, QString server)
+void LocateManager::startSearchForPrv(QString checksum, long size, QString original_path, QString server)
 {
     PrvRecord prv;
     prv.checksum = checksum;
     prv.size = size;
+    prv.original_path = original_path;
 
     //see if we are already doing that search, and cancel it
     for (int i = 0; i < d->m_workers.count(); i++) {
@@ -125,7 +126,6 @@ void LocateManagerPrivate::start_workers_as_needed()
             i--;
         }
     }
-    qDebug() << "NUM WORKERS: " << m_workers.count();
 }
 
 QString LocateManagerPrivate::get_code(const PrvRecord& prv, QString server)

@@ -604,6 +604,7 @@ public:
         // --checksum=[] --checksum1000=[optional] --size=[]
         parser.addOption(QCommandLineOption("checksum", "checksum", "[]"));
         parser.addOption(QCommandLineOption("checksum1000", "checksum1000", "[optional]"));
+        parser.addOption(QCommandLineOption("original_path", "original_path", "[optional]"));
         parser.addOption(QCommandLineOption("size", "size", "[]"));
         parser.addOption(QCommandLineOption("server", "name of the server to search", "[server name]"));
         parser.addOption(QCommandLineOption("verbose", "verbose"));
@@ -633,6 +634,7 @@ public:
             obj["original_checksum"] = parser.value("checksum");
             obj["original_checksum_1000"] = parser.value("checksum1000");
             obj["original_size"] = parser.value("size").toLongLong();
+            obj["original_path"] = parser.value("original_path");
         }
         else {
             QString src_path = args.value(0);

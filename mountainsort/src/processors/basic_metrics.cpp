@@ -41,7 +41,6 @@ bool basic_metrics(QString timeseries, QString firings, QString cluster_metrics_
     for (int i = 0; i < opts.cluster_numbers.count(); i++) {
         cluster_numbers_set.insert(opts.cluster_numbers[i]);
     }
-    qDebug() << "Using cluster numbers:" << opts.cluster_numbers;
 
     printf("Extracting times and labels...\n");
     //QVector<long> inds;

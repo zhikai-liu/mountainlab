@@ -103,8 +103,6 @@ void MVClusterOrderControl::slot_computation_finished()
         scores0 << cluster_scores.value(1, i); //are we sure it will be in the right order?
     }
     mvContext()->setClusterOrderScores("detectability", scores0);
-    qDebug() << mvContext()->clusterOrderScores();
-    qDebug() << mvContext()->clusterOrder();
 }
 
 void MVClusterOrderComputationThread::compute()

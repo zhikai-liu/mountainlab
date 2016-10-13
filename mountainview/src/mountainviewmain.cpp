@@ -224,7 +224,6 @@ int main(int argc, char* argv[])
                     QString title = SV["title"].toString();
                     QJsonObject SVdata = SV["data"].toObject();
                     QString view_type = SVdata["view-type"].toString();
-                    qDebug() << "OPENING VIEW: " + view_type << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
                     if (container.isEmpty()) {
                         if (i % 2 == 0)
                             container = "north";
@@ -302,7 +301,6 @@ int main(int argc, char* argv[])
         MVMainWindow* W = new MVMainWindow(context);
 
         if (mv2_fname.isEmpty()) {
-            qDebug() << CLP.named_parameters;
             MVContext dc; //dummy context
             if (CLP.named_parameters.contains("samplerate")) {
                 dc.setSampleRate(CLP.named_parameters.value("samplerate", 0).toDouble());
@@ -882,6 +880,7 @@ QString check_if_on_local_disk(PrvRecord prv)
     args << "--checksum=" + prv.checksum;
     args << "--checksum1000=" + prv.checksum1000;
     args << QString("--size=%1").arg(prv.size);
+    args << QString("--original_path=%1").arg(prv.original_path);
     args << "--local-only";
     QString output = exec_process_and_return_output(cmd, args);
     return output;

@@ -337,7 +337,6 @@ int main(int argc, char* argv[])
                 }
             }
             if ((str.endsWith(".par")) || (str.endsWith(".json"))) { // note that we can have multiple parameter files! the later ones override the earlier ones.
-                qDebug() << "Loading parameter file: " + str;
                 if (!load_parameter_file(params, str)) {
                     qWarning() << "Unable to load parameter file: " + str;
                     //log_end();

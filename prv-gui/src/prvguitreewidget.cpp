@@ -196,9 +196,9 @@ QVariantMap PrvGuiTreeWidget::currentItemDetails() const
     return ret;
 }
 
-void PrvGuiTreeWidget::searchAgain(QString checksum, long size, QString server)
+void PrvGuiTreeWidget::searchAgain(QString checksum, long size, QString original_path, QString server)
 {
-    d->m_locate_manager.startSearchForPrv(checksum, size, server);
+    d->m_locate_manager.startSearchForPrv(checksum, size, original_path, server);
     slot_update_tree_data();
 }
 
@@ -300,9 +300,9 @@ void PrvGuiTreeWidgetPrivate::start_all_searches()
     }
     for (int i = 0; i < all_prvs.count(); i++) {
         PrvRecord prv = all_prvs[i];
-        m_locate_manager.startSearchForPrv(prv.checksum, prv.size, "");
+        m_locate_manager.startSearchForPrv(prv.checksum, prv.size, prv.original_path, "");
         foreach (QString server, m_server_names) {
-            m_locate_manager.startSearchForPrv(prv.checksum, prv.size, server);
+            m_locate_manager.startSearchForPrv(prv.checksum, prv.size, prv.original_path, server);
         }
     }
 }

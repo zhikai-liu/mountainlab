@@ -47,7 +47,6 @@ void Downloader::start()
     //make the http request
     m_reply = manager()->get(QNetworkRequest(QUrl(source_url)));
 
-    qDebug() << "STARTED DOWNLOAD::::" << source_url;
     QObject::connect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(slot_reply_error()));
     QObject::connect(m_reply, SIGNAL(readyRead()), this, SLOT(slot_reply_ready_read()));
     QObject::connect(m_reply, SIGNAL(finished()), this, SLOT(slot_reply_finished()));
@@ -320,7 +319,6 @@ long Downloader::num_bytes_downloaded()
 
 void Downloader::slot_reply_error()
 {
-    qDebug() << "*************************************************************** slot_reply_error" << this->source_url;
     if (isFinished())
         return;
     success = false;
@@ -350,7 +348,6 @@ void Downloader::slot_reply_ready_read()
 
 void Downloader::slot_reply_finished()
 {
-    qDebug() << "*************************************************************** slot_reply_finished" << this->source_url;
     if (isFinished())
         return;
     if ((size) && (m_num_bytes_downloaded != size)) {
@@ -365,7 +362,6 @@ void Downloader::slot_reply_finished()
         delete m_file;
         m_file = 0;
     }
-    qDebug() << "Renaming file: " + m_tmp_fname + " " + destination_file_name;
     if (!QFile::rename(m_tmp_fname, destination_file_name)) {
         success = false;
         error = "Unable to rename file: " + m_tmp_fname + " " + destination_file_name;
@@ -379,8 +375,6 @@ void Downloader::slot_reply_finished()
 
 bool concatenate_files(QStringList file_paths, QString dest_path)
 {
-    qDebug() << "concatenating files" << file_paths << dest_path;
-
     /// Witold, this function should be improved by streaming the read/writes
     foreach (QString str, file_paths) {
         if (str.isEmpty())

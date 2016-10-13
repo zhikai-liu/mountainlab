@@ -272,6 +272,16 @@ QString PrvFile::locate(const PrvFileLocateOptions& opts)
     QString checksum1000 = obj["original_checksum_1000"].toString();
     long original_size = obj["original_size"].toVariant().toLongLong();
     QString fname_or_url = d->find_file(original_size, checksum, checksum1000, opts);
+    if ((fname_or_url.isEmpty()) && (opts.search_locally)) {
+        QString original_path = obj["original_path"].toString();
+        if (QFile::exists(original_path)) {
+            if (QFileInfo(original_path).size() == original_size) {
+                if (MLUtil::computeSha1SumOfFile(original_path) == checksum) {
+                    return original_path;
+                }
+            }
+        }
+    }
     return fname_or_url;
 }
 
