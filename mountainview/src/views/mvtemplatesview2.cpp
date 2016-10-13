@@ -188,7 +188,8 @@ void MVTemplatesView2::slot_update_highlighting()
     int current_k = mvContext()->currentCluster();
     QSet<int> selected_ks = mvContext()->selectedClusters().toSet();
     for (int i = 0; i < d->m_panels.count(); i++) {
-        int k0 = d->m_cluster_data.value(i).k;
+        int indx = d->m_panels[i]->property("cluster_data_index").toInt();
+        int k0 = d->m_cluster_data.value(indx).k;
         d->m_panels[i]->setCurrent(current_k == k0);
         d->m_panels[i]->setSelected(selected_ks.contains(k0));
         if (current_k == k0) {
@@ -208,15 +209,21 @@ void MVTemplatesView2::slot_panel_clicked(int index, Qt::KeyboardModifiers modif
         if ((j1 >= 0) && (j2 >= 0)) {
             QSet<int> set = mvContext()->selectedClusters().toSet();
             for (int j = j1; j <= j2; j++) {
-                int k = d->m_cluster_data.value(j).k;
-                if (k > 0)
-                    set.insert(k);
+                MVTemplatesView2Panel* panel = d->m_panels.value(j);
+                if (panel) {
+                    int indx = panel->property("cluster_data_index").toInt();
+                    int k = d->m_cluster_data.value(indx).k;
+                    if (k > 0)
+                        set.insert(k);
+                }
             }
             mvContext()->setSelectedClusters(set.toList());
         }
     }
     else {
-        ClusterData2 CD = d->m_cluster_data.value(index);
+        MVTemplatesView2Panel* panel = d->m_panels.value(index);
+        int indx = panel->property("cluster_data_index").toInt();
+        ClusterData2 CD = d->m_cluster_data.value(indx);
         if (CD.k > 0) {
             mvContext()->clickCluster(CD.k, modifiers);
         }
@@ -381,6 +388,7 @@ void MVTemplatesView2Private::update_panels()
             panel->setChannelColors(channel_colors);
             panel->setColors(q->mvContext()->colors());
             panel->setTitle(QString::number(CD.k));
+            panel->setProperty("cluster_data_index", i);
             if (q->mvContext()->sampleRate()) {
                 double total_time_sec = q->mvContext()->currentTimeseries().N2() / q->mvContext()->sampleRate();
                 if (total_time_sec) {
