@@ -19,8 +19,6 @@ catch(err) {
 		process.exit(-1);
 	}
 }
-console.log(config);
-
 
 exports.read_pipelines_from_text_file=function(file_path) {
 	var pipelines=[];
@@ -46,11 +44,8 @@ exports.read_pipelines_from_text_file=function(file_path) {
 						var argv=['',''];
 						argv=argv.concat(pip.arguments);
 						var CLP=new common.CLParams(argv);
-						console.log('AAAAAAAAAAAAAAAAAAAAA '+JSON.stringify(CLP.namedParameters));
-						console.log(pip.arguments);
 						if ('curation' in CLP.namedParameters) {
 							pip.absolute_curation_script_path=find_absolute_pipeline_script_path(CLP.namedParameters.curation,path.dirname(file_path)||'.');
-							console.log('############## '+pip.absolute_curation_script_path);
 						}
 						else {
 							pip.absolute_curation_script_path='';
@@ -138,8 +133,6 @@ function find_absolute_dataset_folder_path(folder,text_file_path) {
 	var dataset_paths=config.kron.dataset_paths;
 	if (text_file_path)
 		dataset_paths.push(text_file_path);
-	console.log(dataset_paths);
-	console.log(text_file_path);
 	for (var i in dataset_paths) {
 		var p=resolve_from_mountainlab(dataset_paths[i]+'/'+folder);
 		if (fs.existsSync(p)) {
@@ -184,11 +177,9 @@ exports.CLParams=function(argv) {
 	this.namedParameters={};
 
 	var args=argv.slice(2);
-	console.log('CCCCCCCCCCCCCCCCCCCCCCCCC '+args.length);
 	for (var i=0; i<args.length; i++) {
 		var arg0=args[i];
 		if (arg0.indexOf('--')===0) {
-			console.log('BBBBBBBBBBBBBBBBBBBBBBBBBBB '+arg0);
 			arg0=arg0.slice(2);
 			var ind=arg0.indexOf('=');
 			if (ind>=0) {
