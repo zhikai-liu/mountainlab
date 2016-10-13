@@ -25,7 +25,7 @@ struct Metric {
     QList<double> values;
 };
 
-double compute_noise_overlap(const DiskReadMda32& X, const QVector<double>& times, ms_metrics_opts opts);
+double compute_noise_overlap(const DiskReadMda32& X, const QVector<double>& times, ms_metrics_opts opts, bool debug);
 double compute_overlap(const DiskReadMda32& X, const QVector<double>& times1, const QVector<double>& times2, ms_metrics_opts opts);
 QSet<QString> get_pairs_to_compare(const DiskReadMda32& X, const DiskReadMda& F, int num_comparisons_per_cluster, ms_metrics_opts opts);
 
@@ -102,7 +102,7 @@ bool ms_metrics(QString timeseries, QString firings, QString cluster_metrics_pat
             cluster_metrics["peak_noise"].values << qMax(qAbs(min0), qAbs(max0));
         }
         {
-            cluster_metrics["noise_overlap"].values << compute_noise_overlap(X, times_k, opts);
+            cluster_metrics["noise_overlap"].values << compute_noise_overlap(X, times_k, opts, false);
         }
         /*
         {
@@ -262,6 +262,18 @@ Mda32 compute_noise_shape(const Mda32& noise_clips, const Mda32& template0)
     return ret2;
 }
 
+Mda32 compute_noise_shape_2(const DiskReadMda32& X, const Mda32& template0, ms_metrics_opts opts)
+{
+    long num_noise_times = 10000;
+    QVector<double> noise_times;
+    for (long i = 0; i < num_noise_times; i++) {
+        noise_times << random_time(X.N2(), opts.clip_size);
+    }
+
+    Mda32 clips = extract_clips(X, noise_times, opts.clip_size);
+    return compute_noise_shape(clips, template0);
+}
+
 void regress_out_noise_shape(Mda32& clips, const Mda32& shape)
 {
     double shape_norm = MLCompute::norm(shape.totalSize(), shape.constDataPtr());
@@ -279,7 +291,7 @@ void regress_out_noise_shape(Mda32& clips, const Mda32& shape)
     }
 }
 
-double compute_noise_overlap(const DiskReadMda32& X, const QVector<double>& times, ms_metrics_opts opts)
+double compute_noise_overlap(const DiskReadMda32& X, const QVector<double>& times, ms_metrics_opts opts, bool debug)
 {
     int num_to_use = qMin(opts.max_num_to_use, times.count());
     QVector<double> times_subset = sample(times, num_to_use);
@@ -306,8 +318,15 @@ double compute_noise_overlap(const DiskReadMda32& X, const QVector<double>& time
     Mda32 noise_clips = extract_clips(X, noise_times, opts.clip_size);
     Mda32 all_clips = extract_clips(X, all_times, opts.clip_size);
 
-    Mda32 noise_shape = compute_noise_shape(noise_clips, compute_mean_clip(clips));
+    //Mda32 noise_shape = compute_noise_shape(noise_clips, compute_mean_clip(clips));
+    Mda32 noise_shape = compute_noise_shape_2(X, compute_mean_clip(clips), opts);
+    if (debug)
+        noise_shape.write32("/tmp/noise_shape.mda");
+    if (debug)
+        all_clips.write32("/tmp/all_clips_before.mda");
     regress_out_noise_shape(all_clips, noise_shape);
+    if (debug)
+        all_clips.write32("/tmp/all_clips_after.mda");
 
     Mda32 all_clips_reshaped(all_clips.N1() * all_clips.N2(), all_clips.N3());
     long NNN = all_clips.totalSize();

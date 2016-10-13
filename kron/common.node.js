@@ -37,12 +37,25 @@ exports.read_pipelines_from_text_file=function(file_path) {
 						process.exit(-1);
 					}
 					if (vals.length>=2) {
-						pipelines.push({
+						var pip={
 							name:vals[0],
 							script:vals[1],
 							absolute_script_path:absolute_script_path,
-							arguments:vals.slice(2).join(' ')
-						});
+							arguments:vals.slice(2)
+						};
+						var argv=['',''];
+						argv=argv.concat(pip.arguments);
+						var CLP=new common.CLParams(argv);
+						console.log('AAAAAAAAAAAAAAAAAAAAA '+JSON.stringify(CLP.namedParameters));
+						console.log(pip.arguments);
+						if ('curation' in CLP.namedParameters) {
+							pip.absolute_curation_script_path=find_absolute_pipeline_script_path(CLP.namedParameters.curation,path.dirname(file_path)||'.');
+							console.log('############## '+pip.absolute_curation_script_path);
+						}
+						else {
+							pip.absolute_curation_script_path='';
+						}
+						pipelines.push(pip);
 					}
 					else {
 						if (lines[i].trim()) {
@@ -171,9 +184,11 @@ exports.CLParams=function(argv) {
 	this.namedParameters={};
 
 	var args=argv.slice(2);
+	console.log('CCCCCCCCCCCCCCCCCCCCCCCCC '+args.length);
 	for (var i=0; i<args.length; i++) {
 		var arg0=args[i];
 		if (arg0.indexOf('--')===0) {
+			console.log('BBBBBBBBBBBBBBBBBBBBBBBBBBB '+arg0);
 			arg0=arg0.slice(2);
 			var ind=arg0.indexOf('=');
 			if (ind>=0) {

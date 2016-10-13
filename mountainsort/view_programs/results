@@ -35,8 +35,15 @@ if (file_exists(outfolder+'/cluster_pair_metrics.csv')) {
 }
 args+=' --firings='+firings_path;
 args+=' --samplerate='+(dsparams.samplerate||0);
+var curation_script_path='';
+if (file_exists(outfolder+'/curation.script')) {
+	curation_script_path=outfolder+'/curation.script';
+}
 if ('curation' in CLP.namedParameters) {
-	args+=' --curation='+CLP.namedParameters.curation;
+	curation_script_path=CLP.namedParameters.curation;
+}
+if (curation_script_path) {
+	args+=' --curation='+curation_script_path;
 }
 args=args.split(' ');
 make_system_call('mountainview',args);

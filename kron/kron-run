@@ -78,13 +78,18 @@ function run_pipeline(pipeline,dataset,callback) {
 	}
 	args+=' --outpath='+outpath0;
 	args+=' --_script_output='+outpath0+'/pipeline_output.json';
-	var arguments0=pipeline.arguments.split(' ');
+	var arguments0=pipeline.arguments;
 	for (var i in arguments0) {
 		args+=' '+arguments0[i];
 	}
 	args=args.split(' ');
 	common.make_system_call(cmd,args,function() {
-		if (callback) callback();
+		if (pipeline.absolute_curation_script_path) {
+			common.copy_file_sync(pipeline.absolute_curation_script_path,outpath0+'/curation.script');
+		}
+		else {
+			if (callback) callback();
+		}
 	});
 
 	function get_interface_parameter_value(val) {
