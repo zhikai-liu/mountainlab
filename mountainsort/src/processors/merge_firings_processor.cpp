@@ -18,7 +18,7 @@ merge_firings_Processor::merge_firings_Processor()
     d->q = this;
 
     this->setName("merge_firings");
-    this->setVersion("0.1");
+    this->setVersion("0.12");
     this->setInputFileParameters("firings1", "firings2");
     this->setOutputFileParameters("firings_merged", "confusion_matrix", "optimal_label_map");
     this->setRequiredParameters("max_matching_offset");

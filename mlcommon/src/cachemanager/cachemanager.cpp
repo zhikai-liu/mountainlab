@@ -176,7 +176,7 @@ void CacheManager::cleanUp()
         }
     }
     if (num_files_removed) {
-        qWarning() << QString(":::::::::::::::::::::::::::::::: CacheManager removed %1 GB and %2 files").arg(amount_removed).arg(num_files_removed);
+        qWarning() << QString("CacheManager removed %1 GB and %2 files").arg(amount_removed).arg(num_files_removed);
     }
 }
 

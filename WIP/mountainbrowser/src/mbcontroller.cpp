@@ -91,7 +91,7 @@ void MBController::openSortingResult(QString json)
              << "--pre=" + pre << "--filt=" + filt << "--raw=" + raw << "--firings=" + firings << "--window_title=" + firings;
         double samplerate = E.json["samplerate"].toDouble();
         if (!samplerate) {
-            qWarning() << "Sample rate defaulting to 30000 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::";
+            qWarning() << "Sample rate defaulting to 30000";
             samplerate = 30000;
         }
         args << QString("--samplerate=%1").arg(samplerate);
