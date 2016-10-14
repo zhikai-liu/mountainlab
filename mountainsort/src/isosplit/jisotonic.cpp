@@ -1,7 +1,7 @@
 #include "jisotonic.h"
 #include <stdlib.h>
 
-void jisotonic(int N, double* BB, double* MSE, double* AA, double* WW)
+void jisotonic(int N, double* BB, double* MSE, const double* AA, const double* WW)
 {
     if (N < 1)
         return;
@@ -64,4 +64,63 @@ void jisotonic(int N, double* BB, double* MSE, double* AA, double* WW)
     free(count);
     free(sum);
     free(sumsqr);
+}
+
+void jisotonic_updown(int N, double* out, const double* in, const double* weights)
+{
+    double* B1 = (double*)malloc(sizeof(double) * N);
+    double* MSE1 = (double*)malloc(sizeof(double) * N);
+    double* B2 = (double*)malloc(sizeof(double) * N);
+    double* MSE2 = (double*)malloc(sizeof(double) * N);
+    double* in_reversed = (double*)malloc(sizeof(double) * N);
+    double* weights_reversed = 0;
+
+    for (int j = 0; j < N; j++) {
+        in_reversed[j] = in[N - 1 - j];
+    }
+    if (weights) {
+        weights_reversed = (double*)malloc(sizeof(double) * N);
+        for (int j = 0; j < N; j++) {
+            weights_reversed[j] = weights[N - 1 - j];
+        }
+    }
+    jisotonic(N, B1, MSE1, in, weights);
+    jisotonic(N, B2, MSE2, in_reversed, weights_reversed);
+    for (int j = 0; j < N; j++)
+        MSE1[j] += MSE2[N - 1 - j];
+    double bestval = MSE1[0];
+    int best_ind = 0;
+    for (int j = 0; j < N; j++) {
+        if (MSE1[j] < bestval) {
+            bestval = MSE1[j];
+            best_ind = j;
+        }
+    }
+    jisotonic(best_ind + 1, B1, MSE1, in, weights);
+    jisotonic(N - best_ind, B2, MSE2, in_reversed, weights_reversed);
+    for (int j = 0; j <= best_ind; j++)
+        out[j] = B1[j];
+    for (int j = 0; j < N - best_ind - 1; j++)
+        out[N - 1 - j] = B2[j];
+
+    free(B1);
+    free(MSE1);
+    free(B2);
+    free(MSE2);
+    free(in_reversed);
+    if (weights_reversed)
+        free(weights_reversed);
+}
+
+void jisotonic_downup(int N, double* out, const double* in, const double* weights)
+{
+    double* in_neg = (double*)malloc(sizeof(double) * N);
+
+    for (int j = 0; j < N; j++)
+        in_neg[j] = -in[j];
+    jisotonic_updown(N, out, in_neg, weights);
+    for (int j = 0; j < N; j++)
+        out[j] = -out[j];
+
+    free(in_neg);
 }

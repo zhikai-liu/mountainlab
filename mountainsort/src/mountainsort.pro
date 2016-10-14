@@ -109,7 +109,11 @@ HEADERS += \
     processors/basic_metrics.h \
     processors/isolation_metrics_processor.h \
     processors/isolation_metrics.h \
-    processors/kdtree.h
+    processors/kdtree.h \
+    isosplit/isocut_w.h \
+    isosplit/isosplit2_w.h \
+    processors/isosplit2_processor.h \
+    processors/isosplit2_impl.h
 
 SOURCES += \
     core/msprocessmanager.cpp \
@@ -200,7 +204,11 @@ SOURCES += \
     processors/basic_metrics.cpp \
     processors/isolation_metrics_processor.cpp \
     processors/isolation_metrics.cpp \
-    processors/kdtree.cpp
+    processors/kdtree.cpp \
+    isosplit/isocut_w.cpp \
+    isosplit/isosplit2_w.cpp \
+    processors/isosplit2_processor.cpp \
+    processors/isosplit2_impl.cpp
 #!macx {
 #SOURCES_NOCXX11 += \ #see below
 #    isosplit/isosplit2.cpp \
