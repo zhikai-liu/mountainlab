@@ -2,6 +2,7 @@
 #include "normalize_channels.h"
 
 #include <mda.h>
+#include <math.h>
 
 class normalize_channels_ProcessorPrivate {
 public:
