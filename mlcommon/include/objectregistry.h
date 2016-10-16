@@ -28,6 +28,10 @@ public:
     static QObjectList allObjects();
 
     template<typename T> static T* getObject() {
+        if (!instance()) {
+            qWarning("No ObjectRegistry instance present");
+            return nullptr;
+        }
         QReadLocker locker(listMutex());
         QObjectList all = allObjects();
         foreach(QObject *o, all) {
@@ -37,6 +41,10 @@ public:
         return Q_NULLPTR;
     }
     template<typename T> static QList<T*> getObjects() {
+        if (!instance()) {
+            qWarning("No ObjectRegistry instance present");
+            return QList<T*>();
+        }
         QReadLocker locker(listMutex());
         QObjectList all = allObjects();
         QList<T*> result;
@@ -48,6 +56,10 @@ public:
     }
 
     template<typename T, typename P> static T *getObject(P pred) {
+        if (!instance()) {
+            qWarning("No ObjectRegistry instance present");
+            return nullptr;
+        }
         QReadLocker locker(listMutex());
         QObjectList all = allObjects();
         foreach(QObject *o, all) {
@@ -60,6 +72,10 @@ public:
     }
 
     template<typename T, typename P> static QList<T*> getObjects(P pred) {
+        if (!instance()) {
+            qWarning("No ObjectRegistry instance present");
+            return QList<T*>();
+        }
         QReadLocker locker(listMutex());
         QObjectList all = allObjects();
         QList<T*> result;

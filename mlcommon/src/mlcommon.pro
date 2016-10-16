@@ -19,14 +19,16 @@ HEADERS += mlcommon.h sumit.h \
     ../include/mda/diskreadmda32.h \
     ../include/mliterator.h \
     ../include/objectregistry.h \
-    ../include/mlprivate.h
+    ../include/mlprivate.h \
+    ../include/icounter.h
 
 SOURCES += \
     mlcommon.cpp sumit.cpp \
     mda/mda32.cpp \
     mda/diskreadmda32.cpp \
     objectregistry.cpp \
-    componentmanager/icomponent.cpp
+    componentmanager/icomponent.cpp \
+    icounter.cpp
 
 INCLUDEPATH += ../include/mda
 VPATH += ../include/mda

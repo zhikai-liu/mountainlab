@@ -4,4 +4,5 @@ TEMPLATE = subdirs
 SUBDIRS =    mda mlcompute taskprogress \
 	     objectregistry \
 	     mlprivate \
-	     componentmanager
+	     componentmanager \
+    counters
