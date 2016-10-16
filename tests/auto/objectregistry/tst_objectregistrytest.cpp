@@ -83,6 +83,8 @@ void ObjectRegistryTest::testEmpty()
 
 void ObjectRegistryTest::testAddObject()
 {
+    QTest::ignoreMessage(QtWarningMsg, "No ObjectRegistry instance present");
+    ObjectRegistry::addObject(this);
     ObjectRegistry registry;
     QVERIFY(ObjectRegistry::allObjects().isEmpty());
     QSignalSpy spy(ObjectRegistry::instance(), SIGNAL(objectAdded(QObject*)));
@@ -102,6 +104,8 @@ void ObjectRegistryTest::testAddObject()
 
 void ObjectRegistryTest::testAutoReleasedObject()
 {
+    QTest::ignoreMessage(QtWarningMsg, "No ObjectRegistry instance present");
+    ObjectRegistry::addAutoReleasedObject(this);
     QPointer<TestClass> obj = new TestClass;
     {
         ObjectRegistry registry;
@@ -115,6 +119,8 @@ void ObjectRegistryTest::testAutoReleasedObject()
 
 void ObjectRegistryTest::testRemoveObject()
 {
+    QTest::ignoreMessage(QtWarningMsg, "No ObjectRegistry instance present");
+    ObjectRegistry::removeObject(this);
     ObjectRegistry registry;
     QVERIFY(ObjectRegistry::allObjects().isEmpty());
     QPointer<TestClass> obj = new TestClass;
@@ -138,19 +144,23 @@ void ObjectRegistryTest::testRemoveObject()
 
 void ObjectRegistryTest::testGetObject()
 {
+    QTest::ignoreMessage(QtWarningMsg, "No ObjectRegistry instance present");
+    ObjectRegistry::getObject<TestClass>();
     ObjectRegistry registry;
     QVERIFY(ObjectRegistry::allObjects().isEmpty());
     QPointer<TestClass> obj = new TestClass;
     ObjectRegistry::addObject(obj);
     QCOMPARE(ObjectRegistry::getObject<TestClass>(), obj.data());
     // get as QObject
-    QCOMPARE(ObjectRegistry::getObject<QObject>(), (QObject*)obj);
+    QCOMPARE(ObjectRegistry::getObject<QObject>(), static_cast<QObject*>(obj));
     //  try to get as wrong class
-    QCOMPARE(ObjectRegistry::getObject<TestSubclass>(), (TestSubclass*)0);
+    QCOMPARE(ObjectRegistry::getObject<TestSubclass>(), static_cast<TestSubclass*>(0));
 }
 
 void ObjectRegistryTest::testGetObjects()
 {
+    QTest::ignoreMessage(QtWarningMsg, "No ObjectRegistry instance present");
+    ObjectRegistry::getObjects<TestClass>();
     ObjectRegistry registry;
     QVERIFY(ObjectRegistry::allObjects().isEmpty());
     QPointer<TestClass> obj = new TestClass;
@@ -166,6 +176,8 @@ void ObjectRegistryTest::testGetObjects()
 
 void ObjectRegistryTest::testGetObjectByName()
 {
+    QTest::ignoreMessage(QtWarningMsg, "No ObjectRegistry instance present");
+    ObjectRegistry::getObjectByName("");
     ObjectRegistry registry;
     QVERIFY(ObjectRegistry::allObjects().isEmpty());
     QPointer<TestClass> obj = new TestClass;
@@ -180,6 +192,8 @@ void ObjectRegistryTest::testGetObjectByName()
 
 void ObjectRegistryTest::testGetObjectByClassName()
 {
+    QTest::ignoreMessage(QtWarningMsg, "No ObjectRegistry instance present");
+    ObjectRegistry::getObjectByClassName("TestClass>");
     ObjectRegistry registry;
     QVERIFY(ObjectRegistry::allObjects().isEmpty());
     QPointer<TestClass> obj = new TestClass;
@@ -201,6 +215,8 @@ private:
 
 void ObjectRegistryTest::testGetObjectPredicate()
 {
+    QTest::ignoreMessage(QtWarningMsg, "No ObjectRegistry instance present");
+    ObjectRegistry::getObject<TestClass>(ValuePredicate(7));
     ObjectRegistry registry;
     QVERIFY(ObjectRegistry::allObjects().isEmpty());
     QPointer<TestClass> obj = new TestClass;
@@ -218,6 +234,8 @@ void ObjectRegistryTest::testGetObjectPredicate()
 
 void ObjectRegistryTest::testGetObjectsPredicate()
 {
+    QTest::ignoreMessage(QtWarningMsg, "No ObjectRegistry instance present");
+    ObjectRegistry::getObjects<TestClass>(ValuePredicate(6));
     ObjectRegistry registry;
     QVERIFY(ObjectRegistry::allObjects().isEmpty());
     QPointer<TestClass> obj = new TestClass;
