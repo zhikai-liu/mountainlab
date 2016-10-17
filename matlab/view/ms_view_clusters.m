@@ -46,7 +46,7 @@ if M==2
             if (k>0)
                 plot(features(1,inds),features(2,inds),'.','Color',colors{k}); hold on;
             else
-                plot(features(1,inds),features(2,inds),'.','Color',[0.5,0.5,0.5]); hold on;
+                plot(features(1,inds),features(2,inds),'.','Color',[0.8,0.8,0.8]); hold on;
             end;
             legend_titles{end+1}=sprintf('%d',k);
         end;

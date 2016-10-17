@@ -58,7 +58,7 @@ isosplit2_w_Processor::isosplit2_w_Processor()
     d = new isosplit2_w_ProcessorPrivate;
     d->q = this;
 
-    this->setName("isosplit2");
+    this->setName("isosplit2_w");
     this->setVersion("0.1");
     this->setInputFileParameters("data", "weights");
     this->setOutputFileParameters("labels");
