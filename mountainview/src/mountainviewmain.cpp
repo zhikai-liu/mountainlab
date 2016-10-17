@@ -54,6 +54,8 @@
 #include <clustermetricsplugin.h>
 #include <curationprogramplugin.h>
 #include "prvgui.h"
+#include <objectregistry.h>
+#include <icounter.h>
 
 /// TODO (LOW) option to turn on/off 8-bit quantization per view
 /// TODO: (HIGH) blobs for populations
@@ -144,6 +146,18 @@ void try_to_automatically_download_and_regenerate_prv_objects(QList<PrvRecord> p
 int main(int argc, char* argv[])
 {
     QApplication a(argc, argv);
+    ObjectRegistry registry;
+    CounterManager * counterManager = new CounterManager;
+    registry.addAutoReleasedObject(counterManager);
+
+    ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_allocated"));
+    ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_freed"));
+    ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_read"));
+    ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_written"));
+
+
+    QList<ICounterBase*> counters = ObjectRegistry::getObjects<ICounterBase>();
+    counterManager->setCounters(counters);
     // make sure task progress monitor is instantiated in the main thread
     TaskManager::TaskProgressMonitor* monitor = TaskManager::TaskProgressMonitor::globalInstance();
     Q_UNUSED(monitor);

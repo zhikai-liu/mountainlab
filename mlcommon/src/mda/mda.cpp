@@ -3,7 +3,8 @@
 #include <cachemanager.h>
 #include <stdio.h>
 #include "mlcommon.h"
-#include "taskprogress.h"
+#include <icounter.h>
+#include <objectregistry.h>
 #include <QSharedData>
 #include <cstring>
 
@@ -66,11 +67,21 @@ public:
     bool read_from_text_file(const QString& path);
     bool write_to_text_file(const QString& path) const;
 
+    void incrementBytesAllocatedCounter(int64_t size) const;
+    void incrementBytesFreedCounter(int64_t size) const;
+    void incrementBytesReadCounter(int64_t size) const;
+    void incrementBytesWrittenCounter(int64_t size) const;
+
 private:
     double* m_data;
     //std::vector<long> m_dims;
     QVector<long> m_dims;
     long total_size;
+    // TODO: Consider making static:
+    mutable IIntCounter *bytesAllocatedCounter;
+    mutable IIntCounter *bytesFreedCounter;
+    mutable IIntCounter *bytesReadCounter;
+    mutable IIntCounter *bytesWrittenCounter;
 };
 
 Mda::Mda(long N1, long N2, long N3, long N4, long N5, long N6)
@@ -146,7 +157,7 @@ bool Mda::write16ui(const QString& path) const
     H.num_dims = d->determine_num_dims(N1(), N2(), N3(), N4(), N5(), N6());
     mda_write_header(&H, output_file);
     mda_write_float64((double*)d->constData(), &H, d->totalSize(), output_file);
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_written", d->totalSize() * H.num_bytes_per_entry);
+    d->incrementBytesWrittenCounter(d->totalSize() * H.num_bytes_per_entry);
     fclose(output_file);
     return true;
 }
@@ -168,7 +179,7 @@ bool Mda::write32ui(const QString& path) const
     H.num_dims = d->determine_num_dims(N1(), N2(), N3(), N4(), N5(), N6());
     mda_write_header(&H, output_file);
     mda_write_float64((double*)d->constData(), &H, d->totalSize(), output_file);
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_written", d->totalSize() * H.num_bytes_per_entry);
+    d->incrementBytesWrittenCounter(d->totalSize() * H.num_bytes_per_entry);
     fclose(output_file);
     return true;
 }
@@ -190,7 +201,7 @@ bool Mda::write16i(const QString& path) const
     H.num_dims = d->determine_num_dims(N1(), N2(), N3(), N4(), N5(), N6());
     mda_write_header(&H, output_file);
     mda_write_float64((double*)d->constData(), &H, d->totalSize(), output_file);
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_written", d->totalSize() * H.num_bytes_per_entry);
+    d->incrementBytesWrittenCounter(d->totalSize() * H.num_bytes_per_entry);
     fclose(output_file);
     return true;
 }
@@ -212,7 +223,7 @@ bool Mda::write32i(const QString& path) const
     H.num_dims = d->determine_num_dims(N1(), N2(), N3(), N4(), N5(), N6());
     mda_write_header(&H, output_file);
     mda_write_float64((double*)d->constData(), &H, d->totalSize(), output_file);
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_written", d->totalSize() * H.num_bytes_per_entry);
+    d->incrementBytesWrittenCounter(d->totalSize() * H.num_bytes_per_entry);
     fclose(output_file);
     return true;
 }
@@ -235,7 +246,7 @@ bool Mda::read(const char* path)
     }
     this->allocate(H.dims[0], H.dims[1], H.dims[2], H.dims[3], H.dims[4], H.dims[5]);
     mda_read_float64(d->data(), &H, d->totalSize(), input_file);
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_read", d->totalSize() * H.num_bytes_per_entry);
+    d->incrementBytesReadCounter(d->totalSize() * H.num_bytes_per_entry);
     fclose(input_file);
     return true;
 }
@@ -260,7 +271,7 @@ bool Mda::write8(const char* path) const
     H.num_dims = d->determine_num_dims(N1(), N2(), N3(), N4(), N5(), N6());
     mda_write_header(&H, output_file);
     mda_write_float64((double*)d->constData(), &H, d->totalSize(), output_file);
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_written", d->totalSize() * H.num_bytes_per_entry);
+    d->incrementBytesWrittenCounter(d->totalSize() * H.num_bytes_per_entry);
     fclose(output_file);
     return true;
 }
@@ -285,7 +296,7 @@ bool Mda::write32(const char* path) const
     H.num_dims = d->determine_num_dims(N1(), N2(), N3(), N4(), N5(), N6());
     mda_write_header(&H, output_file);
     mda_write_float64((double*)d->constData(), &H, d->totalSize(), output_file);
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_written", d->totalSize() * H.num_bytes_per_entry);
+    d->incrementBytesWrittenCounter(d->totalSize() * H.num_bytes_per_entry);
     fclose(output_file);
     return true;
 }
@@ -310,7 +321,7 @@ bool Mda::write64(const char* path) const
     H.num_dims = d->determine_num_dims(N1(), N2(), N3(), N4(), N5(), N6());
     mda_write_header(&H, output_file);
     mda_write_float64((double*)d->constData(), &H, d->totalSize(), output_file);
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_written", d->totalSize() * H.num_bytes_per_entry);
+    d->incrementBytesWrittenCounter(d->totalSize() * H.num_bytes_per_entry);
     fclose(output_file);
     return true;
 }
@@ -837,7 +848,18 @@ MdaData::MdaData()
     : QSharedData()
     , m_data(0)
     , total_size(0)
+    , bytesAllocatedCounter(0)
+    , bytesFreedCounter(0)
+    , bytesReadCounter(0)
+    , bytesWrittenCounter(0)
 {
+    ICounterManager *manager = ObjectRegistry::getObject<ICounterManager>();
+    if (manager) {
+        bytesAllocatedCounter = static_cast<IIntCounter*>(manager->counter("allocated_bytes"));
+        bytesFreedCounter = static_cast<IIntCounter*>(manager->counter("freed_bytes"));
+        bytesReadCounter = static_cast<IIntCounter*>(manager->counter("bytes_read"));
+        bytesWrittenCounter = static_cast<IIntCounter*>(manager->counter("bytes_written"));
+    }
 }
 
 MdaData::MdaData(const MdaData& other)
@@ -845,6 +867,9 @@ MdaData::MdaData(const MdaData& other)
     , m_data(0)
     , m_dims(other.m_dims)
     , total_size(other.total_size)
+    , bytesAllocatedCounter(other.bytesAllocatedCounter)
+    , bytesFreedCounter(other.bytesFreedCounter)
+    , bytesWrittenCounter(other.bytesWrittenCounter)
 {
     allocate(total_size);
     std::copy(other.m_data, other.m_data + other.totalSize(), m_data);
@@ -890,7 +915,7 @@ void MdaData::allocate(long size)
     m_data = (double*)::allocate(size * sizeof(double));
     if (!m_data)
         return;
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_allocated", totalSize());
+    incrementBytesAllocatedCounter(totalSize());
 }
 
 void MdaData::deallocate()
@@ -898,7 +923,7 @@ void MdaData::deallocate()
     if (!m_data)
         return;
     free(m_data);
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_freed", totalSize());
+    incrementBytesFreedCounter(totalSize());
     m_data = 0;
 }
 
@@ -1032,4 +1057,28 @@ bool MdaData::write_to_text_file(const QString& path) const
         lines << line;
     }
     return TextFile::write(path, lines.join("\n"));
+}
+
+void MdaData::incrementBytesAllocatedCounter(int64_t size) const
+{
+    if (bytesAllocatedCounter)
+        bytesAllocatedCounter->add(size);
+}
+
+void MdaData::incrementBytesFreedCounter(int64_t size) const
+{
+    if (bytesFreedCounter)
+        bytesFreedCounter->add(size);
+}
+
+void MdaData::incrementBytesReadCounter(int64_t size) const
+{
+    if (bytesReadCounter)
+        bytesReadCounter->add(size);
+}
+
+void MdaData::incrementBytesWrittenCounter(int64_t size) const
+{
+    if (bytesWrittenCounter)
+        bytesWrittenCounter->add(size);
 }
