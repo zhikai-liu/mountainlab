@@ -9,7 +9,7 @@
 /*
  * MCWRAP [ cutpoint[1,1] ] = isocut(X[1,N],threshold)
  * SET_INPUT N = size(X,2)
- * SOURCES isocut.cpp mda.cpp jisotonic.cpp
+ * SOURCES isocut.cpp jisotonic.cpp
  * HEADERS isocut.h
  */
 bool isocut(int N, double* cutpoint, double* X, double threshold);

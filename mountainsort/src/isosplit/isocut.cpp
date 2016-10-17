@@ -1,5 +1,5 @@
 #include "isocut.h"
-#include "mda.h"
+#include <algorithm>
 #include <math.h>
 #include "jisotonic.h"
 #include <stdio.h>

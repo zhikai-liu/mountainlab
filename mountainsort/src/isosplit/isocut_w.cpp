@@ -3,8 +3,8 @@
 #include "jisotonic.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <QString> //for std::copy, etc
 #include "isocut.h"
+#include <algorithm>
 
 namespace Isocut_w {
 
@@ -39,11 +39,34 @@ double compute_ks_w(int N1, int N2, double* samples1, double* samples2, const do
 }
 }
 
-bool isocut_w(int N, double* cutpoint, const double* samples_in, const double* weights, double threshold, int minsize)
+std::vector<size_t> sort_indices(int N, const double* X)
+{
+
+    std::vector<double> v(N);
+    for (long i = 0; i < N; i++)
+        v[i] = X[i];
+
+    // initialize original index locations
+    std::vector<size_t> idx(v.size());
+    iota(idx.begin(), idx.end(), 0);
+
+    // sort indexes based on comparing values in v
+    std::sort(idx.begin(), idx.end(),
+        [&v](size_t i1, size_t i2) {return v[i1] < v[i2]; });
+
+    return idx;
+}
+
+bool isocut_w(int N, double* cutpoint, const double* samples_in, const double* weights_in, double threshold, int minsize)
 {
     *cutpoint = 0;
+    std::vector<size_t> indices = sort_indices(N, samples_in);
     double* samples = (double*)malloc(sizeof(double) * N);
-    Isocut_w::sort(N, samples, samples_in);
+    double* weights = (double*)malloc(sizeof(double) * N);
+    for (long i = 0; i < N; i++) {
+        samples[i] = samples_in[indices[i]];
+        weights[i] = weights_in[indices[i]];
+    }
 
     int* N0s = (int*)malloc(sizeof(int) * (N * 2 + 2)); //conservative malloc
     int num_N0s = 0;
@@ -225,3 +248,8 @@ bool isocut_w_new(int N, double* cutpoint, const double* samples_in, const doubl
     return found;
 }
 */
+
+bool isocut_w(int N, double* cutpoint, double* X, double* weights, double threshold)
+{
+    return isocut_w(N, cutpoint, X, weights, threshold, 4);
+}
