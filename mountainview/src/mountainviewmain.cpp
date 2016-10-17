@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
 {
     QApplication a(argc, argv);
     ObjectRegistry registry;
-    CounterManager* counterManager = new CounterManager;
+    CounterManager * counterManager = new CounterManager;
     registry.addAutoReleasedObject(counterManager);
 
     printf("Setting up object registry...\n");
@@ -157,6 +157,7 @@ int main(int argc, char* argv[])
     ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_downloaded"));
     ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_read"));
     ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_written"));
+
 
     QList<ICounterBase*> counters = ObjectRegistry::getObjects<ICounterBase>();
     counterManager->setCounters(counters);
