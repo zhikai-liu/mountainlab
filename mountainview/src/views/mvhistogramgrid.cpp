@@ -38,7 +38,6 @@ public:
     QScrollArea* m_scroll_area;
     QWidget* m_grid_widget;
     QGridLayout* m_grid_layout;
-    QList<HistogramView*> m_histogram_views;
     double m_preferred_hist_width = 0; //zero means zoomed all the way out
     HorizontalScaleAxisData m_horizontal_scale_axis_data;
     HorizontalScaleAxis* m_horizontal_scale_axis;
@@ -55,7 +54,7 @@ public:
 };
 
 MVHistogramGrid::MVHistogramGrid(MVContext* context)
-    : MVAbstractView(context)
+    : MVGridView(context)
 {
     d = new MVHistogramGridPrivate;
     d->q = this;
@@ -113,13 +112,14 @@ void MVHistogramGrid::setPreferredHistogramWidth(int width)
 
 QImage MVHistogramGrid::renderImage(int W, int H)
 {
+    QList<HistogramView*> histogram_views = this->histogramViews();
     if (!W)
         W = 1800;
     if (!H)
         H = 900;
     int max_row = 0, max_col = 0;
-    for (int i = 0; i < d->m_histogram_views.count(); i++) {
-        HistogramView* HV = d->m_histogram_views[i];
+    for (int i = 0; i < histogram_views.count(); i++) {
+        HistogramView* HV = histogram_views[i];
         int row = HV->property("row").toInt();
         int col = HV->property("col").toInt();
         if (row > max_row)
@@ -137,8 +137,8 @@ QImage MVHistogramGrid::renderImage(int W, int H)
     QPainter painter(&ret);
     painter.fillRect(0, 0, ret.width(), ret.height(), Qt::white);
 
-    for (int i = 0; i < d->m_histogram_views.count(); i++) {
-        HistogramView* HV = d->m_histogram_views[i];
+    for (int i = 0; i < histogram_views.count(); i++) {
+        HistogramView* HV = histogram_views[i];
         int row = HV->property("row").toInt();
         int col = HV->property("col").toInt();
         QImage img = HV->renderImage(W0, H0);
@@ -163,20 +163,21 @@ void MVHistogramGrid::paintEvent(QPaintEvent* evt)
 
 void MVHistogramGrid::keyPressEvent(QKeyEvent* evt)
 {
+    QList<HistogramView*> histogram_views = this->histogramViews();
     if ((evt->key() == Qt::Key_A) && (evt->modifiers() & Qt::ControlModifier)) {
         if (d->m_pair_mode) {
             QSet<ClusterPair> pairs;
-            for (int i = 0; i < d->m_histogram_views.count(); i++) {
-                int k1 = d->m_histogram_views[i]->property("k1").toInt();
-                int k2 = d->m_histogram_views[i]->property("k2").toInt();
+            for (int i = 0; i < histogram_views.count(); i++) {
+                int k1 = histogram_views[i]->property("k1").toInt();
+                int k2 = histogram_views[i]->property("k2").toInt();
                 pairs.insert(ClusterPair(k1, k2));
             }
             mvContext()->setSelectedClusterPairs(pairs);
         }
         else {
             QList<int> ks;
-            for (int i = 0; i < d->m_histogram_views.count(); i++) {
-                int k = d->m_histogram_views[i]->property("k").toInt();
+            for (int i = 0; i < histogram_views.count(); i++) {
+                int k = histogram_views[i]->property("k").toInt();
                 if (k) {
                     ks << k;
                 }
@@ -202,12 +203,13 @@ void MVHistogramGrid::setHorizontalScaleAxis(HorizontalScaleAxisData X)
 
 void MVHistogramGrid::setHistogramViews(const QList<HistogramView*> views)
 {
-    qDeleteAll(d->m_histogram_views);
-    d->m_histogram_views.clear();
-    d->m_histogram_views = views;
+    MVGridView::clearViews();
+    foreach (HistogramView* V, views) {
+        MVGridView::addView(V);
+    }
 
-    for (int jj = 0; jj < views.count(); jj++) {
-        HistogramView* HV = views[jj];
+    for (int jj = 0; jj < MVGridView::viewCount(); jj++) {
+        HistogramView* HV = qobject_cast<HistogramView*>(MVGridView::view(jj));
         connect(HV, SIGNAL(clicked(Qt::KeyboardModifiers)), this, SLOT(slot_histogram_view_clicked(Qt::KeyboardModifiers)));
         //connect(HV, SIGNAL(activated()), this, SLOT(slot_histogram_view_activated()));
         connect(HV, SIGNAL(activated(QPoint)), this, SLOT(slot_context_menu(QPoint)));
@@ -220,7 +222,12 @@ void MVHistogramGrid::setHistogramViews(const QList<HistogramView*> views)
 
 QList<HistogramView*> MVHistogramGrid::histogramViews()
 {
-    return d->m_histogram_views;
+    QList<HistogramView*> ret;
+    for (int jj = 0; jj < MVGridView::viewCount(); jj++) {
+        HistogramView* HV = qobject_cast<HistogramView*>(MVGridView::view(jj));
+        ret << HV;
+    }
+    return ret;
 }
 
 QStringList cluster_pair_set_to_string_list(const QSet<ClusterPair>& pairs)
@@ -378,8 +385,9 @@ void MVHistogramGridPrivate::do_highlighting_and_captions()
 {
     QList<int> selected_clusters = q->mvContext()->selectedClusters();
     QSet<ClusterPair> selected_cluster_pairs = q->mvContext()->selectedClusterPairs();
-    for (int i = 0; i < m_histogram_views.count(); i++) {
-        HistogramView* HV = m_histogram_views[i];
+    QList<HistogramView*> histogram_views = q->histogramViews();
+    for (int i = 0; i < histogram_views.count(); i++) {
+        HistogramView* HV = histogram_views[i];
         QString title0, caption0;
         if (m_pair_mode) {
             int k1 = HV->property("k1").toInt();
@@ -415,6 +423,7 @@ void MVHistogramGridPrivate::do_highlighting_and_captions()
 
 void MVHistogramGridPrivate::shift_select_clusters_between(int kA, int kB)
 {
+    QList<HistogramView*> histogram_views = q->histogramViews();
     if (!m_pair_mode) {
         /// TODO (low) handle pair mode case
         QSet<int> selected_clusters = q->mvContext()->selectedClusters().toSet();
@@ -422,14 +431,14 @@ void MVHistogramGridPrivate::shift_select_clusters_between(int kA, int kB)
         int ind2 = find_view_index_for_k(kB);
         if ((ind1 >= 0) && (ind2 >= 0)) {
             for (int ii = qMin(ind1, ind2); ii <= qMax(ind1, ind2); ii++) {
-                selected_clusters.insert(m_histogram_views[ii]->property("k2").toInt());
+                selected_clusters.insert(histogram_views[ii]->property("k2").toInt());
             }
         }
         else if (ind1 >= 0) {
-            selected_clusters.insert(m_histogram_views[ind1]->property("k2").toInt());
+            selected_clusters.insert(histogram_views[ind1]->property("k2").toInt());
         }
         else if (ind2 >= 0) {
-            selected_clusters.insert(m_histogram_views[ind2]->property("k2").toInt());
+            selected_clusters.insert(histogram_views[ind2]->property("k2").toInt());
         }
         q->mvContext()->setSelectedClusters(QList<int>::fromSet(selected_clusters));
     }
@@ -437,13 +446,15 @@ void MVHistogramGridPrivate::shift_select_clusters_between(int kA, int kB)
 
 void MVHistogramGridPrivate::setup_grid(int num_cols)
 {
+    QList<HistogramView*> histogram_views = q->histogramViews();
+
     QGridLayout* GL = m_grid_layout;
     for (int i = GL->count() - 1; i >= 0; i--) {
         GL->takeAt(i);
     }
     int num_rows = 0;
-    for (int jj = 0; jj < m_histogram_views.count(); jj++) {
-        HistogramView* HV = m_histogram_views[jj];
+    for (int jj = 0; jj < histogram_views.count(); jj++) {
+        HistogramView* HV = histogram_views[jj];
         int row0 = (jj) / num_cols;
         int col0 = (jj) % num_cols;
         GL->addWidget(HV, row0, col0);
@@ -462,11 +473,12 @@ void MVHistogramGridPrivate::setup_grid(int num_cols)
 
 void MVHistogramGridPrivate::on_resize()
 {
+    QList<HistogramView*> histogram_views = q->histogramViews();
     int W = q->width();
     int scroll_bar_width = 30; //how to determine?
     m_grid_widget->setFixedWidth(W - scroll_bar_width);
 
-    if (!m_histogram_views.isEmpty()) {
+    if (!histogram_views.isEmpty()) {
         int num_rows, num_cols, height;
         get_num_rows_cols_and_height_for_preferred_hist_width(num_rows, num_cols, height, m_preferred_hist_width);
         int height_per_row = height / num_rows;
@@ -488,6 +500,8 @@ void MVHistogramGridPrivate::on_resize()
 
 void MVHistogramGridPrivate::get_num_rows_cols_and_height_for_preferred_hist_width(int& num_rows, int& num_cols, int& height, double preferred_hist_width)
 {
+    QList<HistogramView*> histogram_views = q->histogramViews();
+
     int W = q->width();
     int H = q->height();
     if (!(W * H)) {
@@ -501,7 +515,7 @@ void MVHistogramGridPrivate::get_num_rows_cols_and_height_for_preferred_hist_wid
     }
 
     if (m_force_square_matrix) {
-        int NUM = m_histogram_views.count();
+        int NUM = histogram_views.count();
         num_rows = qMax(1, (int)sqrt(NUM));
         num_cols = qMax(1, (NUM + num_rows - 1) / num_rows);
         double hist_width = preferred_hist_width;
@@ -518,11 +532,11 @@ void MVHistogramGridPrivate::get_num_rows_cols_and_height_for_preferred_hist_wid
                 num_cols = qMax(1.0, W / preferred_hist_width);
             }
             else {
-                num_cols = qMax(1, (int)(m_histogram_views.count() / preferred_aspect_ratio + 0.5));
+                num_cols = qMax(1, (int)(histogram_views.count() / preferred_aspect_ratio + 0.5));
             }
             int hist_width = W / num_cols;
             int hist_height = hist_width / preferred_aspect_ratio;
-            num_rows = qMax(1, (m_histogram_views.count() + num_cols - 1) / num_cols);
+            num_rows = qMax(1, (histogram_views.count() + num_cols - 1) / num_cols);
             height = num_rows * hist_height;
             if (height < H - hist_height * 0.5) {
                 preferred_hist_width += 1;
@@ -535,8 +549,9 @@ void MVHistogramGridPrivate::get_num_rows_cols_and_height_for_preferred_hist_wid
 
 int MVHistogramGridPrivate::find_view_index_for_k(int k)
 {
-    for (int i = 0; i < m_histogram_views.count(); i++) {
-        if (m_histogram_views[i]->property("k").toInt() == k)
+    QList<HistogramView*> histogram_views = q->histogramViews();
+    for (int i = 0; i < histogram_views.count(); i++) {
+        if (histogram_views[i]->property("k").toInt() == k)
             return i;
     }
     return -1;

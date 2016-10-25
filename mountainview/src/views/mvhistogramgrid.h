@@ -9,6 +9,7 @@
 
 #include "mvabstractview.h"
 #include "histogramview.h"
+#include "mvgridview.h"
 
 struct HorizontalScaleAxisData {
     bool use_it = false;
@@ -16,7 +17,7 @@ struct HorizontalScaleAxisData {
 };
 
 class MVHistogramGridPrivate;
-class MVHistogramGrid : public MVAbstractView {
+class MVHistogramGrid : public MVGridView {
     Q_OBJECT
 public:
     friend class MVHistogramGridPrivate;

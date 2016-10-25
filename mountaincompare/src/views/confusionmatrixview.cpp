@@ -6,6 +6,7 @@
 
 #include "confusionmatrixview.h"
 
+#include <QFileDialog>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QRadioButton>
@@ -146,6 +147,13 @@ ConfusionMatrixView::ConfusionMatrixView(MVContext* mvcontext)
     this->recalculateOn(mcContext(), SIGNAL(firingsChanged()), false);
     this->recalculateOn(mcContext(), SIGNAL(firings2Changed()), false);
 
+    {
+        QAction* A = new QAction(QString("Export .csv"), this);
+        //A->setProperty("action_type", "toolbar");
+        QObject::connect(A, SIGNAL(triggered(bool)), this, SLOT(slot_export_csv()));
+        this->addAction(A);
+    }
+
     //Important to do a queued connection here! because we are changing two things at the same time
     QObject::connect(mcContext(), SIGNAL(currentClusterChanged()), this, SLOT(slot_update_current_elements_based_on_context()), Qt::QueuedConnection);
     QObject::connect(mcContext(), SIGNAL(currentCluster2Changed()), this, SLOT(slot_update_current_elements_based_on_context()), Qt::QueuedConnection);
@@ -267,6 +275,43 @@ void ConfusionMatrixView::slot_update_current_elements_based_on_context()
             MV->setCurrentElement(QPoint(k1 - 1, k2 - 1));
         }
     }
+}
+
+void ConfusionMatrixView::slot_export_csv()
+{
+    Mda CM = d->m_matrix_view->matrix();
+    QStringList RL = d->m_matrix_view->rowLabels();
+    QStringList CL = d->m_matrix_view->columnLabels();
+    QVector<int> RP = d->m_matrix_view->rowIndexPermutationInv();
+    QVector<int> CP = d->m_matrix_view->columnIndexPermutationInv();
+
+    QString txt;
+    for (int r = 0; r < CM.N1(); r++) {
+        int r2 = RP.value(r);
+        if (r < CM.N1() - 1)
+            txt += RL.value(r2);
+        else
+            txt += "0";
+        for (int c = 0; c < CM.N2(); c++) {
+            int c2 = CP.value(c);
+            txt += QString(",%1").arg(CM.value(r2, c2));
+        }
+        txt += "\n";
+    }
+    txt += "0";
+    for (int c = 0; c < CM.N2(); c++) {
+        if (c < CM.N2() - 1) {
+            int c2 = CP.value(c);
+            txt += QString(",%1").arg(CL.value(c2));
+        }
+        else
+            txt += ",0";
+    }
+
+    QString fname = QFileDialog::getSaveFileName(this, "Save confusion matrix data", "", "*.csv");
+    if (fname.isEmpty())
+        return;
+    TextFile::write(fname, txt);
 }
 
 ConfusionMatrixViewFactory::ConfusionMatrixViewFactory(MVMainWindow* mw, QObject* parent)

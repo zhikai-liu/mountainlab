@@ -144,6 +144,57 @@ QPoint MatrixView::currentElement() const
     return d->m_current_element;
 }
 
+Mda MatrixView::matrix() const
+{
+    return d->m_matrix;
+}
+
+QStringList MatrixView::rowLabels() const
+{
+    return d->m_row_labels;
+}
+
+QStringList MatrixView::columnLabels() const
+{
+    return d->m_col_labels;
+}
+
+QVector<int> MatrixView::rowIndexPermutation() const
+{
+    return d->m_perm_rows;
+}
+
+QVector<int> MatrixView::columnIndexPermutation() const
+{
+    return d->m_perm_cols;
+}
+
+QVector<int> MatrixView::rowIndexPermutationInv() const
+{
+    QVector<int> ret;
+    for (int i = 0; i < d->m_perm_rows.count(); i++)
+        ret << 0;
+    for (int i = 0; i < d->m_perm_rows.count(); i++) {
+        int tmp = d->m_perm_rows[i];
+        if ((tmp >= 0) && (tmp < d->m_perm_rows.count()))
+            ret[tmp] = i;
+    }
+    return ret;
+}
+
+QVector<int> MatrixView::columnIndexPermutationInv() const
+{
+    QVector<int> ret;
+    for (int i = 0; i < d->m_perm_cols.count(); i++)
+        ret << 0;
+    for (int i = 0; i < d->m_perm_cols.count(); i++) {
+        int tmp = d->m_perm_cols[i];
+        if ((tmp >= 0) && (tmp < d->m_perm_cols.count()))
+            ret[tmp] = i;
+    }
+    return ret;
+}
+
 void MatrixView::paintEvent(QPaintEvent* evt)
 {
     Q_UNUSED(evt)

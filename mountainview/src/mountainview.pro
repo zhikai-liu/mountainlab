@@ -32,7 +32,8 @@ HEADERS += clusterdetailplugin.h clusterdetailview.h \
     msv/views/curationprogramview.h \
     msv/plugins/curationprogramplugin.h \
     msv/views/curationprogramcontroller.h \
-    core/resolveprvsdialog.h
+    core/resolveprvsdialog.h \
+    views/mvgridview.h
 SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
     msv/views/matrixview.cpp \
     msv/views/isolationmatrixview.cpp \
@@ -42,7 +43,8 @@ SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
     msv/views/curationprogramview.cpp \
     msv/plugins/curationprogramplugin.cpp \
     msv/views/curationprogramcontroller.cpp \
-    core/resolveprvsdialog.cpp
+    core/resolveprvsdialog.cpp \
+    views/mvgridview.cpp
 
 INCLUDEPATH += ../../prv-gui/src
 HEADERS += ../../prv-gui/src/prvgui.h

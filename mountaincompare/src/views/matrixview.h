@@ -28,6 +28,14 @@ public:
     void setDrawDividerForFinalColumn(bool val);
     void setCurrentElement(QPoint pt);
     QPoint currentElement() const;
+
+    Mda matrix() const;
+    QStringList rowLabels() const;
+    QStringList columnLabels() const;
+    QVector<int> rowIndexPermutation() const;
+    QVector<int> columnIndexPermutation() const;
+    QVector<int> rowIndexPermutationInv() const;
+    QVector<int> columnIndexPermutationInv() const;
 signals:
     void currentElementChanged();
 
