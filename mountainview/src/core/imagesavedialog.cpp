@@ -79,14 +79,16 @@ void ImageSaveDialog::presentImage(const QImage& img)
 static QPixmap fit_display(const QImage& img)
 {
     static QRect screenRect;
-    static int margin = 20;
+    //static int margin = 20;
     QPixmap result = QPixmap::fromImage(img);
     if (screenRect.isNull())
         screenRect = QApplication::desktop()->availableGeometry();
-    if (result.width() > screenRect.width())
-        result = result.scaledToWidth(screenRect.width() - margin, Qt::SmoothTransformation);
-    if (result.height() > screenRect.height())
-        result = result.scaledToHeight(screenRect.height() - margin, Qt::SmoothTransformation);
+    int SW = screenRect.width() - 100;
+    int SH = screenRect.height() - 100;
+    if ((result.width() > SW) || (result.height() > SH)) {
+        double scale_factor = qMin(SW * 1.0 / result.width(), SH * 1.0 / result.height());
+        result = result.scaled(QSize(result.width() * scale_factor, result.height() * scale_factor), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    }
     return result;
 }
 

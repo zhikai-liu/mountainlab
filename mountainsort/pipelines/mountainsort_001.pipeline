@@ -6,7 +6,7 @@ function run_mountainsort(params) {
 
 	set_default_parameters(params,{
 		samplerate:30000, //Hz
-		freq_min:300,freq_max:8000, //Hz
+		freq_min:300,freq_max:6000, //Hz
 		detect_threshold:3.5, // std. dev's
 		detect_interval:10, //timepoints
 		clip_size:50, //timepoints

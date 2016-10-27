@@ -33,7 +33,8 @@ public:
     QColor m_fill_color = QColor(120, 120, 150);
     QColor m_line_color = QColor(100, 100, 130);
     int m_hovered_bin_index = -1;
-    int m_margin_left = 5, m_margin_right = 5, m_margin_top = 5, m_margin_bottom = 14;
+    int m_margin_left = 5, m_margin_right = 5, m_margin_top = 5, m_margin_bottom = 5;
+    bool m_draw_caption = false;
     QString m_title;
     QString m_caption;
     QMap<QString, QColor> m_colors;
@@ -59,7 +60,7 @@ public:
 };
 
 HistogramView::HistogramView(QWidget* parent)
-    : QWidget(parent)
+    : RenderableWidget(parent)
 {
     d = new HistogramViewPrivate;
     d->q = this;
@@ -231,7 +232,9 @@ void HistogramView::setSelected(bool val)
 QImage HistogramView::renderImage(int W, int H)
 {
     QImage ret = QImage(W, H, QImage::Format_RGB32);
+    ret.fill(Qt::white);
     QPainter painter(&ret);
+    painter.setFont(this->font());
 
     bool selected = d->m_selected;
     bool hovered = d->m_hovered;
@@ -398,6 +401,14 @@ void HistogramViewPrivate::update_bin_counts()
 
 QPointF HistogramViewPrivate::coord2pix(QPointF pt, int W, int H)
 {
+    int caption_height = 9;
+    if (!m_draw_caption)
+        caption_height = 0;
+
+    int margin_bottom = m_margin_bottom;
+    if (q->exportMode())
+        margin_bottom = qMax(margin_bottom, H / 10);
+
     if (!W)
         W = q->width();
     if (!H)
@@ -412,7 +423,7 @@ QPointF HistogramViewPrivate::coord2pix(QPointF pt, int W, int H)
         return QPointF(0, 0);
     if (W <= m_margin_left + m_margin_right + 5)
         return QPointF(0, 0);
-    if (H <= m_margin_top + m_margin_bottom + 5)
+    if (H <= m_margin_top + margin_bottom + caption_height + 5)
         return QPointF(0, 0);
 
     double xmin = m_bin_lefts[0];
@@ -433,13 +444,21 @@ QPointF HistogramViewPrivate::coord2pix(QPointF pt, int W, int H)
         yfrac = (pt.y() - ymin) / (ymax - ymin);
 
     double x0 = m_margin_left + xfrac * (W - m_margin_left - m_margin_right);
-    double y0 = H - (m_margin_bottom + yfrac * (H - m_margin_top - m_margin_bottom));
+    double y0 = H - (margin_bottom + caption_height + yfrac * (H - m_margin_top - margin_bottom - caption_height));
 
     return QPointF(x0, y0);
 }
 
 QPointF HistogramViewPrivate::pix2coord(QPointF pt, int W, int H)
 {
+
+    int caption_height = 9;
+    if (!m_draw_caption)
+        caption_height = 0;
+
+    int margin_bottom = m_margin_bottom;
+    if (q->exportMode())
+        margin_bottom = qMax(margin_bottom, H / 10);
 
     if (!W)
         W = q->width();
@@ -455,7 +474,7 @@ QPointF HistogramViewPrivate::pix2coord(QPointF pt, int W, int H)
         return QPointF(0, 0);
     if (W <= m_margin_left + m_margin_right + 5)
         return QPointF(0, 0);
-    if (H <= m_margin_top + m_margin_bottom + 5)
+    if (H <= m_margin_top + margin_bottom + caption_height + 5)
         return QPointF(0, 0);
 
     double xmin = m_bin_lefts[0];
@@ -469,7 +488,7 @@ QPointF HistogramViewPrivate::pix2coord(QPointF pt, int W, int H)
     }
 
     double xfrac = (pt.x() - m_margin_left) / (W - m_margin_left - m_margin_right);
-    double yfrac = 1 - (pt.y() - m_margin_top) / (H - m_margin_top - m_margin_bottom);
+    double yfrac = 1 - (pt.y() - m_margin_top) / (H - m_margin_top - margin_bottom - caption_height);
 
     double x0 = transform2(transform1(xmin) + xfrac * (transform1(xmax) - transform1(xmin)));
     double y0 = ymin + yfrac * (ymax - ymin);
@@ -518,28 +537,34 @@ void HistogramViewPrivate::do_paint(QPainter& painter, int W, int H)
     //	QColor current_color=QColor(150,200,200,80);
     //	QColor hover_current_color=QColor(170,200,200,80);
 
+    int margin_bottom = m_margin_bottom;
+    if (q->exportMode())
+        margin_bottom = qMax(margin_bottom, H / 10);
+
     QRect R(0, 0, W, H);
 
-    if (m_current) {
-        painter.fillRect(R, m_colors["view_background_highlighted"]);
-    }
-    else if (m_selected) {
-        painter.fillRect(R, m_colors["view_background_selected"]);
-    }
-    else if (m_hovered) {
-        painter.fillRect(R, m_colors["view_background_hovered"]);
-    }
-    else {
-        painter.fillRect(R, m_colors["view_background"]);
-    }
+    if (!q->exportMode()) {
+        if (m_current) {
+            painter.fillRect(R, m_colors["view_background_highlighted"]);
+        }
+        else if (m_selected) {
+            painter.fillRect(R, m_colors["view_background_selected"]);
+        }
+        else if (m_hovered) {
+            painter.fillRect(R, m_colors["view_background_hovered"]);
+        }
+        else {
+            painter.fillRect(R, m_colors["view_background"]);
+        }
 
-    if (m_selected) {
-        painter.setPen(QPen(m_colors["view_frame_selected"], 2));
+        if (m_selected) {
+            painter.setPen(QPen(m_colors["view_frame_selected"], 2));
+        }
+        else {
+            painter.setPen(QPen(m_colors["view_frame"], 1));
+        }
+        painter.drawRect(R);
     }
-    else {
-        painter.setPen(QPen(m_colors["view_frame"], 1));
-    }
-    painter.drawRect(R);
 
     if (m_update_required) {
         update_bin_counts();
@@ -607,23 +632,28 @@ void HistogramViewPrivate::do_paint(QPainter& painter, int W, int H)
     }
 
     if (!m_title.isEmpty()) {
-        int text_height = 14;
-        QRect R(m_margin_left, 5, W - m_margin_left - m_margin_right, text_height);
+        //int text_height = 14;
         QFont font = painter.font();
+        QRect R(m_margin_left, 5, W - m_margin_left - m_margin_right, font.pixelSize());
+
         font.setFamily("Arial");
-        font.setPixelSize(text_height);
+        //font.setPixelSize(text_height);
         painter.setFont(font);
-        painter.setPen(QColor(100, 60, 60));
+        painter.setPen(Qt::darkGray);
         painter.drawText(R, m_title, Qt::AlignLeft | Qt::AlignTop);
     }
-    if (!m_caption.isEmpty()) {
-        int text_height = 12;
-        QRect R(0, H - m_margin_bottom, W, m_margin_bottom);
+    if ((!m_caption.isEmpty()) && (m_draw_caption)) {
+        int caption_height = 9;
+        if (!m_draw_caption)
+            caption_height = 0;
+
+        //int text_height = 11;
+        QRect R(0, H - margin_bottom - caption_height, W, margin_bottom + caption_height);
         QFont font = painter.font();
         font.setFamily("Arial");
-        font.setPixelSize(text_height);
+        //font.setPixelSize(text_height);
         painter.setFont(font);
-        painter.setPen(QColor(100, 60, 60));
+        painter.setPen(Qt::darkGray);
         painter.drawText(R, m_caption, Qt::AlignCenter | Qt::AlignVCenter);
     }
 }

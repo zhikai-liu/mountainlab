@@ -40,7 +40,10 @@ void PaintLayerStack::addLayer(PaintLayer* layer)
 void PaintLayerStack::paint(QPainter* painter)
 {
     for (int i = 0; i < d->m_layers.count(); i++) {
+        bool hold_export_mode = d->m_layers[i]->exportMode();
+        d->m_layers[i]->setExportMode(this->exportMode());
         d->m_layers[i]->paint(painter);
+        d->m_layers[i]->setExportMode(hold_export_mode);
     }
 }
 

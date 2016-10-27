@@ -9,6 +9,7 @@
 
 #include "paintlayer.h"
 #include "mvcontext.h"
+#include <QWidget>
 
 class MVTemplatesView2PanelPrivate;
 class MVTemplatesView2Panel : public PaintLayer {
@@ -27,7 +28,7 @@ public:
     void setFiringRateDiskDiameter(double val);
 
 protected:
-    void paint(QPainter* painter);
+    void paint(QPainter* painter) Q_DECL_OVERRIDE;
 
 private:
     MVTemplatesView2PanelPrivate* d;

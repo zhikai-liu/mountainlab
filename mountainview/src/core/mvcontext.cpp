@@ -97,7 +97,7 @@ MVContext::MVContext()
     d->m_colors["view_frame_selected"] = QColor(100, 80, 80);
     d->m_colors["divider_line"] = QColor(255, 100, 150);
     d->m_colors["calculation-in-progress"] = QColor(130, 130, 140, 50);
-    d->m_colors["cluster_label"] = Qt::darkBlue;
+    d->m_colors["cluster_label"] = Qt::darkGray;
     d->m_colors["firing_rate_disk"] = Qt::lightGray;
 
     QObject::connect(this, SIGNAL(optionChanged(QString)), this, SLOT(slot_option_changed(QString)));

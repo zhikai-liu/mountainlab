@@ -44,6 +44,7 @@
 #include <mvmergecontrol.h>
 #include <mvspikesprayview.h>
 #include <mvtemplatesview2.h>
+#include <mvtemplatesview3.h>
 #include <mvtimeseriesview2.h>
 #include <tabber.h>
 #include <QFileDialog>
@@ -848,7 +849,8 @@ void setup_main_window(MVMainWindow* W)
     W->loadPlugin(new ClipsViewPlugin);
     W->loadPlugin(new ClusterContextMenuPlugin);
     W->loadPlugin(new CurationProgramPlugin);
-    W->registerViewFactory(new MVTemplatesView2Factory(W));
+    //W->registerViewFactory(new MVTemplatesView2Factory(W));
+    W->registerViewFactory(new MVTemplatesView3Factory(W));
     W->registerViewFactory(new MVAutoCorrelogramsFactory(W));
     W->registerViewFactory(new MVSelectedAutoCorrelogramsFactory(W));
     W->registerViewFactory(new MVCrossCorrelogramsFactory(W));

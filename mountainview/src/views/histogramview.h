@@ -7,6 +7,7 @@
 #define HISTOGRAMVIEW_H
 
 #include "mvcontext.h"
+#include "renderablewidget.h"
 
 #include <QWidget>
 
@@ -14,7 +15,7 @@
  *  \brief View of a histogram from an arbitrary data array
  */
 class HistogramViewPrivate;
-class HistogramView : public QWidget {
+class HistogramView : public RenderableWidget {
     Q_OBJECT
 public:
     enum TimeScaleMode {
@@ -48,7 +49,7 @@ public:
     void setCurrent(bool val); // Set this as the current histogram (affects highlighting)
     void setSelected(bool val); // Set this as among the selected histograms (affects highlighting)
 
-    QImage renderImage(int W, int H);
+    QImage renderImage(int W, int H) Q_DECL_OVERRIDE;
 
 protected:
     void paintEvent(QPaintEvent* evt);

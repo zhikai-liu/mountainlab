@@ -20,9 +20,10 @@ public:
     bool m_selected = false;
     QMap<QString, QColor> m_colors;
     QString m_title;
-    double m_top_section_height = 0;
     double m_bottom_section_height = 0;
     double m_firing_rate_disk_diameter = 0;
+    bool m_draw_ellipses = false;
+    bool m_draw_disks = false;
 
     void setup_electrode_boxes(double W, double H);
     QPointF coord2pix(int m, int t, double val);
@@ -89,48 +90,57 @@ void MVTemplatesView2Panel::paint(QPainter* painter)
     QSize ss = this->windowSize();
     QPen pen = painter->pen();
 
-    d->m_top_section_height = qMax(20.0, ss.height() * 0.1);
     d->m_bottom_section_height = qMax(20.0, ss.height() * 0.1);
 
-    //BACKGROUND
+    if (!d->m_draw_disks)
+        d->m_bottom_section_height = 0;
+
     QRect R(0, 0, ss.width(), ss.height());
-    if (d->m_current) {
-        painter->fillRect(R, d->m_colors["view_background_highlighted"]);
-    }
-    else if (d->m_selected) {
-        painter->fillRect(R, d->m_colors["view_background_selected"]);
-    }
-    //else if (d->m_hovered) {
-    //    painter->fillRect(R, d->m_colors["view_background_hovered"]);
-    //}
-    else {
-        painter->fillRect(R, d->m_colors["view_background"]);
+
+    //BACKGROUND
+    if (!this->exportMode()) {
+        if (d->m_current) {
+            painter->fillRect(R, d->m_colors["view_background_highlighted"]);
+        }
+        else if (d->m_selected) {
+            painter->fillRect(R, d->m_colors["view_background_selected"]);
+        }
+        //else if (d->m_hovered) {
+        //    painter->fillRect(R, d->m_colors["view_background_hovered"]);
+        //}
+        else {
+            painter->fillRect(R, d->m_colors["view_background"]);
+        }
     }
 
-    //FRAME
-    if (d->m_selected) {
-        painter->setPen(QPen(d->m_colors["view_frame_selected"], 1));
+    if (!this->exportMode()) {
+        //FRAME
+        if (d->m_selected) {
+            painter->setPen(QPen(d->m_colors["view_frame_selected"], 1));
+        }
+        else {
+            painter->setPen(QPen(d->m_colors["view_frame"], 1));
+        }
+        painter->drawRect(R);
     }
-    else {
-        painter->setPen(QPen(d->m_colors["view_frame"], 1));
-    }
-    painter->drawRect(R);
 
     //TOP SECTION
     {
         QString txt = d->m_title;
-        QRectF R(0, 0, ss.width(), d->m_top_section_height);
-        QFont fnt = painter->font();
-        fnt.setPixelSize(qMin(16.0, qMax(10.0, qMin(d->m_top_section_height, ss.width() * 1.0) - 4)));
+        QFont fnt = this->font();
+        QRectF R(5, 3, ss.width() - 10, fnt.pixelSize());
+        //fnt.setPixelSize(qMin(16.0, qMax(10.0, qMin(d->m_top_section_height, ss.width() * 1.0) - 4)));
+        //fnt.setPixelSize(14);
         painter->setFont(fnt);
+
         QPen pen = painter->pen();
         pen.setColor(d->m_colors["cluster_label"]);
         painter->setPen(pen);
-        painter->drawText(R, Qt::AlignCenter | Qt::AlignVCenter, txt);
+        painter->drawText(R, Qt::AlignLeft | Qt::AlignVCenter, txt);
     }
 
     //BOTTOM SECTION
-    {
+    if (d->m_bottom_section_height) {
         if (d->m_firing_rate_disk_diameter) {
             QPen pen_hold = painter->pen();
             QBrush brush_hold = painter->brush();
@@ -164,12 +174,15 @@ void MVTemplatesView2Panel::paint(QPainter* painter)
         }
         pen.setColor(d->m_channel_colors.value(m, Qt::black));
         pen.setWidth(2);
+        if (this->exportMode())
+            pen.setWidth(6);
         painter->strokePath(path, pen);
         QRectF box = d->m_electrode_boxes.value(m);
         pen.setColor(QColor(180, 200, 200));
         pen.setWidth(1);
         painter->setPen(pen);
-        painter->drawEllipse(box);
+        if (d->m_draw_ellipses)
+            painter->drawEllipse(box);
     }
 }
 
@@ -195,8 +208,10 @@ void MVTemplatesView2PanelPrivate::setup_electrode_boxes(double W, double H)
 {
     m_electrode_boxes.clear();
 
+    int top_section_height = q->font().pixelSize();
+
     double W1 = W;
-    double H1 = H - m_top_section_height - m_bottom_section_height;
+    double H1 = H - top_section_height - m_bottom_section_height;
 
     QList<QVector<double> > coords = m_electrode_geometry.coordinates;
     if (coords.isEmpty()) {
@@ -252,7 +267,7 @@ void MVTemplatesView2PanelPrivate::setup_electrode_boxes(double W, double H)
     }
 
     double offset_x = (W1 - W0 * hscale_factor) / 2;
-    double offset_y = m_top_section_height + (H1 - H0 * vscale_factor) / 2;
+    double offset_y = top_section_height + (H1 - H0 * vscale_factor) / 2;
     for (int m = 0; m < coords.count(); m++) {
         QVector<double> c = coords[m];
         //double x0 = offset_x + (c.value(0) - mins.value(0)) * hscale_factor;

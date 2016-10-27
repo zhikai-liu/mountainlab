@@ -23,18 +23,23 @@ if (nargin<3)
 end;
 
 if (strcmp(direction,'decreasing'))
-	[B,MSEs]=jisotonic(-A,'increasing',weights); B=-B;
+	%[B,MSEs]=jisotonic(-A,'increasing',weights); B=-B;
+    [B,MSEs]=jisotonic_mex(-A,weights); B=-B;
 	return;
 elseif (strcmp(direction,'updown'))
-	[B1,MSE1]=jisotonic(A,'increasing',weights);
-	[B2,MSE2]=jisotonic(A(end:-1:1),'increasing',weights(end:-1:1));
+	%[B1,MSE1]=jisotonic(A,'increasing',weights);
+    [B1,MSE1]=jisotonic_mex(A,weights);
+	%[B2,MSE2]=jisotonic(A(end:-1:1),'increasing',weights(end:-1:1));
+    [B2,MSE2]=jisotonic_mex(A(end:-1:1),weights(end:-1:1));
 	B2=B2(end:-1:1);
 	MSE2=MSE2(end:-1:1);
 	MSE0=MSE1+MSE2;
 	
 	[~,best_ind]=min(MSE0);
-	C1=jisotonic(A(1:best_ind),'increasing',weights(1:best_ind));
-	C2=jisotonic(A(best_ind:end),'decreasing',weights(best_ind:end));
+	%C1=jisotonic(A(1:best_ind),'increasing',weights(1:best_ind));
+    [C1,dum]=jisotonic_mex(A(1:best_ind),weights(1:best_ind));
+	%C2=jisotonic(A(best_ind:end),'decreasing',weights(best_ind:end));
+    [C2,dum]=jisotonic_mex(-A(best_ind:end),weights(best_ind:end)); C2=-C2;
 	B=[C1(1:best_ind),C2(2:end)];
 	if (isnan(B(1)))
 		warning('jisotonic: NaN');

@@ -445,26 +445,28 @@ void HistogramLayerPrivate::do_paint(QPainter& painter, int W, int H)
 
     QRect R(0, 0, W, H);
 
-    if (m_current) {
-        painter.fillRect(R, m_colors["view_background_highlighted"]);
-    }
-    else if (m_selected) {
-        painter.fillRect(R, m_colors["view_background_selected"]);
-    }
-    else if (m_hovered) {
-        painter.fillRect(R, m_colors["view_background_hovered"]);
-    }
-    else {
-        painter.fillRect(R, m_colors["view_background"]);
-    }
+    if (!q->exportMode()) {
+        if (m_current) {
+            painter.fillRect(R, m_colors["view_background_highlighted"]);
+        }
+        else if (m_selected) {
+            painter.fillRect(R, m_colors["view_background_selected"]);
+        }
+        else if (m_hovered) {
+            painter.fillRect(R, m_colors["view_background_hovered"]);
+        }
+        else {
+            painter.fillRect(R, m_colors["view_background"]);
+        }
 
-    if (m_selected) {
-        painter.setPen(QPen(m_colors["view_frame_selected"], 2));
+        if (m_selected) {
+            painter.setPen(QPen(m_colors["view_frame_selected"], 2));
+        }
+        else {
+            painter.setPen(QPen(m_colors["view_frame"], 1));
+        }
+        painter.drawRect(R);
     }
-    else {
-        painter.setPen(QPen(m_colors["view_frame"], 1));
-    }
-    painter.drawRect(R);
 
     if (m_update_required) {
         update_bin_counts();
@@ -504,7 +506,7 @@ void HistogramLayerPrivate::do_paint(QPainter& painter, int W, int H)
         QPointF pt0 = coord2pix(QPointF(val, 0));
         QPointF pt1 = coord2pix(QPointF(val, m_max_bin_density));
         QPen pen = painter.pen();
-        pen.setColor(Qt::gray);
+        pen.setColor(Qt::darkGray);
         pen.setStyle(Qt::DashLine);
         pen.setWidth(1);
         painter.setPen(pen);
@@ -550,23 +552,28 @@ void HistogramLayerPrivate::do_paint(QPainter& painter, int W, int H)
     }
 
     if (!m_title.isEmpty()) {
-        int text_height = 14;
-        QRect R(m_margin_left, 5, W - m_margin_left - m_margin_right, text_height);
-        QFont font = painter.font();
-        font.setFamily("Arial");
-        font.setPixelSize(text_height);
-        painter.setFont(font);
-        painter.setPen(QColor(100, 60, 60));
+        //int text_height = 14;
+        QRect R(m_margin_left, 5, W - m_margin_left - m_margin_right, q->font().pixelSize());
+
+        //QFont font = painter.font();
+        //font.setFamily("Arial");
+        //font.setPixelSize(text_height);
+        //painter.setFont(font);
+        QFont fnt = q->font();
+        //fnt.setPixelSize(text_height);
+        painter.setFont(fnt);
+
+        painter.setPen(Qt::darkGray);
         painter.drawText(R, m_title, Qt::AlignLeft | Qt::AlignTop);
     }
     if (!m_caption.isEmpty()) {
-        int text_height = 12;
+        //int text_height = 14;
         QRect R(0, H - m_margin_bottom, W, m_margin_bottom);
-        QFont font = painter.font();
+        QFont font = q->font();
         font.setFamily("Arial");
-        font.setPixelSize(text_height);
+        //font.setPixelSize(text_height);
         painter.setFont(font);
-        painter.setPen(QColor(100, 60, 60));
+        painter.setPen(Qt::darkGray);
         painter.drawText(R, m_caption, Qt::AlignCenter | Qt::AlignVCenter);
     }
 }
