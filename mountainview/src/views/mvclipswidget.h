@@ -28,6 +28,9 @@ public:
     void setLabelsToUse(const QList<int>& labels);
 
     void paintEvent(QPaintEvent* evt);
+
+    void renderView(QPainter *painter) override;
+
 signals:
 private slots:
 

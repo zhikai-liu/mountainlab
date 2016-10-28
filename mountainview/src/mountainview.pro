@@ -35,6 +35,7 @@ HEADERS += clusterdetailplugin.h clusterdetailview.h \
     msv/views/curationprogramcontroller.h \
     core/resolveprvsdialog.h \
     views/mvgridview.h \
+    core/viewimageexporter.h \
     views/mvgridviewpropertiesdialog.h \
     views/renderablewidget.h \
     misc/jscounter.h
@@ -50,6 +51,7 @@ SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
     msv/views/curationprogramcontroller.cpp \
     core/resolveprvsdialog.cpp \
     views/mvgridview.cpp \
+    core/viewimageexporter.cpp \
     views/mvgridviewpropertiesdialog.cpp \
     views/renderablewidget.cpp \
     misc/jscounter.cpp

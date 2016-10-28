@@ -31,6 +31,12 @@ HEADERS += clusterdetailview.h clusterdetailviewpropertiesdialog.h
 SOURCES += clusterdetailview.cpp clusterdetailviewpropertiesdialog.cpp
 FORMS += clusterdetailviewpropertiesdialog.ui
 
+INCLUDEPATH += ../../mountainview/src/core
+VPATH += ../../mountainview/src/core
+HEADERS += viewimageexporter.h
+SOURCES += viewimageexporter.cpp
+
+
 SOURCES += mountaincomparemain.cpp \
     mvmainwindow.cpp \
     mccontext.cpp \

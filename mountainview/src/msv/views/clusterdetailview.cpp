@@ -25,6 +25,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QTimer>
+#include "viewimageexporter.h"
 #include "compute_templates_0.h"
 #include "mountainprocessrunner.h"
 #include <math.h>
@@ -200,7 +201,7 @@ ClusterDetailView::ClusterDetailView(MVContext* context)
     {
         QAction* a = new QAction("Export image", this);
         this->addAction(a);
-        connect(a, SIGNAL(triggered(bool)), this, SLOT(slot_export_image()));
+        connect(a, SIGNAL(triggered()), this, SLOT(slot_export_image()));
     }
     {
         QAction* a = new QAction("Toggle std. dev. shading", this);
@@ -652,13 +653,139 @@ void ClusterDetailView::slot_update_sort_order()
 }
 
 void ClusterDetailView::slot_view_properties()
-{
+
     ClusterDetailViewPropertiesDialog dlg;
     dlg.setProperties(d->m_properties);
     if (dlg.exec() == QDialog::Accepted) {
         d->m_properties = dlg.properties();
         this->update();
     }
+}
+
+MVAbstractView::ViewFeatures ClusterDetailView::viewFeatures() const
+{
+    return RenderView;
+}
+
+void ClusterDetailView::renderView(QPainter *painter)
+{
+    if (isCalculating()) return;
+    int current_k = mvContext()->currentCluster();
+    QList<int> selected_ks = mvContext()->selectedClusters();
+    mvContext()->setCurrentCluster(-1);
+    mvContext()->setSelectedClusters(QList<int>());
+//    d->do_paint(*painter, painter->device()->width(), painter->device()->height());
+
+    int right_margin = 10; //make some room for the icon
+    int left_margin = 30; //make room for the axis
+    int W = painter->device()->width() - right_margin - left_margin;
+    int H = painter->device()->height();
+
+    painter->setClipRect(QRectF(left_margin, 0, W, H));
+
+    QList<ClusterData> cluster_data_merged;
+    if (mvContext()->viewMerged()) {
+        cluster_data_merged = d->merge_cluster_data(mvContext()->clusterMerge(), d->m_cluster_data);
+    }
+    else {
+        cluster_data_merged = d->m_cluster_data;
+    }
+
+    d->sort_cluster_data(cluster_data_merged);
+
+    int old_view_count = d->m_views.count();
+
+    qDeleteAll(d->m_views);
+    d->m_views.clear();
+    QList<int> selected_clusters = mvContext()->selectedClusters();
+    for (int i = 0; i < cluster_data_merged.count(); i++) {
+        ClusterData CD = cluster_data_merged[i];
+        if (mvContext()->clusterIsVisible(CD.k)) {
+            ClusterView* V = new ClusterView(this, d);
+            V->setStdevShading(d->m_stdev_shading);
+            V->setHighlighted(CD.k == mvContext()->currentCluster());
+            V->setSelected(selected_clusters.contains(CD.k));
+            V->setHovered(CD.k == d->m_hovered_k);
+            V->setClusterData(CD);
+            V->setAttributes(mvContext()->clusterAttributes(CD.k));
+            d->m_views << V;
+        }
+    }
+
+    if (old_view_count != d->m_views.count()) {
+        d->m_space_ratio = 0; //trigger zoom out
+    }
+
+    double total_space_needed = 0;
+    for (int i = 0; i < d->m_views.count(); i++) {
+        total_space_needed += d->m_views[i]->spaceNeeded();
+    }
+    if (d->m_scroll_x < 0)
+        d->m_scroll_x = 0;
+    if (total_space_needed * d->m_space_ratio - d->m_scroll_x < W) {
+        d->m_scroll_x = total_space_needed * d->m_space_ratio - W;
+        if (d->m_scroll_x < 0)
+            d->m_scroll_x = 0;
+    }
+    if ((d->m_scroll_x == 0) && (total_space_needed * d->m_space_ratio < W)) {
+        d->m_space_ratio = W / total_space_needed;
+        if (d->m_space_ratio > 300)
+            d->m_space_ratio = 300;
+    }
+
+    ChannelSpacingInfo csi = compute_channel_spacing_info(cluster_data_merged, d->m_vscale_factor);
+
+    float x0_before_scaling = 0;
+    ClusterView* first_view = 0;
+    for (int i = 0; i < d->m_views.count(); i++) {
+        ClusterView* V = d->m_views[i];
+        QRectF rect(left_margin + x0_before_scaling * d->m_space_ratio - d->m_scroll_x, 0, V->spaceNeeded() * d->m_space_ratio, H);
+        V->setChannelSpacingInfo(csi);
+        if ((rect.x() + rect.width() >= left_margin) && (rect.x() <= left_margin + W)) {
+            first_view = V;
+            QRegion save_clip_region = painter->clipRegion();
+            V->paint(painter, rect);
+            painter->setClipRegion(save_clip_region);
+        }
+        V->x_position_before_scaling = x0_before_scaling;
+        x0_before_scaling += V->spaceNeeded();
+    }
+
+    painter->setClipRect(0, 0, painter->device()->width(), painter->device()->height());
+    if (first_view) {
+        double fac0 = 0.95; //to leave a bit of a gap
+        ClusterView* V = first_view;
+        int M = cluster_data_merged[0].template0.N1();
+        Q_UNUSED(M)
+        //for (int m = 0; m < M; m++) {
+        for (int m = 0; m <= 0; m++) {
+            QPointF pt1 = V->template_coord2pix(m, 0, -0.5 / csi.vert_scaling_factor * fac0);
+            QPointF pt2 = V->template_coord2pix(m, 0, 0.5 / csi.vert_scaling_factor * fac0);
+            pt1.setX(left_margin);
+            pt2.setX(left_margin);
+            pt1.setY(pt1.y());
+            pt2.setY(pt2.y());
+            draw_axis_opts opts;
+            opts.pt1 = pt1;
+            opts.pt2 = pt2;
+            opts.draw_tick_labels = false;
+            opts.tick_length = 0;
+            opts.draw_range = true;
+            opts.minval = -0.5 / csi.vert_scaling_factor * fac0;
+            opts.maxval = 0.5 / csi.vert_scaling_factor * fac0;
+            opts.orientation = Qt::Vertical;
+            draw_axis(painter, opts);
+        }
+    }
+
+
+
+
+
+
+    mvContext()->setCurrentCluster(current_k);
+    mvContext()->setSelectedClusters(selected_ks);
+    this->update(); //make sure we update, because some internal stuff has changed!
 }
 
 void ClusterDetailViewPrivate::compute_total_time()
@@ -791,8 +918,8 @@ void ClusterView::paint(QPainter* painter, QRectF rect, bool render_image_mode)
         background_color = q->mvContext()->color("view_background_hovered");
     if (render_image_mode)
         background_color = Qt::white;
-    painter->fillRect(rect, QColor(220, 220, 225));
-    painter->fillRect(rect2, background_color);
+//    painter->fillRect(rect, QColor(220, 220, 225));
+//    painter->fillRect(rect2, background_color);
 
     QPen pen_frame;
     pen_frame.setWidth(1);
@@ -1083,8 +1210,13 @@ void ClusterDetailViewPrivate::export_image()
 {
     int W = m_properties.export_image_width;
     int H = m_properties.export_image_height;
-    QImage img = q->renderImage(W, H);
-    user_save_image(img);
+//    QImage img = q->renderImage();
+//    user_save_image(img);
+    ViewImageExporter exporter;
+    QDialog *dialog = exporter.createViewExportDialog(q, q);
+    dialog->exec();
+    delete dialog;
+    return;
 }
 
 void ClusterDetailViewPrivate::toggle_stdev_shading()

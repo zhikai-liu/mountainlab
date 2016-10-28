@@ -64,6 +64,8 @@ public:
 
     double amplitudeFactor() const;
 
+    void renderView(QPainter *painter);
+
 protected:
     void resizeEvent(QResizeEvent* evt);
     void paintEvent(QPaintEvent* evt);

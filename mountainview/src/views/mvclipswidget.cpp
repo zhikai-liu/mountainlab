@@ -66,11 +66,10 @@ MVClipsWidget::MVClipsWidget(MVContext* context)
     ActionFactory::addToToolbar(ActionFactory::ActionType::ZoomIn, this, d->m_view, SLOT(slot_zoom_in()));
     ActionFactory::addToToolbar(ActionFactory::ActionType::ZoomOut, this, d->m_view, SLOT(slot_zoom_out()));
 
-    QHBoxLayout* hlayout = new QHBoxLayout;
+    QHBoxLayout* hlayout = new QHBoxLayout(this);
     hlayout->setMargin(0);
     hlayout->setSpacing(0);
     hlayout->addWidget(d->m_view);
-    this->setLayout(hlayout);
 
     this->recalculateOn(context, SIGNAL(currentTimeseriesChanged()));
     this->recalculateOn(context, SIGNAL(firingsChanged()), false);
@@ -127,6 +126,11 @@ void MVClipsWidget::paintEvent(QPaintEvent* evt)
     }
 
     QWidget::paintEvent(evt);
+}
+
+void MVClipsWidget::renderView(QPainter *painter)
+{
+    d->m_view->renderView(painter);
 }
 
 void MVClipsWidgetComputer::compute()
