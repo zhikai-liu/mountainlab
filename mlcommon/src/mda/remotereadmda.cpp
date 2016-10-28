@@ -9,7 +9,6 @@
 #include <QStringList>
 #include <QDir>
 #include <QDateTime>
-#include <taskprogress.h>
 #include <mlnetwork.h>
 #include <mda32.h>
 #include <diskreadmda32.h>

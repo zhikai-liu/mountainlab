@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
     counterManager->setCounters(counters);
     // make sure task progress monitor is instantiated in the main thread
     TaskManager::TaskProgressMonitor* monitor = TaskManager::TaskProgressMonitor::globalInstance();
-    Q_UNUSED(monitor);
+    registry.addObject(monitor);
     CloseMeHandler::start();
 
     setbuf(stdout, 0);
