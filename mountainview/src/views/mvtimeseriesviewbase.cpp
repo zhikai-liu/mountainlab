@@ -283,10 +283,11 @@ void MVTimeSeriesViewBase::setSelectedTimeRange(MVRange range)
     update();
 }
 
-void MVTimeSeriesViewBase::renderView(QPainter *painter)
+void MVTimeSeriesViewBase::renderView(QPainter *painter, const QRectF &rect)
 {
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
+    painter->translate(rect.left(), rect.top());
     d->m_paint_layer_stack.paint(painter);
     painter->restore();
 }

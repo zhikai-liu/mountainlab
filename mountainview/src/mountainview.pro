@@ -38,6 +38,7 @@ HEADERS += clusterdetailplugin.h clusterdetailview.h \
     core/viewimageexporter.h \
     views/mvgridviewpropertiesdialog.h \
     views/renderablewidget.h \
+    misc/renderable.h \
     misc/jscounter.h
 SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
     clusterdetailviewpropertiesdialog.cpp \
@@ -54,6 +55,7 @@ SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
     core/viewimageexporter.cpp \
     views/mvgridviewpropertiesdialog.cpp \
     views/renderablewidget.cpp \
+    misc/renderable.cpp \
     misc/jscounter.cpp
 FORMS += clusterdetailviewpropertiesdialog.ui
 
@@ -200,7 +202,8 @@ RESOURCES += mountainview.qrc \
 FORMS += \
     controlwidgets/prvmanagerdialog.ui \
     controlwidgets/resolveprvsdialog.ui \
-    views/mvgridviewpropertiesdialog.ui
+    views/mvgridviewpropertiesdialog.ui \
+    core/exportpreviewwidget.ui
 
 DISTFILES += \
     msv/views/curationprogram.js

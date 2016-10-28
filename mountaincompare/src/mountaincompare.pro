@@ -20,10 +20,8 @@ TEMPLATE = app
 
 INCLUDEPATH += ../../mountainview/src/msv/plugins
 VPATH += ../../mountainview/src/msv/plugins
-HEADERS += clusterdetailplugin.h clipsviewplugin.h \
-    ../../mountainview/src/views/renderablewidget.h
-SOURCES += clusterdetailplugin.cpp clipsviewplugin.cpp \
-    ../../mountainview/src/views/renderablewidget.cpp
+HEADERS += clusterdetailplugin.h clipsviewplugin.h
+SOURCES += clusterdetailplugin.cpp clipsviewplugin.cpp
 
 INCLUDEPATH += ../../mountainview/src/msv/views
 VPATH += ../../mountainview/src/msv/views
@@ -84,14 +82,16 @@ VPATH += ../../mountainview/src/controlwidgets
 HEADERS += mvopenviewscontrol.h
 SOURCES += mvopenviewscontrol.cpp
 
-INCLUDEPATH += ../../mountainview/src/views
-VPATH += ../../mountainview/src/views
+INCLUDEPATH += ../../mountainview/src/views ../../mountainview/src/misc
+VPATH += ../../mountainview/src/views ../../mountainview/src/misc
 HEADERS += \
 mvclipsview.h mvclipswidget.h mvtimeseriesview2.h mvtimeseriesviewbase.h mvtimeseriesrendermanager.h \
-mvclusterview.h mvclusterwidget.h mvclusterlegend.h
+mvclusterview.h mvclusterwidget.h mvclusterlegend.h  \
+           renderablewidget.h renderable.h
 SOURCES += \
 mvclipsview.cpp mvclipswidget.cpp mvtimeseriesview2.cpp mvtimeseriesviewbase.cpp mvtimeseriesrendermanager.cpp \
-mvclusterview.cpp mvclusterwidget.cpp mvclusterlegend.cpp
+mvclusterview.cpp mvclusterwidget.cpp mvclusterlegend.cpp \
+            renderablewidget.cpp renderable.cpp
 
 INCLUDEPATH += ../../mountainsort/src/processors
 DEPENDPATH += ../../mountainsort/src/processors

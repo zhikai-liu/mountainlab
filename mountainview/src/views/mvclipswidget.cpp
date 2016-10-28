@@ -128,9 +128,9 @@ void MVClipsWidget::paintEvent(QPaintEvent* evt)
     QWidget::paintEvent(evt);
 }
 
-void MVClipsWidget::renderView(QPainter *painter)
+void MVClipsWidget::renderView(QPainter *painter, const QRectF &rect)
 {
-    d->m_view->renderView(painter);
+    d->m_view->renderView(painter, rect);
 }
 
 void MVClipsWidgetComputer::compute()
