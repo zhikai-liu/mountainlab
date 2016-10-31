@@ -27,10 +27,8 @@ FireTrackView::FireTrackView(MVContext* context)
     d->m_electrode_array_view = new FTElectrodeArrayView;
     d->m_electrode_array_view->setShowChannelNumbers(true);
 
-    QHBoxLayout* layout = new QHBoxLayout;
+    QHBoxLayout* layout = new QHBoxLayout(this);
     layout->addWidget(d->m_electrode_array_view);
-
-    this->setLayout(layout);
 
     this->recalculateOn(context, SIGNAL(electrodeGeometryChanged()));
 

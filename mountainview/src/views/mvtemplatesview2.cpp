@@ -70,6 +70,7 @@ public:
 MVTemplatesView2::MVTemplatesView2(MVContext* mvcontext)
     : MVAbstractView(mvcontext)
 {
+    qDebug() << Q_FUNC_INFO;
     d = new MVTemplatesView2Private;
     d->q = this;
 
