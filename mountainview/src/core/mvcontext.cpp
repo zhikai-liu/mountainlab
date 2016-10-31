@@ -934,6 +934,7 @@ void MVContext::setCurrentTimeRange(const MVRange& range_in)
 void MVContext::setClusterColors(const QList<QColor>& colors)
 {
     d->m_cluster_colors = colors;
+    emit clusterColorsChanged(colors);
 }
 
 void MVContext::setChannelColors(const QList<QColor>& colors)

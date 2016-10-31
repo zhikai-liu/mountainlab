@@ -225,6 +225,7 @@ signals:
     void viewMergedChanged();
     void visibleChannelsChanged();
     void clusterOrderChanged();
+    void clusterColorsChanged(const QList<QColor> &);
 
 private slots:
     void slot_option_changed(QString name);
