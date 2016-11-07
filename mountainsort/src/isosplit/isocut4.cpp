@@ -93,7 +93,9 @@ bool isocut4(int N, double* dipscore, double* cutpoint, double* samples) {
     printf("test %d\n",__LINE__);
 
     int cutpoint_index=find_index_of_minimum(num_bins,densities_resid_fit);
+    printf("test %d %d %d\n",__LINE__,cutpoint_index,num_bins);
     *cutpoint=(X_sub[cutpoint_index]+X_sub[cutpoint_index+1])/2;
+    printf("test %d\n",__LINE__);
 
     for (int i=0; i<num_bins; i++) {
         unimodal_fit_counts[i]=densities_unimodal_fit[i]*spacings[i];
