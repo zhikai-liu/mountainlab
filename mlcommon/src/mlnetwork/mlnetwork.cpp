@@ -6,7 +6,6 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <cachemanager.h>
-#include <taskprogress.h>
 #include "mlcommon.h"
 #include <QCoreApplication>
 #include <QJsonDocument>

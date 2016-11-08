@@ -8,11 +8,12 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include "cachemanager.h"
-#include "taskprogress.h"
 #ifdef USE_REMOTE_READ_MDA
 #include "remotereadmda.h"
 #endif
 #include "mlcommon.h"
+#include <icounter.h>
+#include <objectregistry.h>
 
 #define MAX_PATH_LEN 10000
 #define DEFAULT_CHUNK_SIZE 1e6
@@ -40,6 +41,12 @@ public:
 
     QString m_path;
     QJsonObject m_prv_object;
+
+    IIntCounter *allocatedCounter = nullptr;
+    IIntCounter *freedCounter = nullptr;
+    IIntCounter *bytesReadCounter = nullptr;
+    IIntCounter *bytesWrittenCounter = nullptr;
+
     void construct_and_clear();
     bool read_header_if_needed();
     bool open_file_if_needed();
@@ -51,6 +58,13 @@ DiskReadMda::DiskReadMda(const QString& path)
 {
     d = new DiskReadMdaPrivate;
     d->q = this;
+    ICounterManager *manager = ObjectRegistry::getObject<ICounterManager>();
+    if (manager) {
+        d->allocatedCounter = static_cast<IIntCounter*>(manager->counter("allocated_bytes"));
+        d->freedCounter = static_cast<IIntCounter*>(manager->counter("freed_bytes"));
+        d->bytesReadCounter = static_cast<IIntCounter*>(manager->counter("bytes_read"));
+        d->bytesWrittenCounter = static_cast<IIntCounter*>(manager->counter("bytes_written"));
+    }
     d->construct_and_clear();
     if (!path.isEmpty()) {
         this->setPath(path);
@@ -407,7 +421,8 @@ bool DiskReadMda::readChunk(Mda& X, long i, long size) const
     if (size_to_read > 0) {
         fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (jA), SEEK_SET);
         long bytes_read = mda_read_float64(&X.dataPtr()[jA - i], &d->m_header, size_to_read, d->m_file);
-        TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_read", bytes_read);
+        if (d->bytesReadCounter)
+            d->bytesReadCounter->add(bytes_read);
         if (bytes_read != size_to_read) {
             printf("Warning problem reading chunk in diskreadmda: %ld<>%ld\n", bytes_read, size_to_read);
             return false;
@@ -454,7 +469,8 @@ bool DiskReadMda::readChunk(Mda& X, long i1, long i2, long size1, long size2) co
         if (size2_to_read > 0) {
             fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (i1 + N1() * jA), SEEK_SET);
             long bytes_read = mda_read_float64(&X.dataPtr()[(jA - i2) * size1], &d->m_header, size1 * size2_to_read, d->m_file);
-            TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_read", bytes_read);
+            if (d->bytesReadCounter)
+                d->bytesReadCounter->add(bytes_read);
             if (bytes_read != size1 * size2_to_read) {
                 printf("Warning problem reading 2d chunk in diskreadmda: %ld<>%ld\n", bytes_read, size1 * size2);
                 return false;
@@ -512,7 +528,8 @@ bool DiskReadMda::readChunk(Mda& X, long i1, long i2, long i3, long size1, long 
         if (size3_to_read > 0) {
             fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (i1 + N1() * i2 + N1() * N2() * jA), SEEK_SET);
             long bytes_read = mda_read_float64(&X.dataPtr()[(jA - i3) * size1 * size2], &d->m_header, size1 * size2 * size3_to_read, d->m_file);
-            TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_read", bytes_read);
+            if (d->bytesReadCounter)
+                d->bytesReadCounter->add(bytes_read);
             if (bytes_read != size1 * size2 * size3_to_read) {
                 printf("Warning problem reading 3d chunk in diskreadmda: %ld<>%ld\n", bytes_read, size1 * size2 * size3_to_read);
                 return false;
@@ -663,6 +680,10 @@ void DiskReadMdaPrivate::copy_from(const DiskReadMda& other)
         fclose(this->m_file);
         this->m_file = 0;
     }
+    this->allocatedCounter = other.d->allocatedCounter;
+    this->freedCounter = other.d->freedCounter;
+    this->bytesReadCounter = other.d->bytesReadCounter;
+    this->bytesWrittenCounter = other.d->bytesWrittenCounter;
     this->construct_and_clear();
     this->m_current_internal_chunk_index = -1;
     this->m_file_open_failed = other.d->m_file_open_failed;

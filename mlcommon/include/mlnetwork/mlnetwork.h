@@ -68,7 +68,7 @@ private slots:
 private:
     long m_num_bytes_downloaded = 0;
     QTime m_timer;
-    TaskProgress m_task;
+    TaskProgress m_task; // WW: This dependency shouldn't be here. We can emit signals instead.
     QNetworkReply* m_reply = 0;
     QString m_tmp_fname;
     QFile* m_file = 0;

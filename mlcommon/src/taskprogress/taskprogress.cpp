@@ -520,19 +520,6 @@ public:
         return -1;
     }
 
-    void incrementQuantity(QString name, double val) override
-    {
-        QWriteLocker locker(&m_quantitiesMutex);
-        m_quantities.insert(name, m_quantities.value(name, 0) + val);
-        locker.unlock();
-        emit quantitiesChanged();
-    }
-    double getQuantity(QString name) const override
-    {
-        QReadLocker locker(&m_quantitiesMutex);
-        return m_quantities.value(name, 0);
-    }
-
     TaskProgressModel* model() const override
     {
         return m_model;
@@ -615,8 +602,6 @@ protected:
 
 private:
     TaskProgressModelPrivate* m_model;
-    mutable QReadWriteLock m_quantitiesMutex;
-    QMap<QString, double> m_quantities;
     ChangeLog::Manager m_changeManager;
     int m_timerId = 0;
 };

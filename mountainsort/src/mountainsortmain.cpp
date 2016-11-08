@@ -21,6 +21,7 @@
 //#include "unit_tests.h"
 #include "mlcommon.h"
 #include "pca.h"
+#include <objectregistry.h>
 
 void print_usage();
 void list_processors(const MSProcessManager* PM);
@@ -30,6 +31,7 @@ QJsonArray test_processor(MSProcessManager* PM, QString processor_name);
 int main(int argc, char* argv[])
 {
     QCoreApplication app(argc, argv);
+    ObjectRegistry registry;
 
     setbuf(stdout, NULL);
 

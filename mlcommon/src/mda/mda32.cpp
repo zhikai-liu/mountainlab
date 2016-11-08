@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include "mlcommon.h"
 #include "taskprogress.h"
+#include "icounter.h"
+#include <objectregistry.h>
 
 #define MDA_MAX_DIMS 6
 
@@ -13,6 +15,10 @@ public:
     dtype32* m_data;
     long m_dims[MDA_MAX_DIMS];
     long m_total_size;
+    IIntCounter *allocatedCounter = nullptr;
+    IIntCounter *freedCounter = nullptr;
+    IIntCounter *bytesReadCounter = nullptr;
+    IIntCounter *bytesWrittenCounter = nullptr;
 
     void do_construct();
     void copy_from(const Mda32& other);
@@ -30,6 +36,13 @@ Mda32::Mda32(long N1, long N2, long N3, long N4, long N5, long N6)
 {
     d = new Mda32Private;
     d->q = this;
+    ICounterManager *manager = ObjectRegistry::getObject<ICounterManager>();
+    if (manager) {
+        d->allocatedCounter = static_cast<IIntCounter*>(manager->counter("allocated_bytes"));
+        d->freedCounter = static_cast<IIntCounter*>(manager->counter("freed_bytes"));
+        d->bytesReadCounter = static_cast<IIntCounter*>(manager->counter("bytes_read"));
+        d->bytesWrittenCounter = static_cast<IIntCounter*>(manager->counter("bytes_written"));
+    }
     d->do_construct();
     this->allocate(N1, N2, N3, N4, N5, N6);
 }
@@ -59,7 +72,8 @@ Mda32::~Mda32()
 {
     if (d->m_data) {
         free(d->m_data);
-        TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_freed", d->m_total_size);
+        if (d->freedCounter)
+            d->freedCounter->add(d->m_total_size);
     }
     delete d;
 }
@@ -68,7 +82,8 @@ bool Mda32::allocate(long N1, long N2, long N3, long N4, long N5, long N6)
 {
     if (d->m_data) {
         free(d->m_data);
-        TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_freed", d->m_total_size);
+        if (d->freedCounter)
+            d->freedCounter->add(d->m_total_size);
     }
 
     d->m_dims[0] = N1;
@@ -86,7 +101,8 @@ bool Mda32::allocate(long N1, long N2, long N3, long N4, long N5, long N6)
             qCritical() << QString("Unable to allocate Mda32 of size %1x%2x%3x%4x%5x%6 (total=%7)").arg(N1).arg(N2).arg(N3).arg(N4).arg(N5).arg(N6).arg(d->m_total_size);
             exit(-1);
         }
-        TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_allocated", d->m_total_size);
+        if (d->allocatedCounter)
+            d->allocatedCounter->add(d->m_total_size);
         for (long i = 0; i < d->m_total_size; i++)
             d->m_data[i] = 0;
     }
@@ -132,7 +148,8 @@ bool Mda32::read(const char* path)
     }
     this->allocate(H.dims[0], H.dims[1], H.dims[2], H.dims[3], H.dims[4], H.dims[5]);
     mda_read_float32(d->m_data, &H, d->m_total_size, input_file);
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_read", d->m_total_size * H.num_bytes_per_entry);
+    if (d->bytesReadCounter)
+        d->bytesReadCounter->add(d->m_total_size * H.num_bytes_per_entry);
     fclose(input_file);
     return true;
 }
@@ -157,7 +174,8 @@ bool Mda32::write8(const char* path) const
     H.num_dims = d->determine_num_dims(N1(), N2(), N3(), N4(), N5(), N6());
     mda_write_header(&H, output_file);
     mda_write_float32(d->m_data, &H, d->m_total_size, output_file);
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_written", d->m_total_size * H.num_bytes_per_entry);
+    if (d->bytesWrittenCounter)
+        d->bytesWrittenCounter->add(d->m_total_size * H.num_bytes_per_entry);
     fclose(output_file);
     return true;
 }
@@ -182,7 +200,8 @@ bool Mda32::write32(const char* path) const
     H.num_dims = d->determine_num_dims(N1(), N2(), N3(), N4(), N5(), N6());
     mda_write_header(&H, output_file);
     mda_write_float32(d->m_data, &H, d->m_total_size, output_file);
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_written", d->m_total_size * H.num_bytes_per_entry);
+    if (d->bytesWrittenCounter)
+        d->bytesWrittenCounter->add(d->m_total_size * H.num_bytes_per_entry);
     fclose(output_file);
     return true;
 }
@@ -207,7 +226,8 @@ bool Mda32::write64(const char* path) const
     H.num_dims = d->determine_num_dims(N1(), N2(), N3(), N4(), N5(), N6());
     mda_write_header(&H, output_file);
     mda_write_float32(d->m_data, &H, d->m_total_size, output_file);
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_written", d->m_total_size * H.num_bytes_per_entry);
+    if (d->bytesWrittenCounter)
+        d->bytesWrittenCounter->add(d->m_total_size * H.num_bytes_per_entry);
     fclose(output_file);
     return true;
 }
@@ -733,7 +753,8 @@ void Mda32::set(dtype32 val, long i1, long i2, long i3, long i4, long i5, long i
 void Mda32Private::do_construct()
 {
     m_data = (dtype32*)::allocate(sizeof(dtype32) * 1);
-    TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_allocated", 1);
+    if (allocatedCounter)
+        allocatedCounter->add(1);
     for (int i = 0; i < MDA_MAX_DIMS; i++) {
         m_dims[i] = 1;
     }
@@ -742,10 +763,15 @@ void Mda32Private::do_construct()
 
 void Mda32Private::copy_from(const Mda32& other)
 {
+    allocatedCounter = other.d->allocatedCounter;
+    freedCounter = other.d->freedCounter;
+    bytesReadCounter = other.d->bytesReadCounter;
+    bytesWrittenCounter = other.d->bytesWrittenCounter;
     const bool needResize = m_total_size != other.d->m_total_size;
     if (needResize && m_data) {
         free(m_data);
-        TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_freed", m_total_size);
+        if (freedCounter)
+            freedCounter->add(m_total_size);
         m_data = 0;
     }
     m_total_size = other.d->m_total_size;
@@ -753,7 +779,8 @@ void Mda32Private::copy_from(const Mda32& other)
     if (m_total_size > 0) {
         if (needResize) {
             m_data = (dtype32*)::allocate(sizeof(dtype32) * m_total_size);
-            TaskManager::TaskProgressMonitor::globalInstance()->incrementQuantity("bytes_allocated", m_total_size);
+            if (allocatedCounter)
+                allocatedCounter->add(m_total_size);
         }
         memcpy(m_data, other.d->m_data, sizeof(dtype32) * m_total_size);
     }

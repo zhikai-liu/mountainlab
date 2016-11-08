@@ -7,6 +7,7 @@
 #include "pca.h"
 #include "mlcommon.h"
 #include <cstring>
+#include <math.h>
 
 void iterate_to_get_top_component(Mda& C, double& sigma, Mda& X, int num_iterations);
 void iterate_to_get_top_component(Mda32& C, double& sigma, Mda32& X, int num_iterations);

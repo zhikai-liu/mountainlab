@@ -143,9 +143,6 @@ public:
     virtual int indexOf(TaskProgressAgent*) const = 0;
     static TaskProgressMonitor* globalInstance();
 
-    virtual void incrementQuantity(QString name, double val) = 0;
-    virtual double getQuantity(QString name) const = 0;
-
     virtual TaskProgressModel* model() const = 0;
 signals:
     void quantitiesChanged();
