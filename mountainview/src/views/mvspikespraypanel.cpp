@@ -19,11 +19,18 @@ namespace {
 class RAII {
 public:
     using Callback = std::function<void()>;
-    RAII(const Callback &func, const Callback &cfunc = Callback()) {
+    RAII(const Callback& func, const Callback& cfunc = Callback())
+    {
         m_func = func;
-        if (cfunc) cfunc();
+        if (cfunc)
+            cfunc();
     }
-    ~RAII() { if (m_func) m_func(); }
+    ~RAII()
+    {
+        if (m_func)
+            m_func();
+    }
+
 private:
     Callback m_func;
 };
@@ -31,8 +38,11 @@ private:
 
 class MVSpikeSprayPanelControlPrivate {
 public:
-    MVSpikeSprayPanelControlPrivate(MVSpikeSprayPanelControl *qq) : q(qq) {}
-    MVSpikeSprayPanelControl *q;
+    MVSpikeSprayPanelControlPrivate(MVSpikeSprayPanelControl* qq)
+        : q(qq)
+    {
+    }
+    MVSpikeSprayPanelControl* q;
     double amplitude = 1;
     double brightness = 2;
     double weight = 1;
@@ -43,7 +53,7 @@ public:
     QVector<int> renderLabels;
     bool needsRerender = true;
     QThread renderThread;
-    MVSSRenderer *renderer = nullptr;
+    MVSSRenderer* renderer = nullptr;
     QImage render;
     int progress = 0;
     int allocProgress = 0;
@@ -124,10 +134,11 @@ void MVSpikeSprayPanel::paintEvent(QPaintEvent* evt)
     int progress = d->m_control.progress();
     int allocprogress = d->m_control.allocationProgress();
     if (progress > 0 && progress < 100) {
-        QRect r(0, height()-2, width() * progress*1.0/100, 2);
+        QRect r(0, height() - 2, width() * progress * 1.0 / 100, 2);
         painter.fillRect(r, Qt::white);
-    } else if (!progress && allocprogress > 0 && allocprogress < 100) {
-        QRect r(0, height()-2, width() * allocprogress*1.0/100, 2);
+    }
+    else if (!progress && allocprogress > 0 && allocprogress < 100) {
+        QRect r(0, height() - 2, width() * allocprogress * 1.0 / 100, 2);
         painter.fillRect(r, Qt::red);
     }
 }
@@ -168,9 +179,9 @@ void MVSSRenderer::render()
     QTime timer;
     timer.start();
     for (long i = 0; i < L; i++) {
-        if (timer.elapsed() > 300) {           // each 300ms report an intermediate result
+        if (timer.elapsed() > 300) { // each 300ms report an intermediate result
             replaceImage(image);
-            emit imageUpdated(100*i/L);
+            emit imageUpdated(100 * i / L);
             timer.restart();
         }
         if (isInterruptionRequested()) {
@@ -182,13 +193,12 @@ void MVSSRenderer::render()
     emit imageUpdated(100);
 }
 
-
-void MVSSRenderer::render_clip(QPainter *painter, long i) const
+void MVSSRenderer::render_clip(QPainter* painter, long i) const
 {
     QColor col = colors[i];
     const long M = clips.N1();
     const long T = clips.N2();
-    const double *ptr = clips.constDataPtr()+(M * T * i);
+    const double* ptr = clips.constDataPtr() + (M * T * i);
     QPen pen = painter->pen();
     pen.setColor(col);
     painter->setPen(pen);
@@ -228,54 +238,68 @@ QPointF MVSSRenderer::coord2pix(int m, double t, double val) const
     return QPointF(rect.left() + pctx * rect.width(), rect.top() + pcty * rect.height());
 }
 
-MVSpikeSprayPanelControl::MVSpikeSprayPanelControl(QObject *parent)
-    : QObject(parent), d(new MVSpikeSprayPanelControlPrivate(this)) {
+MVSpikeSprayPanelControl::MVSpikeSprayPanelControl(QObject* parent)
+    : QObject(parent)
+    , d(new MVSpikeSprayPanelControlPrivate(this))
+{
 }
 
-MVSpikeSprayPanelControl::~MVSpikeSprayPanelControl() {
+MVSpikeSprayPanelControl::~MVSpikeSprayPanelControl()
+{
     d->renderThread.terminate();
     if (d->renderer)
         d->renderer->deleteLater();
 }
 
-double MVSpikeSprayPanelControl::amplitude() const {
+double MVSpikeSprayPanelControl::amplitude() const
+{
     return d->amplitude;
 }
 
-void MVSpikeSprayPanelControl::setAmplitude(double amplitude) {
-    if (d->amplitude == amplitude) return;
+void MVSpikeSprayPanelControl::setAmplitude(double amplitude)
+{
+    if (d->amplitude == amplitude)
+        return;
     d->amplitude = amplitude;
     emit amplitudeChanged(amplitude);
     updateRender();
 }
 
-double MVSpikeSprayPanelControl::brightness() const {
+double MVSpikeSprayPanelControl::brightness() const
+{
     return d->brightness;
 }
 
-void MVSpikeSprayPanelControl::setBrightness(double brightness) {
-    if (d->brightness == brightness) return;
+void MVSpikeSprayPanelControl::setBrightness(double brightness)
+{
+    if (d->brightness == brightness)
+        return;
     d->brightness = brightness;
     emit brightnessChanged(brightness);
     updateRender();
 }
 
-double MVSpikeSprayPanelControl::weight() const {
+double MVSpikeSprayPanelControl::weight() const
+{
     return d->weight;
 }
 
-void MVSpikeSprayPanelControl::setWeight(double weight) {
-    if (d->weight == weight) return;
+void MVSpikeSprayPanelControl::setWeight(double weight)
+{
+    if (d->weight == weight)
+        return;
     d->weight = weight;
     emit weightChanged(weight);
     updateRender();
 }
 
-bool MVSpikeSprayPanelControl::legendVisible() const {
+bool MVSpikeSprayPanelControl::legendVisible() const
+{
     return d->legendVisible;
 }
 
-void MVSpikeSprayPanelControl::setLegendVisible(bool legendVisible) {
+void MVSpikeSprayPanelControl::setLegendVisible(bool legendVisible)
+{
     if (d->legendVisible == legendVisible)
         return;
     d->legendVisible = legendVisible;
@@ -283,11 +307,13 @@ void MVSpikeSprayPanelControl::setLegendVisible(bool legendVisible) {
     update();
 }
 
-QSet<int> MVSpikeSprayPanelControl::labels() const {
+QSet<int> MVSpikeSprayPanelControl::labels() const
+{
     return d->labels;
 }
 
-void MVSpikeSprayPanelControl::paint(QPainter *painter, const QRectF &rect) {
+void MVSpikeSprayPanelControl::paint(QPainter* painter, const QRectF& rect)
+{
     if (d->needsRerender)
         rerender();
     if (!d->render.isNull())
@@ -297,14 +323,16 @@ void MVSpikeSprayPanelControl::paint(QPainter *painter, const QRectF &rect) {
     painter->restore();
 }
 
-void MVSpikeSprayPanelControl::paintLegend(QPainter *painter, const QRectF &rect) {
-    if (!legendVisible()) return;
+void MVSpikeSprayPanelControl::paintLegend(QPainter* painter, const QRectF& rect)
+{
+    if (!legendVisible())
+        return;
 
     double W = rect.width();
     double spacing = 6;
     double margin = 10;
-    double text_height = qBound(12.0, W*1.0/10, 25.0);
-    double y0 = rect.top()+margin;
+    double text_height = qBound(12.0, W * 1.0 / 10, 25.0);
+    double y0 = rect.top() + margin;
     QFont font = painter->font();
     font.setPixelSize(text_height - 1);
     painter->setFont(font);
@@ -323,45 +351,57 @@ void MVSpikeSprayPanelControl::paintLegend(QPainter *painter, const QRectF &rect
     }
 }
 
-void MVSpikeSprayPanelControl::setLabels(const QSet<int> &labels) {
-    if (d->labels == labels) return;
+void MVSpikeSprayPanelControl::setLabels(const QSet<int>& labels)
+{
+    if (d->labels == labels)
+        return;
     d->labels = labels;
     emit labelsChanged(labels);
     update();
 }
 
-const QList<QColor> &MVSpikeSprayPanelControl::labelColors() const {
+const QList<QColor>& MVSpikeSprayPanelControl::labelColors() const
+{
     return d->labelColors;
 }
 
-void MVSpikeSprayPanelControl::setClips(Mda *X) {
-    if (X == d->clipsToRender) return;
+void MVSpikeSprayPanelControl::setClips(Mda* X)
+{
+    if (X == d->clipsToRender)
+        return;
     d->clipsToRender = X;
     updateRender();
 }
 
-void MVSpikeSprayPanelControl::setRenderLabels(const QVector<int> &X) {
-    if (X == d->renderLabels) return;
+void MVSpikeSprayPanelControl::setRenderLabels(const QVector<int>& X)
+{
+    if (X == d->renderLabels)
+        return;
     d->renderLabels = X;
     updateRender();
 }
 
-int MVSpikeSprayPanelControl::progress() const {
+int MVSpikeSprayPanelControl::progress() const
+{
     return d->progress;
 }
 
-int MVSpikeSprayPanelControl::allocationProgress() const {
+int MVSpikeSprayPanelControl::allocationProgress() const
+{
     return d->allocProgress;
 }
 
-void MVSpikeSprayPanelControl::setLabelColors(const QList<QColor> &labelColors) {
-    if (labelColors == d->labelColors) return;
+void MVSpikeSprayPanelControl::setLabelColors(const QList<QColor>& labelColors)
+{
+    if (labelColors == d->labelColors)
+        return;
     d->labelColors = labelColors;
     emit labelColorsChanged(labelColors);
     update();
 }
 
-void MVSpikeSprayPanelControl::update(int progress) {
+void MVSpikeSprayPanelControl::update(int progress)
+{
     if (d->renderer) {
         d->render = d->renderer->resultImage();
         emit renderAvailable();
@@ -372,7 +412,8 @@ void MVSpikeSprayPanelControl::update(int progress) {
     }
 }
 
-void MVSpikeSprayPanelControl::updateRender() {
+void MVSpikeSprayPanelControl::updateRender()
+{
     d->needsRerender = true;
     update();
 }
@@ -427,7 +468,6 @@ void MVSpikeSprayPanelControl::rerender()
     if (!d->renderThread.isRunning())
         d->renderThread.start();
 
-
     long M = d->clipsToRender->N1();
     long T = d->clipsToRender->N2();
     // defer copying data until we're in a worker thread to keep GUI responsive
@@ -453,43 +493,47 @@ void MVSpikeSprayPanelControl::rerender()
     connect(d->renderer, SIGNAL(imageUpdated(int)), this, SLOT(update(int)));
     connect(d->renderer, SIGNAL(allocateProgress(int)), this, SLOT(updateAllocProgress(int)));
     d->renderer->moveToThread(&d->renderThread);
-    QMetaObject::invokeMethod(d->renderer,"render", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(d->renderer, "render", Qt::QueuedConnection);
 }
 
 void MVSpikeSprayPanelControl::updateAllocProgress(int progress)
 {
-    if (d->allocProgress == progress) return;
+    if (d->allocProgress == progress)
+        return;
     d->allocProgress = progress;
     emit allocationProgressChanged(d->allocProgress);
 }
 
-
-void MVSSRenderer::replaceImage(const QImage &img) {
+void MVSSRenderer::replaceImage(const QImage& img)
+{
     QMutexLocker locker(&image_in_progress_mutex);
     image_in_progress = img;
 }
 
-QImage MVSSRenderer::resultImage() const {
+QImage MVSSRenderer::resultImage() const
+{
     QMutexLocker locker(&image_in_progress_mutex);
     return image_in_progress;
 }
 
-void MVSSRenderer::wait() {
+void MVSSRenderer::wait()
+{
     m_condMutex.lock();
-    while(m_processing)
+    while (m_processing)
         m_cond.wait(&m_condMutex);
     m_condMutex.unlock();
 }
 
-void MVSSRenderer::release() {
+void MVSSRenderer::release()
+{
     m_condMutex.lock();
     m_processing = false;
     m_cond.wakeAll();
     m_condMutex.unlock();
 }
 
-
-Mda MVSSRenderer::ClipsAllocator::allocate(const std::function<bool()> &breakFunc) {
+Mda MVSSRenderer::ClipsAllocator::allocate(const std::function<bool()>& breakFunc)
+{
     Mda result(M, T, inds.count());
     for (long j = 0; j < inds.count(); j++) {
         for (long t = 0; t < T; t++) {
@@ -500,7 +544,7 @@ Mda MVSSRenderer::ClipsAllocator::allocate(const std::function<bool()> &breakFun
         if (breakFunc && breakFunc())
             return result;
         if (progressFunction)
-            progressFunction(j*100/inds.count());
+            progressFunction(j * 100 / inds.count());
     }
     if (progressFunction)
         progressFunction(100);

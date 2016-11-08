@@ -6,8 +6,6 @@ if (nargin<3), opts=struct; end;
 if (~isfield(opts,'already_sorted')) opts.already_sorted=0; end;
 if (~isfield(opts,'return_info')) opts.return_info=[]; end;
 
-dip_score=0;
-cutpoint=0;
 info=struct;
 
 [~,N]=size(samples);
@@ -164,7 +162,7 @@ if (trial==1)
     plot(info.plot_xx,info.plot_densities,'k','LineWidth',2);
     plot(info.plot_xx,info.plot_densities_unimodal,'g','LineWidth',2);
     %plot(info.plot_xx,info.plot_densities_bimodal,'b','LineWidth',2);
-    vline(cutpoint);
+    vline0(cutpoint);
     title(sprintf('dip score = %g, N=%g',dip_score,length(X)));
     drawnow;
 end;

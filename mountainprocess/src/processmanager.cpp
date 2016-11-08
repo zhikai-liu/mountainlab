@@ -210,6 +210,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     //connect(PP.qprocess,SIGNAL(readyRead()),this,SLOT(slot_qprocess_output()));
     QObject::connect(PP.qprocess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(slot_process_finished()));
     printf("STARTING: %s.\n", PP.info.exe_command.toLatin1().data());
+    PP.info.start_time = QDateTime::currentDateTime();
     PP.qprocess->start(PP.info.exe_command);
     PP.qprocess->setProperty("pp_id", id);
     if (!PP.qprocess->waitForStarted(2000)) {
@@ -435,6 +436,7 @@ void ProcessManagerPrivate::update_process_info(QString id)
     PMProcess* PP = &m_processes[id];
     QProcess* qprocess = PP->qprocess;
     if (qprocess->state() == QProcess::NotRunning) {
+        PP->info.finish_time = QDateTime::currentDateTime();
         PP->info.finished = true;
         PP->info.exit_code = qprocess->exitCode();
         PP->info.exit_status = qprocess->exitStatus();

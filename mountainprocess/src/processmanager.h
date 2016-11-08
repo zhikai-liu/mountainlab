@@ -41,6 +41,8 @@ struct MonitorStats {
 };
 
 struct MLProcessInfo {
+    QDateTime start_time;
+    QDateTime finish_time;
     QString processor_name;
     QVariantMap parameters;
     QString exe_command;

@@ -16,7 +16,7 @@ TEMPLATE = app
 
 QMAKE_POST_LINK += cp $$PWD/../bin/mountainsort $$PWD/../../mountainprocess/processors/mountainsort.mp
 
-INCLUDEPATH += utils core processors mda unit_tests 3rdparty isosplit
+INCLUDEPATH += utils core processors mda unit_tests 3rdparty isosplit isosplit5
 
 DEFINES += MOUNTAINSORT_VERSION="0.0.1"
 
@@ -37,9 +37,14 @@ HEADERS += \
     processors/branch_cluster_v2.h \
     processors/branch_cluster_v3_processor.h \
     processors/branch_cluster_v3.h \
+    processors/isocluster_v1_processor.h \
+    processors/isocluster_v1.h \
     isosplit/isosplit2.h \
     isosplit/isocut.h \
     isosplit/jisotonic.h \
+    isosplit5/isosplit5.h \
+    isosplit5/isocut5.h \
+    isosplit5/jisotonic5.h \
     processors/extract_clips.h \
     processors/remove_duplicate_clusters_processor.h \
     processors/remove_duplicate_clusters.h \
@@ -128,6 +133,8 @@ SOURCES += \
     processors/branch_cluster_v2.cpp \
     processors/branch_cluster_v3_processor.cpp \
     processors/branch_cluster_v3.cpp \
+    processors/isocluster_v1_processor.cpp \
+    processors/isocluster_v1.cpp \
     processors/extract_clips.cpp \
     processors/remove_duplicate_clusters_processor.cpp \
     processors/remove_duplicate_clusters.cpp \
@@ -202,7 +209,10 @@ SOURCES += \
     processors/isolation_metrics_processor.cpp \
     processors/isolation_metrics.cpp \
     processors/kdtree.cpp \
-    isosplit/isocut4.cpp
+    isosplit/isocut4.cpp \
+    isosplit5/isosplit5.cpp \
+    isosplit5/isocut5.cpp \
+    isosplit5/jisotonic5.cpp
 #!macx {
 #SOURCES_NOCXX11 += \ #see below
 #    isosplit/isosplit2.cpp \

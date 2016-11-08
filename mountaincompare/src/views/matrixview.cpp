@@ -173,7 +173,7 @@ QVector<int> MatrixView::rowIndexPermutationInv() const
 {
     QVector<int> ret;
     for (int i = 0; i < d->m_perm_rows.count(); i++)
-        ret << 0;
+        ret << -1;
     for (int i = 0; i < d->m_perm_rows.count(); i++) {
         int tmp = d->m_perm_rows[i];
         if ((tmp >= 0) && (tmp < d->m_perm_rows.count()))
@@ -186,7 +186,7 @@ QVector<int> MatrixView::columnIndexPermutationInv() const
 {
     QVector<int> ret;
     for (int i = 0; i < d->m_perm_cols.count(); i++)
-        ret << 0;
+        ret << -1;
     for (int i = 0; i < d->m_perm_cols.count(); i++) {
         int tmp = d->m_perm_cols[i];
         if ((tmp >= 0) && (tmp < d->m_perm_cols.count()))

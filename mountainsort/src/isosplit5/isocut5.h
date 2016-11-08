@@ -2,10 +2,10 @@
 #define ISOCUT5_H
 
 struct isocut5_opts {
-    bool already_sorted=false;
+    bool already_sorted = false;
 };
 
-void isocut5(double *dipscore_out,double *cutpoint_out,long N,float *samples,isocut5_opts opts);
+void isocut5(double* dipscore_out, double* cutpoint_out, long N, float* samples, isocut5_opts opts);
 
 /*
  * MCWRAP [ dipscore[1,1], cutpoint[1,1] ] = isocut5_mex(samples[1,N])
@@ -13,6 +13,6 @@ void isocut5(double *dipscore_out,double *cutpoint_out,long N,float *samples,iso
  * SOURCES isocut5.cpp jisotonic5.cpp
  * HEADERS isocut5.h jisotonic5.h
  */
-void isocut5_mex(double *dipscore,double *cutpoint,int N,double *samples);
+void isocut5_mex(double* dipscore, double* cutpoint, int N, double* samples);
 
 #endif // ISOCUT5_H

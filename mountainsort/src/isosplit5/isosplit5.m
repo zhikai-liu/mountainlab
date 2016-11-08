@@ -110,7 +110,8 @@ while 1 % Passes
                     labels_map(active_labels(ii))=ii;
                 end;
                 labels_mapped=labels_map(data.labels);
-                figure; ms_view_clusters(X(1:2,:),labels_mapped);
+                figure; ms_view_clusters_0(X(1:3,:),labels_mapped);
+                title(sprintf('iteration %d',iteration_number));
                 pause(opts.verbose_pause_duration);
             end;
         end;
@@ -314,19 +315,26 @@ rng(2);
 close all;
 
 [X,true_labels]=generate_dataset;
-figure; ms_view_clusters(X(1:2,:),true_labels);
+figure; ms_view_clusters_0(X(1:2,:),true_labels);
 title('Truth');
 
 ttt=tic;
 [labels2,info]=isosplit5(X,struct('verbose',1,'refine_clusters',0));
 fprintf('Time for isosplit5: %g\n',toc(ttt));
-figure; ms_view_clusters(X(1:2,:),labels2);
+figure; ms_view_clusters_0(X(1:2,:),labels2);
 title('isosplit5');
 disp(info.timers);
+
+try
+    test1=isosplit5_mex(randn(2,100));
+catch
+    compile_mex_isosplit5;
+    compile_mex_isocut5;
+end
 
 ttt=tic;
 labels_mex=isosplit5_mex(X);
 fprintf('Time for isosplit5_mex: %g\n',toc(ttt));
-figure; ms_view_clusters(X(1:2,:),labels_mex);
+figure; ms_view_clusters_0(X(1:2,:),labels_mex);
 title('isosplit5 mex');
 

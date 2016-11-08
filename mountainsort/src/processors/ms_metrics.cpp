@@ -76,52 +76,55 @@ bool ms_metrics(QString timeseries, QString firings, QString cluster_metrics_pat
     QMap<QString, Metric> cluster_metrics;
     QTime timer;
     timer.start();
+
+    QMap<int, double> peak_amp;
+    QMap<int, double> peak_noise;
+    QMap<int, double> noise_overlap;
+
+#pragma omp parallel for
     for (int i = 0; i < opts.cluster_numbers.count(); i++) {
         if (timer.elapsed() > 5000) {
-            qDebug() << QString("Cluster %1 of %2").arg(i + 1).arg(opts.cluster_numbers.count());
+            printf("Computing cluster metrics: completed %d of %d (%d%%)\n", peak_amp.count(), opts.cluster_numbers.count(), (peak_amp.count() * 100) / opts.cluster_numbers.count());
             timer.restart();
         }
         int k = opts.cluster_numbers[i];
         QVector<double> times_k;
-        for (long i = 0; i < times.count(); i++) {
-            if (labels[i] == k) {
-                times_k << times[i];
+#pragma omp critical
+        {
+            for (long i = 0; i < times.count(); i++) {
+                if (labels[i] == k) {
+                    times_k << times[i];
+                }
             }
         }
-        Mda32 clips_k = extract_clips(X, times_k, opts.clip_size);
+        DiskReadMda32 X0(timeseries);
+        Mda32 clips_k = extract_clips(X0, times_k, opts.clip_size);
         Mda32 template_k = compute_mean_clip(clips_k);
         Mda32 stdev_k = compute_stdev_clip(clips_k);
+        double noise_overlap0 = compute_noise_overlap(X0, times_k, opts, false);
+#pragma omp critical
         {
-            double min0 = template_k.minimum();
-            double max0 = template_k.maximum();
-            cluster_metrics["peak_amp"].values << qMax(qAbs(min0), qAbs(max0));
+            {
+                double min0 = template_k.minimum();
+                double max0 = template_k.maximum();
+                peak_amp[k] = qMax(qAbs(min0), qAbs(max0));
+            }
+            {
+                double min0 = stdev_k.minimum();
+                double max0 = stdev_k.maximum();
+                peak_noise[k] = qMax(qAbs(min0), qAbs(max0));
+            }
+            {
+                noise_overlap[k] = noise_overlap0;
+            }
         }
-        {
-            double min0 = stdev_k.minimum();
-            double max0 = stdev_k.maximum();
-            cluster_metrics["peak_noise"].values << qMax(qAbs(min0), qAbs(max0));
-        }
-        {
-            cluster_metrics["noise_overlap"].values << compute_noise_overlap(X, times_k, opts, false);
-        }
-        /*
-        {
-            double numer = isolation_matrix.value(i, opts.cluster_numbers.count());
-            double denom = times_k.count();
-            if (!denom)
-                denom = 1;
-            double val = numer / denom;
-            cluster_metrics["noise_overlap"].values << val;
-        }
-        {
-            double numer = isolation_matrix.value(i, i);
-            double denom = times_k.count();
-            if (!denom)
-                denom = 1;
-            double val = numer / denom;
-            cluster_metrics["isolation"].values << val;
-        }
-        */
+    }
+
+    for (int i = 0; i < opts.cluster_numbers.count(); i++) {
+        int k = opts.cluster_numbers[i];
+        cluster_metrics["peak_amp"].values << peak_amp[k];
+        cluster_metrics["peak_noise"].values << peak_noise[k];
+        cluster_metrics["noise_overlap"].values << noise_overlap[k];
     }
 
     QStringList cluster_metric_names = cluster_metrics.keys();
@@ -140,9 +143,46 @@ bool ms_metrics(QString timeseries, QString firings, QString cluster_metrics_pat
 
     printf("get pairs to compare...\n");
     QSet<QString> pairs_to_compare = get_pairs_to_compare(X, F, 10, opts);
+    QStringList pairs_to_compare_list = pairs_to_compare.toList();
+    QMap<QString, double> overlap_scores;
+
+    printf("Computing pair metrics...\n");
+    timer.start();
+#pragma omp parallel for
+    for (int i = 0; i < pairs_to_compare_list.count(); i++) {
+        QString pairstr = pairs_to_compare_list[i];
+        QStringList vals = pairstr.split("-");
+        int k1 = vals[0].toInt();
+        int k2 = vals[1].toInt();
+        QVector<double> times_k1;
+        QVector<double> times_k2;
+#pragma omp critical
+        {
+            if (timer.elapsed() > 5000) {
+                printf("Computing pair metrics: completed %d of %d (%d%%)\n", overlap_scores.count(), pairs_to_compare_list.count(), (overlap_scores.count() * 100) / pairs_to_compare_list.count());
+                timer.restart();
+            }
+            for (long i = 0; i < times.count(); i++) {
+                if (labels[i] == k1) {
+                    times_k1 << times[i];
+                }
+            }
+
+            for (long i = 0; i < times.count(); i++) {
+                if (labels[i] == k2) {
+                    times_k2 << times[i];
+                }
+            }
+        }
+        DiskReadMda32 X0(timeseries);
+        double val = compute_overlap(X0, times_k1, times_k2, opts);
+#pragma omp critical
+        {
+            overlap_scores[pairstr] = val;
+        }
+    }
 
     //////////////////////////////////////////////////////////////
-    printf("Cluster pair metrics...\n");
     QMap<QString, Metric> cluster_pair_metrics;
     QTime timer1;
     timer1.start();
@@ -155,20 +195,9 @@ bool ms_metrics(QString timeseries, QString firings, QString cluster_metrics_pat
             int k1 = opts.cluster_numbers[i1];
             int k2 = opts.cluster_numbers[i2];
 
-            if (pairs_to_compare.contains(QString("%1-%2").arg(k1).arg(k2))) {
-                QVector<double> times_k1;
-                for (long i = 0; i < times.count(); i++) {
-                    if (labels[i] == k1) {
-                        times_k1 << times[i];
-                    }
-                }
-                QVector<double> times_k2;
-                for (long i = 0; i < times.count(); i++) {
-                    if (labels[i] == k2) {
-                        times_k2 << times[i];
-                    }
-                }
-                double val = compute_overlap(X, times_k1, times_k2, opts);
+            QString pairstr = QString("%1-%2").arg(k1).arg(k2);
+            if (pairs_to_compare.contains(pairstr)) {
+                double val = overlap_scores[pairstr];
                 if (val >= 0.01) { //to save some space in the file
                     cluster_pair_metrics["overlap"].values << val;
                 }
@@ -264,7 +293,7 @@ Mda32 compute_noise_shape(const Mda32& noise_clips, const Mda32& template0)
 
 Mda32 compute_noise_shape_2(const DiskReadMda32& X, const Mda32& template0, ms_metrics_opts opts)
 {
-    long num_noise_times = 10000;
+    long num_noise_times = 1000;
     QVector<double> noise_times;
     for (long i = 0; i < num_noise_times; i++) {
         noise_times << random_time(X.N2(), opts.clip_size);
@@ -293,6 +322,11 @@ void regress_out_noise_shape(Mda32& clips, const Mda32& shape)
 
 double compute_noise_overlap(const DiskReadMda32& X, const QVector<double>& times, ms_metrics_opts opts, bool debug)
 {
+    QTime timer;
+    timer.start();
+
+    QList<int> elapsed_times;
+
     int num_to_use = qMin(opts.max_num_to_use, times.count());
     QVector<double> times_subset = sample(times, num_to_use);
 
@@ -308,6 +342,8 @@ double compute_noise_overlap(const DiskReadMda32& X, const QVector<double>& time
         noise_labels << 0;
     }
 
+    elapsed_times << timer.restart();
+
     QVector<double> all_times = times_subset;
     QVector<int> all_labels = labels_subset; //0 and 1
 
@@ -315,18 +351,24 @@ double compute_noise_overlap(const DiskReadMda32& X, const QVector<double>& time
     all_labels.append(noise_labels);
 
     Mda32 clips = extract_clips(X, times_subset, opts.clip_size);
-    Mda32 noise_clips = extract_clips(X, noise_times, opts.clip_size);
+    //Mda32 noise_clips = extract_clips(X, noise_times, opts.clip_size);
     Mda32 all_clips = extract_clips(X, all_times, opts.clip_size);
+
+    elapsed_times << timer.restart();
 
     //Mda32 noise_shape = compute_noise_shape(noise_clips, compute_mean_clip(clips));
     Mda32 noise_shape = compute_noise_shape_2(X, compute_mean_clip(clips), opts);
+    elapsed_times << timer.restart();
     if (debug)
         noise_shape.write32("/tmp/noise_shape.mda");
     if (debug)
         all_clips.write32("/tmp/all_clips_before.mda");
     regress_out_noise_shape(all_clips, noise_shape);
+    elapsed_times << timer.restart();
     if (debug)
         all_clips.write32("/tmp/all_clips_after.mda");
+
+    elapsed_times << timer.restart();
 
     Mda32 all_clips_reshaped(all_clips.N1() * all_clips.N2(), all_clips.N3());
     long NNN = all_clips.totalSize();
@@ -334,10 +376,14 @@ double compute_noise_overlap(const DiskReadMda32& X, const QVector<double>& time
         all_clips_reshaped.set(all_clips.get(iii), iii);
     }
 
+    elapsed_times << timer.restart();
+
     bool subtract_mean = false;
     Mda32 FF;
     Mda32 CC, sigma;
     pca(CC, FF, sigma, all_clips_reshaped, opts.num_features, subtract_mean);
+
+    elapsed_times << timer.restart();
 
     KdTree tree;
     tree.create(FF);
@@ -357,6 +403,12 @@ double compute_noise_overlap(const DiskReadMda32& X, const QVector<double>& time
             }
         }
     }
+
+    elapsed_times << timer.restart();
+
+    if (false)
+        qDebug() << "TIMES:" << elapsed_times;
+
     if (!num_total)
         return 0;
     return 1 - (num_correct * 1.0 / num_total);

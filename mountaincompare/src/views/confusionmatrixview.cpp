@@ -288,25 +288,36 @@ void ConfusionMatrixView::slot_export_csv()
     QString txt;
     for (int r = 0; r < CM.N1(); r++) {
         int r2 = RP.value(r);
-        if (r < CM.N1() - 1)
-            txt += RL.value(r2);
-        else
-            txt += "0";
-        for (int c = 0; c < CM.N2(); c++) {
-            int c2 = CP.value(c);
-            txt += QString(",%1").arg(CM.value(r2, c2));
+        if ((r2 >= 0) && (r2 < CM.N1() - 1)) {
+            txt += RL.value(r2); //row label
+            for (int c = 0; c < CM.N2(); c++) {
+                int c2 = CP.value(c);
+                if ((c2 >= 0) && (c2 < CM.N2() - 1))
+                    txt += QString(",%1").arg(CM.value(r2, c2)); //entry
+            }
+            txt += QString(",%1").arg(CM.value(r2, CM.N2() - 1)); //unclassified column
+            txt += "\n";
         }
-        txt += "\n";
     }
-    txt += "0";
+
+    txt += "0"; //unclassified row
     for (int c = 0; c < CM.N2(); c++) {
-        if (c < CM.N2() - 1) {
-            int c2 = CP.value(c);
-            txt += QString(",%1").arg(CL.value(c2));
+        int c2 = CP.value(c);
+        if ((c2 >= 0) && (c2 < CM.N2() - 1)) {
+            txt += QString(",%1").arg(CM.value(CM.N1() - 1, c2));
         }
-        else
-            txt += ",0";
     }
+    txt += ",0\n"; //nothing is doubly-unclassified
+
+    //column labels
+    txt += "0";
+    for (int c = 0; c < CM.N2() - 1; c++) {
+        int c2 = CP.value(c);
+        if ((c2 >= 0) && (c2 < CM.N2() - 1)) {
+            txt += QString(",%1").arg(CL.value(c2)); //column label
+        }
+    }
+    txt += ",0\n";
 
     QString fname = QFileDialog::getSaveFileName(this, "Save confusion matrix data", "", "*.csv");
     if (fname.isEmpty())

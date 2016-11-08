@@ -21,7 +21,7 @@ class MVSpikeSprayPanelControl : public QObject {
     Q_PROPERTY(int progress READ progress NOTIFY progressChanged)
     Q_PROPERTY(int allocationProgress READ allocationProgress NOTIFY allocationProgressChanged)
 public:
-    MVSpikeSprayPanelControl(QObject *parent = 0);
+    MVSpikeSprayPanelControl(QObject* parent = 0);
     ~MVSpikeSprayPanelControl();
     double amplitude() const;
     double brightness() const;
@@ -29,11 +29,11 @@ public:
     bool legendVisible() const;
     QSet<int> labels() const;
 
-    virtual void paint(QPainter *painter, const QRectF &rect);
-    virtual void paintLegend(QPainter *painter, const QRectF &rect);
-    const QList<QColor> &labelColors() const;
+    virtual void paint(QPainter* painter, const QRectF& rect);
+    virtual void paintLegend(QPainter* painter, const QRectF& rect);
+    const QList<QColor>& labelColors() const;
 
-    void setClips(Mda *X);
+    void setClips(Mda* X);
     void setRenderLabels(const QVector<int>& X);
 
     int progress() const;
@@ -44,8 +44,8 @@ public slots:
     void setBrightness(double brightness);
     void setWeight(double weight);
     void setLegendVisible(bool legendVisible);
-    void setLabels(const QSet<int> &labels);
-    void setLabelColors(const QList<QColor> &labelColors);
+    void setLabels(const QSet<int>& labels);
+    void setLabelColors(const QList<QColor>& labelColors);
     virtual void update(int progress = -1);
 
 signals:
@@ -65,6 +65,7 @@ protected:
     void rerender();
 private slots:
     void updateAllocProgress(int);
+
 private:
     QSharedPointer<MVSpikeSprayPanelControlPrivate> d;
 };
@@ -86,6 +87,7 @@ public:
 
 protected:
     void paintEvent(QPaintEvent* evt);
+
 private:
     MVSpikeSprayPanelPrivate* d;
 };
@@ -103,19 +105,24 @@ public:
 
     class ClipsAllocator {
     public:
-        ClipsAllocator(){}
-        ClipsAllocator(Mda *src, long _M, long _T, const QList<long> &_inds)
-            : source(src), M(_M), T(_T), inds(_inds){}
-        Mda *source = nullptr;
+        ClipsAllocator() {}
+        ClipsAllocator(Mda* src, long _M, long _T, const QList<long>& _inds)
+            : source(src)
+            , M(_M)
+            , T(_T)
+            , inds(_inds)
+        {
+        }
+        Mda* source = nullptr;
         long M = 0;
         long T = 0;
         QList<long> inds;
         std::function<void(int)> progressFunction;
-        Mda allocate(const std::function<bool()> &breakFunc);
+        Mda allocate(const std::function<bool()>& breakFunc);
     };
 
     ClipsAllocator allocator;
-    void replaceImage(const QImage &img);
+    void replaceImage(const QImage& img);
     QImage resultImage() const;
     void requestInterruption() { m_int = 1; }
     bool isInterruptionRequested() const { return m_int != 0; }
@@ -127,6 +134,7 @@ public slots:
 signals:
     void imageUpdated(int progress);
     void allocateProgress(int progress);
+
 private:
     QImage image_in_progress;
     mutable QMutex image_in_progress_mutex;

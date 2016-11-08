@@ -22,6 +22,12 @@ if (nargin<3)
 	weights=ones(size(A));
 end;
 
+try
+    [test1,test2]=jisotonic5_mex(1,1);
+catch
+    compile_mex_jisotonic5;
+end;
+
 if (strcmp(direction,'decreasing'))
 	%[B,MSEs]=jisotonic5(-A,'increasing',weights); B=-B;
     [B,MSEs]=jisotonic5_mex(-A,weights); B=-B;

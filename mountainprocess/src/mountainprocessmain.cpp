@@ -265,9 +265,8 @@ int main(int argc, char* argv[])
                 printf("ERROR: %s\n", error_message.toLatin1().data());
             long mb = compute_peak_mem_bytes(info.monitor_stats) / 1000000;
             double cpu = compute_peak_cpu_pct(info.monitor_stats);
-            if (cpu) {
-                printf("Peak usage: %ld MB RAM / %g%% CPU\n", mb, cpu);
-            }
+            double sec = info.start_time.msecsTo(info.finish_time) * 1.0 / 1000;
+            printf("Peak usage: %ld MB RAM / %g%% CPU. Elapsed time: %g seconds.\n", mb, cpu, sec);
             printf("---------------------------------------------------------------\n");
         }
         QJsonObject obj; //the output info
@@ -286,6 +285,8 @@ int main(int argc, char* argv[])
         obj["error"] = error_message;
         obj["peak_mem_bytes"] = (long long)compute_peak_mem_bytes(info.monitor_stats);
         obj["peak_cpu_pct"] = compute_peak_cpu_pct(info.monitor_stats);
+        obj["start_time"] = info.start_time.toString("yyyy-MM-dd:hh-mm-ss.zzz");
+        obj["finish_time"] = info.finish_time.toString("yyyy-MM-dd:hh-mm-ss.zzz");
         //obj["monitor_stats"]=monitor_stats_to_json_array(info.monitor_stats); -- at some point we can include this in the file. For now we only worry about the computed peak values
         if (!output_fname.isEmpty()) { //The user wants the results to go in this file
             QFile::remove(output_fname); //important -- added 9/9/16
