@@ -283,11 +283,16 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
             comparisons_made[i1][i2] = 0;
     while (true) { //passes
         bool something_merged = false; //Keep track of whether something has merged in this pass. If not, do a final pass.
-        std::vector<int> clusters_changed_vec(Kmax); //Keep track of the clusters that have changed in this pass so that we can update the comparisons_made matrix at the end
+        std::vector<int> clusters_changed_vec_in_pass(Kmax); //Keep track of the clusters that have changed in this pass so that we can update the comparisons_made matrix at the end
         for (int i = 0; i < Kmax; i++)
-            clusters_changed_vec[i] = 0;
+            clusters_changed_vec_in_pass[i] = 0;
         int iteration_number = 0;
         while (true) { //iterations
+
+            std::vector<int> clusters_changed_vec_in_iteration(Kmax); //Keep track of the clusters that have changed in this iteration so that we can update centroids and covmats
+            for (int i = 0; i < Kmax; i++)
+                clusters_changed_vec_in_iteration[i] = 0;
+
             iteration_number++;
             if (iteration_number > opts.max_iterations_per_pass) {
                 printf("Warning: max iterations per pass exceeded.\n");
@@ -330,8 +335,10 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
                 std::vector<int> clusters_changed;
                 long total_num_label_changes = 0;
                 ns_isosplit5::compare_pairs(&clusters_changed, &total_num_label_changes, M, N, X, labels, inds1b, inds2b, opts, centroids, covmats); //the labels are updated
-                for (int i = 0; i < (int)clusters_changed.size(); i++)
-                    clusters_changed_vec[clusters_changed[i]] = 1;
+                for (int i = 0; i < (int)clusters_changed.size(); i++) {
+                    clusters_changed_vec_in_pass[clusters_changed[i] - 1] = 1;
+                    clusters_changed_vec_in_iteration[clusters_changed[i] - 1] = 1;
+                }
 
                 // Update which comparisons have been made
                 for (int j = 0; j < (int)inds1b.size(); j++) {
@@ -339,9 +346,9 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
                     comparisons_made[inds2b[j] - 1][inds1b[j] - 1] = 1;
                 }
 
-                // Recompute the centers -- note: maybe this should only apply to those that changed? That would speed things up
-                ns_isosplit5::compute_centroids(centroids, M, N, Kmax, X, labels, clusters_changed_vec);
-                ns_isosplit5::compute_covmats(covmats, M, N, Kmax, X, labels, centroids, clusters_changed_vec);
+                // Recompute the centers for those that have changed in this iteration
+                ns_isosplit5::compute_centroids(centroids, M, N, Kmax, X, labels, clusters_changed_vec_in_iteration);
+                ns_isosplit5::compute_covmats(covmats, M, N, Kmax, X, labels, centroids, clusters_changed_vec_in_iteration);
 
                 // For diagnostics
                 //printf ("total num label changes = %ld\n",total_num_label_changes);
@@ -361,12 +368,11 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
 
                 free(active_centroids);
             }
-            //break;
         }
 
-        // zero out the comparisons made matrix only for those that have changed
+        // zero out the comparisons made matrix only for those that have changed in this pass
         for (int i = 0; i < Kmax; i++) {
-            if (clusters_changed_vec[i]) {
+            if (clusters_changed_vec_in_pass[i]) {
                 for (int j = 0; j < Kmax; j++) {
                     comparisons_made[i][j] = 0;
                     comparisons_made[j][i] = 0;
@@ -380,8 +386,6 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
             break; // This was the final pass and nothing has merged
         if (!something_merged)
             final_pass = true; // If we are done, do one last pass for final redistributes
-
-        //break;
     }
 
     // We should remap the labels to occupy the first natural numbers
@@ -858,41 +862,42 @@ void get_pairs_to_compare(std::vector<int>* inds1, std::vector<int>* inds2, int 
             }
         }
     }
-    bool something_changed = true;
-    while (something_changed) {
-        something_changed = false;
-        std::vector<int> best_inds(K);
-        for (int k = 0; k < K; k++) {
-            int best_ind = -1;
-            double best_distance = -1;
-            for (int k2 = 0; k2 < K; k2++) {
-                if (dists[k][k2] >= 0) {
-                    if ((best_distance < 0) || (dists[k][k2] < best_distance)) {
-                        best_distance = dists[k][k2];
-                        best_ind = k2;
-                    }
+    // important to only take the mutal closest pairs -- unlike how we originally did it
+    //bool something_changed = true;
+    //while (something_changed) {
+    //something_changed = false;
+    std::vector<int> best_inds(K);
+    for (int k = 0; k < K; k++) {
+        int best_ind = -1;
+        double best_distance = -1;
+        for (int k2 = 0; k2 < K; k2++) {
+            if (dists[k][k2] >= 0) {
+                if ((best_distance < 0) || (dists[k][k2] < best_distance)) {
+                    best_distance = dists[k][k2];
+                    best_ind = k2;
                 }
             }
-            best_inds[k] = best_ind;
         }
-        for (int j = 0; j < K; j++) {
-            if (best_inds[j] > j) {
-                if (best_inds[best_inds[j]] == j) { //mutual
-                    if (dists[j][best_inds[j]] >= 0) {
-                        inds1->push_back(j + 1);
-                        inds2->push_back(best_inds[j] + 1);
-                        for (int aa = 0; aa < K; aa++) {
-                            dists[j][aa] = -1;
-                            dists[aa][j] = -1;
-                            dists[best_inds[j]][aa] = -1;
-                            dists[aa][best_inds[j]] = -1;
-                        }
-                        something_changed = true;
+        best_inds[k] = best_ind;
+    }
+    for (int j = 0; j < K; j++) {
+        if (best_inds[j] > j) {
+            if (best_inds[best_inds[j]] == j) { //mutual
+                if (dists[j][best_inds[j]] >= 0) {
+                    inds1->push_back(j + 1);
+                    inds2->push_back(best_inds[j] + 1);
+                    for (int aa = 0; aa < K; aa++) {
+                        dists[j][aa] = -1;
+                        dists[aa][j] = -1;
+                        dists[best_inds[j]][aa] = -1;
+                        dists[aa][best_inds[j]] = -1;
                     }
+                    //something_changed = true;
                 }
             }
         }
     }
+    //}
 }
 
 std::vector<float> compute_centroid(int M, long N, float* X)
@@ -933,6 +938,23 @@ void matvec(int M, int N, float* out, float* mat, float* vec)
         }
         out[m] = val;
     }
+}
+
+double dbg_compute_mean(const std::vector<float>& X)
+{
+    double ret = 0;
+    for (long i = 0; i < (long)X.size(); i++)
+        ret += X[i];
+    return ret / X.size();
+}
+
+double dbg_compute_var(const std::vector<float>& X)
+{
+    double mu = dbg_compute_mean(X);
+    double ret = 0;
+    for (long i = 0; i < (long)X.size(); i++)
+        ret += (X[i] - mu) * (X[i] - mu);
+    return ret / X.size();
 }
 
 bool merge_test(std::vector<int>* L12, int M, long N1, long N2, float* X1, float* X2, const isosplit5_opts& opts, float* centroid1, float* centroid2, float* covmat1, float* covmat2)

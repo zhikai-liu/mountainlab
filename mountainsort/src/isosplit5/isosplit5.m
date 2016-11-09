@@ -3,9 +3,9 @@ function [labels,info]=isosplit5(X,opts)
 %% Default parameters and self test
 if nargin<1, test_isosplit5; return; end;
 if nargin<2, opts=struct; end;
-if ~isfield(opts,'isocut_threshold') opts.isocut_threshold=1.5; end;
+if ~isfield(opts,'isocut_threshold') opts.isocut_threshold=1; end;
 if ~isfield(opts,'min_cluster_size') opts.min_cluster_size=10; end;
-if ~isfield(opts,'K_init') opts.K_init=30; end;
+if ~isfield(opts,'K_init') opts.K_init=200; end;
 if ~isfield(opts,'refine_clusters'), opts.refine_clusters=true; end;
 if ~isfield(opts,'max_iterations'), opts.max_iterations_per_pass=500; end;
 if ~isfield(opts,'verbose') opts.verbose=0; end;
@@ -42,7 +42,7 @@ data.comparisons_made=zeros(Kmax,Kmax); % Keep a matrix of comparisons that have
 while 1 % Passes
     something_merged=false; % Keep track of whether something has merged in this pass. If not, do a final pass.
     
-    clusters_changed_vec=zeros(1,Kmax); % Keep track of the clusters that have changed in this pass so that we can update the comparisons_made matrix at the end
+    clusters_changed_vec_in_pass=zeros(1,Kmax); % Keep track of the clusters that have changed in this pass so that we can update the comparisons_made matrix at the end
     iteration_number=0;
     while 1 % Iterations
         iteration_number=iteration_number+1;
@@ -54,7 +54,6 @@ while 1 % Passes
         active_labels_vec=zeros(1,Kmax);
         active_labels_vec(data.labels)=1;
         active_labels=find(active_labels_vec);
-        fprintf('num active labels = %d\n',length(active_labels));
         active_centers=data.centers(:,active_labels);
 
         % Find the pairs to compare on this iteration
@@ -66,7 +65,7 @@ while 1 % Passes
 
         % If we didn't find any, break from this iteration
         if (length(inds1)==0)
-            disp('Nothing else to compare.');
+            % Nothing else to compare.
             break;
         end;
         old_labels=data.labels; % So we can determine the number of label changes for diagnostics
@@ -74,7 +73,7 @@ while 1 % Passes
         % Actually compare the pairs -- in principle this operation could be parallelized
         ttt=tic;
         [data.labels,clusters_changed]=compare_pairs(X,data.labels,active_labels(inds1),active_labels(inds2),opts);
-        clusters_changed_vec(clusters_changed)=1;
+        clusters_changed_vec_in_pass(clusters_changed)=1;
         timers.compare_pairs=timers.compare_pairs+toc(ttt);
 
         % Update which comparisons have been made
@@ -90,7 +89,6 @@ while 1 % Passes
 
         % For diagnostics, cound the number of changes
         total_num_label_changes=length(find(data.labels~=old_labels));
-        fprintf('total num label changes = %d\n',total_num_label_changes);
     
         % Determine whether something has merged
         new_active_labels_vec=zeros(1,N);
@@ -111,7 +109,7 @@ while 1 % Passes
                     labels_map(active_labels(ii))=ii;
                 end;
                 labels_mapped=labels_map(data.labels);
-                figure; ms_view_clusters_0(X(1:2,:),labels_mapped);
+                figure; ms_view_clusters_0(X(:,:),labels_mapped);
                 title(sprintf('iteration %d',iteration_number));
                 pause(opts.verbose_pause_duration);
             end;
@@ -120,20 +118,16 @@ while 1 % Passes
         %break;
     end;
     % zero out the comparisons made matrix only for those that have changed
-    clusters_changed=find(clusters_changed_vec);
+    clusters_changed=find(clusters_changed_vec_in_pass);
     for j=1:length(clusters_changed)
         data.comparisons_made(clusters_changed(j),:)=0;
         data.comparisons_made(:,clusters_changed(j))=0;
     end;
     
-    disp('---------------------------------------------');
-    disp(clusters_changed);
-    
     if (something_merged) final_pass=false; end;
     if (final_pass) break; end; % This was the final pass and nothing has merged
     if (~something_merged) final_pass=true; end; % If we are done, do one last pass for final redistributes
     
-    %break;
 end;
 
 % This is the result
@@ -309,9 +303,10 @@ dists(find(comparisons_made(:)))=inf;
 for j=1:N
     dists(j,j)=inf;
 end;
-something_changed=1;
-while (something_changed)
-    something_changed=0;
+% important to only take the mutal closest pairs -- unlike how we originally did it
+%something_changed=1;
+%while (something_changed)
+    %something_changed=0;
     [~,best_inds]=min(dists,[],1);
     for j=1:N
         if (best_inds(j)>j)
@@ -323,12 +318,12 @@ while (something_changed)
                     dists(:,j)=inf;
                     dists(best_inds(j),:)=inf;
                     dists(:,best_inds(j))=inf;
-                    something_changed=1;
+                    %something_changed=1;
                 end;
             end;
         end;        
     end;
-end;
+%end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [X,labels]=create_multimodal_nd(A)
@@ -390,12 +385,12 @@ figure; ms_view_clusters_0(X(1:2,:),labels2);
 title('isosplit5');
 disp(info.timers);
 
-try
-    test1=isosplit5_mex(randn(2,100));
-catch
-    compile_mex_isosplit5;
-    compile_mex_isocut5;
-end
+% try
+%     test1=isosplit5_mex(randn(2,100));
+% catch
+%     compile_mex_isosplit5;
+%     compile_mex_isocut5;
+% end
 
 ttt=tic;
 labels_mex=isosplit5_mex(X);

@@ -49,8 +49,8 @@ bool isocluster_v1_Processor::run(const QMap<QString, QVariant>& params)
     opts.num_features2 = params.value("num_features2", 0).toInt();
     opts.detect_interval = params["detect_interval"].toInt();
     opts.consolidation_factor = params.value("consolidation_factor", 0.9).toDouble();
-    opts.isocut_threshold = params.value("isocut_threshold", 1.5).toDouble();
-    opts.K_init = params.value("K_init", 30).toInt();
+    opts.isocut_threshold = params.value("isocut_threshold", 1).toDouble();
+    opts.K_init = params.value("K_init", 200).toInt();
 
     int num_threads = params.value("num_threads", 0).toInt();
     if (num_threads > 0) {

@@ -2,9 +2,9 @@
 #define ISOSPLIT5_H
 
 struct isosplit5_opts {
-    float isocut_threshold = 1.5;
+    float isocut_threshold = 1.0;
     int min_cluster_size = 10;
-    int K_init = 30;
+    int K_init = 200;
     bool refine_clusters = false;
     int max_iterations_per_pass = 500;
 };
