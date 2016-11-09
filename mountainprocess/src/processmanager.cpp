@@ -154,7 +154,7 @@ MLProcessor ProcessManager::processor(const QString& name)
     return d->m_processors.value(name);
 }
 
-QString ProcessManager::startProcess(const QString& processor_name, const QVariantMap& parameters_in)
+QString ProcessManager::startProcess(const QString& processor_name, const QVariantMap& parameters_in, const RequestProcessResources& RPR)
 {
     QVariantMap parameters = d->resolve_file_names_in_parameters(processor_name, parameters_in);
 
@@ -168,6 +168,10 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
         return "";
     }
     MLProcessor P = d->m_processors[processor_name];
+
+    if (RPR.request_num_threads)
+        parameters["_request_num_threads"] = RPR.request_num_threads;
+
     QString exe_command = P.exe_command;
     exe_command.replace(QRegExp("\\$\\(basepath\\)"), P.basepath);
     {

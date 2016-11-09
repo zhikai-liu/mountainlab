@@ -228,6 +228,7 @@ int main(int argc, char* argv[])
         MLProcessInfo info;
 
         bool force_run = CLP.named_parameters.contains("_force_run");
+        int request_num_threads = CLP.named_parameters.value("_request_num_threads", 0).toInt();
         if ((!force_run) && (PM->processAlreadyCompleted(processor_name, process_parameters))) { //do we have a record of this procesor already completing? If so, we save a lot of time by not re-running
             printf("Process already completed: %s\n", processor_name.toLatin1().data());
         }
@@ -239,7 +240,9 @@ int main(int argc, char* argv[])
                 ret = -1;
             }
             else {
-                id = PM->startProcess(processor_name, process_parameters); //start the process and retrieve a unique id
+                RequestProcessResources RPR;
+                RPR.request_num_threads = request_num_threads;
+                id = PM->startProcess(processor_name, process_parameters, RPR); //start the process and retrieve a unique id
                 if (id.isEmpty()) {
                     error_message = "Problem starting process: " + processor_name;
                     ret = -1;
@@ -730,8 +733,8 @@ bool run_script(const QStringList& script_fnames, const QVariantMap& params, con
 void print_usage()
 {
     printf("Usage:\n");
-    printf("mountainprocess run-process [processor_name] --[param1]=[val1] --[param2]=[val2] ... [--_force_run]\n");
-    printf("mountainprocess run-script [script1].js [script2.js] ... [file1].par [file2].par ... [--_force_run] \n");
+    printf("mountainprocess run-process [processor_name] --[param1]=[val1] --[param2]=[val2] ... [--_force_run] [--_request_num_threads=4]\n");
+    printf("mountainprocess run-script [script1].js [script2.js] ... [file1].par [file2].par ... [--_force_run] [--_request_num_threads=4]\n");
     printf("mountainprocess daemon-start\n");
     printf("mountainprocess daemon-stop\n");
     printf("mountainprocess daemon-restart\n");

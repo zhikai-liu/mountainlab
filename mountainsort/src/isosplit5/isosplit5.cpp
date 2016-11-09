@@ -24,8 +24,8 @@ long compute_max(long N, long* inds);
 void kmeans_multistep(int* labels, int M, long N, float* X, int K1, int K2, int K3, kmeans_opts opts);
 void kmeans_maxsize(int* labels, int M, long N, float* X, int maxsize, kmeans_opts opts);
 void compare_clusters(double* dip_score, std::vector<int>* new_labels1, std::vector<int>* new_labels2, int M, long N1, long N2, float* X1, float* X2, float* centroid1, float* centroid2);
-void compute_centroids(float* centroids, int M, long N, int Kmax, float* X, int* labels);
-void compute_covmats(float* covmats, int M, long N, int Kmax, float* X, int* labels, float* centroids);
+void compute_centroids(float* centroids, int M, long N, int Kmax, float* X, int* labels, std::vector<int>& clusters_to_compute_vec);
+void compute_covmats(float* covmats, int M, long N, int Kmax, float* X, int* labels, float* centroids, std::vector<int>& clusters_to_compute_vec);
 void get_pairs_to_compare(std::vector<int>* inds1, std::vector<int>* inds2, int M, int K, float* active_centroids, const intarray2d& active_comparisons_made);
 void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_changes, int M, long N, float* X, int* labels, const std::vector<int>& inds1, const std::vector<int>& inds2, const isosplit5_opts& opts, float* centroids, float* covmats); //the labels are updated
 }
@@ -33,79 +33,6 @@ void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_cha
 namespace smi {
 void get_inverse_via_lu_decomposition(int M, float* out, float* in);
 }
-
-class isosplit5_data {
-public:
-    isosplit5_data(int M_in, long N_in, float* X_in)
-    {
-        M = M_in;
-        N = N_in;
-        labels = (int*)malloc(sizeof(int) * N);
-        X = X_in;
-    }
-
-    virtual ~isosplit5_data()
-    {
-        if (labels)
-            free(labels);
-        if (centroids)
-            free(centroids);
-        if (active_labels_vec)
-            free(active_labels_vec);
-    }
-
-    void initialize_labels();
-
-    void setKAndAllocate(int K_in)
-    {
-        K = K_in;
-        centroids = (double*)malloc(sizeof(double) * M * K);
-        for (long i = 0; i < M * K; i++)
-            centroids[i] = 0;
-        active_labels_vec = (int*)malloc(sizeof(int) * K);
-        for (int k = 1; k <= K; k++)
-            active_labels_vec[k - 1] = 1;
-    }
-
-    void compute_all_centroids()
-    {
-        for (int k = 1; k <= K; k++) {
-            recompute_centroid(k);
-        }
-    }
-    void recompute_centroid(int k)
-    {
-        double count = 0;
-        double* ptr = &centroids[M * (k - 1)];
-        for (int m = 0; m < M; m++) {
-            ptr[m] = 0;
-        }
-        for (long i = 0; i < N; i++) {
-            if (labels[i] == k) {
-                for (int m = 0; m < M; m++) {
-                    ptr[m] += X[m + M * i];
-                }
-                count++;
-            }
-        }
-        if (count) {
-            for (int m = 0; m < M; m++) {
-                ptr[m] /= count;
-            }
-        }
-    }
-    void get_pairs_to_compare(std::vector<int>* k1s, std::vector<int>* k2s);
-    long compare_pairs(const std::vector<int>& k1s, const std::vector<int>& k2s, float isocut_threshold); //return number of changes
-    std::vector<int> get_active_labels();
-
-    float* X;
-    int M = 0;
-    long N = 0;
-    int K = 0;
-    int* labels = 0;
-    double* centroids = 0;
-    int* active_labels_vec = 0;
-};
 
 void isosplit5_mex(double* labels_out, int M, int N, double* X)
 {
@@ -333,8 +260,11 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
 
     float* centroids = (float*)malloc(sizeof(float) * M * Kmax);
     float* covmats = (float*)malloc(sizeof(float) * M * M * Kmax);
-    ns_isosplit5::compute_centroids(centroids, M, N, Kmax, X, labels);
-    ns_isosplit5::compute_covmats(covmats, M, N, Kmax, X, labels, centroids);
+    std::vector<int> clusters_to_compute_vec;
+    for (int k = 0; k < Kmax; k++)
+        clusters_to_compute_vec.push_back(1);
+    ns_isosplit5::compute_centroids(centroids, M, N, Kmax, X, labels, clusters_to_compute_vec);
+    ns_isosplit5::compute_covmats(covmats, M, N, Kmax, X, labels, centroids, clusters_to_compute_vec);
 
     // The active labels are those that are still being used -- for now, everything is active
     int active_labels_vec[Kmax];
@@ -353,7 +283,7 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
             comparisons_made[i1][i2] = 0;
     while (true) { //passes
         bool something_merged = false; //Keep track of whether something has merged in this pass. If not, do a final pass.
-        int clusters_changed_vec[Kmax]; //Keep track of the clusters that have changed in this pass so that we can update the comparisons_made matrix at the end
+        std::vector<int> clusters_changed_vec(Kmax); //Keep track of the clusters that have changed in this pass so that we can update the comparisons_made matrix at the end
         for (int i = 0; i < Kmax; i++)
             clusters_changed_vec[i] = 0;
         int iteration_number = 0;
@@ -410,8 +340,8 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
                 }
 
                 // Recompute the centers -- note: maybe this should only apply to those that changed? That would speed things up
-                ns_isosplit5::compute_centroids(centroids, M, N, Kmax, X, labels);
-                ns_isosplit5::compute_covmats(covmats, M, N, Kmax, X, labels, centroids);
+                ns_isosplit5::compute_centroids(centroids, M, N, Kmax, X, labels, clusters_changed_vec);
+                ns_isosplit5::compute_covmats(covmats, M, N, Kmax, X, labels, centroids, clusters_changed_vec);
 
                 // For diagnostics
                 //printf ("total num label changes = %ld\n",total_num_label_changes);
@@ -833,7 +763,7 @@ void compare_clusters(double* dip_score, std::vector<int>* new_labels1, std::vec
     free(V);
 }
 
-void compute_centroids(float* centroids, int M, long N, int Kmax, float* X, int* labels)
+void compute_centroids(float* centroids, int M, long N, int Kmax, float* X, int* labels, std::vector<int>& cluster_to_compute_vec)
 {
     std::vector<double> C(M * Kmax);
     for (int jj = 0; jj < M * Kmax; jj++)
@@ -842,24 +772,34 @@ void compute_centroids(float* centroids, int M, long N, int Kmax, float* X, int*
     for (int k = 0; k < Kmax; k++)
         counts[k] = 0;
     for (long i = 0; i < N; i++) {
-        int i0 = labels[i] - 1;
-        for (int m = 0; m < M; m++) {
-            C[m + M * i0] += X[m + M * i];
+        int k0 = labels[i];
+        int i0 = k0 - 1;
+        if (cluster_to_compute_vec[i0]) {
+            for (int m = 0; m < M; m++) {
+                C[m + M * i0] += X[m + M * i];
+            }
+            counts[i0]++;
         }
-        counts[i0]++;
     }
     for (int k = 0; k < Kmax; k++) {
-        if (counts[k]) {
-            for (int m = 0; m < M; m++) {
-                C[m + M * k] /= counts[k];
+        if (cluster_to_compute_vec[k]) {
+            if (counts[k]) {
+                for (int m = 0; m < M; m++) {
+                    C[m + M * k] /= counts[k];
+                }
             }
         }
     }
-    for (int jj = 0; jj < M * Kmax; jj++)
-        centroids[jj] = C[jj];
+    for (int k = 0; k < Kmax; k++) {
+        if (cluster_to_compute_vec[k]) {
+            for (int m = 0; m < M; m++) {
+                centroids[m + k * M] = C[m + k * M];
+            }
+        }
+    }
 }
 
-void compute_covmats(float* covmats, int M, long N, int Kmax, float* X, int* labels, float* centroids)
+void compute_covmats(float* covmats, int M, long N, int Kmax, float* X, int* labels, float* centroids, std::vector<int>& clusters_to_compute_vec)
 {
     std::vector<double> C(M * M * Kmax);
     for (int jj = 0; jj < M * M * Kmax; jj++)
@@ -869,24 +809,33 @@ void compute_covmats(float* covmats, int M, long N, int Kmax, float* X, int* lab
         counts[k] = 0;
     for (long i = 0; i < N; i++) {
         int i0 = labels[i] - 1;
-        for (int m1 = 0; m1 < M; m1++) {
-            for (int m2 = 0; m2 < M; m2++) {
-                C[m1 + M * m2 + M * M * i0] += (X[m1 + M * i] - centroids[m1 + i0 * M]) * (X[m2 + M * i] - centroids[m2 + i0 * M]);
-            }
-        }
-        counts[i0]++;
-    }
-    for (int k = 0; k < Kmax; k++) {
-        if (counts[k]) {
+        if (clusters_to_compute_vec[i0]) {
             for (int m1 = 0; m1 < M; m1++) {
                 for (int m2 = 0; m2 < M; m2++) {
-                    C[m1 + m2 * M + M * M * k] /= counts[k];
+                    C[m1 + M * m2 + M * M * i0] += (X[m1 + M * i] - centroids[m1 + i0 * M]) * (X[m2 + M * i] - centroids[m2 + i0 * M]);
+                }
+            }
+            counts[i0]++;
+        }
+    }
+    for (int k = 0; k < Kmax; k++) {
+        if (clusters_to_compute_vec[k]) {
+            if (counts[k]) {
+                for (int m1 = 0; m1 < M; m1++) {
+                    for (int m2 = 0; m2 < M; m2++) {
+                        C[m1 + m2 * M + M * M * k] /= counts[k];
+                    }
                 }
             }
         }
     }
-    for (int jj = 0; jj < M * M * Kmax; jj++)
-        covmats[jj] = C[jj];
+    for (int k = 0; k < Kmax; k++) {
+        if (clusters_to_compute_vec[k]) {
+            for (int mm = 0; mm < M * M; mm++) {
+                covmats[mm + k * M * M] = C[mm + k * M * M];
+            }
+        }
+    }
 }
 
 void get_pairs_to_compare(std::vector<int>* inds1, std::vector<int>* inds2, int M, int K, float* active_centroids, const intarray2d& active_comparisons_made)
@@ -1077,7 +1026,7 @@ bool merge_test(std::vector<int>* L12, int M, long N1, long N2, float* X1, float
 void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_changes, int M, long N, float* X, int* labels, const std::vector<int>& k1s, const std::vector<int>& k2s, const isosplit5_opts& opts, float* centroids, float* covmats)
 {
     int Kmax = ns_isosplit5::compute_max(N, labels);
-    int clusters_changed_vec[Kmax];
+    std::vector<int> clusters_changed_vec(Kmax);
     for (int i = 0; i < Kmax; i++)
         clusters_changed_vec[i] = 0;
     int* new_labels = (int*)malloc(sizeof(int) * N);
@@ -1247,100 +1196,6 @@ void get_pairs_to_compare2(std::vector<int>* i1s, std::vector<int>* i2s, int M, 
 
     free(groups);
     free(centroidsf);
-}
-
-void isosplit5_data::initialize_labels()
-{
-    ns_isosplit5::kmeans_opts oo;
-    ns_isosplit5::kmeans_multistep(labels, M, N, X, 1000, 0, 0, oo);
-    //ns_isosplit5::kmeans_maxsize(labels,M,N,X,10000,oo);
-    setKAndAllocate(ns_isosplit5::compute_max(N, labels));
-}
-
-void isosplit5_data::get_pairs_to_compare(std::vector<int>* k1s, std::vector<int>* k2s)
-{
-    k1s->clear();
-    k2s->clear();
-    std::vector<int> active_labels = get_active_labels();
-    if (active_labels.size() <= 1)
-        return;
-    int A = active_labels.size();
-    double* active_centroids = (double*)malloc(sizeof(double) * M * A);
-    for (int i = 0; i < A; i++) {
-        int k = active_labels[i];
-        for (int m = 0; m < M; m++) {
-            active_centroids[m + M * i] = centroids[m + M * (k - 1)];
-        }
-    }
-    std::vector<int> i1s, i2s;
-    get_pairs_to_compare2(&i1s, &i2s, M, A, active_centroids);
-    for (int i = 0; i < (int)i1s.size(); i++) {
-        k1s->push_back(active_labels[i1s[i]]);
-        k2s->push_back(active_labels[i2s[i]]);
-    }
-    free(active_centroids);
-}
-
-long isosplit5_data::compare_pairs(const std::vector<int>& k1s, const std::vector<int>& k2s, float isocut_threshold)
-{
-    long num_changes = 0;
-    for (int i = 0; i < (int)k1s.size(); i++) {
-        int k1 = k1s[i];
-        int k2 = k2s[i];
-        std::vector<long> inds_1, inds_2;
-        for (long i = 0; i < this->N; i++) {
-            if (this->labels[i] == k1)
-                inds_1.push_back(i);
-            if (this->labels[i] == k2)
-                inds_2.push_back(i);
-        }
-        float* X1 = (float*)malloc(sizeof(float) * M * inds_1.size());
-        float* X2 = (float*)malloc(sizeof(float) * M * inds_2.size());
-        ns_isosplit5::extract_subarray(X1, M, X, inds_1);
-        ns_isosplit5::extract_subarray(X2, M, X, inds_2);
-        double dip_score = 0;
-        std::vector<int> new_labels1, new_labels2;
-        ns_isosplit5::compare_clusters(&dip_score, &new_labels1, &new_labels2, M, inds_1.size(), inds_2.size(), X1, X2, &centroids[M * (k1 - 1)], &centroids[M * (k2 - 1)]);
-        if (dip_score < isocut_threshold) {
-            //merge
-            for (long a = 0; a < (long)inds_2.size(); a++) {
-                this->labels[inds_2[a]] = k1;
-            }
-            this->active_labels_vec[k2 - 1] = 0;
-            this->recompute_centroid(k1);
-            num_changes += inds_2.size();
-        }
-        else {
-            //redistribute
-            for (long a = 0; a < (long)inds_1.size(); a++) {
-                if (new_labels1[a] == 2) {
-                    this->labels[inds_1[a]] = k2;
-                    num_changes++;
-                }
-            }
-            for (long a = 0; a < (long)inds_2.size(); a++) {
-                if (new_labels2[a] == 1) {
-                    this->labels[inds_2[a]] = k1;
-                    num_changes++;
-                }
-            }
-            this->recompute_centroid(k1);
-            this->recompute_centroid(k2);
-        }
-        free(X1);
-        free(X2);
-    }
-    return num_changes;
-}
-
-std::vector<int> isosplit5_data::get_active_labels()
-{
-    std::vector<int> ret;
-    for (int i = 0; i < K; i++) {
-        if (active_labels_vec[i])
-            ret.push_back(i + 1);
-    }
-    return ret;
 }
 
 ////////////// SQUARE MATRIX INVERSION ////////////////////
