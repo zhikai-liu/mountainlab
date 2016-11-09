@@ -1,9 +1,7 @@
 #ifndef VIEWIMAGEEXPORTER_H
 #define VIEWIMAGEEXPORTER_H
 
-
-class ViewImageExporter
-{
+class ViewImageExporter {
 public:
     ViewImageExporter();
 };

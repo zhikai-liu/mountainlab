@@ -9,6 +9,7 @@ public:
     TestClass() {}
     int value() const { return m_value; }
     void setValue(int v) { m_value = v; }
+
 private:
     int m_value;
 };
@@ -17,8 +18,7 @@ class TestSubclass : public TestClass {
     Q_OBJECT
 };
 
-class ObjectRegistryTest : public QObject
-{
+class ObjectRegistryTest : public QObject {
     Q_OBJECT
 
 public:
@@ -44,8 +44,12 @@ private Q_SLOTS:
  */
 class Cleaner {
 public:
-    Cleaner(QObject *o) : m_object(o) {}
-    ~Cleaner() {
+    Cleaner(QObject* o)
+        : m_object(o)
+    {
+    }
+    ~Cleaner()
+    {
         if (m_object)
             ObjectRegistry::removeObject(m_object);
     }
@@ -74,7 +78,7 @@ void ObjectRegistryTest::testEmpty()
 {
     ObjectRegistry registry;
     // check that the registry is empty
-    QObject *o = ObjectRegistry::getObject<QObject>();
+    QObject* o = ObjectRegistry::getObject<QObject>();
     QCOMPARE(o, (QObject*)0);
     QList<QObject*> list = ObjectRegistry::getObjects<QObject>();
     QVERIFY(list.isEmpty());
@@ -207,8 +211,12 @@ void ObjectRegistryTest::testGetObjectByClassName()
 
 class ValuePredicate {
 public:
-    ValuePredicate(int v) : m_v(v) {}
+    ValuePredicate(int v)
+        : m_v(v)
+    {
+    }
     bool operator()(TestClass* tc) { return tc->value() == m_v; }
+
 private:
     int m_v;
 };
@@ -225,7 +233,7 @@ void ObjectRegistryTest::testGetObjectPredicate()
     // check we can actually retrieve the object
     QVERIFY(ObjectRegistry::getObject<TestClass>() == obj.data());
     // retrieve by valid predicate
-    TestClass *retrieved = ObjectRegistry::getObject<TestClass>(ValuePredicate(7));
+    TestClass* retrieved = ObjectRegistry::getObject<TestClass>(ValuePredicate(7));
     QVERIFY(retrieved == obj);
     // retrieve by invalid predicate
     retrieved = ObjectRegistry::getObject<TestClass>(ValuePredicate(6));
@@ -250,7 +258,6 @@ void ObjectRegistryTest::testGetObjectsPredicate()
     retrieved = ObjectRegistry::getObjects<TestClass>(ValuePredicate(6));
     QVERIFY2(retrieved.size() == 0, "Predicate not satisfied, yet object returned");
 }
-
 
 QTEST_APPLESS_MAIN(ObjectRegistryTest)
 

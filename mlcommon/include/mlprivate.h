@@ -25,26 +25,36 @@
  * Foo() : d(new FooPrivate(this) {}
  */
 
-template<typename T> class MLPrivate
-{
+template <typename T>
+class MLPrivate {
 public:
-    MLPrivate(T *qq) : q(qq) {}
+    MLPrivate(T* qq)
+        : q(qq)
+    {
+    }
+
 private:
     T* q;
 };
 
-template<typename T> class MLPublic {
+template <typename T>
+class MLPublic {
 public:
     MLPublic(T* dd)
-        : d(dd) {}
+        : d(dd)
+    {
+    }
 #ifndef QT_CORE_LIB
-    ~MLPublic() { delete d; }
+    ~MLPublic()
+    {
+        delete d;
+    }
 #endif
 protected:
 #ifdef QT_CORE_LIB
     QSharedPointer<T> d;
 #else
-    T *d;
+    T* d;
 #endif
 };
 

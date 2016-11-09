@@ -147,14 +147,13 @@ int main(int argc, char* argv[])
 {
     QApplication a(argc, argv);
     ObjectRegistry registry;
-    CounterManager * counterManager = new CounterManager;
+    CounterManager* counterManager = new CounterManager;
     registry.addAutoReleasedObject(counterManager);
 
     ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_allocated"));
     ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_freed"));
     ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_read"));
     ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_written"));
-
 
     QList<ICounterBase*> counters = ObjectRegistry::getObjects<ICounterBase>();
     counterManager->setCounters(counters);

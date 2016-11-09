@@ -25,8 +25,13 @@ void kmeans_multistep(int* labels, int M, long N, float* X, int K1, int K2, int 
 void kmeans_maxsize(int* labels, int M, long N, float* X, int maxsize, kmeans_opts opts);
 void compare_clusters(double* dip_score, std::vector<int>* new_labels1, std::vector<int>* new_labels2, int M, long N1, long N2, float* X1, float* X2, float* centroid1, float* centroid2);
 void compute_centroids(float* centroids, int M, long N, int Kmax, float* X, int* labels);
+void compute_covmats(float* covmats, int M, long N, int Kmax, float* X, int* labels, float* centroids);
 void get_pairs_to_compare(std::vector<int>* inds1, std::vector<int>* inds2, int M, int K, float* active_centroids, const intarray2d& active_comparisons_made);
-void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_changes, int M, long N, float* X, int* labels, const std::vector<int>& inds1, const std::vector<int>& inds2, const isosplit5_opts& opts); //the labels are updated
+void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_changes, int M, long N, float* X, int* labels, const std::vector<int>& inds1, const std::vector<int>& inds2, const isosplit5_opts& opts, float* centroids, float* covmats); //the labels are updated
+}
+
+namespace smi {
+void get_inverse_via_lu_decomposition(int M, float* out, float* in);
 }
 
 class isosplit5_data {
@@ -125,6 +130,17 @@ struct p2_parcel {
     std::vector<float> centroid;
     double radius;
 };
+
+void print_matrix(int M, int N, float* A)
+{
+    for (int m = 0; m < M; m++) {
+        for (int n = 0; n < N; n++) {
+            float val = A[m + M * n];
+            printf("%g ", val);
+        }
+        printf("\n");
+    }
+}
 
 std::vector<float> p2_compute_centroid(int M, float* X, const std::vector<long>& indices)
 {
@@ -316,7 +332,9 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
     int Kmax = ns_isosplit5::compute_max(N, labels);
 
     float* centroids = (float*)malloc(sizeof(float) * M * Kmax);
+    float* covmats = (float*)malloc(sizeof(float) * M * M * Kmax);
     ns_isosplit5::compute_centroids(centroids, M, N, Kmax, X, labels);
+    ns_isosplit5::compute_covmats(covmats, M, N, Kmax, X, labels, centroids);
 
     // The active labels are those that are still being used -- for now, everything is active
     int active_labels_vec[Kmax];
@@ -381,7 +399,7 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
                 // Actually compare the pairs -- in principle this operation could be parallelized
                 std::vector<int> clusters_changed;
                 long total_num_label_changes = 0;
-                ns_isosplit5::compare_pairs(&clusters_changed, &total_num_label_changes, M, N, X, labels, inds1b, inds2b, opts); //the labels are updated
+                ns_isosplit5::compare_pairs(&clusters_changed, &total_num_label_changes, M, N, X, labels, inds1b, inds2b, opts, centroids, covmats); //the labels are updated
                 for (int i = 0; i < (int)clusters_changed.size(); i++)
                     clusters_changed_vec[clusters_changed[i]] = 1;
 
@@ -393,9 +411,10 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
 
                 // Recompute the centers -- note: maybe this should only apply to those that changed? That would speed things up
                 ns_isosplit5::compute_centroids(centroids, M, N, Kmax, X, labels);
+                ns_isosplit5::compute_covmats(covmats, M, N, Kmax, X, labels, centroids);
 
                 // For diagnostics
-                //printf("total num label changes = %ld\n",total_num_label_changes);
+                //printf ("total num label changes = %ld\n",total_num_label_changes);
 
                 // Determine whether something has merged and update the active labels
                 for (int i = 0; i < Kmax; i++)
@@ -483,6 +502,7 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
     }
 
     free(centroids);
+    free(covmats);
 }
 
 /*
@@ -514,7 +534,7 @@ void isosplit5_old(int *labels_out,int M, long N,float *X,isosplit5_opts opts) {
             break;
         }
 
-        printf("Number of active labels: %ld\n",DD.get_active_labels().size());
+        printf ("Number of active labels: %ld\n",DD.get_active_labels().size());
 
         std::vector<int> k1s,k2s;
         DD.get_pairs_to_compare(&k1s,&k2s);
@@ -541,7 +561,7 @@ void isosplit5_old(int *labels_out,int M, long N,float *X,isosplit5_opts opts) {
                 int k1=active_labels[i1];
                 int k2=active_labels[i2];
                 if ((DD.active_labels_vec[k1-1])&&(DD.active_labels_vec[k2-1])) {
-                    printf("Number of active labels: %ld\n",DD.get_active_labels().size());
+                    printf ("Number of active labels: %ld\n",DD.get_active_labels().size());
                     printf ("compare %d/%d (pass %d)\n",k1,k2,pass);
                     std::vector<int> k1s,k2s;
                     k1s.push_back(k1);
@@ -816,7 +836,11 @@ void compare_clusters(double* dip_score, std::vector<int>* new_labels1, std::vec
 void compute_centroids(float* centroids, int M, long N, int Kmax, float* X, int* labels)
 {
     std::vector<double> C(M * Kmax);
+    for (int jj = 0; jj < M * Kmax; jj++)
+        C[jj] = 0;
     std::vector<double> counts(Kmax);
+    for (int k = 0; k < Kmax; k++)
+        counts[k] = 0;
     for (long i = 0; i < N; i++) {
         int i0 = labels[i] - 1;
         for (int m = 0; m < M; m++) {
@@ -833,6 +857,36 @@ void compute_centroids(float* centroids, int M, long N, int Kmax, float* X, int*
     }
     for (int jj = 0; jj < M * Kmax; jj++)
         centroids[jj] = C[jj];
+}
+
+void compute_covmats(float* covmats, int M, long N, int Kmax, float* X, int* labels, float* centroids)
+{
+    std::vector<double> C(M * M * Kmax);
+    for (int jj = 0; jj < M * M * Kmax; jj++)
+        C[jj] = 0;
+    std::vector<double> counts(Kmax);
+    for (int k = 0; k < Kmax; k++)
+        counts[k] = 0;
+    for (long i = 0; i < N; i++) {
+        int i0 = labels[i] - 1;
+        for (int m1 = 0; m1 < M; m1++) {
+            for (int m2 = 0; m2 < M; m2++) {
+                C[m1 + M * m2 + M * M * i0] += (X[m1 + M * i] - centroids[m1 + i0 * M]) * (X[m2 + M * i] - centroids[m2 + i0 * M]);
+            }
+        }
+        counts[i0]++;
+    }
+    for (int k = 0; k < Kmax; k++) {
+        if (counts[k]) {
+            for (int m1 = 0; m1 < M; m1++) {
+                for (int m2 = 0; m2 < M; m2++) {
+                    C[m1 + m2 * M + M * M * k] /= counts[k];
+                }
+            }
+        }
+    }
+    for (int jj = 0; jj < M * M * Kmax; jj++)
+        covmats[jj] = C[jj];
 }
 
 void get_pairs_to_compare(std::vector<int>* inds1, std::vector<int>* inds2, int M, int K, float* active_centroids, const intarray2d& active_comparisons_made)
@@ -916,7 +970,23 @@ std::vector<float> compute_centroid(int M, long N, float* X)
     return retf;
 }
 
-bool merge_test(std::vector<int>* L12, int M, long N1, long N2, float* X1, float* X2, const isosplit5_opts& opts)
+void matinv(int M, float* out, float* in)
+{
+    smi::get_inverse_via_lu_decomposition(M, out, in);
+}
+
+void matvec(int M, int N, float* out, float* mat, float* vec)
+{
+    for (int m = 0; m < M; m++) {
+        float val = 0;
+        for (int n = 0; n < N; n++) {
+            val += mat[m + M * n] * vec[n];
+        }
+        out[m] = val;
+    }
+}
+
+bool merge_test(std::vector<int>* L12, int M, long N1, long N2, float* X1, float* X2, const isosplit5_opts& opts, float* centroid1, float* centroid2, float* covmat1, float* covmat2)
 {
     L12->resize(N1 + N2);
     for (long i = 0; i < N1 + N2; i++)
@@ -925,12 +995,40 @@ bool merge_test(std::vector<int>* L12, int M, long N1, long N2, float* X1, float
         printf("Error in merge test: N1 or N2 is zero.\n");
         return true;
     }
-    std::vector<float> centroid1 = compute_centroid(M, N1, X1);
-    std::vector<float> centroid2 = compute_centroid(M, N2, X2);
+
+    //std::vector<float> centroid1 = compute_centroid(M, N1, X1);
+    //std::vector<float> centroid2 = compute_centroid(M, N2, X2);
+
     std::vector<float> V(M);
-    double sumsqr = 0;
     for (int m = 0; m < M; m++) {
         V[m] = centroid2[m] - centroid1[m];
+    }
+
+    std::vector<float> avg_covmat;
+    avg_covmat.resize(M * M);
+    for (int rr = 0; rr < M * M; rr++) {
+        avg_covmat[rr] = (covmat1[rr] + covmat2[rr]) / 2;
+    }
+    std::vector<float> inv_avg_covmat;
+    inv_avg_covmat.resize(M * M);
+    matinv(M, inv_avg_covmat.data(), avg_covmat.data());
+
+    std::vector<float> V2(M);
+    matvec(M, M, V2.data(), inv_avg_covmat.data(), V.data());
+    //matvec(M,M,V.data(),inv_avg_covmat.data(),V2.data());
+    for (int i = 0; i < M; i++)
+        V[i] = V2[i];
+
+    /*
+    printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
+    print_matrix(M,M,avg_covmat.data());
+    printf("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\n");
+    print_matrix(M,M,inv_avg_covmat.data());
+    printf("\n\n");
+    */
+
+    double sumsqr = 0;
+    for (int m = 0; m < M; m++) {
         sumsqr += V[m] * V[m];
     }
     if (sumsqr) {
@@ -959,6 +1057,7 @@ bool merge_test(std::vector<int>* L12, int M, long N1, long N2, float* X1, float
     oo.already_sorted = false;
     double dipscore, cutpoint;
     isocut5(&dipscore, &cutpoint, N1 + N2, projection12.data(), oo);
+
     if (dipscore < opts.isocut_threshold) {
         do_merge = true;
     }
@@ -975,7 +1074,7 @@ bool merge_test(std::vector<int>* L12, int M, long N1, long N2, float* X1, float
     return do_merge;
 }
 
-void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_changes, int M, long N, float* X, int* labels, const std::vector<int>& k1s, const std::vector<int>& k2s, const isosplit5_opts& opts)
+void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_changes, int M, long N, float* X, int* labels, const std::vector<int>& k1s, const std::vector<int>& k2s, const isosplit5_opts& opts, float* centroids, float* covmats)
 {
     int Kmax = ns_isosplit5::compute_max(N, labels);
     int clusters_changed_vec[Kmax];
@@ -1015,7 +1114,7 @@ void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_cha
                 float* X2 = (float*)malloc(sizeof(float) * M * inds2.size());
                 extract_subarray(X1, M, X, inds1);
                 extract_subarray(X2, M, X, inds2);
-                do_merge = merge_test(&L12, M, inds1.size(), inds2.size(), X1, X2, opts);
+                do_merge = merge_test(&L12, M, inds1.size(), inds2.size(), X1, X2, opts, &centroids[(k1 - 1) * M], &centroids[(k2 - 1) * M], &covmats[(k1 - 1) * M * M], &covmats[(k2 - 1) * M * M]);
                 free(X1);
                 free(X2);
             }
@@ -1242,4 +1341,232 @@ std::vector<int> isosplit5_data::get_active_labels()
             ret.push_back(i + 1);
     }
     return ret;
+}
+
+////////////// SQUARE MATRIX INVERSION ////////////////////
+
+namespace smi {
+
+// calculate the cofactor of element (row,col)
+void get_minor(int M, float* out, float* in, int row, int col)
+{
+    int rr = 0;
+    for (int i = 0; i < M; i++) {
+        if (i != row) {
+            int cc = 0;
+            for (int j = 0; j < M; j++) {
+                if (j != col) {
+                    out[rr + (M - 1) * cc] = in[i + M * j];
+                    cc++;
+                }
+            }
+            rr++;
+        }
+    }
+}
+
+// Calculate the determinant recursively.
+double determinant(int M, float* A)
+{
+    if (M < 1) {
+        printf("Error. Cannot take determinant when M<1.\n");
+        return 0;
+    }
+    if (M == 1)
+        return A[0];
+
+    double ret = 0;
+
+    std::vector<float> minor;
+    minor.resize((M - 1) * (M - 1));
+    for (int i = 0; i < M; i++) {
+        get_minor(M, minor.data(), A, 0, i);
+        double sgn = 1;
+        if (i % 2 == 1)
+            sgn = -1;
+        ret += A[0 + M * i] * determinant(M - 1, minor.data()) * sgn;
+    }
+
+    return ret;
+}
+
+// matrix inversion
+void get_inverse_via_formula(int M, float* out, float* in)
+{
+    if (M == 1) {
+        if (in[0])
+            out[0] = 1 / in[0];
+        else
+            out[0] = 0;
+        return;
+    }
+    // get the determinant of a
+    double det = determinant(M, in);
+    if (det == 0) {
+        for (int m = 0; m < M * M; m++)
+            out[m] = 0;
+        return;
+    }
+    det = 1 / det;
+
+    std::vector<float> minor;
+    minor.resize((M - 1) * (M - 1));
+    for (int j = 0; j < M; j++) {
+        for (int i = 0; i < M; i++) {
+            // get the co-factor (matrix) of A(j,i)
+            get_minor(M, minor.data(), in, j, i);
+            out[i + M * j] = det * determinant(M - 1, minor.data());
+            if ((i + j) % 2 == 1)
+                out[i + M * j] = -out[i + M * j];
+        }
+    }
+}
+
+/* Copyright 2015 Chandra Shekhar (chandraiitk AT yahoo DOT co DOT in).
+  Homepage: https://sites.google.com/site/chandraacads
+ * * */
+
+/* This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * * */
+
+/* This program computes inverse of a square matrix, based on LUP decomposition.
+ *
+ * Tested with GCC-4.8.3 on 64 bit Linux (Fedora-20).
+ *
+ * Compilation:     "gcc -O2 Matrix_inverse_LUP.c -o Mat_inv_LUP.exe -lm -Wall"
+ * Execution:     "./Mat_inv_LUP.exe"
+ * * */
+
+/* This function decomposes the matrix 'A' into L, U, and P. If successful,
+ * the L and the U are stored in 'A', and information about the pivot in 'P'.
+ * The diagonal elements of 'L' are all 1, and therefore they are not stored. */
+int LUPdecompose(int M, float* A, int* P)
+{
+    int i, j, k, kd = 0, T;
+    float p, t;
+
+    /* Finding the pivot of the LUP decomposition. */
+    for (i = 1; i < M; i++)
+        P[i] = i; //Initializing.
+
+    for (k = 1; k < M - 1; k++) {
+        p = 0;
+        for (i = k; i < M; i++) {
+            t = A[i + M * k];
+            if (t < 0)
+                t *= -1; //Abosolute value of 't'.
+            if (t > p) {
+                p = t;
+                kd = i;
+            }
+        }
+
+        if (p == 0) {
+            printf("\nLUPdecompose(): ERROR: A singular matrix is supplied.\n"
+                   "\tRefusing to proceed any further.\n");
+            return -1;
+        }
+
+        /* Exchanging the rows according to the pivot determined above. */
+        T = P[kd];
+        P[kd] = P[k];
+        P[k] = T;
+        for (i = 1; i < M; i++) {
+            t = A[kd + M * i];
+            A[kd + M * i] = A[k + M * i];
+            A[k + M * i] = t;
+        }
+
+        for (i = k + 1; i < M; i++) //Performing substraction to decompose A as LU.
+        {
+            A[i + M * k] = A[i + M * k] / A[k + M * k];
+            for (j = k + 1; j < M; j++)
+                A[i + M * j] -= A[i + M * k] * A[k + M * j];
+        }
+    } //Now, 'A' contains the L (without the diagonal elements, which are all 1)
+    //and the U.
+
+    return 0;
+}
+
+/* This function calculates the inverse of the LUP decomposed matrix 'LU' and pivoting
+ * information stored in 'P'. The inverse is returned through the matrix 'LU' itselt.
+ * 'B', X', and 'Y' are used as temporary spaces. */
+int LUPinverse(int M, int* P, float* LU,
+    float* B, float* X, float* Y)
+{
+    int i, j, n, m;
+    float t;
+
+    //Initializing X and Y.
+    for (n = 1; n < M; n++)
+        X[n] = Y[n] = 0;
+
+    /* Solving LUX = Pe, in order to calculate the inverse of 'A'. Here, 'e' is a column
+ * vector of the identity matrix of size 'M-1'. Solving for all 'e'. */
+    for (i = 1; i < M; i++) {
+        //Storing elements of the i-th column of the identity matrix in i-th row of 'B'.
+        for (j = 1; j < M; j++)
+            B[i + M * j] = 0;
+        B[i + M * i] = 1;
+
+        //Solving Ly = Pb.
+        for (n = 1; n < M; n++) {
+            t = 0;
+            for (m = 1; m <= n - 1; m++)
+                t += LU[n + M * m] * Y[m];
+            Y[n] = B[i + M * P[n]] - t;
+        }
+
+        //Solving Ux = y.
+        for (n = M - 1; n >= 1; n--) {
+            t = 0;
+            for (m = n + 1; m < M; m++)
+                t += LU[n + M * m] * X[m];
+            X[n] = (Y[n] - t) / LU[n + M * n];
+        } //Now, X contains the solution.
+
+        for (j = 1; j < M; j++)
+            B[i + M * j] = X[j]; //Copying 'X' into the same row of 'B'.
+    } //Now, 'B' the transpose of the inverse of 'A'.
+
+    /* Copying transpose of 'B' into 'LU', which would the inverse of 'A'. */
+    for (i = 1; i < M; i++)
+        for (j = 1; j < M; j++)
+            LU[i + M * j] = B[j + M * i];
+
+    return 0;
+}
+
+void get_inverse_via_lu_decomposition(int M, float* out, float* in)
+{
+    std::vector<float> A((M + 1) * (M + 1));
+    std::vector<int> P((M + 1));
+    for (int i = 0; i < M; i++) {
+        for (int j = 0; j < M; j++) {
+            A[(1 + i) + (M + 1) * (1 + j)] = in[i + M * j];
+        }
+    }
+    LUPdecompose(M + 1, A.data(), P.data());
+    std::vector<float> B((M + 1) * (M + 1));
+    std::vector<float> X(M + 1);
+    std::vector<float> Y(M + 1);
+    LUPinverse(M + 1, P.data(), A.data(), B.data(), X.data(), Y.data());
+    for (int i = 0; i < M; i++) {
+        for (int j = 0; j < M; j++) {
+            out[i + M * j] = A[(1 + i) + (M + 1) * (1 + j)];
+        }
+    }
+}
 }

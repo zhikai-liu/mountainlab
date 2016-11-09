@@ -10,6 +10,7 @@ if ~isfield(opts,'refine_clusters'), opts.refine_clusters=true; end;
 if ~isfield(opts,'max_iterations'), opts.max_iterations_per_pass=500; end;
 if ~isfield(opts,'verbose') opts.verbose=0; end;
 if ~isfield(opts,'verbose_pause_duration') opts.verbose_pause_duration=0.5; end;
+if ~isfield(opts,'whiten_cluster_pairs') opts.whiten_cluster_pairs=1; end;
 
 %% Initialize the timers for diagnostic
 timers.get_pairs_to_compare=0;
@@ -110,7 +111,7 @@ while 1 % Passes
                     labels_map(active_labels(ii))=ii;
                 end;
                 labels_mapped=labels_map(data.labels);
-                figure; ms_view_clusters_0(X(1:3,:),labels_mapped);
+                figure; ms_view_clusters_0(X(1:2,:),labels_mapped);
                 title(sprintf('iteration %d',iteration_number));
                 pause(opts.verbose_pause_duration);
             end;
@@ -209,15 +210,77 @@ for i1=1:length(k1s)
 end;
 clusters_changed=find(clusters_changed_vec);
 
-function [ret,new_labels,projection12]=merge_test(X1,X2,opts)
+function [X1b,X2b,V]=whiten_two_clusters_b(X1,X2)
+M=size(X1,1);
+N1=size(X1,2);
+N2=size(X2,2);
+
+centroid1=mean(X1,2);
+centroid2=mean(X2,2);
+
+X1_centered=X1-repmat(centroid1,1,N1);
+X2_centered=X2-repmat(centroid2,1,N2);
+
+C1=(X1_centered*X1_centered')/N1;
+C2=(X2_centered*X2_centered')/N2;
+avg_cov=(C1+C2)/2;
+inv_avg_cov=inv(avg_cov);
+X1b=X1;
+X2b=X2;
+V=centroid2-centroid1;
+V=inv_avg_cov*V;
+V=V/sqrt(V'*V);
+
+function [X1b,X2b,V]=whiten_two_clusters(X1,X2)
+M=size(X1,1);
+N1=size(X1,2);
+N2=size(X2,2);
+
+% Important to subtract the two centroids before whitening!
+centroid1=mean(X1,2);
+centroid2=mean(X2,2);
+Y1=X1-repmat(centroid1,1,N1);
+Y2=X2-repmat(centroid2,1,N2);
+
+% Combine the data
+Y=cat(2,Y1,Y2);
+N=N1+N2;
+
+% Obtain the whitening matrix using svd
+if (N>=M)
+    [U,D,V] = svd(Y,'econ');
+    D(D~=0)=1./D(D~=0);
+    % Amd apply it to the original (non-mean subtracted) data
+    X1b=sqrt(N-1)*U*D(1:M,1:M)*(U'*X1);
+    X2b=sqrt(N-1)*U*D(1:M,1:M)*(U'*X2);
+else
+    %too few points to whiten
+    X1b=X1;
+    X2b=X2;
+end;
+
+% The best direction is now the one connecting the centroids.
+centroid1b=mean(X1b,2);
+centroid2b=mean(X2b,2);
+V=centroid2b-centroid1b;
+
+function [ret,new_labels,projection12]=merge_test(X1_in,X2_in,opts)
+if opts.whiten_cluster_pairs
+    [X1,X2,V]=whiten_two_clusters_b(X1_in,X2_in);
+else
+    X1=X1_in;
+    X2=X2_in;
+    centroid1=mean(X1,2);
+    centroid2=mean(X2,2);
+    V=centroid2-centroid1;
+    V=V/sqrt(V'*V);
+end;
+
 [~,N1]=size(X1); [~,N2]=size(X2);
 if ((N1==0)||(N2==0))
     error('Error in merge test: N1 or N2 is zero');
 end;
-centroid1=mean(X1,2);
-centroid2=mean(X2,2);
-V=centroid2-centroid1;
-V=V/sqrt(V'*V);
+
 projection1=V'*X1;
 projection2=V'*X2;
 projection12=cat(2,projection1,projection2);
@@ -297,7 +360,9 @@ A2.N=N0/2; A2.center=[6,0]; A2.cov=[1,0;0,2.5];
 A3.N=1000; A3.center=[-5,5]; A3.cov=[2.5,1;1,2.5];
 A4.N=500; A4.center=[0,-8]; A4.cov=[0.5,0;0,0.5];
 
-AA={A1,A2,A3,A4};
+A5.N=N0/2; A5.center=[11,7]; A5.cov=[1,0;0,2.5];
+
+AA={A1,A2,A3,A4,A5};
 for j=1:length(AA)
     M=length(AA{j}.center);
     center2=rand(1,M+num_noise_dims)*0;
@@ -311,7 +376,7 @@ end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function test_isosplit5
-rng(2);
+rng(104);
 close all;
 
 [X,true_labels]=generate_dataset;
@@ -319,7 +384,7 @@ figure; ms_view_clusters_0(X(1:2,:),true_labels);
 title('Truth');
 
 ttt=tic;
-[labels2,info]=isosplit5(X,struct('verbose',1,'refine_clusters',0));
+[labels2,info]=isosplit5(X,struct('verbose',0,'refine_clusters',0,'whiten_cluster_pairs',1));
 fprintf('Time for isosplit5: %g\n',toc(ttt));
 figure; ms_view_clusters_0(X(1:2,:),labels2);
 title('isosplit5');

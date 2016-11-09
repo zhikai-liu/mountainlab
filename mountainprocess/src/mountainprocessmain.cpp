@@ -109,6 +109,7 @@ struct run_script_opts {
 QJsonArray monitor_stats_to_json_array(const QList<MonitorStats>& stats);
 long compute_peak_mem_bytes(const QList<MonitorStats>& stats);
 double compute_peak_cpu_pct(const QList<MonitorStats>& stats);
+double compute_avg_cpu_pct(const QList<MonitorStats>& stats);
 //void log_begin(int argc,char* argv[]);
 //void //log_end();
 
@@ -265,8 +266,9 @@ int main(int argc, char* argv[])
                 printf("ERROR: %s\n", error_message.toLatin1().data());
             long mb = compute_peak_mem_bytes(info.monitor_stats) / 1000000;
             double cpu = compute_peak_cpu_pct(info.monitor_stats);
+            double cpu_avg = compute_avg_cpu_pct(info.monitor_stats);
             double sec = info.start_time.msecsTo(info.finish_time) * 1.0 / 1000;
-            printf("Peak usage: %ld MB RAM / %g%% CPU. Elapsed time: %g seconds.\n", mb, cpu, sec);
+            printf("Peak RAM: %ld MB. Peak CPU: %g%%. Avg CPU: %g%%. Elapsed time: %g seconds.\n", mb, cpu, cpu_avg, sec);
             printf("---------------------------------------------------------------\n");
         }
         QJsonObject obj; //the output info
@@ -285,6 +287,7 @@ int main(int argc, char* argv[])
         obj["error"] = error_message;
         obj["peak_mem_bytes"] = (long long)compute_peak_mem_bytes(info.monitor_stats);
         obj["peak_cpu_pct"] = compute_peak_cpu_pct(info.monitor_stats);
+        obj["avg_cpu_pct"] = compute_avg_cpu_pct(info.monitor_stats);
         obj["start_time"] = info.start_time.toString("yyyy-MM-dd:hh-mm-ss.zzz");
         obj["finish_time"] = info.finish_time.toString("yyyy-MM-dd:hh-mm-ss.zzz");
         //obj["monitor_stats"]=monitor_stats_to_json_array(info.monitor_stats); -- at some point we can include this in the file. For now we only worry about the computed peak values
@@ -373,6 +376,59 @@ int main(int argc, char* argv[])
             QString obj_json = QJsonDocument(obj).toJson();
             if (!TextFile::write(output_fname, obj_json)) {
                 qCritical() << "Unable to write results to: " + output_fname;
+            }
+        }
+
+        //qDebug() << results;
+        QJsonArray PP = results["processes"].toArray();
+
+        printf("\nPeak Memory (MB):\n");
+        for (int i = 0; i < PP.count(); i++) {
+            QJsonObject QQ = PP[i].toObject();
+            QJsonObject RR = QQ["results"].toObject();
+            QString processor_name = QQ["processor_name"].toString();
+            double mem = RR["peak_mem_bytes"].toDouble() / 1e6;
+            if (!processor_name.isEmpty()) {
+                QString tmp = QString("  %1 (%2)").arg(mem).arg(processor_name);
+                printf("%s\n", tmp.toUtf8().data());
+            }
+        }
+
+        printf("\nPeak CPU percent:\n");
+        for (int i = 0; i < PP.count(); i++) {
+            QJsonObject QQ = PP[i].toObject();
+            QJsonObject RR = QQ["results"].toObject();
+            QString processor_name = QQ["processor_name"].toString();
+            double cpu = RR["peak_cpu_pct"].toDouble();
+            if (!processor_name.isEmpty()) {
+                QString tmp = QString("  %1 (%2)").arg(cpu).arg(processor_name);
+                printf("%s\n", tmp.toUtf8().data());
+            }
+        }
+
+        printf("\nAvg CPU (pct):\n");
+        for (int i = 0; i < PP.count(); i++) {
+            QJsonObject QQ = PP[i].toObject();
+            QJsonObject RR = QQ["results"].toObject();
+            QString processor_name = QQ["processor_name"].toString();
+            double cpu = RR["avg_cpu_pct"].toDouble();
+            if (!processor_name.isEmpty()) {
+                QString tmp = QString("  %1 (%2)").arg(cpu).arg(processor_name);
+                printf("%s\n", tmp.toUtf8().data());
+            }
+        }
+
+        printf("\nElapsed time (sec):\n");
+        for (int i = 0; i < PP.count(); i++) {
+            QJsonObject QQ = PP[i].toObject();
+            QJsonObject RR = QQ["results"].toObject();
+            QString processor_name = QQ["processor_name"].toString();
+            QDateTime start_time = QDateTime::fromString(RR["start_time"].toString(), "yyyy-MM-dd:hh-mm-ss.zzz");
+            QDateTime finish_time = QDateTime::fromString(RR["finish_time"].toString(), "yyyy-MM-dd:hh-mm-ss.zzz");
+            double elapsed = start_time.msecsTo(finish_time) * 1.0 / 1000;
+            if (!processor_name.isEmpty()) {
+                QString tmp = QString("  %1 (%2)").arg(elapsed).arg(processor_name);
+                printf("%s\n", tmp.toUtf8().data());
             }
         }
 
@@ -860,6 +916,17 @@ double compute_peak_cpu_pct(const QList<MonitorStats>& stats)
     for (int i = 0; i < stats.count(); i++) {
         ret = qMax(ret, stats[i].cpu_pct);
     }
+    return ret;
+}
+
+double compute_avg_cpu_pct(const QList<MonitorStats>& stats)
+{
+    double ret = 0;
+    for (int i = 0; i < stats.count(); i++) {
+        ret += stats[i].cpu_pct;
+    }
+    if (stats.count())
+        ret /= stats.count();
     return ret;
 }
 

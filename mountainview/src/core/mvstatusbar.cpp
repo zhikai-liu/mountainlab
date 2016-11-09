@@ -76,24 +76,23 @@ QString format_duration(double msec)
 
 void MVStatusBar::slot_update_quantities()
 {
-    ICounterManager *manager = ObjectRegistry::getObject<ICounterManager>();
-    if (ICounterBase *counter = manager ? manager->counter("bytes_downloaded") : nullptr){
-            QString txt = QString("%1 downloaded |").arg(counter->label());
-            d->m_bytes_downloaded_label.setText(txt);
+    ICounterManager* manager = ObjectRegistry::getObject<ICounterManager>();
+    if (ICounterBase* counter = manager ? manager->counter("bytes_downloaded") : nullptr) {
+        QString txt = QString("%1 downloaded |").arg(counter->label());
+        d->m_bytes_downloaded_label.setText(txt);
     }
-    if (ICounterBase *counter = manager ? manager->counter("bytes_downloaded") : nullptr){
+    if (ICounterBase* counter = manager ? manager->counter("bytes_downloaded") : nullptr) {
         QString txt = QString("%1 remote processing").arg(format_duration(counter->value<int>()));
         d->m_remote_processing_time_label.setText(txt);
     }
     {
         if (manager) {
             // TODO: Make the counters intelligent by using aggregate counters and labels for them.
-            IIntCounter *allocatedCounter = static_cast<IIntCounter*>(manager->counter("allocated_bytes"));
-            IIntCounter *freedCounter = static_cast<IIntCounter*>(manager->counter("freed_bytes"));
-            IIntCounter *bytesReadCounter = static_cast<IIntCounter*>(manager->counter("bytes_read"));
+            IIntCounter* allocatedCounter = static_cast<IIntCounter*>(manager->counter("allocated_bytes"));
+            IIntCounter* freedCounter = static_cast<IIntCounter*>(manager->counter("freed_bytes"));
+            IIntCounter* bytesReadCounter = static_cast<IIntCounter*>(manager->counter("bytes_read"));
 
-            double using_bytes = allocatedCounter && freedCounter ?
-                        allocatedCounter->value() - freedCounter->value() : 0;
+            double using_bytes = allocatedCounter && freedCounter ? allocatedCounter->value() - freedCounter->value() : 0;
             double bytes_read = bytesReadCounter ? bytesReadCounter->value() : 0;
             QString txt = QString("%1 RAM | %2 Read").arg(format_num_bytes(using_bytes)).arg(format_num_bytes(bytes_read));
             d->m_bytes_allocated_label.setText(txt);

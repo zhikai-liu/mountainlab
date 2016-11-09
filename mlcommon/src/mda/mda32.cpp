@@ -15,10 +15,10 @@ public:
     dtype32* m_data;
     long m_dims[MDA_MAX_DIMS];
     long m_total_size;
-    IIntCounter *allocatedCounter = nullptr;
-    IIntCounter *freedCounter = nullptr;
-    IIntCounter *bytesReadCounter = nullptr;
-    IIntCounter *bytesWrittenCounter = nullptr;
+    IIntCounter* allocatedCounter = nullptr;
+    IIntCounter* freedCounter = nullptr;
+    IIntCounter* bytesReadCounter = nullptr;
+    IIntCounter* bytesWrittenCounter = nullptr;
 
     void do_construct();
     void copy_from(const Mda32& other);
@@ -36,7 +36,7 @@ Mda32::Mda32(long N1, long N2, long N3, long N4, long N5, long N6)
 {
     d = new Mda32Private;
     d->q = this;
-    ICounterManager *manager = ObjectRegistry::getObject<ICounterManager>();
+    ICounterManager* manager = ObjectRegistry::getObject<ICounterManager>();
     if (manager) {
         d->allocatedCounter = static_cast<IIntCounter*>(manager->counter("allocated_bytes"));
         d->freedCounter = static_cast<IIntCounter*>(manager->counter("freed_bytes"));

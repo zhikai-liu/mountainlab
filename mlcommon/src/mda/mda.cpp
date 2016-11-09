@@ -78,10 +78,10 @@ private:
     QVector<long> m_dims;
     long total_size;
     // TODO: Consider making static:
-    mutable IIntCounter *bytesAllocatedCounter;
-    mutable IIntCounter *bytesFreedCounter;
-    mutable IIntCounter *bytesReadCounter;
-    mutable IIntCounter *bytesWrittenCounter;
+    mutable IIntCounter* bytesAllocatedCounter;
+    mutable IIntCounter* bytesFreedCounter;
+    mutable IIntCounter* bytesReadCounter;
+    mutable IIntCounter* bytesWrittenCounter;
 };
 
 Mda::Mda(long N1, long N2, long N3, long N4, long N5, long N6)
@@ -853,7 +853,7 @@ MdaData::MdaData()
     , bytesReadCounter(0)
     , bytesWrittenCounter(0)
 {
-    ICounterManager *manager = ObjectRegistry::getObject<ICounterManager>();
+    ICounterManager* manager = ObjectRegistry::getObject<ICounterManager>();
     if (manager) {
         bytesAllocatedCounter = static_cast<IIntCounter*>(manager->counter("allocated_bytes"));
         bytesFreedCounter = static_cast<IIntCounter*>(manager->counter("freed_bytes"));

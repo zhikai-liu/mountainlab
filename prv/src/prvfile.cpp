@@ -343,8 +343,8 @@ bool PrvFile::recoverFile(const QString& dst_file_path, const PrvFileRecoverOpti
             return false;
         }
         QNetworkAccessManager manager;
-        QNetworkReply *reply = manager.get(QNetworkRequest(QUrl(fname_or_url)));
-        QObject::connect(reply, &QNetworkReply::readyRead, [reply,&tmpFile]{
+        QNetworkReply* reply = manager.get(QNetworkRequest(QUrl(fname_or_url)));
+        QObject::connect(reply, &QNetworkReply::readyRead, [reply, &tmpFile] {
            while(reply->bytesAvailable())
                tmpFile.write(reply->read(4096));
         });
@@ -352,7 +352,7 @@ bool PrvFile::recoverFile(const QString& dst_file_path, const PrvFileRecoverOpti
         QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
         loop.exec();
         if (reply->error() == QNetworkReply::NoError) {
-            while(reply->bytesAvailable())
+            while (reply->bytesAvailable())
                 tmpFile.write(reply->read(4096));
             reply->deleteLater();
             tmpFile.close();
@@ -369,7 +369,8 @@ bool PrvFile::recoverFile(const QString& dst_file_path, const PrvFileRecoverOpti
                 return false;
             }
             return QFile::rename(fname_tmp, dst_file_path);
-        } else {
+        }
+        else {
             tmpFile.remove();
             return false;
         }
@@ -565,13 +566,13 @@ bool curl_is_installed()
 QString http_get_text_curl_0(const QString& url)
 {
     QNetworkAccessManager manager;
-    QNetworkReply *reply = manager.get(QNetworkRequest(QUrl(url)));
+    QNetworkReply* reply = manager.get(QNetworkRequest(QUrl(url)));
     QEventLoop loop;
     QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
     QTimer timeoutTimer;
     timeoutTimer.setInterval(20000); // 20s of inactivity causes us to break the connection
     QObject::connect(&timeoutTimer, SIGNAL(timeout()), reply, SLOT(abort()));
-    QObject::connect(reply, SIGNAL(downloadProgress(qint64,qint64)), &timeoutTimer, SLOT(start()));
+    QObject::connect(reply, SIGNAL(downloadProgress(qint64, qint64)), &timeoutTimer, SLOT(start()));
     timeoutTimer.start();
     loop.exec();
     if (reply->error() != QNetworkReply::NoError) {
@@ -599,7 +600,7 @@ QString httpPostFile(const QUrl& url, const QString& fileName, const ProgressFun
     QTimer timeoutTimer;
     timeoutTimer.setInterval(20000); // 20s of inactivity causes us to break the connection
     QObject::connect(&timeoutTimer, SIGNAL(timeout()), reply, SLOT(abort()));
-    QObject::connect(reply, SIGNAL(uploadProgress(qint64,qint64)), &timeoutTimer, SLOT(start()));
+    QObject::connect(reply, SIGNAL(uploadProgress(qint64, qint64)), &timeoutTimer, SLOT(start()));
     if (progressFunction) {
         QObject::connect(reply, &QNetworkReply::uploadProgress, [reply, progressFunction](qint64 bytesSent, qint64 bytesTotal) {
             progressFunction(bytesSent, bytesTotal);

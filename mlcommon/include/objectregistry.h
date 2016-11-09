@@ -13,13 +13,11 @@
 #include <QSharedPointer>
 #include "mlprivate.h"
 
-
 class ObjectRegistryPrivate;
-class ObjectRegistry : public QObject, public MLPublic<ObjectRegistryPrivate>
-{
+class ObjectRegistry : public QObject, public MLPublic<ObjectRegistryPrivate> {
     Q_OBJECT
 public:
-    explicit ObjectRegistry(QObject *parent = 0);
+    explicit ObjectRegistry(QObject* parent = 0);
     ~ObjectRegistry();
 
     static void addObject(QObject*);
@@ -27,20 +25,24 @@ public:
     static void removeObject(QObject*);
     static QObjectList allObjects();
 
-    template<typename T> static T* getObject() {
+    template <typename T>
+    static T* getObject()
+    {
         if (!instance()) {
             qWarning("No ObjectRegistry instance present");
             return nullptr;
         }
         QReadLocker locker(listMutex());
         QObjectList all = allObjects();
-        foreach(QObject *o, all) {
+        foreach (QObject* o, all) {
             if (T* obj = qobject_cast<T*>(o))
                 return obj;
         }
         return Q_NULLPTR;
     }
-    template<typename T> static QList<T*> getObjects() {
+    template <typename T>
+    static QList<T*> getObjects()
+    {
         if (!instance()) {
             qWarning("No ObjectRegistry instance present");
             return QList<T*>();
@@ -48,21 +50,23 @@ public:
         QReadLocker locker(listMutex());
         QObjectList all = allObjects();
         QList<T*> result;
-        foreach(QObject *o, all) {
+        foreach (QObject* o, all) {
             if (T* obj = qobject_cast<T*>(o))
                 result.append(obj);
         }
         return result;
     }
 
-    template<typename T, typename P> static T *getObject(P pred) {
+    template <typename T, typename P>
+    static T* getObject(P pred)
+    {
         if (!instance()) {
             qWarning("No ObjectRegistry instance present");
             return nullptr;
         }
         QReadLocker locker(listMutex());
         QObjectList all = allObjects();
-        foreach(QObject *o, all) {
+        foreach (QObject* o, all) {
             if (T* obj = qobject_cast<T*>(o)) {
                 if (pred(obj))
                     return obj;
@@ -71,7 +75,9 @@ public:
         return Q_NULLPTR;
     }
 
-    template<typename T, typename P> static QList<T*> getObjects(P pred) {
+    template <typename T, typename P>
+    static QList<T*> getObjects(P pred)
+    {
         if (!instance()) {
             qWarning("No ObjectRegistry instance present");
             return QList<T*>();
@@ -79,22 +85,22 @@ public:
         QReadLocker locker(listMutex());
         QObjectList all = allObjects();
         QList<T*> result;
-        foreach(QObject *o, all) {
+        foreach (QObject* o, all) {
             if (T* obj = qobject_cast<T*>(o))
                 if (pred(obj))
                     result.append(obj);
         }
         return result;
     }
-    static QObject* getObjectByName(const QString &name);
-    static QObject* getObjectByClassName(const QString &className);
-
+    static QObject* getObjectByName(const QString& name);
+    static QObject* getObjectByClassName(const QString& className);
 
     static ObjectRegistry* instance();
 signals:
-    void objectAdded(QObject *o);
-    void objectAboutToBeRemoved(QObject *o);
-    void objectRemoved(QObject *o);
+    void objectAdded(QObject* o);
+    void objectAboutToBeRemoved(QObject* o);
+    void objectRemoved(QObject* o);
+
 private:
     static QReadWriteLock* listMutex();
     QReadWriteLock m_listMutex;

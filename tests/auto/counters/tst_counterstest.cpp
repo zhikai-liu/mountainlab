@@ -2,8 +2,7 @@
 #include <QtTest>
 #include "icounter.h"
 
-class CountersTest : public QObject
-{
+class CountersTest : public QObject {
     Q_OBJECT
 
 public:
@@ -37,7 +36,7 @@ void CountersTest::testManager()
     manager.addCounter(&counter);
     QCOMPARE(addSpy.size(), 1);
     QCOMPARE(manager.availableCounters().size(), 1);
-    QCOMPARE(manager.availableCounters(), QStringList({"C1"}));
+    QCOMPARE(manager.availableCounters(), QStringList({ "C1" }));
     QCOMPARE(manager.counter("C1"), &counter);
     manager.removeCounter(&counter);
     QCOMPARE(addSpy.size(), 2);
@@ -85,24 +84,24 @@ void CountersTest::testDoubleCounter()
 
 class BytesCounter : public IIntCounter {
 public:
-    BytesCounter(const QString &name)
-        : IIntCounter(name) {}
+    BytesCounter(const QString& name)
+        : IIntCounter(name)
+    {
+    }
     QString label() const
     {
         int64_t v = value();
-        if ( v >= 1024*1024 ) {
-            double MB = static_cast<double>(v) / (1024*1024);
+        if (v >= 1024 * 1024) {
+            double MB = static_cast<double>(v) / (1024 * 1024);
             return QString("%1 MB").arg(MB);
         }
-        if ( v >= 1024 ) {
+        if (v >= 1024) {
             double kB = static_cast<double>(v) / (1024);
             return QString("%1 kB").arg(kB);
         }
         return QString("%1 bytes").arg(v);
     }
 };
-
-
 
 void CountersTest::testCustomCounter()
 {
@@ -116,26 +115,31 @@ void CountersTest::testCustomCounter()
     QCOMPARE(counter.label(), QStringLiteral("1.5 kB"));
     QCOMPARE(counter.add(-512), 1024);
     QCOMPARE(counter.label(), QStringLiteral("1 kB"));
-    QCOMPARE(counter.add(1023*1024), 1024*1024);
+    QCOMPARE(counter.add(1023 * 1024), 1024 * 1024);
     QCOMPARE(counter.label(), QStringLiteral("1 MB"));
-    QCOMPARE(counter.add(512*1024), 1536*1024);
+    QCOMPARE(counter.add(512 * 1024), 1536 * 1024);
     QCOMPARE(counter.label(), QStringLiteral("1.5 MB"));
 }
 
 class AddCounter : public IAggregateCounter {
 public:
     Type type() const { return Integer; }
-    AddCounter(const QString &name, ICounterBase *c1, ICounterBase *c2) : IAggregateCounter (name) {
+    AddCounter(const QString& name, ICounterBase* c1, ICounterBase* c2)
+        : IAggregateCounter(name)
+    {
         addCounter(c1);
         addCounter(c2);
     }
     QVariant genericValue() const { return QVariant::fromValue(m_value); }
     int64_t value() const { return m_value; }
+
 protected:
-    void updateValue() {
+    void updateValue()
+    {
         m_value = counters().first()->value<int>() + counters().last()->value<int>();
         emit valueChanged();
     }
+
 private:
     int64_t m_value;
 };

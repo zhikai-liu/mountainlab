@@ -40,10 +40,10 @@ bool mask_out_artifacts(const QString& timeseries_path, const QString& timeserie
         }
     }
 
-    //determine which chunks, on which channels, to use
-    Mda use_it(M, N / interval_size);
-    for (long i = 0; i < use_it.totalSize(); i++)
-        use_it.set(1, i);
+    //determine which chunks to use
+    QVector<int> use_it(N / interval_size + 1);
+    for (long i = 0; i < use_it.count(); i++)
+        use_it[i] = 1;
     for (int m = 0; m < M; m++) {
         QVector<double> vals;
         for (long i = 0; i < norms.N2(); i++) {
@@ -53,9 +53,9 @@ bool mask_out_artifacts(const QString& timeseries_path, const QString& timeserie
         double mean0 = MLCompute::mean(vals);
         for (int i = 0; i < norms.N2(); i++) {
             if (norms.value(m, i) > mean0 + sigma0 * threshold) {
-                use_it.setValue(0, m, i - 1); //don't use the neighbor chunks either
-                use_it.setValue(0, m, i);
-                use_it.setValue(0, m, i + 1); //don't use the neighbor chunks either
+                use_it[i - 1] = 0; //don't use the neighbor chunks either
+                use_it[i] = 0; //don't use the neighbor chunks either
+                use_it[i + 1] = 0; //don't use the neighbor chunks either
             }
         }
     }
@@ -73,14 +73,12 @@ bool mask_out_artifacts(const QString& timeseries_path, const QString& timeserie
         }
         Mda chunk;
         X.readChunk(chunk, 0, timepoint, M, interval_size);
-        for (int m = 0; m < M; m++) {
-            if (use_it.value(m, i)) {
-                num_timepoints_used += interval_size;
-                Y.writeChunk(chunk, 0, timepoint);
-            }
-            else {
-                num_timepoints_not_used += interval_size;
-            }
+        if (use_it[i]) {
+            num_timepoints_used += interval_size;
+            Y.writeChunk(chunk, 0, timepoint);
+        }
+        else {
+            num_timepoints_not_used += interval_size;
         }
     }
     Y.close();

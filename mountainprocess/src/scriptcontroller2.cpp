@@ -43,6 +43,7 @@ struct PipelineNode2 {
     bool create_prv = false;
     bool completed;
     bool running;
+    QString process_output_fname; //internal
     QProcess* qprocess;
 
     QStringList input_paths()
@@ -82,8 +83,8 @@ public:
 
     QList<PipelineNode2> m_pipeline_nodes;
 
-    QProcess* queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run);
-    QProcess* run_process(QString processor_name, const QVariantMap& parameters, bool force_run);
+    QProcess* queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, QString process_output_fname);
+    QProcess* run_process(QString processor_name, const QVariantMap& parameters, bool force_run, QString process_output_fname);
 
     void resolve_file_names(QVariantMap& fnames);
     QString resolve_file_name_p(QString fname);
@@ -294,7 +295,7 @@ void ScriptController2::log(const QString& message)
     printf("SCRIPT: %s\n", message.toLatin1().data());
 }
 
-QProcess* ScriptController2Private::queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run)
+QProcess* ScriptController2Private::queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, QString process_output_fname)
 {
     QString exe = qApp->applicationFilePath();
     QStringList args;
@@ -313,6 +314,7 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
     if (force_run) {
         args << "--_force_run";
     }
+    args << "--_process_output=" + process_output_fname;
     QProcess* P1 = new QProcess;
     P1->setReadChannelMode(QProcess::MergedChannels);
     P1->start(exe, args);
@@ -324,9 +326,9 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
     return P1;
 }
 
-QProcess* ScriptController2Private::run_process(QString processor_name, const QVariantMap& parameters, bool force_run)
+QProcess* ScriptController2Private::run_process(QString processor_name, const QVariantMap& parameters, bool force_run, QString process_output_fname)
 {
-    return ScriptController2Private::queue_process(processor_name, parameters, true, force_run);
+    return ScriptController2Private::queue_process(processor_name, parameters, true, force_run, process_output_fname);
 }
 
 void ScriptController2Private::resolve_file_names(QVariantMap& fnames)
@@ -425,9 +427,10 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
     }
     else {
         QProcess* P1;
+        node->process_output_fname = CacheManager::globalInstance()->makeLocalFile() + ".process_output";
         if (m_nodaemon) {
             printf("Launching process %s\n", node->processor_name.toLatin1().data());
-            P1 = run_process(node->processor_name, parameters0, m_force_run);
+            P1 = run_process(node->processor_name, parameters0, m_force_run, node->process_output_fname);
             if (!P1) {
                 qWarning() << "Unable to launch process: " + node->processor_name;
                 return false;
@@ -435,7 +438,7 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
         }
         else {
             printf("Queuing process %s\n", node->processor_name.toLatin1().data());
-            P1 = queue_process(node->processor_name, parameters0, false, m_force_run);
+            P1 = queue_process(node->processor_name, parameters0, false, m_force_run, node->process_output_fname);
             if (!P1) {
                 qWarning() << "Unable to queue process: " + node->processor_name;
                 return false;
@@ -524,6 +527,28 @@ bool ScriptController2Private::handle_running_processes()
                 }
                 node->completed = true;
                 node->running = false;
+
+                if (!node->process_output_fname.isEmpty()) {
+                    QString tmp_json = TextFile::read(node->process_output_fname);
+                    if (tmp_json.isEmpty()) {
+                        qWarning() << "process output file is empty or does not exist for processor: " + node->processor_name;
+                    }
+                    //QFile::remove(node->process_output_fname);
+                    QJsonArray PP = m_results["processes"].toArray();
+                    while (i >= PP.count())
+                        PP.append(QJsonObject());
+                    QJsonObject X;
+                    X["processor_name"] = node->processor_name;
+                    X["inputs"] = QJsonObject::fromVariantMap(node->inputs);
+                    X["outputs"] = QJsonObject::fromVariantMap(node->outputs);
+                    X["parameters"] = QJsonObject::fromVariantMap(node->parameters);
+                    if (!tmp_json.isEmpty()) {
+                        X["results"] = QJsonDocument::fromJson(tmp_json.toUtf8()).object();
+                    }
+                    PP[i] = X;
+                    m_results["processes"] = PP;
+                }
+
                 delete node->qprocess;
                 node->qprocess = 0;
             }

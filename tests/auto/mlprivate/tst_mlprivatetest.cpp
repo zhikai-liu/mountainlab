@@ -5,24 +5,33 @@
 class TestClass;
 class TestClassPrivate : public MLPrivate<TestClass> {
 public:
-    TestClassPrivate(bool &del, TestClass *qq) : MLPrivate(qq), value(42), m_del(del) {}
-    ~TestClassPrivate() {
+    TestClassPrivate(bool& del, TestClass* qq)
+        : MLPrivate(qq)
+        , value(42)
+        , m_del(del)
+    {
+    }
+    ~TestClassPrivate()
+    {
         m_del = true;
     }
     int value;
+
 private:
     bool& m_del;
 };
 
 class TestClass : public MLPublic<TestClassPrivate> {
 public:
-    TestClass(bool &del) : MLPublic(new TestClassPrivate(del, this)) {}
+    TestClass(bool& del)
+        : MLPublic(new TestClassPrivate(del, this))
+    {
+    }
     int value() const { return d->value; }
     void setValue(int v) { d->value = v; }
 };
 
-class MLPrivateTest : public QObject
-{
+class MLPrivateTest : public QObject {
     Q_OBJECT
 
 public:
@@ -45,7 +54,6 @@ void MLPrivateTest::testDeletion()
         object.setValue(0); // make sure it doesn't get optimized out
     }
     QCOMPARE(deleted, true);
-
 }
 
 void MLPrivateTest::testAccess()
