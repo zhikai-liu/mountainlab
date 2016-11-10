@@ -128,7 +128,7 @@ bool fit_stage_new(const QString& timeseries_path, const QString& firings_path, 
                 }
 
                 num_timepoints_handled += qMin(chunk_size, N - timepoint);
-                if ((timer_status.elapsed() > 1000) || (num_timepoints_handled == N) || (timepoint == 0)) {
+                if ((timer_status.elapsed() > 5000) || (num_timepoints_handled == N) || (timepoint == 0)) {
                     printf("%ld/%ld (%d%%) - Elapsed(s): RC:%g, SLD:%g, KERNEL:%g, GLD:%g, Total:%g, %d threads\n",
                         num_timepoints_handled, N,
                         (int)(num_timepoints_handled * 1.0 / N * 100),

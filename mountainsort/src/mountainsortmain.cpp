@@ -152,7 +152,7 @@ bool run_process(MSProcessManager* PM, QJsonObject process)
 {
     QString processor_name = process["processor_name"].toString();
     QJsonObject parameters = process["parameters"].toObject();
-    int request_num_threads = parameters.value("_request_num_threads").toInt(0);
+    int request_num_threads = parameters.value("_request_num_threads").toVariant().toInt();
     if (request_num_threads) {
         omp_set_num_threads(request_num_threads);
     }

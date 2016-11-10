@@ -656,6 +656,12 @@ QString remove_comments(QString json)
     return lines.join("\n");
 }
 
+QJsonValue evaluate_js(QString js)
+{
+    QJSEngine engine;
+    return QJsonValue::fromVariant(engine.evaluate(js.toUtf8()).toVariant());
+}
+
 bool load_parameter_file(QVariantMap& params, const QString& fname)
 {
     QString json = TextFile::read(fname);
@@ -665,15 +671,17 @@ bool load_parameter_file(QVariantMap& params, const QString& fname)
     }
     json = remove_comments(json);
     QJsonParseError error;
-    /// Witold I use toLatin1() everywhere. Is this the appropriate way to convert to byte array?
-    /// Jeremy: toUtf8() or toLocal8Bit() might be better
-    QJsonObject obj = QJsonDocument::fromJson(json.toLatin1(), &error).object();
+    QJsonObject obj = QJsonDocument::fromJson(json.toUtf8(), &error).object();
     if (error.error != QJsonParseError::NoError) {
         qCritical() << "Error parsing json file: " + fname + " : " + error.errorString();
         return false;
     }
     QStringList keys = obj.keys();
     foreach (QString key, keys) {
+        QString str = obj[key].toString();
+        if ((str.startsWith("eval")) && (str.endsWith(")"))) {
+            obj[key] = evaluate_js(str);
+        }
         params[key] = obj[key].toVariant();
     }
     return true;
@@ -762,7 +770,6 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
     MPDaemonPript PP;
 
     bool detach = CLP.named_parameters.value("_detach", false).toBool();
-    int request_num_threads = CLP.named_parameters.value("request_num_threads", 0).toInt();
 
     if (prtype == ScriptType) {
         QVariantMap params;
@@ -788,6 +795,7 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
         PP.prtype = ScriptType;
     }
     else {
+        int request_num_threads = CLP.named_parameters.value("_request_num_threads", 0).toInt();
         PP.parameters = CLP.named_parameters;
         PP.prtype = ProcessType;
         PP.RPR.request_num_threads = request_num_threads;

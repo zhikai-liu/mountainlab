@@ -80,6 +80,7 @@ public:
     bool m_force_run = false;
     QString m_working_path;
     QJsonObject m_results;
+    int m_num_threads = 0;
 
     QList<PipelineNode2> m_pipeline_nodes;
 
@@ -272,6 +273,11 @@ bool ScriptController2::runPipeline()
     return true;
 }
 
+void ScriptController2::setNumThreads(int num_threads)
+{
+    d->m_num_threads = num_threads;
+}
+
 QJsonObject make_prv_object_2(QString path)
 {
     if (!QFile::exists(path)) {
@@ -432,7 +438,7 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
         node->process_output_fname = CacheManager::globalInstance()->makeLocalFile() + ".process_output";
         if (m_nodaemon) {
             printf("Launching process %s\n", node->processor_name.toLatin1().data());
-            P1 = run_process(node->processor_name, parameters0, m_force_run, node->process_output_fname,0);
+            P1 = run_process(node->processor_name, parameters0, m_force_run, node->process_output_fname, m_num_threads);
             if (!P1) {
                 qWarning() << "Unable to launch process: " + node->processor_name;
                 return false;
@@ -440,7 +446,7 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
         }
         else {
             printf("Queuing process %s\n", node->processor_name.toLatin1().data());
-            P1 = queue_process(node->processor_name, parameters0, false, m_force_run, node->process_output_fname,0);
+            P1 = queue_process(node->processor_name, parameters0, false, m_force_run, node->process_output_fname, m_num_threads);
             if (!P1) {
                 qWarning() << "Unable to queue process: " + node->processor_name;
                 return false;

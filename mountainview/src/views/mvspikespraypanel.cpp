@@ -421,8 +421,9 @@ void MVSpikeSprayPanelControl::updateRender()
 void MVSpikeSprayPanelControl::rerender()
 {
     d->needsRerender = false;
-    if (!d->clipsToRender)
+    if (!d->clipsToRender) {
         return;
+    }
     if (d->clipsToRender->N3() != d->renderLabels.count()) {
         qWarning() << "Number of clips to render does not match the number of labels to render" << d->clipsToRender->N3() << d->renderLabels.count();
         return;
@@ -435,8 +436,9 @@ void MVSpikeSprayPanelControl::rerender()
     }
 
     int K = MLCompute::max(d->renderLabels);
-    if (!K)
+    if (!K) {
         return;
+    }
     QVector<int> counts(K + 1, 0);
     QList<long> inds;
     for (long i = 0; i < d->renderLabels.count(); i++) {

@@ -37,16 +37,16 @@ int main(int argc, char* argv[])
     opts.output_format = params.named_parameters.value("output-format").toString();
 
     if (opts.output_path.isEmpty()) {
-        if (opts.input_path.endsWith(".mda")) {
-            DiskReadMda X(opts.input_path);
-            QString str = get_info_string(X);
-            printf("%s\n", str.toUtf8().data());
-            return 0;
-        }
-        else {
-            print_usage();
-            return -1;
-        }
+        //if (opts.input_path.endsWith(".mda")) {
+        DiskReadMda X(opts.input_path);
+        QString str = get_info_string(X);
+        printf("%s\n", str.toUtf8().data());
+        return 0;
+        //}
+        //else {
+        //    print_usage();
+        //    return -1;
+        //}
     }
 
     if (params.named_parameters.contains("dtype")) {

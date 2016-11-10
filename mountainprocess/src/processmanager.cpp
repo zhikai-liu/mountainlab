@@ -169,9 +169,6 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     }
     MLProcessor P = d->m_processors[processor_name];
 
-    if (RPR.request_num_threads)
-        parameters["_request_num_threads"] = RPR.request_num_threads;
-
     QString exe_command = P.exe_command;
     exe_command.replace(QRegExp("\\$\\(basepath\\)"), P.basepath);
     {
@@ -197,6 +194,9 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
                 ppp += QString("--%1=%2 ").arg(key).arg(parameters[key].toString());
             }
         }
+
+        if (RPR.request_num_threads)
+            ppp += QString("--_request_num_threads=%1 ").arg(RPR.request_num_threads);
 
         exe_command.replace(QRegExp("\\$\\(arguments\\)"), ppp);
     }
