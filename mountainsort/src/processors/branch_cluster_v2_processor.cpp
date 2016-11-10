@@ -19,7 +19,7 @@ branch_cluster_v2_Processor::branch_cluster_v2_Processor()
     this->setRequiredParameters("clip_size", "min_shell_size", "shell_increment", "num_features");
     this->setRequiredParameters("detect_interval");
     this->setOptionalParameters("num_pca_representatives", "consolidation_factor");
-    this->setOptionalParameters("num_threads", "num_features2");
+    this->setOptionalParameters("num_features2");
     this->setOptionalParameters("isocut_threshold");
 }
 
@@ -52,11 +52,6 @@ bool branch_cluster_v2_Processor::run(const QMap<QString, QVariant>& params)
     opts.num_pca_representatives = (long)params.value("num_pca_representatives", 5000).toDouble();
     opts.consolidation_factor = params.value("consolidation_factor", 0.9).toDouble();
     opts.isocut_threshold = params.value("isocut_threshold", 1.5).toDouble();
-
-    int num_threads = params.value("num_threads", 0).toInt();
-    if (num_threads > 0) {
-        omp_set_num_threads(num_threads);
-    }
 
     //return branch_cluster_v2(timeseries_path, detect_path, adjacency_matrix_path, firings_path, opts);
     return branch_cluster_v2b(timeseries_path, detect_path, adjacency_matrix_path, firings_path, opts);

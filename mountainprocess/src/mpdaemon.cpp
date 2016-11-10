@@ -654,8 +654,11 @@ bool MPDaemonPrivate::launch_pript(QString pript_id)
         foreach (QString pkey, pkeys) {
             args << QString("--%1=%2").arg(pkey).arg(S->parameters[pkey].toString());
         }
-        S->runtime_opts.num_threads_allotted = S->num_threads_requested;
-        S->runtime_opts.memory_gb_allotted = S->memory_gb_requested;
+        if (S->RPR.request_num_threads) {
+            args << QString("--_request_num_threads=%1").arg(S->RPR.request_num_threads);
+        }
+        //S->runtime_opts.num_threads_allotted = S->num_threads_requested;
+        //S->runtime_opts.memory_gb_allotted = S->memory_gb_requested;
     }
     if (S->force_run) {
         args << "--_force_run";
@@ -747,8 +750,11 @@ ProcessResources MPDaemonPrivate::compute_process_resources_available()
 ProcessResources MPDaemonPrivate::compute_process_resources_needed(MPDaemonPript P)
 {
     ProcessResources ret;
-    ret.num_threads = P.num_threads_requested;
-    ret.memory_gb = P.memory_gb_requested;
+    ret.num_threads = P.RPR.request_num_threads;
+    if (ret.num_threads < 1)
+        ret.num_threads = 1;
+    //ret.memory_gb = P.memory_gb_requested;
+    ret.memory_gb = 1;
     ret.num_processes = 1;
     return ret;
 }
@@ -1274,6 +1280,7 @@ QJsonObject pript_struct_to_obj(MPDaemonPript S, RecordType rt)
     ret["timestamp_queued"] = S.timestamp_queued.toString("yyyy-MM-dd|hh:mm:ss.zzz");
     ret["timestamp_started"] = S.timestamp_started.toString("yyyy-MM-dd|hh:mm:ss.zzz");
     ret["timestamp_finished"] = S.timestamp_finished.toString("yyyy-MM-dd|hh:mm:ss.zzz");
+    ret["request_num_threads"] = S.RPR.request_num_threads;
     if (S.prtype == ScriptType) {
         ret["prtype"] = "script";
         if (rt != AbbreviatedRecord) {
@@ -1312,6 +1319,7 @@ MPDaemonPript pript_obj_to_struct(QJsonObject obj)
     ret.timestamp_queued = QDateTime::fromString(obj.value("timestamp_queued").toString(), "yyyy-MM-dd|hh:mm:ss.zzz");
     ret.timestamp_started = QDateTime::fromString(obj.value("timestamp_started").toString(), "yyyy-MM-dd|hh:mm:ss.zzz");
     ret.timestamp_finished = QDateTime::fromString(obj.value("timestamp_finished").toString(), "yyyy-MM-dd|hh:mm:ss.zzz");
+    ret.RPR.request_num_threads = obj.value("request_num_threads").toInt();
     if (obj.value("prtype").toString() == "script") {
         ret.prtype = ScriptType;
         ret.script_paths = json_array_to_stringlist(obj.value("script_paths").toArray());

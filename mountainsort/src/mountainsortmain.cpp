@@ -22,6 +22,7 @@
 #include "mlcommon.h"
 #include "pca.h"
 #include <objectregistry.h>
+#include "omp.h"
 
 void print_usage();
 void list_processors(const MSProcessManager* PM);
@@ -151,6 +152,11 @@ bool run_process(MSProcessManager* PM, QJsonObject process)
 {
     QString processor_name = process["processor_name"].toString();
     QJsonObject parameters = process["parameters"].toObject();
+    int request_num_threads = parameters.value("_request_num_threads").toInt(0);
+    if (request_num_threads) {
+        omp_set_num_threads(request_num_threads);
+    }
+
     QStringList keys = parameters.keys();
     QMap<QString, QVariant> params;
     foreach (QString key, keys) {

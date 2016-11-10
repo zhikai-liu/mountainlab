@@ -83,7 +83,7 @@ public:
 
     QList<PipelineNode2> m_pipeline_nodes;
 
-    QProcess* queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, QString process_output_fname);
+    QProcess* queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, QString process_output_fname, int request_num_threads);
     QProcess* run_process(QString processor_name, const QVariantMap& parameters, bool force_run, QString process_output_fname);
 
     void resolve_file_names(QVariantMap& fnames);
@@ -295,7 +295,7 @@ void ScriptController2::log(const QString& message)
     printf("SCRIPT: %s\n", message.toLatin1().data());
 }
 
-QProcess* ScriptController2Private::queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, QString process_output_fname)
+QProcess* ScriptController2Private::queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, QString process_output_fname, int request_num_threads)
 {
     QString exe = qApp->applicationFilePath();
     QStringList args;
@@ -315,6 +315,8 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
         args << "--_force_run";
     }
     args << "--_process_output=" + process_output_fname;
+    if (request_num_threads)
+        args << QString("--_request_num_threads=%1").arg(request_num_threads);
     QProcess* P1 = new QProcess;
     P1->setReadChannelMode(QProcess::MergedChannels);
     P1->start(exe, args);

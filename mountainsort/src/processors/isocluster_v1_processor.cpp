@@ -19,7 +19,7 @@ isocluster_v1_Processor::isocluster_v1_Processor()
     this->setRequiredParameters("clip_size", "num_features", "num_features2");
     this->setRequiredParameters("detect_interval");
     this->setOptionalParameters("consolidation_factor");
-    this->setOptionalParameters("num_threads", "num_features2");
+    this->setOptionalParameters("num_features2");
     this->setOptionalParameters("isocut_threshold");
     this->setOptionalParameters("K_init");
 }
@@ -51,11 +51,6 @@ bool isocluster_v1_Processor::run(const QMap<QString, QVariant>& params)
     opts.consolidation_factor = params.value("consolidation_factor", 0.9).toDouble();
     opts.isocut_threshold = params.value("isocut_threshold", 1).toDouble();
     opts.K_init = params.value("K_init", 200).toInt();
-
-    int num_threads = params.value("num_threads", 0).toInt();
-    if (num_threads > 0) {
-        omp_set_num_threads(num_threads);
-    }
 
     return isocluster_v1(timeseries_path, detect_path, adjacency_matrix_path, firings_path, opts);
 }

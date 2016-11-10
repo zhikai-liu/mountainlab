@@ -14,6 +14,7 @@
 #include <QJsonObject>
 #include <QProcess>
 #include <QFile>
+#include "processmanager.h" //for RequestProcessResources
 
 struct ProcessResources {
     double num_threads = 0;
@@ -94,8 +95,9 @@ struct MPDaemonPript {
 
     //For a process:
     QString processor_name;
-    double num_threads_requested = 1;
-    double memory_gb_requested = 0;
+    //double num_threads_requested = 1;
+    //double memory_gb_requested = 0;
+    RequestProcessResources RPR;
     ProcessRuntimeOpts runtime_opts; //defined at run time
 };
 

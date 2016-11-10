@@ -762,6 +762,7 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
     MPDaemonPript PP;
 
     bool detach = CLP.named_parameters.value("_detach", false).toBool();
+    int request_num_threads = CLP.named_parameters.value("request_num_threads", 0).toInt();
 
     if (prtype == ScriptType) {
         QVariantMap params;
@@ -789,6 +790,7 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
     else {
         PP.parameters = CLP.named_parameters;
         PP.prtype = ProcessType;
+        PP.RPR.request_num_threads = request_num_threads;
         remove_system_parameters(PP.parameters);
         PP.processor_name = CLP.unnamed_parameters.value(1); //arg2
     }
