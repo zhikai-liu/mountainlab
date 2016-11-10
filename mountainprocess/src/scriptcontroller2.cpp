@@ -84,7 +84,7 @@ public:
     QList<PipelineNode2> m_pipeline_nodes;
 
     QProcess* queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, QString process_output_fname, int request_num_threads);
-    QProcess* run_process(QString processor_name, const QVariantMap& parameters, bool force_run, QString process_output_fname);
+    QProcess* run_process(QString processor_name, const QVariantMap& parameters, bool force_run, QString process_output_fname, int request_num_threads);
 
     void resolve_file_names(QVariantMap& fnames);
     QString resolve_file_name_p(QString fname);
@@ -328,9 +328,9 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
     return P1;
 }
 
-QProcess* ScriptController2Private::run_process(QString processor_name, const QVariantMap& parameters, bool force_run, QString process_output_fname)
+QProcess* ScriptController2Private::run_process(QString processor_name, const QVariantMap& parameters, bool force_run, QString process_output_fname, int request_num_threads)
 {
-    return ScriptController2Private::queue_process(processor_name, parameters, true, force_run, process_output_fname);
+    return ScriptController2Private::queue_process(processor_name, parameters, true, force_run, process_output_fname, request_num_threads);
 }
 
 void ScriptController2Private::resolve_file_names(QVariantMap& fnames)
@@ -432,7 +432,7 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
         node->process_output_fname = CacheManager::globalInstance()->makeLocalFile() + ".process_output";
         if (m_nodaemon) {
             printf("Launching process %s\n", node->processor_name.toLatin1().data());
-            P1 = run_process(node->processor_name, parameters0, m_force_run, node->process_output_fname);
+            P1 = run_process(node->processor_name, parameters0, m_force_run, node->process_output_fname,0);
             if (!P1) {
                 qWarning() << "Unable to launch process: " + node->processor_name;
                 return false;
@@ -440,7 +440,7 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
         }
         else {
             printf("Queuing process %s\n", node->processor_name.toLatin1().data());
-            P1 = queue_process(node->processor_name, parameters0, false, m_force_run, node->process_output_fname);
+            P1 = queue_process(node->processor_name, parameters0, false, m_force_run, node->process_output_fname,0);
             if (!P1) {
                 qWarning() << "Unable to queue process: " + node->processor_name;
                 return false;

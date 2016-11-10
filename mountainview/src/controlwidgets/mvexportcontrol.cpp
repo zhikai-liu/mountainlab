@@ -287,14 +287,14 @@ void MVExportControl::slot_export_firings()
 
 QString get_local_path_of_firings_file_or_current_path(const DiskReadMda& X)
 {
-    QString path = X.makePath();
+    /*QString path = X.makePath();
     if (!path.isEmpty()) {
         if (!path.startsWith("http:")) {
             if (QFile::exists(path)) {
                 return QFileInfo(path).path();
             }
         }
-    }
+    }*/
     return QDir::currentPath();
 }
 
