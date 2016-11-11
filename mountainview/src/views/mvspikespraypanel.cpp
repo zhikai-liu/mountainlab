@@ -52,7 +52,7 @@ public:
     Mda* clipsToRender = nullptr;
     QVector<int> renderLabels;
     bool needsRerender = true;
-    QThread renderThread;
+    QThread *renderThread;
     MVSSRenderer* renderer = nullptr;
     QImage render;
     int progress = 0;
@@ -242,13 +242,15 @@ MVSpikeSprayPanelControl::MVSpikeSprayPanelControl(QObject* parent)
     : QObject(parent)
     , d(new MVSpikeSprayPanelControlPrivate(this))
 {
+    d->renderThread=new QThread;
 }
 
 MVSpikeSprayPanelControl::~MVSpikeSprayPanelControl()
 {
-    d->renderThread.terminate();
+    d->renderThread->terminate();
     if (d->renderer)
         d->renderer->deleteLater();
+    d->renderThread->deleteLater();
 }
 
 double MVSpikeSprayPanelControl::amplitude() const
@@ -318,6 +320,7 @@ void MVSpikeSprayPanelControl::paint(QPainter* painter, const QRectF& rect)
         rerender();
     if (!d->render.isNull())
         painter->drawImage(rect, d->render);
+
     painter->save();
     paintLegend(painter, rect);
     painter->restore();
@@ -429,6 +432,7 @@ void MVSpikeSprayPanelControl::rerender()
         return;
     }
 
+
     if (!amplitude()) {
         double maxval = qMax(qAbs(d->clipsToRender->minimum()), qAbs(d->clipsToRender->maximum()));
         if (maxval)
@@ -467,8 +471,8 @@ void MVSpikeSprayPanelControl::rerender()
         d->renderer = nullptr;
     }
     d->renderer = new MVSSRenderer;
-    if (!d->renderThread.isRunning())
-        d->renderThread.start();
+    if (!d->renderThread->isRunning())
+        d->renderThread->start();
 
     long M = d->clipsToRender->N1();
     long T = d->clipsToRender->N2();
@@ -494,7 +498,7 @@ void MVSpikeSprayPanelControl::rerender()
     d->renderer->H = 1500;
     connect(d->renderer, SIGNAL(imageUpdated(int)), this, SLOT(update(int)));
     connect(d->renderer, SIGNAL(allocateProgress(int)), this, SLOT(updateAllocProgress(int)));
-    d->renderer->moveToThread(&d->renderThread);
+    d->renderer->moveToThread(d->renderThread);
     QMetaObject::invokeMethod(d->renderer, "render", Qt::QueuedConnection);
 }
 
