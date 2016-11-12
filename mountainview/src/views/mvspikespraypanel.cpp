@@ -10,6 +10,57 @@
 #include "mda.h"
 #include "mlcommon.h"
 
+/*!
+ * \class MVSpikeSprayPanelControl
+ * \brief The MVSpikeSprayPanelControl class provides a way to render a spike spray panel
+ *
+ */
+/*!
+ * \property MVSpikeSprayPanelControl::amplitude
+ * \brief
+ */
+/*!
+ * \property MVSpikeSprayPanelControl::brightness
+ * \brief
+ */
+/*!
+ * \property MVSpikeSprayPanelControl::weight
+ * \brief
+ */
+/*!
+ * \property MVSpikeSprayPanelControl::legendVisible
+ * \brief
+ */
+/*!
+ * \property MVSpikeSprayPanelControl::labels
+ * \brief
+ */
+/*!
+ * \property MVSpikeSprayPanelControl::labelColors
+ * \brief
+ */
+/*!
+ * \property MVSpikeSprayPanelControl::progress
+ * \brief
+ */
+/*!
+ * \property MVSpikeSprayPanelControl::allocationProgress
+ * \brief
+ */
+
+/*!
+ * \class MVSSRenderer
+ * \brief The MVSSRenderer class represents an object used to perform rendering of a spike spray
+ *        panel, likely in a separate thread.
+ */
+
+/*!
+ * \class MVSSRenderer::ClipsAllocator
+ * \brief The ClipsAllocator class performs an allocation and deep copy of Mda structure.
+ *
+ */
+
+
 namespace {
 /*!
  * \brief A RAII object executes a given function upon destruction
@@ -72,9 +123,14 @@ MVSpikeSprayPanel::MVSpikeSprayPanel(MVContext* context)
     d->q = this;
     d->m_context = context;
     d->m_control.setLabelColors(context->clusterColors());
-    QObject::connect(context, SIGNAL(clusterColorsChanged(QList<QColor>)), &d->m_control, SLOT(setLabelColors(QList<QColor>)));
+    // rerender if cluster colors have changed
+    QObject::connect(context, SIGNAL(clusterColorsChanged(QList<QColor>)),
+                     &d->m_control, SLOT(setLabelColors(QList<QColor>)));
+    // repaint if new render is available
     connect(&d->m_control, SIGNAL(renderAvailable()), this, SLOT(update()));
+    // repaint if progress is updated
     connect(&d->m_control, SIGNAL(progressChanged(int)), this, SLOT(update()));
+    // repaint if allocation progress is updated
     connect(&d->m_control, SIGNAL(allocationProgressChanged(int)), this, SLOT(update()));
 }
 
@@ -130,7 +186,7 @@ void MVSpikeSprayPanel::paintEvent(QPaintEvent* evt)
 
     d->m_control.paint(&painter, rect());
 
-    // render progress
+    // render progress: red stripe for memory allocation, white for rendering
     int progress = d->m_control.progress();
     int allocprogress = d->m_control.allocationProgress();
     if (progress > 0 && progress < 100) {
@@ -155,20 +211,27 @@ QColor brighten(QColor col, double factor)
     return QColor(r, g, b);
 }
 
+/*!
+ * \brief MVSSRenderer::render starts the rendering operation.
+ *
+ * \warning This method can run for a long period of times.
+ */
 void MVSSRenderer::render()
 {
-    RAII releaseRAII([this]() { release(); }); // make sure we call release while returning
+    RAII releaseRAII([this]() { release(); });  // make sure we call release while returning
     if (isInterruptionRequested()) {
-        return;
+        return; // if we're requested to stop, we bail out here.
     }
     m_processing = true;
     clearInterrupt();
-    QImage image = QImage(W, H, QImage::Format_ARGB32);
-    image.fill(Qt::transparent);
-    replaceImage(image);
-    emit imageUpdated(0);
+    QImage image = QImage(W, H, QImage::Format_ARGB32);         // create an empty image
+    image.fill(Qt::transparent);                                // and make it transparent
+    replaceImage(image);                                        // replace the current image
+    emit imageUpdated(0);                                       // and report we've just begun
     QPainter painter(&image);
     painter.setRenderHint(QPainter::Antialiasing);
+    // the algorithm is performing lazy memory allocation. This is the last spot we can
+    // do the actual allocation (and copy). Bail out if interruption is requested.
     clips = allocator.allocate([this]() { return isInterruptionRequested(); });
 
     const long L = clips.N3();
@@ -179,7 +242,7 @@ void MVSSRenderer::render()
     QTime timer;
     timer.start();
     for (long i = 0; i < L; i++) {
-        if (timer.elapsed() > 300) { // each 300ms report an intermediate result
+        if (timer.elapsed() > 300) {            // each 300ms report an intermediate result
             replaceImage(image);
             emit imageUpdated(100 * i / L);
             timer.restart();
@@ -187,12 +250,16 @@ void MVSSRenderer::render()
         if (isInterruptionRequested()) {
             return;
         }
-        render_clip(&painter, i);
+        render_clip(&painter, i);               // render one step
     }
-    replaceImage(image);
+    replaceImage(image);                        // we're done, expose the result
     emit imageUpdated(100);
 }
 
+/*!
+ * \brief MVSSRenderer::render_clip performs rendering of a single clip
+ *
+ */
 void MVSSRenderer::render_clip(QPainter* painter, long i) const
 {
     QColor col = colors[i];
@@ -200,10 +267,10 @@ void MVSSRenderer::render_clip(QPainter* painter, long i) const
     const long T = clips.N2();
     const double* ptr = clips.constDataPtr() + (M * T * i);
     QPen pen = painter->pen();
-    pen.setColor(col);
+    pen.setColor(col);                          // set proper color
     painter->setPen(pen);
     for (long m = 0; m < M; m++) {
-        QPainterPath path;
+        QPainterPath path;                      // we're setting up a painter path
         for (long t = 0; t < T; t++) {
             double val = ptr[m + M * t];
             QPointF pt = coord2pix(m, t, val);
@@ -211,10 +278,10 @@ void MVSSRenderer::render_clip(QPainter* painter, long i) const
                 path.moveTo(pt);
             }
             else {
-                path.lineTo(pt);
+                path.lineTo(pt);                // plotting a curve
             }
         }
-        painter->drawPath(path);
+        painter->drawPath(path);                // render the complete painter path
     }
 }
 
@@ -314,6 +381,15 @@ QSet<int> MVSpikeSprayPanelControl::labels() const
     return d->labels;
 }
 
+/*!
+ * \brief MVSpikeSprayPanelControl::paint renders the panel to a \a painter.
+ *
+ * The panel is rendered to the given \a rect in \a painter coordinate system.
+ * If the panel needs refreshing, a render operation is scheduled. The method will
+ * render the current content but will be called again when new content is available.
+ *
+ * \sa update(), rerender()
+ */
 void MVSpikeSprayPanelControl::paint(QPainter* painter, const QRectF& rect)
 {
     if (d->needsRerender)
@@ -326,6 +402,10 @@ void MVSpikeSprayPanelControl::paint(QPainter* painter, const QRectF& rect)
     painter->restore();
 }
 
+/*!
+ * \brief MVSpikeSprayPanelControl::paintLegend renders a view legend to \a painter.
+ *
+ */
 void MVSpikeSprayPanelControl::paintLegend(QPainter* painter, const QRectF& rect)
 {
     if (!legendVisible())
@@ -368,6 +448,10 @@ const QList<QColor>& MVSpikeSprayPanelControl::labelColors() const
     return d->labelColors;
 }
 
+/*!
+ * \brief setClips sets clip data to be rendered.
+ *
+ */
 void MVSpikeSprayPanelControl::setClips(Mda* X)
 {
     if (X == d->clipsToRender)
@@ -384,16 +468,28 @@ void MVSpikeSprayPanelControl::setRenderLabels(const QVector<int>& X)
     updateRender();
 }
 
+/*!
+ * \brief The progress method returns the current rendering progress
+ *
+ */
 int MVSpikeSprayPanelControl::progress() const
 {
     return d->progress;
 }
 
+/*!
+ * \brief The allocationProgress method returns the current progress of memory allocation
+ *
+ */
 int MVSpikeSprayPanelControl::allocationProgress() const
 {
     return d->allocProgress;
 }
 
+/*!
+ * \brief The setLabelColors method sets colors for the labels.
+ *
+ */
 void MVSpikeSprayPanelControl::setLabelColors(const QList<QColor>& labelColors)
 {
     if (labelColors == d->labelColors)
@@ -403,18 +499,26 @@ void MVSpikeSprayPanelControl::setLabelColors(const QList<QColor>& labelColors)
     update();
 }
 
+/*!
+ * \brief The update method updates the control with the latest image from the renderer.
+ *
+ * The \a progress argument denotes the current progress reported by the renderer.
+ */
 void MVSpikeSprayPanelControl::update(int progress)
 {
     if (d->renderer) {
-        d->render = d->renderer->resultImage();
+        d->render = d->renderer->resultImage(); // get latest image from the renderer
         emit renderAvailable();
     }
     if (progress != -1) {
-        d->progress = progress;
+        d->progress = progress;                 // if rendering is in progress, report the progress
         emit progressChanged(progress);
     }
 }
 
+/*!
+ * \brief The updateRender method tells the control a rerender is required.
+ */
 void MVSpikeSprayPanelControl::updateRender()
 {
     d->needsRerender = true;
@@ -425,23 +529,24 @@ void MVSpikeSprayPanelControl::rerender()
 {
     d->needsRerender = false;
     if (!d->clipsToRender) {
-        return;
+        return;                                 // nothing to render
     }
     if (d->clipsToRender->N3() != d->renderLabels.count()) {
-        qWarning() << "Number of clips to render does not match the number of labels to render" << d->clipsToRender->N3() << d->renderLabels.count();
-        return;
+        qWarning() << "Number of clips to render does not match the number of labels to render"
+                   << d->clipsToRender->N3() << d->renderLabels.count();
+        return;                                 // data mismatch
     }
 
 
-    if (!amplitude()) {
+    if (!amplitude()) {                         // if amplitude is not given
         double maxval = qMax(qAbs(d->clipsToRender->minimum()), qAbs(d->clipsToRender->maximum()));
         if (maxval)
-            d->amplitude = 1.5 / maxval;
+            d->amplitude = 1.5 / maxval;        // try to calculate it automatically
     }
 
     int K = MLCompute::max(d->renderLabels);
     if (!K) {
-        return;
+        return;                                 // nothing to render
     }
     QVector<int> counts(K + 1, 0);
     QList<long> inds;
@@ -464,15 +569,15 @@ void MVSpikeSprayPanelControl::rerender()
             alphas[k] = 255;
     }
 
-    if (d->renderer) {
-        d->renderer->requestInterruption();
-        d->renderer->wait();
+    if (d->renderer) {                          // since we're chainging the conditions
+        d->renderer->requestInterruption();     // stop the old rendering
+        d->renderer->wait();                    // and wait for it to die
         d->renderer->deleteLater();
         d->renderer = nullptr;
     }
-    d->renderer = new MVSSRenderer;
+    d->renderer = new MVSSRenderer;             // start a new renderer
     if (!d->renderThread->isRunning())
-        d->renderThread->start();
+        d->renderThread->start();               // start the thread if not already started
 
     long M = d->clipsToRender->N1();
     long T = d->clipsToRender->N2();
@@ -499,6 +604,7 @@ void MVSpikeSprayPanelControl::rerender()
     connect(d->renderer, SIGNAL(imageUpdated(int)), this, SLOT(update(int)));
     connect(d->renderer, SIGNAL(allocateProgress(int)), this, SLOT(updateAllocProgress(int)));
     d->renderer->moveToThread(d->renderThread);
+    // schedule rendering
     QMetaObject::invokeMethod(d->renderer, "render", Qt::QueuedConnection);
 }
 
@@ -522,6 +628,9 @@ QImage MVSSRenderer::resultImage() const
     return image_in_progress;
 }
 
+/*!
+ * \brief MVSSRenderer::wait method suspends the calling thread until processing is complete.
+ */
 void MVSSRenderer::wait()
 {
     m_condMutex.lock();
@@ -530,12 +639,35 @@ void MVSSRenderer::wait()
     m_condMutex.unlock();
 }
 
+/*!
+ * \brief MVSSRenderer::release method wakes all threads waiting for processing completion.
+ */
 void MVSSRenderer::release()
 {
     m_condMutex.lock();
     m_processing = false;
     m_cond.wakeAll();
     m_condMutex.unlock();
+}
+
+/*!
+ * \brief Constructor which creates a no-op allocator
+ */
+MVSSRenderer::ClipsAllocator::ClipsAllocator() {}
+
+/*!
+ * \brief Constructor which initializes the allocator
+ * \param src Mda structure to be copied
+ * \param _M 1st dim
+ * \param _T 2nd dim
+ * \param _inds 3rd dim
+ */
+MVSSRenderer::ClipsAllocator::ClipsAllocator(Mda *src, long _M, long _T, const QList<long> &_inds)
+    : source(src)
+    , M(_M)
+    , T(_T)
+    , inds(_inds)
+{
 }
 
 Mda MVSSRenderer::ClipsAllocator::allocate(const std::function<bool()>& breakFunc)
@@ -548,11 +680,11 @@ Mda MVSSRenderer::ClipsAllocator::allocate(const std::function<bool()>& breakFun
             }
         }
         if (breakFunc && breakFunc())
-            return result;
+            return result;                      // bail out if requested
         if (progressFunction)
-            progressFunction(j * 100 / inds.count());
+            progressFunction(j * 100 / inds.count()); // report progress
     }
     if (progressFunction)
-        progressFunction(100);
+        progressFunction(100);                  // report completion
     return result;
 }
