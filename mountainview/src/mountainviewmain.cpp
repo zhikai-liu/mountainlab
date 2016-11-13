@@ -150,13 +150,21 @@ int main(int argc, char* argv[])
     CounterManager* counterManager = new CounterManager;
     registry.addAutoReleasedObject(counterManager);
 
-    ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_allocated"));
-    ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_freed"));
+    ObjectRegistry::addAutoReleasedObject(new IIntCounter("allocated_bytes"));
+    ObjectRegistry::addAutoReleasedObject(new IIntCounter("freed_bytes"));
+    ObjectRegistry::addAutoReleasedObject(new IIntCounter("remote_processing_time"));
+    ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_downloaded"));
     ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_read"));
     ObjectRegistry::addAutoReleasedObject(new IIntCounter("bytes_written"));
 
     QList<ICounterBase*> counters = ObjectRegistry::getObjects<ICounterBase>();
     counterManager->setCounters(counters);
+    counterManager->connect(ObjectRegistry::instance(), &ObjectRegistry::objectAdded, [counterManager](QObject *o) {
+      if (ICounterBase *cntr = qobject_cast<ICounterBase*>(o)) {
+          counterManager->addCounter(cntr);
+      }
+    });
+
     // make sure task progress monitor is instantiated in the main thread
     TaskManager::TaskProgressMonitor* monitor = TaskManager::TaskProgressMonitor::globalInstance();
     registry.addObject(monitor);

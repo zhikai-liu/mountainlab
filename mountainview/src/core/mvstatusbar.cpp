@@ -46,9 +46,22 @@ MVStatusBar::MVStatusBar()
     setLayout(layout);
 
     d->m_tp_agent = TaskManager::TaskProgressMonitor::globalInstance();
-    connect(d->m_tp_agent, SIGNAL(quantitiesChanged()), this, SLOT(slot_update_quantities()));
     connect(d->m_tp_agent->model(), SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(slot_update_tasks()));
     connect(d->m_tp_agent->model(), SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(slot_update_tasks()));
+    ICounterManager* manager = ObjectRegistry::getObject<ICounterManager>();
+    SimpleAggregateCounter *meminuse = new SimpleAggregateCounter("bytes_in_use", SimpleAggregateCounter::Subtract, manager->counter("allocated_bytes"), manager->counter("freed_bytes"));
+    meminuse->setParent(this);
+    ObjectRegistry::addObject(meminuse);
+    if (manager) {
+        QStringList counters = { "bytes_downloaded", "bytes_read", "bytes_in_use"};
+        foreach(const QString& cntr, counters) {
+            ICounterBase *counter = manager->counter(cntr);
+            if (counter)
+                connect(counter, SIGNAL(valueChanged()), this, SLOT(slot_update_quantities()));
+            else
+                qWarning() << cntr << "counter not present";
+        }
+    }
 }
 
 MVStatusBar::~MVStatusBar()
@@ -81,21 +94,24 @@ void MVStatusBar::slot_update_quantities()
         QString txt = QString("%1 downloaded |").arg(counter->label());
         d->m_bytes_downloaded_label.setText(txt);
     }
-    if (ICounterBase* counter = manager ? manager->counter("bytes_downloaded") : nullptr) {
+    if (ICounterBase* counter = manager ? manager->counter("remote_processing_time") : nullptr) {
         QString txt = QString("%1 remote processing").arg(format_duration(counter->value<int>()));
         d->m_remote_processing_time_label.setText(txt);
     }
     {
         if (manager) {
             // TODO: Make the counters intelligent by using aggregate counters and labels for them.
-            IIntCounter* allocatedCounter = static_cast<IIntCounter*>(manager->counter("allocated_bytes"));
-            IIntCounter* freedCounter = static_cast<IIntCounter*>(manager->counter("freed_bytes"));
             IIntCounter* bytesReadCounter = static_cast<IIntCounter*>(manager->counter("bytes_read"));
+            ICounterBase* bytesInUseCounter = manager->counter("bytes_in_use");
 
-            double using_bytes = allocatedCounter && freedCounter ? allocatedCounter->value() - freedCounter->value() : 0;
+            double using_bytes = bytesInUseCounter ? bytesInUseCounter->value<int64_t>() : 0;
             double bytes_read = bytesReadCounter ? bytesReadCounter->value() : 0;
             QString txt = QString("%1 RAM | %2 Read").arg(format_num_bytes(using_bytes)).arg(format_num_bytes(bytes_read));
             d->m_bytes_allocated_label.setText(txt);
+            IIntCounter* allocatedCounter = static_cast<IIntCounter*>(manager->counter("allocated_bytes"));
+            IIntCounter* freedCounter = static_cast<IIntCounter*>(manager->counter("freed_bytes"));
+            if (allocatedCounter && freedCounter)
+                d->m_bytes_allocated_label.setToolTip(QString("Allocated: <b>%1</b><br>Freed: <b>%2</b>").arg(format_num_bytes(allocatedCounter->value())).arg(format_num_bytes(freedCounter->value())));
         }
     }
 }

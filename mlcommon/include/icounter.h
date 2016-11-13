@@ -5,7 +5,6 @@
 #include <QReadWriteLock>
 #include <QVariant>
 #include <QHash>
-#include <type_traits>
 
 class ICounterBase : public QObject {
     Q_OBJECT
@@ -16,7 +15,7 @@ public:
         Double
     };
     Q_ENUM(Type)
-    ICounterBase(const QString& name);
+    ICounterBase(const QString& name, QObject *parent = 0);
     virtual Type type() const = 0;
     virtual QString name() const;
     virtual QString label() const;
@@ -173,6 +172,101 @@ private:
     QHash<QString, CounterGroup*> m_groups;
     QStringList m_groupNames;
     mutable QReadWriteLock m_groupsLock;
+};
+
+class CounterProxy : public ICounterBase {
+    Q_OBJECT
+public:
+    CounterProxy(const QString &name, QObject *parent = 0);
+    CounterProxy(const QString &name, ICounterBase *c, QObject *parent = 0);
+    void setBaseCounter(ICounterBase *c);
+    ICounterBase* baseCounter() const;
+    virtual Type type() const;
+    virtual QString label() const;
+    virtual QVariant genericValue() const;
+    virtual QVariant add(const QVariant& v);
+protected slots:
+    virtual void updateValue();
+
+private:
+    ICounterBase *m_base = nullptr;
+};
+
+//template<typename T>
+class SimpleAggregateCounter : public IAggregateCounter {
+public:
+    enum Operator {
+        None,
+        Add,
+        Subtract,
+        Multiply,
+        Divide,
+        Mean
+    };
+    SimpleAggregateCounter(const QString &name, Operator op, ICounterBase *c1, ICounterBase *c2)
+        : SimpleAggregateCounter(name, op, { c1, c2 }) {}
+
+    SimpleAggregateCounter(const QString &name, Operator op, QList<ICounterBase*> &counters)
+        : IAggregateCounter(name), m_operator(op){
+        foreach(ICounterBase* cntr, counters) {
+            addCounter(cntr);
+        }
+    }
+
+    SimpleAggregateCounter(const QString &name, Operator op, const std::initializer_list<ICounterBase*> &counters)
+        : IAggregateCounter(name), m_operator(op){
+        foreach(ICounterBase* cntr, counters) {
+            addCounter(cntr);
+        }
+    }
+
+    Type type() const { return Integer; }
+    QVariant genericValue() const { return QVariant::fromValue<int64_t>(value()); }
+    int64_t value() const { return m_value; }
+    Operator operatorType() const { return m_operator; }
+protected:
+    void updateValue() {
+        m_value = calculate(operatorType());
+        emit valueChanged();
+    }
+    int64_t calculate(Operator op) const {
+        if(counters().empty()) return 0;
+        int64_t val = 0;
+        switch(op) {
+        case None: return 0;
+        case Add: {
+            foreach(ICounterBase *cntr, counters())
+                val += cntr->value<int64_t>();
+            return val;
+        }
+        case Subtract: {
+            val = counters().first()->value<int64_t>();
+            for (int i=1;i<counters().size(); ++i)
+                val -= counters().at(i)->value<int64_t>();
+            return val;
+        }
+        case Multiply: {
+            val = 1;
+            foreach(ICounterBase *cntr, counters())
+                val *= cntr->value<int64_t>();
+            return val;
+        }
+        case Divide: {
+            val = counters().first()->value<int64_t>();
+            for (int i=1;i<counters().size(); ++i) {
+                int64_t cval = counters().at(i)->value<int64_t>();
+                if (cval == 0) continue;
+                val /= cval;
+            }
+            return val;
+        }
+        case Mean: return calculate(Add) / counters().size();
+        }
+        return 0;
+    }
+private:
+    int64_t m_value = 0;
+    Operator m_operator;
 };
 
 #endif // ICOUNTER_H
