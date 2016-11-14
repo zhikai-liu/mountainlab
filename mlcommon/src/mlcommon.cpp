@@ -242,7 +242,22 @@ CLParams::CLParams(int argc, char* argv[])
                 this->error_message = "Problem with parameter: " + str;
                 return;
             }
-            this->named_parameters[name] = clp_string_to_variant(val);
+            QVariant val2 = clp_string_to_variant(val);
+            if (this->named_parameters.contains(name)) {
+                QVariant tmp = this->named_parameters[name];
+                QVariantList list;
+                if (tmp.type() == QVariant::List) {
+                    list = tmp.toList();
+                }
+                else {
+                    list.append(tmp);
+                }
+                list.append(val2);
+                this->named_parameters[name] = list;
+            }
+            else {
+                this->named_parameters[name] = val2;
+            }
         }
         else {
             this->unnamed_parameters << str;
@@ -1077,6 +1092,21 @@ QString locate_prv(const QJsonObject& obj)
                 }
             }
         }
+    }
+    return ret;
+}
+
+QStringList MLUtil::toStringList(const QVariant& val)
+{
+    QStringList ret;
+    if (val.type() == QVariant::List) {
+        QVariantList list = val.toList();
+        for (int i = 0; i < list.count(); i++) {
+            ret << list[i].toString();
+        }
+    }
+    else {
+        ret << val.toString();
     }
     return ret;
 }

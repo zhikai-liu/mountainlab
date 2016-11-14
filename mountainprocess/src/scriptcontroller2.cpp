@@ -50,16 +50,18 @@ struct PipelineNode2 {
     {
         QStringList input_pnames = inputs.keys();
         QStringList ret;
-        foreach (QString pname, input_pnames)
-            ret << inputs[pname].toString();
+        foreach (QString pname, input_pnames) {
+            ret.append(MLUtil::toStringList(inputs[pname]));
+        }
         return ret;
     }
     QStringList output_paths()
     {
         QStringList output_pnames = outputs.keys();
         QStringList ret;
-        foreach (QString pname, output_pnames)
-            ret << outputs[pname].toString();
+        foreach (QString pname, output_pnames) {
+            ret.append(MLUtil::toStringList(outputs[pname]));
+        }
         return ret;
     }
 };
@@ -343,7 +345,16 @@ void ScriptController2Private::resolve_file_names(QVariantMap& fnames)
 {
     QStringList pnames = fnames.keys();
     foreach (QString pname, pnames) {
-        fnames[pname] = resolve_file_name_p(fnames[pname].toString());
+        QStringList list = MLUtil::toStringList(fnames[pname]);
+        if (list.count() == 1)
+            fnames[pname] = resolve_file_name_p(fnames[pname].toString());
+        else {
+            QVariantList list2;
+            foreach (QString str, list) {
+                list2 << resolve_file_name_p(str);
+            }
+            fnames[pname] = list2;
+        }
     }
 }
 
@@ -478,9 +489,11 @@ PipelineNode2* ScriptController2Private::find_node_ready_to_run()
             bool ready_to_run = true;
             QStringList pnames = node->inputs.keys();
             foreach (QString pname, pnames) {
-                QString input_path = node->inputs[pname].toString();
-                if (file_paths_waiting_to_be_created.contains(input_path)) {
-                    ready_to_run = false;
+                QStringList input_paths = MLUtil::toStringList(node->inputs[pname]);
+                foreach (QString input_path, input_paths) {
+                    if (file_paths_waiting_to_be_created.contains(input_path)) {
+                        ready_to_run = false;
+                    }
                 }
             }
             if (ready_to_run) {

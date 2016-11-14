@@ -45,6 +45,7 @@ QJsonObject mountainlabConfig();
 QJsonValue configValue(const QString& group, const QString& key);
 QString configResolvedPath(const QString& group, const QString& key);
 QStringList configResolvedPathList(const QString& group, const QString& key);
+QStringList toStringList(const QVariant& val); //val is either a string or a QVariantList
 };
 
 namespace MLCompute {

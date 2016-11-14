@@ -60,7 +60,6 @@
  *
  */
 
-
 namespace {
 /*!
  * \brief A RAII object executes a given function upon destruction
@@ -103,7 +102,7 @@ public:
     Mda* clipsToRender = nullptr;
     QVector<int> renderLabels;
     bool needsRerender = true;
-    QThread *renderThread;
+    QThread* renderThread;
     MVSSRenderer* renderer = nullptr;
     QImage render;
     int progress = 0;
@@ -125,7 +124,7 @@ MVSpikeSprayPanel::MVSpikeSprayPanel(MVContext* context)
     d->m_control.setLabelColors(context->clusterColors());
     // rerender if cluster colors have changed
     QObject::connect(context, SIGNAL(clusterColorsChanged(QList<QColor>)),
-                     &d->m_control, SLOT(setLabelColors(QList<QColor>)));
+        &d->m_control, SLOT(setLabelColors(QList<QColor>)));
     // repaint if new render is available
     connect(&d->m_control, SIGNAL(renderAvailable()), this, SLOT(update()));
     // repaint if progress is updated
@@ -218,16 +217,16 @@ QColor brighten(QColor col, double factor)
  */
 void MVSSRenderer::render()
 {
-    RAII releaseRAII([this]() { release(); });  // make sure we call release while returning
+    RAII releaseRAII([this]() { release(); }); // make sure we call release while returning
     if (isInterruptionRequested()) {
         return; // if we're requested to stop, we bail out here.
     }
     m_processing = true;
     clearInterrupt();
-    QImage image = QImage(W, H, QImage::Format_ARGB32);         // create an empty image
-    image.fill(Qt::transparent);                                // and make it transparent
-    replaceImage(image);                                        // replace the current image
-    emit imageUpdated(0);                                       // and report we've just begun
+    QImage image = QImage(W, H, QImage::Format_ARGB32); // create an empty image
+    image.fill(Qt::transparent); // and make it transparent
+    replaceImage(image); // replace the current image
+    emit imageUpdated(0); // and report we've just begun
     QPainter painter(&image);
     painter.setRenderHint(QPainter::Antialiasing);
     // the algorithm is performing lazy memory allocation. This is the last spot we can
@@ -242,7 +241,7 @@ void MVSSRenderer::render()
     QTime timer;
     timer.start();
     for (long i = 0; i < L; i++) {
-        if (timer.elapsed() > 300) {            // each 300ms report an intermediate result
+        if (timer.elapsed() > 300) { // each 300ms report an intermediate result
             replaceImage(image);
             emit imageUpdated(100 * i / L);
             timer.restart();
@@ -250,9 +249,9 @@ void MVSSRenderer::render()
         if (isInterruptionRequested()) {
             return;
         }
-        render_clip(&painter, i);               // render one step
+        render_clip(&painter, i); // render one step
     }
-    replaceImage(image);                        // we're done, expose the result
+    replaceImage(image); // we're done, expose the result
     emit imageUpdated(100);
 }
 
@@ -267,10 +266,10 @@ void MVSSRenderer::render_clip(QPainter* painter, long i) const
     const long T = clips.N2();
     const double* ptr = clips.constDataPtr() + (M * T * i);
     QPen pen = painter->pen();
-    pen.setColor(col);                          // set proper color
+    pen.setColor(col); // set proper color
     painter->setPen(pen);
     for (long m = 0; m < M; m++) {
-        QPainterPath path;                      // we're setting up a painter path
+        QPainterPath path; // we're setting up a painter path
         for (long t = 0; t < T; t++) {
             double val = ptr[m + M * t];
             QPointF pt = coord2pix(m, t, val);
@@ -278,10 +277,10 @@ void MVSSRenderer::render_clip(QPainter* painter, long i) const
                 path.moveTo(pt);
             }
             else {
-                path.lineTo(pt);                // plotting a curve
+                path.lineTo(pt); // plotting a curve
             }
         }
-        painter->drawPath(path);                // render the complete painter path
+        painter->drawPath(path); // render the complete painter path
     }
 }
 
@@ -309,7 +308,7 @@ MVSpikeSprayPanelControl::MVSpikeSprayPanelControl(QObject* parent)
     : QObject(parent)
     , d(new MVSpikeSprayPanelControlPrivate(this))
 {
-    d->renderThread=new QThread;
+    d->renderThread = new QThread;
 }
 
 MVSpikeSprayPanelControl::~MVSpikeSprayPanelControl()
@@ -511,7 +510,7 @@ void MVSpikeSprayPanelControl::update(int progress)
         emit renderAvailable();
     }
     if (progress != -1) {
-        d->progress = progress;                 // if rendering is in progress, report the progress
+        d->progress = progress; // if rendering is in progress, report the progress
         emit progressChanged(progress);
     }
 }
@@ -529,24 +528,23 @@ void MVSpikeSprayPanelControl::rerender()
 {
     d->needsRerender = false;
     if (!d->clipsToRender) {
-        return;                                 // nothing to render
+        return; // nothing to render
     }
     if (d->clipsToRender->N3() != d->renderLabels.count()) {
         qWarning() << "Number of clips to render does not match the number of labels to render"
                    << d->clipsToRender->N3() << d->renderLabels.count();
-        return;                                 // data mismatch
+        return; // data mismatch
     }
 
-
-    if (!amplitude()) {                         // if amplitude is not given
+    if (!amplitude()) { // if amplitude is not given
         double maxval = qMax(qAbs(d->clipsToRender->minimum()), qAbs(d->clipsToRender->maximum()));
         if (maxval)
-            d->amplitude = 1.5 / maxval;        // try to calculate it automatically
+            d->amplitude = 1.5 / maxval; // try to calculate it automatically
     }
 
     int K = MLCompute::max(d->renderLabels);
     if (!K) {
-        return;                                 // nothing to render
+        return; // nothing to render
     }
     QVector<int> counts(K + 1, 0);
     QList<long> inds;
@@ -569,15 +567,15 @@ void MVSpikeSprayPanelControl::rerender()
             alphas[k] = 255;
     }
 
-    if (d->renderer) {                          // since we're chainging the conditions
-        d->renderer->requestInterruption();     // stop the old rendering
-        d->renderer->wait();                    // and wait for it to die
+    if (d->renderer) { // since we're chainging the conditions
+        d->renderer->requestInterruption(); // stop the old rendering
+        d->renderer->wait(); // and wait for it to die
         d->renderer->deleteLater();
         d->renderer = nullptr;
     }
-    d->renderer = new MVSSRenderer;             // start a new renderer
+    d->renderer = new MVSSRenderer; // start a new renderer
     if (!d->renderThread->isRunning())
-        d->renderThread->start();               // start the thread if not already started
+        d->renderThread->start(); // start the thread if not already started
 
     long M = d->clipsToRender->N1();
     long T = d->clipsToRender->N2();
@@ -662,7 +660,7 @@ MVSSRenderer::ClipsAllocator::ClipsAllocator() {}
  * \param _T 2nd dim
  * \param _inds 3rd dim
  */
-MVSSRenderer::ClipsAllocator::ClipsAllocator(Mda *src, long _M, long _T, const QList<long> &_inds)
+MVSSRenderer::ClipsAllocator::ClipsAllocator(Mda* src, long _M, long _T, const QList<long>& _inds)
     : source(src)
     , M(_M)
     , T(_T)
@@ -680,11 +678,11 @@ Mda MVSSRenderer::ClipsAllocator::allocate(const std::function<bool()>& breakFun
             }
         }
         if (breakFunc && breakFunc())
-            return result;                      // bail out if requested
+            return result; // bail out if requested
         if (progressFunction)
             progressFunction(j * 100 / inds.count()); // report progress
     }
     if (progressFunction)
-        progressFunction(100);                  // report completion
+        progressFunction(100); // report completion
     return result;
 }

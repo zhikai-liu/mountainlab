@@ -118,7 +118,18 @@ int main(int argc, char* argv[])
         QJsonObject parameters;
         QStringList keys = CLP.named_parameters.keys();
         foreach (QString key, keys) {
-            parameters[key] = CLP.named_parameters[key].toString();
+            QVariant val = CLP.named_parameters[key];
+            if (val.type() == QVariant::List) {
+                QJsonArray array;
+                QVariantList list = val.toList();
+                for (int i = 0; i < list.count(); i++) {
+                    array.push_back(list[i].toString());
+                }
+                parameters[key] = array;
+            }
+            else {
+                parameters[key] = val.toString();
+            }
         }
         process["parameters"] = parameters;
         if (run_process(PM, process))
@@ -160,7 +171,18 @@ bool run_process(MSProcessManager* PM, QJsonObject process)
     QStringList keys = parameters.keys();
     QMap<QString, QVariant> params;
     foreach (QString key, keys) {
-        params[key] = parameters[key].toString();
+        QJsonValue val = parameters[key];
+        if (val.isArray()) {
+            QJsonArray array = val.toArray();
+            QVariantList list;
+            for (int i = 0; i < array.count(); i++) {
+                list.push_back(array[i].toString());
+            }
+            params[key] = list;
+        }
+        else {
+            params[key] = parameters[key].toString();
+        }
     }
 
     if (!PM->checkAndRunProcess(processor_name, params)) {

@@ -652,7 +652,10 @@ bool MPDaemonPrivate::launch_pript(QString pript_id)
             args << "--_process_output=" + S->output_fname;
         QStringList pkeys = S->parameters.keys();
         foreach (QString pkey, pkeys) {
-            args << QString("--%1=%2").arg(pkey).arg(S->parameters[pkey].toString());
+            QStringList list = MLUtil::toStringList(S->parameters[pkey]);
+            foreach (QString str, list) {
+                args << QString("--%1=%2").arg(pkey).arg(str);
+            }
         }
         if (S->RPR.request_num_threads) {
             args << QString("--_request_num_threads=%1").arg(S->RPR.request_num_threads);
@@ -946,9 +949,11 @@ QStringList MPDaemonPrivate::get_input_paths(MPDaemonPript P)
     MLProcessor MLP = PM->processor(P.processor_name);
     QStringList pnames = MLP.inputs.keys();
     foreach (QString pname, pnames) {
-        QString path0 = P.parameters.value(pname).toString();
-        if (!path0.isEmpty()) {
-            ret << path0;
+        QStringList paths0 = MLUtil::toStringList(P.parameters[pname]); //is this right?
+        foreach (QString path0, paths0) {
+            if (!path0.isEmpty()) {
+                ret << path0;
+            }
         }
     }
     return ret;
@@ -963,9 +968,11 @@ QStringList MPDaemonPrivate::get_output_paths(MPDaemonPript P)
     MLProcessor MLP = PM->processor(P.processor_name);
     QStringList pnames = MLP.outputs.keys();
     foreach (QString pname, pnames) {
-        QString path0 = P.parameters.value(pname).toString();
-        if (!path0.isEmpty()) {
-            ret << path0;
+        QStringList paths0 = MLUtil::toStringList(P.parameters[pname]); //is this right?
+        foreach (QString path0, paths0) {
+            if (!path0.isEmpty()) {
+                ret << path0;
+            }
         }
     }
     return ret;

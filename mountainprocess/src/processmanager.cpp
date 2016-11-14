@@ -176,15 +176,21 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
         {
             QStringList keys = P.inputs.keys();
             foreach (QString key, keys) {
-                exe_command.replace(QRegExp(QString("\\$%1\\$").arg(key)), parameters[key].toString());
-                ppp += QString("--%1=%2 ").arg(key).arg(parameters[key].toString());
+                QStringList list = MLUtil::toStringList(parameters[key]);
+                exe_command.replace(QRegExp(QString("\\$%1\\$").arg(key)), list.value(0)); //note that only the first file name is inserted here
+                foreach (QString str, list) {
+                    ppp += QString("--%1=%2 ").arg(key).arg(str);
+                }
             }
         }
         {
             QStringList keys = P.outputs.keys();
             foreach (QString key, keys) {
-                exe_command.replace(QRegExp(QString("\\$%1\\$").arg(key)), parameters[key].toString());
-                ppp += QString("--%1=%2 ").arg(key).arg(parameters[key].toString());
+                QStringList list = MLUtil::toStringList(parameters[key]);
+                exe_command.replace(QRegExp(QString("\\$%1\\$").arg(key)), list.value(0)); //note that only the first file name is inserted here
+                foreach (QString str, list) {
+                    ppp += QString("--%1=%2 ").arg(key).arg(str);
+                }
             }
         }
         {
@@ -480,10 +486,30 @@ QVariantMap ProcessManagerPrivate::resolve_file_names_in_parameters(QString proc
     }
     MLProcessor MLP = m_processors[processor_name];
     foreach (MLParameter P, MLP.inputs) {
-        parameters[P.name] = resolve_file_name_p(parameters[P.name].toString());
+        QStringList list = MLUtil::toStringList(parameters[P.name]);
+        if (list.count() == 1) {
+            parameters[P.name] = resolve_file_name_p(list[0]);
+        }
+        else {
+            QVariantList list2;
+            foreach (QString str, list) {
+                list2 << resolve_file_name_p(str);
+            }
+            parameters[P.name] = list2;
+        }
     }
     foreach (MLParameter P, MLP.outputs) {
-        parameters[P.name] = resolve_file_name_p(parameters[P.name].toString());
+        QStringList list = MLUtil::toStringList(parameters[P.name]);
+        if (list.count() == 1) {
+            parameters[P.name] = resolve_file_name_p(list[0]);
+        }
+        else {
+            QVariantList list2;
+            foreach (QString str, list) {
+                list2 << resolve_file_name_p(str);
+            }
+            parameters[P.name] = list2;
+        }
     }
     return parameters;
 }
@@ -551,8 +577,18 @@ QJsonObject ProcessManagerPrivate::compute_unique_process_object(MLProcessor P, 
         QStringList input_pnames = P.inputs.keys();
         qSort(input_pnames);
         foreach (QString input_pname, input_pnames) {
-            QString fname = resolve_file_name_p(parameters[input_pname].toString());
-            inputs[input_pname] = create_file_object(fname);
+            QStringList fnames = MLUtil::toStringList(parameters[input_pname]);
+            if (fnames.count() == 1) {
+                inputs[input_pname] = resolve_file_name_p(fnames[0]);
+            }
+            else {
+                QJsonArray array;
+                foreach (QString fname0, fnames) {
+                    QString fname = resolve_file_name_p(fname0);
+                    array.append(create_file_object(fname));
+                }
+                inputs[input_pname] = array;
+            }
         }
         obj["inputs"] = inputs;
     }
@@ -561,8 +597,18 @@ QJsonObject ProcessManagerPrivate::compute_unique_process_object(MLProcessor P, 
         QStringList output_pnames = P.outputs.keys();
         qSort(output_pnames);
         foreach (QString output_pname, output_pnames) {
-            QString fname = resolve_file_name_p(parameters[output_pname].toString());
-            outputs[output_pname] = create_file_object(fname);
+            QStringList fnames = MLUtil::toStringList(parameters[output_pname]);
+            if (fnames.count() == 1) {
+                outputs[output_pname] = resolve_file_name_p(fnames[0]);
+            }
+            else {
+                QJsonArray array;
+                foreach (QString fname0, fnames) {
+                    QString fname = resolve_file_name_p(fname0);
+                    array.append(create_file_object(fname));
+                }
+                outputs[output_pname] = array;
+            }
         }
         obj["outputs"] = outputs;
     }
@@ -583,10 +629,13 @@ bool ProcessManagerPrivate::all_input_and_output_files_exist(MLProcessor P, cons
     QStringList file_pnames = P.inputs.keys();
     file_pnames.append(P.outputs.keys());
     foreach (QString pname, file_pnames) {
-        QString fname = resolve_file_name_p(parameters.value(pname).toString());
-        if (!fname.isEmpty()) {
-            if (!QFile::exists(fname))
-                return false;
+        QStringList fnames = MLUtil::toStringList(parameters.value(pname));
+        foreach (QString fname0, fnames) {
+            QString fname = resolve_file_name_p(fname0);
+            if (!fname.isEmpty()) {
+                if (!QFile::exists(fname))
+                    return false;
+            }
         }
     }
     return true;
