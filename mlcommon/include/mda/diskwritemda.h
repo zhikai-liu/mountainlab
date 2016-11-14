@@ -30,13 +30,13 @@ public:
     long N6();
     long totalSize();
 
-    void writeChunk(Mda& X, long i);
-    void writeChunk(Mda& X, long i1, long i2);
-    void writeChunk(Mda& X, long i1, long i2, long i3);
+    bool writeChunk(Mda& X, long i);
+    bool writeChunk(Mda& X, long i1, long i2);
+    bool writeChunk(Mda& X, long i1, long i2, long i3);
 
-    void writeChunk(Mda32& X, long i);
-    void writeChunk(Mda32& X, long i1, long i2);
-    void writeChunk(Mda32& X, long i1, long i2, long i3);
+    bool writeChunk(Mda32& X, long i);
+    bool writeChunk(Mda32& X, long i1, long i2);
+    bool writeChunk(Mda32& X, long i1, long i2, long i3);
 
 private:
     DiskWriteMdaPrivate* d;

@@ -253,7 +253,7 @@ QString run_process(PrvProcessRecord& P, QString& output_pname)
 
     QString fname = outputs0[output_pname].toString();
     if (!QFile::exists(fname)) {
-        qDebug() << outputs0 << output_pname;
+        qWarning() << outputs0 << output_pname;
         qWarning() << "+++++++++++++++++ Problem in run_process. File does not exist: " + fname;
         return "";
     }

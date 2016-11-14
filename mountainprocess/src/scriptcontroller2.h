@@ -28,6 +28,8 @@ public:
     Q_INVOKABLE bool runPipeline();
     Q_INVOKABLE void setNumThreads(int num_threads);
     Q_INVOKABLE void log(const QString& message);
+    Q_INVOKABLE QString dir(const QString& path);
+    Q_INVOKABLE void mkdir(const QString& path);
 
 private:
     ScriptController2Private* d;

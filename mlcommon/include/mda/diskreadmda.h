@@ -44,6 +44,7 @@ public:
     long N4() const;
     long N5() const;
     long N6() const;
+    long N(int dim) const; // dim is 1-based indexing
     long totalSize() const; //product of N1..N6
 
     MDAIO_HEADER mdaioHeader() const;

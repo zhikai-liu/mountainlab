@@ -115,7 +115,9 @@ HEADERS += \
     processors/isolation_metrics_processor.h \
     processors/isolation_metrics.h \
     processors/kdtree.h \
-    isosplit/isocut4.h
+    isosplit/isocut4.h \
+    processors/concat_mda_processor.h \
+    processors/split_timeseries_processor.h
 
 SOURCES += \
     core/msprocessmanager.cpp \
@@ -212,7 +214,9 @@ SOURCES += \
     isosplit/isocut4.cpp \
     isosplit5/isosplit5.cpp \
     isosplit5/isocut5.cpp \
-    isosplit5/jisotonic5.cpp
+    isosplit5/jisotonic5.cpp \
+    processors/concat_mda_processor.cpp \
+    processors/split_timeseries_processor.cpp
 #!macx {
 #SOURCES_NOCXX11 += \ #see below
 #    isosplit/isosplit2.cpp \

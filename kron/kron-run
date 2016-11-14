@@ -67,7 +67,9 @@ function run_pipeline(pipeline,dataset,callback) {
 	args+=' '+ds_folder+'/params.json';
 	for (var pname in interface.parameters) {
 		var val=get_interface_parameter_value(interface.parameters[pname]);
-		args+=' --'+pname+'='+val;
+		if (fs.existsSync(val)) {
+			args+=' --'+pname+'='+val;
+		}
 	}
 
 	if ('_force_run' in CLP.namedParameters) {

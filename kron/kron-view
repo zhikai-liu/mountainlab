@@ -13,6 +13,7 @@ var CLP=new common.CLParams(process.argv);
 var view_program_name=CLP.unnamedParameters[0];
 var pipnames=(CLP.unnamedParameters[1]||'').split(',');
 var dsnames=(CLP.unnamedParameters[2]||'').split(',');
+var session_names=(CLP.unnamedParameters[3]||'').split(',');
 if ('all_pairs' in CLP.namedParameters) {
 	var pipnames2=[];
 	var dsnames2=[];
@@ -68,11 +69,16 @@ if (!view_program_file) {
 
 var output_folders=[];
 for (var i in pipnames) {
-	output_folders.push(outpath+'/'+pipnames[i]+'--'+dsnames[i]);
+	var outfolder=outpath+'/'+pipnames[i]+'--'+dsnames[i];
+	if (i<session_names.length) outfolder+='/'+session_names[i];
+	output_folders.push(outfolder);
 }
+console.log('=========================================');
+console.log(JSON.stringify(output_folders));
 var dataset_folders=[];
 for (var i in datasets) {
-	dataset_folders.push(datasets[i].absolute_folder_path);
+	var dsfolder=datasets[i].absolute_folder_path;
+	dataset_folders.push(dsfolder);
 }
 
 var args='';
@@ -85,10 +91,11 @@ if (dataset_folders.length>0) {
 if (output_folders.length>0) {
 	args+=' --output_folders='+output_folders.join(';');
 }
+if (session_names.length>0) {
+	args+=' --session_names='+session_names.join(';');	
+}
 args+=' --dataset_names='+dsnames.join(',');
 args+=' --pipeline_names='+pipnames.join(',');
-console.log('==============================================================');
-console.log(args);
 args=args.split(' ');
 common.make_system_call(view_program_file,args,function() {
 });
@@ -97,6 +104,7 @@ common.wait_for_system_calls_to_finish(function() {
 
 });
 
+/*
 function open_view(alg,ds,callback) {
 	var outpath0=outpath+'/'+alg.name+'-'+ds.name;
 
@@ -113,5 +121,5 @@ function open_view(alg,ds,callback) {
 	args=args.split(' ');
 	common.make_system_call(cmd,args,callback);
 }
-
+*/
 

@@ -102,6 +102,7 @@ exports.read_datasets_from_text_file=function(file_path) {
 			}
 		}
 	}
+	console.log(datasets);
 	return datasets;
 };
 
@@ -110,7 +111,8 @@ exports.get_interface=function() {
 	return {
 		parameters:{
 			raw:'$dataset_folder$/raw.mda.prv',
-			geom:'$dataset_folder$/geom.csv'
+			geom:'$dataset_folder$/geom.csv',
+			inpath:'$dataset_folder$'
 		}
 	};
 };

@@ -35,7 +35,7 @@ public:
     void update_tree_item_data(QTreeWidgetItem* it);
     void replace_prv_in_processes(QList<PrvProcessRecord>& processes, QString original_path, const PrvRecord& prv_new);
     void replace_prv_in_process(PrvProcessRecord& P, QString original_path, const PrvRecord& prv_new);
-    QTreeWidgetItem* make_tree_item_from_prv(PrvRecord prv, int column_count, const QList<PrvProcessRecord>& additional_processes);
+    QTreeWidgetItem* make_tree_item_from_prv(PrvRecord prv, int column_count, const QList<PrvProcessRecord>& additional_processes, int recursion_level = 0);
     void start_all_searches();
 };
 
@@ -248,8 +248,12 @@ bool outputs_include_checksum(QMap<QString, PrvRecord> outputs, QString checksum
     return false;
 }
 
-QTreeWidgetItem* PrvGuiTreeWidgetPrivate::make_tree_item_from_prv(PrvRecord prv, int column_count, const QList<PrvProcessRecord>& additional_processes)
+QTreeWidgetItem* PrvGuiTreeWidgetPrivate::make_tree_item_from_prv(PrvRecord prv, int column_count, const QList<PrvProcessRecord>& additional_processes, int recursion_level)
 {
+    if (recursion_level > 4) {
+        qWarning() << "Recursion level exceeded.";
+        return 0;
+    }
     prv.processes.append(additional_processes);
 
     QTreeWidgetItem* it = new QTreeWidgetItem();
@@ -277,9 +281,11 @@ QTreeWidgetItem* PrvGuiTreeWidgetPrivate::make_tree_item_from_prv(PrvRecord prv,
         }
     }
     for (int i = 0; i < dependencies.count(); i++) {
-        QTreeWidgetItem* it2 = make_tree_item_from_prv(dependencies[i], column_count, prv.processes);
-        it2->setText(1, dep_processor_names[i] + ' ' + dep_processor_versions[i]);
-        it->addChild(it2);
+        QTreeWidgetItem* it2 = make_tree_item_from_prv(dependencies[i], column_count, prv.processes, recursion_level + 1);
+        if (it2) {
+            it2->setText(1, dep_processor_names[i] + ' ' + dep_processor_versions[i]);
+            it->addChild(it2);
+        }
     }
 
     return it;

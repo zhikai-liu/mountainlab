@@ -52,6 +52,8 @@
 #include "ms_metrics_processor.h"
 #include "basic_metrics_processor.h"
 #include "isocluster_v1_processor.h"
+#include "concat_mda_processor.h"
+#include "split_timeseries_processor.h"
 #include <sys/stat.h>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -132,6 +134,10 @@ void MSProcessManager::loadDefaultProcessors()
     loadProcessor(new ms_metrics_Processor);
     loadProcessor(new basic_metrics_Processor);
     loadProcessor(new isocluster_v1_Processor);
+    loadProcessor(new concat_mda_Processor);
+    loadProcessor(new split_timeseries_Processor);
+    loadProcessor(new concat_timeseries_Processor);
+    loadProcessor(new split_firings_Processor);
 }
 
 bool MSProcessManager::containsProcessor(const QString& processor_name) const

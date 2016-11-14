@@ -8,6 +8,9 @@ console.log(CLP.namedParameters);
 
 var dsfolder=CLP.namedParameters.dataset_folders;
 var outfolder=CLP.namedParameters.output_folders;
+var session_names=CLP.namedParameters.session_names;
+var session_str='';
+if (session_names) session_str='/'+session_names;
 
 var dsparams=JSON.parse(read_text_file(dsfolder+'/params.json')||'{}');
 
@@ -17,10 +20,18 @@ if ('ground_truth' in CLP.namedParameters) {
 }
 
 var args='';
-args+=' --raw='+dsfolder+'/raw.mda';
+if (file_exists(dsfolder+session_str+'/raw.mda')) {
+	args+=' --raw='+dsfolder+session_str+'/raw.mda';
+}
+else {
+	if (file_exists(outfolder+'/raw.mda')) {
+		args+=' --raw='+outfolder+'/raw.mda';
+	}	
+}
 if (file_exists(outfolder+'/filt.mda')) {
 	args+=' --filt='+outfolder+'/filt.mda';
 }
+
 if (file_exists(outfolder+'/pre.mda')) {
 	args+=' --pre='+outfolder+'/pre.mda';
 }
@@ -46,6 +57,7 @@ if (curation_script_path) {
 	args+=' --curation='+curation_script_path;
 }
 args=args.split(' ');
+console.log('mountainview '+args.join(' '));
 make_system_call('mountainview',args);
 
 function CLParams(argv) {

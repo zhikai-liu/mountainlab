@@ -457,7 +457,24 @@ void ProcessManagerPrivate::update_process_info(QString id)
 QString ProcessManagerPrivate::resolve_file_name_p(QString fname)
 {
     //for now I have completely removed the client/server functionality
-    return fname;
+
+    if (fname.endsWith(".prv")) {
+        QString txt = TextFile::read(fname);
+        QJsonParseError err;
+        QJsonObject obj = QJsonDocument::fromJson(txt.toUtf8(), &err).object();
+        if (err.error != QJsonParseError::NoError) {
+            qWarning() << "Error parsing .prv file: " + fname;
+            return "";
+        }
+        QString path0 = locate_prv(obj);
+        if (path0.isEmpty()) {
+            qWarning() << "Unable to locate prv file originally at: " + obj["original_path"].toString();
+            return "";
+        }
+        return path0;
+    }
+    else
+        return fname;
 
     /*
     //This is terrible, we need to fix it!
@@ -579,7 +596,7 @@ QJsonObject ProcessManagerPrivate::compute_unique_process_object(MLProcessor P, 
         foreach (QString input_pname, input_pnames) {
             QStringList fnames = MLUtil::toStringList(parameters[input_pname]);
             if (fnames.count() == 1) {
-                inputs[input_pname] = resolve_file_name_p(fnames[0]);
+                inputs[input_pname] = create_file_object(resolve_file_name_p(fnames[0]));
             }
             else {
                 QJsonArray array;
@@ -599,7 +616,7 @@ QJsonObject ProcessManagerPrivate::compute_unique_process_object(MLProcessor P, 
         foreach (QString output_pname, output_pnames) {
             QStringList fnames = MLUtil::toStringList(parameters[output_pname]);
             if (fnames.count() == 1) {
-                outputs[output_pname] = resolve_file_name_p(fnames[0]);
+                outputs[output_pname] = create_file_object(resolve_file_name_p(fnames[0]));
             }
             else {
                 QJsonArray array;

@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
             return -1;
         }
         else {
-            qDebug() << missing_prvs.keys();
+            qWarning() << missing_prvs.keys();
             QString msg = QString("One or more prvs could not be found. To resolve these using the GUI, run this command again with the --_prvgui option.");
             printf("%s\n", msg.toUtf8().data());
             return -1;

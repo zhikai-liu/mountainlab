@@ -337,6 +337,26 @@ long DiskReadMda::N6() const
     return d->m_header.dims[5];
 }
 
+long DiskReadMda::N(int dim) const
+{
+    if (dim == 0)
+        return 0; //should be 1-based
+    if (dim == 1)
+        return N1();
+    else if (dim == 2)
+        return N2();
+    else if (dim == 3)
+        return N3();
+    else if (dim == 4)
+        return N4();
+    else if (dim == 5)
+        return N5();
+    else if (dim == 6)
+        return N6();
+    else
+        return 1;
+}
+
 long DiskReadMda::totalSize() const
 {
     return d->total_size();

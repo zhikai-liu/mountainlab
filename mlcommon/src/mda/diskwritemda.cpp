@@ -152,69 +152,83 @@ long DiskWriteMda::totalSize()
     return N1() * N2() * N3() * N4() * N5() * N6();
 }
 
-void DiskWriteMda::writeChunk(Mda& X, long i)
+bool DiskWriteMda::writeChunk(Mda& X, long i)
 {
     if (!d->m_file)
-        return;
+        return false;
     fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * i, SEEK_SET);
     long size = X.totalSize();
     if (i + size > this->totalSize())
         size = this->totalSize() - i;
     if (size > 0) {
-        mda_write_float64(X.dataPtr(), &d->m_header, size, d->m_file);
+        if (!mda_write_float64(X.dataPtr(), &d->m_header, size, d->m_file))
+            return false;
     }
+    return true;
 }
 
-void DiskWriteMda::writeChunk(Mda& X, long i1, long i2)
+bool DiskWriteMda::writeChunk(Mda& X, long i1, long i2)
 {
     if ((X.N1() == N1()) && (i1 == 0)) {
-        writeChunk(X, i1 + this->N1() * i2);
+        return writeChunk(X, i1 + this->N1() * i2);
     }
     else {
         qWarning() << "This case not yet supported in 2d writeSubArray" << X.N1() << X.N2() << N1() << N2() << i1 << i2;
+        return false;
     }
 }
 
-void DiskWriteMda::writeChunk(Mda& X, long i1, long i2, long i3)
+bool DiskWriteMda::writeChunk(Mda& X, long i1, long i2, long i3)
 {
+    if ((i3 == 0) && (X.N3() == 1) && (X.N3() == 1))
+        return writeChunk(X, i1, i2);
     if ((X.N1() == N1()) && (X.N2() == N2()) && (i1 == 0) && (i2 == 0)) {
-        writeChunk(X, i1 + this->N1() * i2 + this->N1() * this->N2() * i3);
+        return writeChunk(X, i1 + this->N1() * i2 + this->N1() * this->N2() * i3);
     }
     else {
         qWarning() << "This case not yet supported in 3d writeSubArray" << X.N1() << X.N2() << X.N3() << N1() << N2() << N3() << i1 << i2 << i3;
+        return false;
     }
 }
 
-void DiskWriteMda::writeChunk(Mda32& X, long i)
+bool DiskWriteMda::writeChunk(Mda32& X, long i)
 {
     if (!d->m_file)
-        return;
+        return false;
     fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * i, SEEK_SET);
     long size = X.totalSize();
     if (i + size > this->totalSize())
         size = this->totalSize() - i;
     if (size > 0) {
-        mda_write_float32(X.dataPtr(), &d->m_header, size, d->m_file);
+        return mda_write_float32(X.dataPtr(), &d->m_header, size, d->m_file);
+    }
+    else {
+        qWarning() << "size is zero in writeChunk";
+        return false;
     }
 }
 
-void DiskWriteMda::writeChunk(Mda32& X, long i1, long i2)
+bool DiskWriteMda::writeChunk(Mda32& X, long i1, long i2)
 {
     if ((X.N1() == N1()) && (i1 == 0)) {
-        writeChunk(X, i1 + this->N1() * i2);
+        return writeChunk(X, i1 + this->N1() * i2);
     }
     else {
         qWarning() << "This case not yet supported in 2d writeSubArray" << X.N1() << X.N2() << N1() << N2() << i1 << i2;
+        return false;
     }
 }
 
-void DiskWriteMda::writeChunk(Mda32& X, long i1, long i2, long i3)
+bool DiskWriteMda::writeChunk(Mda32& X, long i1, long i2, long i3)
 {
+    if ((i3 == 0) && (X.N3() == 1) && (X.N3() == 1))
+        return writeChunk(X, i1, i2);
     if ((X.N1() == N1()) && (X.N2() == N2()) && (i1 == 0) && (i2 == 0)) {
-        writeChunk(X, i1 + this->N1() * i2 + this->N1() * this->N2() * i3);
+        return writeChunk(X, i1 + this->N1() * i2 + this->N1() * this->N2() * i3);
     }
     else {
         qWarning() << "This case not yet supported in 3d writeSubArray" << X.N1() << X.N2() << X.N3() << N1() << N2() << N3() << i1 << i2 << i3;
+        return false;
     }
 }
 
