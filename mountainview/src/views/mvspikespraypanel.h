@@ -105,14 +105,8 @@ public:
 
     class ClipsAllocator {
     public:
-        ClipsAllocator() {}
-        ClipsAllocator(Mda* src, long _M, long _T, const QList<long>& _inds)
-            : source(src)
-            , M(_M)
-            , T(_T)
-            , inds(_inds)
-        {
-        }
+        ClipsAllocator();
+        ClipsAllocator(Mda* src, long _M, long _T, const QList<long>& _inds);
         Mda* source = nullptr;
         long M = 0;
         long T = 0;
