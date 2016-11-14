@@ -1,0 +1,204 @@
+function main(params) {
+	run_mountainsort(params);
+}
+
+function run_mountainsort(params) {	
+	set_default_parameters(params,{
+		samplerate:30000, //Hz
+		freq_min:300,freq_max:6000, //Hz
+		detect_threshold:3.5, // std. dev's
+		detect_interval:10, //timepoints
+		clip_size:50, //timepoints
+		sign:0, // use 1 to detect only positive spikes, -1 to detect only negative spikes, and 0 for both
+		num_features:10,
+		num_features2:10,
+		adjacency_radius:0,
+		whiten:true,
+		metrics_noise_level:0.25,
+		mask_out_artifacts_interval:100,
+		mask_out_artifacts_threshold:5,
+		isocut_threshold:1.0,
+		K_init:200,
+		extract_raw_t1:-1,
+		extract_raw_t2:-1,
+		extract_raw_channels:'', //comma-separated, 1-based indexing, empty for all channels
+		num_threads:0
+	});
+
+	setNumThreads(params.num_threads);
+
+	if (typeof params.sessions=='string') params.sessions=[params.sessions];
+	
+	var raws=[];
+	var outpaths=[];
+	for (var i in params.sessions) {
+		raws.push(params.inpath+'/'+params.sessions[i]+'/raw.mda.prv');
+		Mkdir(params.outpath+'/'+params.sessions[i]);
+		outpaths.push(params.outpath+'/'+params.sessions[i]);
+	}
+
+
+	var adjacency_matrix='';
+	if ((params.geom)&&(params.adjacency_radius)) {
+		if (params.geom=='linear') {
+			adjacency_matrix=Process('linear_adjacency_matrix',{timeseries:params.raws[0]},{adjacency_radius:adjacency_radius});
+		}
+		else {
+			adjacency_matrix=Process('geom2adj',{input:params.geom},{radius:params.adjacency_radius,channels:params.extract_raw_channels}).output;
+		}
+	}
+
+	var filts=[];
+	for (var i=0; i<raws.length; i++) {
+		var raw=raws[i];
+		if ((params.extract_raw_t1>=0)||(params.extract_raw_t2>=0)||(params.extract_raw_channels)) {
+			raw=Process('extract_raw',{timeseries:raw},{
+				t1:params.extract_raw_t1,t2:params.extract_raw_t2,channels:params.extract_raw_channels
+			}).timeseries_out;
+		}
+
+		// Bandpass filter
+		var filt=Process('bandpass_filter',{timeseries:raw},{
+				samplerate:params.samplerate,freq_min:params.freq_min,freq_max:params.freq_max
+			}).timeseries_out;
+
+		// Mask out artifacts
+		if (('mask_out_artifacts_threshold' in params)&&(params.mask_out_artifacts_threshold)) {
+			filt=Process('mask_out_artifacts',{timeseries:filt},{interval_size:params.mask_out_artifacts_interval,threshold:params.mask_out_artifacts_threshold}).timeseries_out;
+		}
+		filts.push(filt);
+	}
+
+	var filt_concat=Process('concat_timeseries',{timeseries:filts},{}).timeseries_concat;
+
+	//Whiten or normalize
+	var pre_concat='';
+	if (params.whiten) {
+		pre_concat=Process('whiten',{timeseries:filt_concat}).timeseries_out;
+	}
+	else {
+		// Normalize channels (to have variance 1)
+		pre_concat=Process('normalize_channels',{timeseries:filt_concat}).timeseries_out;
+	}
+
+	var empties=[];
+	for (var i=0; i<raws.length; i++) empties.push('');
+	var pre_split=Process('split_timeseries',{timeseries:pre_concat,raw_timeseries:raws},{},{timeseries_split:empties}).timeseries_split;
+
+	// Detect super-threshold events
+	var detect=Process('detect',{timeseries:pre_concat},{
+			detect_threshold:params.detect_threshold,detect_interval:params.detect_interval,
+			clip_size:params.clip_size,sign:params.sign,
+			individual_channels:1
+		}).detect_out;
+
+	// Clustering
+	var firings1=Process('isocluster_v1',{timeseries:pre_concat,detect:detect,adjacency_matrix:adjacency_matrix},{
+			clip_size:params.clip_size,
+			num_features:params.num_features,num_features2:params.num_features2,
+			detect_interval:params.detect_interval,consolidation_factor:0.9,
+			isocut_threshold:params.isocut_threshold,K_init:params.K_init
+		}).firings_out;
+
+	// Merge across channels
+	var firings2=Process('merge_across_channels_v2',{timeseries:pre_concat,firings:firings1},{
+			clip_size:params.clip_size
+		}).firings_out;
+
+	// Fit stage
+	var firings3=Process('fit_stage',{timeseries:pre_concat,firings:firings2},{
+			clip_size:params.clip_size,
+			min_shell_size:150,shell_increment:0
+		}).firings_out;
+
+	// Metrics
+	var metrics=Process('ms_metrics',{timeseries:pre_concat,firings:firings3},{
+		clip_size:params.clip_size,add_noise_level:params.metrics_noise_level
+	});
+
+	var firings_split=Process('split_firings',{firings:firings3,raw_timeseries:raws},{},{firings_split:empties}).firings_split;
+
+	// Write the output
+	{
+		for (var i=0; i<raws.length; i++) {
+			if (adjacency_matrix) {
+				write_file(adjacency_matrix,outpaths[i]+'/adjacency_matrix.mda');
+				write_file(metrics.cluster_metrics,outpaths[i]+'/cluster_metrics.csv');
+				write_file(metrics.cluster_pair_metrics,outpaths[i]+'/cluster_pair_metrics.csv');
+			}
+			write_prv(raws[i],outpaths[i]+'/raw.mda.prv');
+			write_prv(filts[i],outpaths[i]+'/filt.mda.prv');
+			write_prv(pre_split[i],outpaths[i]+'/pre.mda.prv');
+			write_file(firings_split[i],outpaths[i]+'/firings.mda');
+		}
+	}
+
+	if (1) {
+		if (adjacency_matrix) {
+			write_file(adjacency_matrix,params.outpath+'/adjacency_matrix.mda');
+			write_file(metrics.cluster_metrics,params.outpath+'/cluster_metrics.csv');
+			write_file(metrics.cluster_pair_metrics,params.outpath+'/cluster_pair_metrics.csv');
+		}
+		var raw_concat=Process('concat_timeseries',{timeseries:raws},{}).timeseries_concat;
+		write_prv(raw_concat,params.outpath+'/raw.mda.prv');
+		write_prv(filt_concat,params.outpath+'/filt.mda.prv');
+		write_prv(pre_concat,params.outpath+'/pre.mda.prv');
+		write_file(firings3,params.outpath+'/firings.mda');	
+	}
+
+	run_pipeline();
+}
+
+function run_pipeline() {
+	_MP2.runPipeline();
+}
+
+function Process(processor_name,inputs,parameters,outputs) {
+	if (!parameters) parameters={};
+	if (!outputs) outputs='';
+	var ret=_MP2.addProcess(
+		processor_name,
+		JSON.stringify(inputs),
+		JSON.stringify(parameters),
+		JSON.stringify(outputs) // empty outputs means that they will be created as temporary files and the return object will contain the paths to these temporary files
+	);
+	return JSON.parse(ret);
+}
+
+function Mkdir(path) {
+	_MP2.mkdir(path);
+}
+
+
+function setNumThreads(num_threads) {
+	_MP2.setNumThreads(num_threads);
+}
+
+function write_file(input,output) {
+	_MP2.addProcess(
+		'copy',
+		JSON.stringify({input:input}),
+		JSON.stringify({}),
+		JSON.stringify({output:output})
+	);
+}
+
+function write_prv(input,output) {
+	_MP2.addPrv(input,output);
+}
+
+function clone(obj) {
+	return JSON.parse(JSON.stringify(obj));
+}
+
+var console={
+	log:function(msg) {_MP2.log(msg);}
+};
+
+function set_default_parameters(params,defaults) {
+	for (var pname in defaults) {
+		if (!(pname in params)) {
+			params[pname]=defaults[pname];
+		}
+	}
+}
