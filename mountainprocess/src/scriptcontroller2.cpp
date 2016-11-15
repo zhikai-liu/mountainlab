@@ -23,6 +23,7 @@
 #include "mlcommon.h"
 
 struct PipelineNode2 {
+    // A node in the processing pipeline -- representing a single process
     PipelineNode2()
     {
         completed = false;
@@ -66,7 +67,10 @@ struct PipelineNode2 {
     }
 };
 
+// prv processes are special processing nodes that create a .prv file from an output file
 QJsonArray get_prv_processes_2(const QList<PipelineNode2>& nodes, const QMap<QString, int>& node_indices_for_outputs, QString path, QSet<int>& node_indices_already_used, bool* ok);
+
+QString create_temporary_path_for_output(QString processor_name, QVariantMap inputs, QVariantMap parameters, QString output_pname, int output_index = -1);
 
 class ScriptController2Private {
 public:
@@ -94,7 +98,6 @@ public:
 
     bool run_or_queue_node(PipelineNode2* node, const QMap<QString, int>& node_indices_for_outputs);
     PipelineNode2* find_node_ready_to_run();
-    QString create_temporary_path_for_output(QString processor_name, QVariantMap inputs, QVariantMap parameters, QString output_pname, int output_index = -1);
     bool handle_running_processes();
 };
 
@@ -141,14 +144,44 @@ QJsonObject ScriptController2::getResults()
     return d->m_results;
 }
 
+QVariant filter_process_output(QVariant X,QString processor_name,QVariantMap inputs,QVariantMap parameters, QString pname) {
+    bool is_list = (X.type() == QVariant::List);
+    QStringList list = MLUtil::toStringList(X);
+    if (list.count() == 1) {
+        if (X.toString().isEmpty()) {
+            X = create_temporary_path_for_output(processor_name, inputs, parameters, pname);
+            if (is_list) {
+                QVariantList tmp;
+                tmp << X;
+                X = tmp;
+            }
+        }
+    }
+    else {
+        QVariantList list2;
+        for (int a = 0; a < list.count(); a++) {
+            if (list[a].isEmpty()) {
+                list2 << create_temporary_path_for_output(processor_name, inputs, parameters, pname, a);
+            }
+            else {
+                list2 << list[a];
+            }
+        }
+        X = list2;
+    }
+    return X;
+}
+
+// Add a process to the processing pipeline
 QString ScriptController2::addProcess(QString processor_name, QString inputs_json, QString parameters_json, QString outputs_json)
 {
+    // Find the processor in the process manager
     MLProcessor PP = ProcessManager::globalInstance()->processor(processor_name);
     if (PP.name != processor_name) { //rather use PP.isNull()
         qWarning() << "Unable to find processor **: " + processor_name;
         return "{}";
     }
-    QMap<QString, MLParameter> PP_outputs = PP.outputs;
+    QMap<QString, MLParameter> PP_outputs = PP.outputs; // The spec of the output parameters
 
     PipelineNode2 node;
     /// TODO: check for json parse errors here
@@ -160,6 +193,8 @@ QString ScriptController2::addProcess(QString processor_name, QString inputs_jso
         /// TODO: check to see if outputs are consistent with PP_outputs
     }
     {
+        // any outputs that have not been specified will be marked as an empty string
+        // later we will handle these cases by creating temporary files, and then returning this info from the function call
         QStringList output_pnames = PP_outputs.keys();
         foreach (QString pname, output_pnames) {
             if (!node.outputs.contains(pname)) {
@@ -169,30 +204,7 @@ QString ScriptController2::addProcess(QString processor_name, QString inputs_jso
         }
     }
     foreach (QString pname, node.outputs.keys()) {
-        bool is_list = (node.outputs[pname].type() == QVariant::List);
-        QStringList list = MLUtil::toStringList(node.outputs[pname]);
-        if (list.count() == 1) {
-            if (node.outputs[pname].toString().isEmpty()) {
-                node.outputs[pname] = d->create_temporary_path_for_output(node.processor_name, node.inputs, node.parameters, pname);
-                if (is_list) {
-                    QVariantList tmp;
-                    tmp << node.outputs[pname];
-                    node.outputs[pname] = tmp;
-                }
-            }
-        }
-        else {
-            QVariantList list2;
-            for (int a = 0; a < list.count(); a++) {
-                if (list[a].isEmpty()) {
-                    list2 << d->create_temporary_path_for_output(node.processor_name, node.inputs, node.parameters, pname, a);
-                }
-                else {
-                    list2 << list[a];
-                }
-            }
-            node.outputs[pname] = list2;
-        }
+        node.outputs[pname]=filter_process_output(node.outputs[pname],node.processor_name, node.inputs, node.parameters, pname);
     }
 
     d->resolve_file_names(node.inputs);
@@ -622,7 +634,7 @@ PipelineNode2* ScriptController2Private::find_node_ready_to_run()
     return 0;
 }
 
-QString ScriptController2Private::create_temporary_path_for_output(QString processor_name, QVariantMap inputs, QVariantMap parameters, QString output_pname, int output_index)
+QString create_temporary_path_for_output(QString processor_name, QVariantMap inputs, QVariantMap parameters, QString output_pname, int output_index)
 {
     QJsonObject obj;
     obj["processor_name"] = processor_name;

@@ -113,7 +113,7 @@ double compute_avg_cpu_pct(const QList<MonitorStats>& stats);
 //void log_begin(int argc,char* argv[]);
 //void //log_end();
 
-bool handle_prv_files(const QVariantMap& clparams, QJsonObject& missing_prvs);
+bool get_missing_prvs(const QVariantMap& clparams, QJsonObject& missing_prvs);
 
 int main(int argc, char* argv[])
 {
@@ -122,20 +122,14 @@ int main(int argc, char* argv[])
 
     //log_begin(argc,argv);
 
-    // Do not allow downloads or processing to resolve prv files
+    // Do not allow downloads or *processing* to resolve prv files
     // since this is now handled in a separate gui -- as it very much should!!!
-    //bool allow_downloads = false;
-    //bool allow_processing = false;
+    // The --_prvgui option can be used to launch the gui
 
-    /*
-    if (!resolve_prv_files(CLP.named_parameters, allow_downloads, allow_processing)) {
-        qWarning() << "Could not resolve .prv file. Try adjusting the settings in mountainlab.user.json.";
-        //log_end();
-        return -1;
-    }
-    */
+
+    // Find .prv files that are missing, and handle that situation accordingly.
     QJsonObject missing_prvs;
-    if (!handle_prv_files(CLP.named_parameters, missing_prvs)) {
+    if (!get_missing_prvs(CLP.named_parameters, missing_prvs)) {
         if (missing_prvs.keys().isEmpty())
             return -1;
         if (CLP.named_parameters.contains("_prvgui")) {
@@ -161,27 +155,15 @@ int main(int argc, char* argv[])
     QString tmp_path = MLUtil::tempPath();
     CacheManager::globalInstance()->setLocalBasePath(tmp_path);
 
-    /*
-    if (arg1.endsWith(".prv")) {
-        QString path0 = resolve_prv_file(arg1, allow_downloads, allow_processing);
-        printf("FILE: %s\n", path0.toLatin1().data());
-        //log_end();
-        return 0;
-    }
-    */
-
     qInstallMessageHandler(mountainprocessMessageOutput);
 
     /// TODO don't need to always load the process manager?
 
     ProcessManager* PM = ProcessManager::globalInstance();
-    //QStringList server_urls = MLUtil::configResolvedPathList("mountainprocess", "server_urls");
-    //PM->setServerUrls(server_urls);
-    //QString server_base_path = MLUtil::configResolvedPath("server", "mdaserver_base_path");
-    //PM->setServerBasePath(server_base_path);
 
     setbuf(stdout, NULL);
 
+    // If _working_path is specified then we change the current directory
     QString working_path = CLP.named_parameters.value("_working_path").toString();
     if (!working_path.isEmpty()) {
         if (!QDir::setCurrent(working_path)) {
@@ -202,8 +184,8 @@ int main(int argc, char* argv[])
         //log_end();
         return 0;
     }
-    else if (arg1 == "spec") {
-        if (!initialize_process_manager()) { //load the processor plugins etc
+    else if (arg1 == "spec") { // Show the spec for a single processor
+        if (!initialize_process_manager()) { // load the processor plugins etc
             //log_end();
             return -1;
         }
@@ -212,11 +194,11 @@ int main(int argc, char* argv[])
         printf("%s\n", json.toLatin1().data());
     }
     else if (arg1 == "run-process") { //Run a process synchronously
-        if (!initialize_process_manager()) {
+        if (!initialize_process_manager()) { // load the processor plugins etc
             //log_end();
-            return -1; //load the processor plugins etc
+            return -1;
         }
-        QString output_fname = CLP.named_parameters.value("_process_output").toString(); //maybe the user specified where output is to be reported
+        QString output_fname = CLP.named_parameters.value("_process_output").toString(); //maybe the user/framework specified where output is to be saved
         if (!output_fname.isEmpty()) {
             output_fname = QDir::current().absoluteFilePath(output_fname); //make it absolute
         }
@@ -227,15 +209,17 @@ int main(int argc, char* argv[])
         QString error_message;
         MLProcessInfo info;
 
-        bool force_run = CLP.named_parameters.contains("_force_run");
-        int request_num_threads = CLP.named_parameters.value("_request_num_threads", 0).toInt();
-        if ((!force_run) && (PM->processAlreadyCompleted(processor_name, process_parameters))) { //do we have a record of this procesor already completing? If so, we save a lot of time by not re-running
+        bool force_run = CLP.named_parameters.contains("_force_run"); // do not check for already computed
+        int request_num_threads = CLP.named_parameters.value("_request_num_threads", 0).toInt(); // the processor may or may not respect this request. But mountainsort/omp does.
+        if ((!force_run) && (PM->processAlreadyCompleted(processor_name, process_parameters))) {
+            // We have a record of this procesor already completed. If so, we save a lot of time by not re-running
             printf("Process already completed: %s\n", processor_name.toLatin1().data());
         }
         else {
             QString id;
 
-            if (!PM->checkParameters(processor_name, process_parameters)) { //check to see that all our parameters are in order for the given processor
+            //check to see that all our parameters are in order for the given processor
+            if (!PM->checkParameters(processor_name, process_parameters)) {
                 error_message = "Problem checking process: " + processor_name;
                 ret = -1;
             }
@@ -274,7 +258,7 @@ int main(int argc, char* argv[])
             printf("Peak RAM: %ld MB. Peak CPU: %g%%. Avg CPU: %g%%. Elapsed time: %g seconds.\n", mb, cpu, cpu_avg, sec);
             printf("---------------------------------------------------------------\n");
         }
-        QJsonObject obj; //the output info
+        QJsonObject obj; //the output info to be saved
         obj["exe_command"] = info.exe_command;
         obj["exit_code"] = info.exit_code;
         if (info.exit_status == QProcess::CrashExit)
@@ -299,6 +283,7 @@ int main(int argc, char* argv[])
             QString obj_json = QJsonDocument(obj).toJson();
             if (!TextFile::write(output_fname, obj_json)) {
                 qCritical() << "Unable to write results to: " + output_fname;
+                return -1;
             }
         }
         if (!error_message.isEmpty()) {
@@ -309,13 +294,13 @@ int main(int argc, char* argv[])
         //log_end();
         return ret; //returns exit code 0 if okay
     }
-    else if (arg1 == "run-script") { //run a script synchronously (although note that individual processes will be queued (unless --_nodaemon is specified), but the script will wait for them to complete)
-        if (!initialize_process_manager()) {
+    else if (arg1 == "run-script") { // run a script synchronously (although note that individual processes will be queued (unless --_nodaemon is specified), but the script will wait for them to complete before exiting)
+        if (!initialize_process_manager()) { // load the processor plugins etc
             //log_end();
             return -1;
         }
 
-        QString output_fname = CLP.named_parameters.value("_script_output").toString(); //maybe the user specified where output is to be reported
+        QString output_fname = CLP.named_parameters.value("_script_output").toString(); //maybe the user or framework specified where output is to be saved
         if (!output_fname.isEmpty()) {
             output_fname = QDir::current().absoluteFilePath(output_fname); //make it absolute
         }
@@ -327,7 +312,7 @@ int main(int argc, char* argv[])
         QVariantMap params; //parameters to be passed into the main() function of the javascript
         for (int i = 0; i < CLP.unnamed_parameters.count(); i++) {
             QString str = CLP.unnamed_parameters[i];
-            if ((str.endsWith(".js")) || (str.endsWith(".pipeline"))) { //must be a javascript source file
+            if ((str.endsWith(".js")) || (str.endsWith(".pipeline"))) { // it is a javascript source file
                 if (!QFile::exists(str)) {
                     QString str2 = MLUtil::mountainlabBasePath() + "/mountainprocess/scripts/" + str;
                     if (QFile::exists(str2)) {
@@ -338,7 +323,7 @@ int main(int argc, char* argv[])
                     script_fnames << str;
                 }
                 else {
-                    qWarning() << "Unable to find script file: " + str;
+                    qCritical() << "Unable to find script file: " + str;
                     //log_end();
                     return -1;
                 }
@@ -351,6 +336,7 @@ int main(int argc, char* argv[])
                 }
             }
         }
+        // load the command-line parameters into params. These will override parameters set by .par or .json files
         QStringList keys0 = CLP.named_parameters.keys();
         foreach (QString key0, keys0) {
             params[key0] = CLP.named_parameters[key0];
@@ -359,12 +345,11 @@ int main(int argc, char* argv[])
 
         run_script_opts opts;
         opts.nodaemon = CLP.named_parameters.contains("_nodaemon");
-        //opts.server_urls = server_urls;
-        //opts.server_base_path = server_base_path;
         opts.force_run = CLP.named_parameters.contains("_force_run");
-        opts.working_path = QDir::currentPath();
+        opts.working_path = QDir::currentPath(); // this should get passed through to the processors
         QJsonObject results;
-        if (!run_script(script_fnames, params, opts, error_message, results)) { //actually run the script
+        // actually run the script
+        if (!run_script(script_fnames, params, opts, error_message, results)) {
             ret = -1;
         }
 
@@ -379,6 +364,7 @@ int main(int argc, char* argv[])
             QString obj_json = QJsonDocument(obj).toJson();
             if (!TextFile::write(output_fname, obj_json)) {
                 qCritical() << "Unable to write results to: " + output_fname;
+                return -1;
             }
         }
 
@@ -438,7 +424,28 @@ int main(int argc, char* argv[])
         //log_end();
         return ret;
     }
+    else if (arg1 == "queue-script") { //Queue a script -- to be executed when resources are available
+        if (queue_pript(ScriptType, CLP)) {
+            //log_end();
+            return 0;
+        }
+        else {
+            //log_end();
+            return -1;
+        }
+    }
+    else if (arg1 == "queue-process") {
+        if (queue_pript(ProcessType, CLP)) {
+            //log_end();
+            return 0;
+        }
+        else {
+            //log_end();
+            return -1;
+        }
+    }
     else if (arg1 == "daemon-start") {
+        // Start the mountainprocess daemon
 /*
          *  The following magic ensures we detach from the parent process
          *  and from the controlling terminal. This is to prevent process
@@ -463,7 +470,7 @@ int main(int argc, char* argv[])
         Q_UNUSED(dup2(devnull, STDERR_FILENO));
 #endif
 
-        if (!initialize_process_manager()) {
+        if (!initialize_process_manager()) { // load the processor plugins etc
             //log_end();
             return -1;
         }
@@ -481,7 +488,7 @@ int main(int argc, char* argv[])
         */
         MPDaemon X;
         X.setLogPath(log_path);
-        ProcessResources RR;
+        ProcessResources RR; // these are the rules for determining how many processes to run simultaneously
         //RR.num_threads = qMax(0.0, MLUtil::configValue("mountainprocess", "max_num_simultaneous_threads").toDouble());
         //RR.memory_gb = qMax(0.0, MLUtil::configValue("mountainprocess", "max_total_memory_gb").toDouble());
         RR.num_threads = 0;
@@ -534,73 +541,27 @@ int main(int argc, char* argv[])
         //log_end();
         return 0;
     }
-    else if (arg1 == "clear-processing") {
+    else if (arg1 == "clear-processing") { // stop all active processing including running or queued pripts
         MPDaemonInterface X;
         X.clearProcessing();
         //log_end();
         return 0;
     }
-    else if (arg1 == "queue-script") { //Queue a script -- to be executed when resources are available
-        if (queue_pript(ScriptType, CLP)) {
-            //log_end();
-            return 0;
-        }
-        else {
-            //log_end();
-            return -1;
-        }
-    }
-    else if (arg1 == "queue-process") {
-        if (queue_pript(ProcessType, CLP)) {
-            //log_end();
-            return 0;
-        }
-        else {
-            //log_end();
-            return -1;
-        }
-    }
-    else if (arg1 == "get-script") {
+    else if (arg1 == "get-script") { // print information about a script with given id
         if (!log_path.isEmpty()) {
             QString str = TextFile::read(log_path + "/scripts/" + CLP.named_parameters["id"].toString() + ".json");
             printf("%s", str.toLatin1().data());
         }
     }
-    else if (arg1 == "get-process") {
+    else if (arg1 == "get-process") { // print information about a process with given id
         if (!log_path.isEmpty()) {
             QString str = TextFile::read(log_path + "/processes/" + CLP.named_parameters["id"].toString() + ".json");
             printf("%s", str.toLatin1().data());
         }
     }
-    else if (arg1 == "cleanup-cache") {
+    else if (arg1 == "cleanup-cache") { // remove old files in the temporary directory
         CacheManager::globalInstance()->cleanUp();
     }
-    /*
-    else if (arg1 == "create-prv") {
-
-        if (arg2.isEmpty()) {
-            print_usage();
-            //log_end();
-            return -1;
-        }
-        QString arg3 = CLP.unnamed_parameters.value(2);
-        if (arg3.isEmpty())
-            arg3 = arg2 + ".prv";
-
-        if (!QFile::exists(arg2)) {
-            qWarning() << "File does not exist: " + arg2;
-            //log_end();
-            return -1;
-        }
-        QJsonObject obj = make_prv_object(arg2);
-        QString json = QJsonDocument(obj).toJson(QJsonDocument::Indented);
-        if (!TextFile::write(arg3, json)) {
-            qWarning() << "Error writing file: " + arg3;
-            //log_end();
-            return -1;
-        }
-    }
-    */
     else {
         print_usage(); //print usage information
         //log_end();
@@ -611,6 +572,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
+// load the processor plugins etc
 bool initialize_process_manager()
 {
     /*
@@ -647,6 +609,7 @@ QString remove_comments_in_line(QString line)
     }
 }
 
+// thie allows us to have comments in the .json parameter file. Not necessarily a good idea overall
 QString remove_comments(QString json)
 {
     QStringList lines = json.split("\n");
@@ -679,7 +642,7 @@ bool load_parameter_file(QVariantMap& params, const QString& fname)
     QStringList keys = obj.keys();
     foreach (QString key, keys) {
         QString str = obj[key].toString();
-        if ((str.startsWith("eval")) && (str.endsWith(")"))) {
+        if ((str.startsWith("eval")) && (str.endsWith(")"))) { // in case we want to evaluate a numerical expression. eg, eval(6*1000)
             obj[key] = evaluate_js(str);
         }
         params[key] = obj[key].toVariant();
@@ -689,13 +652,12 @@ bool load_parameter_file(QVariantMap& params, const QString& fname)
 
 void display_error(QJSValue result)
 {
-    /// Witold there must be a better way to print the QJSValue error message out to the console.
-    /// Jeremy: No, this is the proper way. You can use "stack" property to get a full trace, if you want
-    qDebug().noquote() << result.property("name").toString(); //okay
-    qDebug().noquote() << result.property("message").toString(); //okay
-    qDebug().noquote() << QString("%1 line %2").arg(result.property("fileName").toString()).arg(result.property("lineNumber").toInt()); //okay
+    qDebug().noquote() << result.property("name").toString();
+    qDebug().noquote() << result.property("message").toString();
+    qDebug().noquote() << QString("%1 line %2").arg(result.property("fileName").toString()).arg(result.property("lineNumber").toInt());
 }
 
+// Run a processing script synchronously
 bool run_script(const QStringList& script_fnames, const QVariantMap& params, const run_script_opts& opts, QString& error_message, QJsonObject& results)
 {
     QJsonObject parameters = variantmap_to_json_obj(params);
@@ -728,7 +690,7 @@ bool run_script(const QStringList& script_fnames, const QVariantMap& params, con
         if (result.isError()) {
             display_error(result);
             error_message = "Error running script: " + QString("%1 line %2: %3").arg(result.property("fileName").toString()).arg(result.property("lineNumber").toInt()).arg(result.property("message").toString());
-            qCritical() << error_message;
+            qCritical().noquote() << error_message;
             return false;
         }
     }
@@ -765,14 +727,16 @@ void remove_system_parameters(QVariantMap& params)
     }
 }
 
+// Queue a script or process
 bool queue_pript(PriptType prtype, const CLParams& CLP)
 {
     MPDaemonPript PP;
 
     bool detach = CLP.named_parameters.value("_detach", false).toBool();
 
+    QVariantMap params;
     if (prtype == ScriptType) {
-        QVariantMap params;
+        // It is a script
         for (int i = 0; i < CLP.unnamed_parameters.count(); i++) {
             QString str = CLP.unnamed_parameters[i];
             if ((str.endsWith(".js")) || (str.endsWith(".pipeline"))) {
@@ -786,26 +750,28 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
                 }
             }
         }
-        QStringList pkeys = CLP.named_parameters.keys();
-        foreach (QString pkey, pkeys) {
-            params[pkey] = CLP.named_parameters[pkey];
-        }
-        remove_system_parameters(params);
-        PP.parameters = params;
         PP.prtype = ScriptType;
     }
     else {
+        // It is a process
         int request_num_threads = CLP.named_parameters.value("_request_num_threads", 0).toInt();
-        PP.parameters = CLP.named_parameters;
         PP.prtype = ProcessType;
         PP.RPR.request_num_threads = request_num_threads;
-        remove_system_parameters(PP.parameters);
-        PP.processor_name = CLP.unnamed_parameters.value(1); //arg2
+        PP.processor_name = CLP.unnamed_parameters.value(1); //arg2 -- the name of the processor
     }
 
-    PP.id = MLUtil::makeRandomId(20);
+    // Command-line parameters
+    QStringList pkeys = CLP.named_parameters.keys();
+    foreach (QString pkey, pkeys) {
+        params[pkey] = CLP.named_parameters[pkey];
+    }
+    remove_system_parameters(params);
+    PP.parameters = params;
+
+    PP.id = MLUtil::makeRandomId(20); // Random id for the process or script
 
     if (prtype == ScriptType) {
+        // It is a script
         PP.output_fname = CLP.named_parameters["_script_output"].toString();
         if (!PP.output_fname.isEmpty()) {
             PP.output_fname = QDir::current().absoluteFilePath(PP.output_fname); //make it absolute
@@ -813,6 +779,7 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
         }
     }
     else {
+        // It is a process
         PP.output_fname = CLP.named_parameters["_process_output"].toString();
         if (!PP.output_fname.isEmpty()) {
             PP.output_fname = QDir::current().absoluteFilePath(PP.output_fname); //make it absolute
@@ -820,54 +787,60 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
         }
     }
     if (PP.output_fname.isEmpty()) {
+        // If the user has not specified an output file, we create one with a name depending on the random id
         if (prtype == ScriptType)
             PP.output_fname = CacheManager::globalInstance()->makeLocalFile("script_output." + PP.id + ".json", CacheManager::ShortTerm);
         else
             PP.output_fname = CacheManager::globalInstance()->makeLocalFile("process_output." + PP.id + ".json", CacheManager::ShortTerm);
     }
+    // We write the standard output to a file -- which will be read at the end, I believe
     if (prtype == ScriptType)
         PP.stdout_fname = CacheManager::globalInstance()->makeLocalFile("script_stdout." + PP.id + ".txt", CacheManager::ShortTerm);
     else
         PP.stdout_fname = CacheManager::globalInstance()->makeLocalFile("process_stdout." + PP.id + ".txt", CacheManager::ShortTerm);
 
     if (!detach) {
+        // If we don't plan to detach, then we keep track of the parent pid, so if the parent is terminated, the pript will terminate itself
         PP.parent_pid = QCoreApplication::applicationPid();
     }
 
-    PP.force_run = CLP.named_parameters.contains("_force_run");
-    PP.working_path = QDir::currentPath();
+    PP.force_run = CLP.named_parameters.contains("_force_run"); // do not check if processes have already run
+    PP.working_path = QDir::currentPath(); // all processes and scripts should be run in this working path
 
     MPDaemonInterface X;
     // ensure daemon is running
 
     if (prtype == ScriptType) {
+        // It is a script
         if (!X.queueScript(PP)) { //queue the script
             qWarning() << "Error queueing script";
             return false;
         }
     }
     else {
+        // It is a process
         if (!X.queueProcess(PP)) { //queue the process
             qWarning() << "Error queueing process";
             return false;
         }
     }
     if (!detach) {
+        // If we are not detaching, then we are going to wait for the output file to appear
         qint64 parent_pid = CLP.named_parameters.value("_parent_pid", 0).toLongLong();
         MPDaemon::waitForFileToAppear(PP.output_fname, -1, false, parent_pid, PP.stdout_fname);
         QJsonParseError error;
         QJsonObject results_obj = QJsonDocument::fromJson(TextFile::read(PP.output_fname).toLatin1(), &error).object();
         if (error.error != QJsonParseError::NoError) {
-            qWarning() << "Error in queue_pript in parsing output json file.";
+            qCritical().noquote() << "Error in queue_pript in parsing output json file.";
             return false;
         }
         bool success = results_obj["success"].toBool();
         if (!success) {
             if (prtype == ScriptType) {
-                qWarning() << "Error in script " + PP.id + ": " + results_obj["error"].toString();
+                qCritical().noquote() << "Error in script " + PP.id + ": " + results_obj["error"].toString();
             }
             else {
-                qWarning() << "Error in process " + PP.processor_name + " " + PP.id + ": " + results_obj["error"].toString();
+                qCritical().noquote() << "Error in process " + PP.processor_name + " " + PP.id + ": " + results_obj["error"].toString();
             }
             return false;
         }
@@ -883,20 +856,20 @@ void mountainprocessMessageOutput(QtMsgType type, const QMessageLogContext& cont
         fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
         break;
     case QtInfoMsg:
-        fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        fprintf(stderr, "%s\n", localMsg.constData());
         break;
     case QtWarningMsg:
-        fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        fprintf(stderr, "Warning: %s\n", localMsg.constData());
         break;
     case QtCriticalMsg:
         //write to error log here
-        fprintf(stderr, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        fprintf(stderr, "Critical: %s\n", localMsg.constData());
 #ifdef EXIT_ON_CRITICAL_ERROR
         exit(-1);
 #endif
         break;
     case QtFatalMsg:
-        fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        fprintf(stderr, "Fatal: %s\n", localMsg.constData());
         exit(-1);
     }
 }
@@ -1029,33 +1002,53 @@ QString get_daemon_state_summary(const QJsonObject& state)
     return ret;
 }
 
-bool handle_prv_files(const QVariantMap& clparams, QJsonObject& missing_prvs)
-{
-    QStringList keys = clparams.keys();
-    foreach (QString key, keys) {
-        QString val = clparams[key].toString();
+QJsonObject read_prv_file(QString path) {
+    QString txt = TextFile::read(path);
+    if (txt.isEmpty()) {
+        qWarning() << "Unable to read .prv file: " + path;
+        return QJsonObject();
+    }
+    QJsonParseError err;
+    QJsonObject obj = QJsonDocument::fromJson(txt.toUtf8(), &err).object();
+    if (err.error != QJsonParseError::NoError) {
+        qWarning() << "Error parsing .prv file: " + path;
+        return QJsonObject();
+    }
+    return obj;
+}
+
+void get_missing_prvs(QString key,QVariant clparam,QJsonObject& missing_prvs) {
+    if (clparam.type()==QVariant::List) {
+        //handle the case of multiple values
+        QVariantList list=clparam.toList();
+        for (int i=0; i<list.count(); i++) {
+            QVariant val=list[i];
+            get_missing_prvs(QString("%1-%2").arg(key).arg(i),val,missing_prvs);
+        }
+        return;
+    }
+    else {
+        QString val = clparam.toString();
         if (val.endsWith(".prv")) {
-            QString txt = TextFile::read(val);
-            if (txt.isEmpty()) {
-                qWarning() << "Unable to read .prv file: " + val;
-                return false;
-            }
-            QJsonParseError err;
-            QJsonObject obj = QJsonDocument::fromJson(txt.toUtf8(), &err).object();
-            if (err.error != QJsonParseError::NoError) {
-                qWarning() << "Error parsing .prv file: " + val;
-                return false;
-            }
+            QJsonObject obj=read_prv_file(val);
             QString path0 = locate_prv(obj);
             if (path0.isEmpty()) {
                 missing_prvs[key] = obj;
             }
         }
     }
+}
+
+bool get_missing_prvs(const QVariantMap& clparams, QJsonObject& missing_prvs)
+{
+    QStringList keys = clparams.keys();
+    foreach (QString key, keys) {
+        get_missing_prvs(key,clparams[key],missing_prvs);
+    }
     if (!missing_prvs.isEmpty()) {
         return false;
     }
-    return true;
+    return true; //something is missing
 }
 
 /*
