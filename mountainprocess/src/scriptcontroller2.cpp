@@ -144,7 +144,8 @@ QJsonObject ScriptController2::getResults()
     return d->m_results;
 }
 
-QVariant filter_process_output(QVariant X,QString processor_name,QVariantMap inputs,QVariantMap parameters, QString pname) {
+QVariant filter_process_output(QVariant X, QString processor_name, QVariantMap inputs, QVariantMap parameters, QString pname)
+{
     bool is_list = (X.type() == QVariant::List);
     QStringList list = MLUtil::toStringList(X);
     if (list.count() == 1) {
@@ -204,7 +205,7 @@ QString ScriptController2::addProcess(QString processor_name, QString inputs_jso
         }
     }
     foreach (QString pname, node.outputs.keys()) {
-        node.outputs[pname]=filter_process_output(node.outputs[pname],node.processor_name, node.inputs, node.parameters, pname);
+        node.outputs[pname] = filter_process_output(node.outputs[pname], node.processor_name, node.inputs, node.parameters, pname);
     }
 
     d->resolve_file_names(node.inputs);

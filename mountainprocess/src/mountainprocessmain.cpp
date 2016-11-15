@@ -126,7 +126,6 @@ int main(int argc, char* argv[])
     // since this is now handled in a separate gui -- as it very much should!!!
     // The --_prvgui option can be used to launch the gui
 
-
     // Find .prv files that are missing, and handle that situation accordingly.
     QJsonObject missing_prvs;
     if (!get_missing_prvs(CLP.named_parameters, missing_prvs)) {
@@ -445,7 +444,7 @@ int main(int argc, char* argv[])
         }
     }
     else if (arg1 == "daemon-start") {
-        // Start the mountainprocess daemon
+// Start the mountainprocess daemon
 /*
          *  The following magic ensures we detach from the parent process
          *  and from the controlling terminal. This is to prevent process
@@ -1002,7 +1001,8 @@ QString get_daemon_state_summary(const QJsonObject& state)
     return ret;
 }
 
-QJsonObject read_prv_file(QString path) {
+QJsonObject read_prv_file(QString path)
+{
     QString txt = TextFile::read(path);
     if (txt.isEmpty()) {
         qWarning() << "Unable to read .prv file: " + path;
@@ -1017,20 +1017,21 @@ QJsonObject read_prv_file(QString path) {
     return obj;
 }
 
-void get_missing_prvs(QString key,QVariant clparam,QJsonObject& missing_prvs) {
-    if (clparam.type()==QVariant::List) {
+void get_missing_prvs(QString key, QVariant clparam, QJsonObject& missing_prvs)
+{
+    if (clparam.type() == QVariant::List) {
         //handle the case of multiple values
-        QVariantList list=clparam.toList();
-        for (int i=0; i<list.count(); i++) {
-            QVariant val=list[i];
-            get_missing_prvs(QString("%1-%2").arg(key).arg(i),val,missing_prvs);
+        QVariantList list = clparam.toList();
+        for (int i = 0; i < list.count(); i++) {
+            QVariant val = list[i];
+            get_missing_prvs(QString("%1-%2").arg(key).arg(i), val, missing_prvs);
         }
         return;
     }
     else {
         QString val = clparam.toString();
         if (val.endsWith(".prv")) {
-            QJsonObject obj=read_prv_file(val);
+            QJsonObject obj = read_prv_file(val);
             QString path0 = locate_prv(obj);
             if (path0.isEmpty()) {
                 missing_prvs[key] = obj;
@@ -1043,7 +1044,7 @@ bool get_missing_prvs(const QVariantMap& clparams, QJsonObject& missing_prvs)
 {
     QStringList keys = clparams.keys();
     foreach (QString key, keys) {
-        get_missing_prvs(key,clparams[key],missing_prvs);
+        get_missing_prvs(key, clparams[key], missing_prvs);
     }
     if (!missing_prvs.isEmpty()) {
         return false;
