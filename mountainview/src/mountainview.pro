@@ -24,6 +24,7 @@ INCLUDEPATH += msv/plugins msv/views
 VPATH += msv/plugins msv/views
 
 HEADERS += clusterdetailplugin.h clusterdetailview.h \
+    clusterdetailviewpropertiesdialog.h \
     msv/views/matrixview.h \
     msv/views/isolationmatrixview.h \
     msv/plugins/isolationmatrixplugin.h \
@@ -37,6 +38,7 @@ HEADERS += clusterdetailplugin.h clusterdetailview.h \
     views/mvgridviewpropertiesdialog.h \
     views/renderablewidget.h
 SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
+    clusterdetailviewpropertiesdialog.cpp \
     msv/views/matrixview.cpp \
     msv/views/isolationmatrixview.cpp \
     msv/plugins/isolationmatrixplugin.cpp \
@@ -49,6 +51,7 @@ SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
     views/mvgridview.cpp \
     views/mvgridviewpropertiesdialog.cpp \
     views/renderablewidget.cpp
+FORMS += clusterdetailviewpropertiesdialog.ui
 
 INCLUDEPATH += ../../prv-gui/src
 HEADERS += ../../prv-gui/src/prvgui.h

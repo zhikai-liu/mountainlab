@@ -93,8 +93,9 @@ public:
     QProcess* queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, QString process_output_fname, int request_num_threads);
     QProcess* run_process(QString processor_name, const QVariantMap& parameters, bool force_run, QString process_output_fname, int request_num_threads);
 
-    void resolve_file_names(QVariantMap& fnames);
-    QString resolve_file_name_p(QString fname);
+    void make_absolute_paths(QVariantMap& fnames);
+    QString make_absolute_path(QString fname);
+    QVariant make_absolute_path_variant(QVariant val);
 
     bool run_or_queue_node(PipelineNode2* node, const QMap<QString, int>& node_indices_for_outputs);
     PipelineNode2* find_node_ready_to_run();
@@ -146,31 +147,20 @@ QJsonObject ScriptController2::getResults()
 
 QVariant filter_process_output(QVariant X, QString processor_name, QVariantMap inputs, QVariantMap parameters, QString pname)
 {
-    bool is_list = (X.type() == QVariant::List);
-    QStringList list = MLUtil::toStringList(X);
-    if (list.count() == 1) {
-        if (X.toString().isEmpty()) {
-            X = create_temporary_path_for_output(processor_name, inputs, parameters, pname);
-            if (is_list) {
-                QVariantList tmp;
-                tmp << X;
-                X = tmp;
-            }
+    // Create temporary files for any output that is an empty string
+    if (X.type() == QVariant::List) {
+        QVariantList list = X.toList();
+        for (int i = 0; i < list.count(); i++) {
+            list[i] = filter_process_output(list[i], processor_name, inputs, parameters, QString("%1-%2").arg(pname).arg(i));
         }
+        return list;
     }
     else {
-        QVariantList list2;
-        for (int a = 0; a < list.count(); a++) {
-            if (list[a].isEmpty()) {
-                list2 << create_temporary_path_for_output(processor_name, inputs, parameters, pname, a);
-            }
-            else {
-                list2 << list[a];
-            }
+        if (X.toString().isEmpty()) {
+            X = create_temporary_path_for_output(processor_name, inputs, parameters, pname);
         }
-        X = list2;
+        return X;
     }
-    return X;
 }
 
 // Add a process to the processing pipeline
@@ -204,12 +194,14 @@ QString ScriptController2::addProcess(QString processor_name, QString inputs_jso
             }
         }
     }
+
+    // Create temporary files for any output that is an empty string
     foreach (QString pname, node.outputs.keys()) {
         node.outputs[pname] = filter_process_output(node.outputs[pname], node.processor_name, node.inputs, node.parameters, pname);
     }
 
-    d->resolve_file_names(node.inputs);
-    d->resolve_file_names(node.outputs);
+    d->make_absolute_paths(node.inputs);
+    d->make_absolute_paths(node.outputs);
     d->m_pipeline_nodes << node;
 
     return QJsonDocument(QJsonObject::fromVariantMap(node.outputs)).toJson();
@@ -218,8 +210,8 @@ QString ScriptController2::addProcess(QString processor_name, QString inputs_jso
 void ScriptController2::addPrv(QString input_path, QString output_path)
 {
     PipelineNode2 node;
-    node.inputs["input"] = d->resolve_file_name_p(input_path);
-    node.outputs["output"] = d->resolve_file_name_p(output_path);
+    node.inputs["input"] = d->make_absolute_path(input_path);
+    node.outputs["output"] = d->make_absolute_path(output_path);
     node.create_prv = true;
     d->m_pipeline_nodes << node;
 }
@@ -418,33 +410,16 @@ QProcess* ScriptController2Private::run_process(QString processor_name, const QV
     return ScriptController2Private::queue_process(processor_name, parameters, true, force_run, process_output_fname, request_num_threads);
 }
 
-void ScriptController2Private::resolve_file_names(QVariantMap& fnames)
+void ScriptController2Private::make_absolute_paths(QVariantMap& fnames)
 {
     QStringList pnames = fnames.keys();
     foreach (QString pname, pnames) {
-        bool is_list = (fnames[pname].type() == QVariant::List);
-        QStringList list = MLUtil::toStringList(fnames[pname]);
-        if (list.count() == 1) {
-            fnames[pname] = resolve_file_name_p(list[0]);
-            if (is_list) {
-                QVariantList tmp;
-                tmp << fnames[pname];
-                fnames[pname] = tmp;
-            }
-        }
-        else {
-            QVariantList list2;
-            foreach (QString str, list) {
-                list2 << resolve_file_name_p(str);
-            }
-            fnames[pname] = list2;
-        }
+        fnames[pname] = make_absolute_path_variant(fnames[pname]);
     }
 }
 
-QString ScriptController2Private::resolve_file_name_p(QString fname)
+QString ScriptController2Private::make_absolute_path(QString fname)
 {
-
     if (fname.isEmpty())
         return "";
 
@@ -452,18 +427,20 @@ QString ScriptController2Private::resolve_file_name_p(QString fname)
         fname = m_working_path + "/" + fname;
     }
     return fname;
+}
 
-    /*
-
-    //QString ret = resolve_file_name_2(m_server_urls, m_server_base_path, fname_in);
-    if (!ret.startsWith("http:")) {
-        if ((QDir::isRelativePath(ret)) && (!m_working_path.isEmpty())) {
-            ret = m_working_path + "/" + ret;
+QVariant ScriptController2Private::make_absolute_path_variant(QVariant val)
+{
+    if (val.type() == QVariant::List) {
+        QVariantList list = val.toList();
+        for (int i = 0; i < list.count(); i++) {
+            list[i] = make_absolute_path_variant(list[i]);
         }
+        return list;
     }
-    */
-
-    //return ret;
+    else {
+        return make_absolute_path(val.toString());
+    }
 }
 
 QVariant resolve_prv_files(QVariant f)

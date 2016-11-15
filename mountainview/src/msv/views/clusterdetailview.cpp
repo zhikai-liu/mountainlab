@@ -4,6 +4,7 @@
 #include "tabber.h"
 #include "taskprogress.h"
 #include "actionfactory.h"
+#include "clusterdetailviewpropertiesdialog.h"
 
 #include <QPainter>
 #include "mvutils.h"
@@ -91,7 +92,7 @@ public:
     void setStdevShading(bool val);
     bool stdevShading();
 
-    void paint(QPainter* painter, QRectF rect);
+    void paint(QPainter* painter, QRectF rect, bool render_image_mode = false);
     double spaceNeeded();
     ClusterData* clusterData();
     QRectF rect();
@@ -136,6 +137,7 @@ public:
     ClusterDetailViewCalculator m_calculator;
     bool m_stdev_shading;
     bool m_zoomed_out_once;
+    ClusterDetailViewProperties m_properties;
 
     QComboBox* m_sort_order_chooser;
 
@@ -150,7 +152,7 @@ public:
     void zoom(double factor);
     QString group_label_for_k(int k);
     int get_current_view_index();
-    void do_paint(QPainter& painter, int W, int H);
+    void do_paint(QPainter& painter, int W, int H, bool render_image_mode = false);
     void export_image();
     void toggle_stdev_shading();
     void shift_select_clusters_between(int k1, int k2);
@@ -214,6 +216,13 @@ ClusterDetailView::ClusterDetailView(MVContext* context)
         QAction* A = new QAction("Export static view", this);
         A->setProperty("action_type", "");
         QObject::connect(A, SIGNAL(triggered(bool)), this, SLOT(slot_export_static_view()));
+        this->addAction(A);
+    }
+
+    {
+        QAction* A = new QAction(QString("View properties"), this);
+        A->setProperty("action_type", "toolbar");
+        QObject::connect(A, SIGNAL(triggered(bool)), this, SLOT(slot_view_properties()));
         this->addAction(A);
     }
 
@@ -308,7 +317,7 @@ QImage ClusterDetailView::renderImage(int W, int H)
     QList<int> selected_ks = mvContext()->selectedClusters();
     mvContext()->setCurrentCluster(-1);
     mvContext()->setSelectedClusters(QList<int>());
-    d->do_paint(painter, W, H);
+    d->do_paint(painter, W, H, true);
     mvContext()->setCurrentCluster(current_k);
     mvContext()->setSelectedClusters(selected_ks);
     this->update(); //make sure we update, because some internal stuff has changed!
@@ -642,6 +651,16 @@ void ClusterDetailView::slot_update_sort_order()
     this->update();
 }
 
+void ClusterDetailView::slot_view_properties()
+{
+    ClusterDetailViewPropertiesDialog dlg;
+    dlg.setProperties(d->m_properties);
+    if (dlg.exec() == QDialog::Accepted) {
+        d->m_properties = dlg.properties();
+        this->update();
+    }
+}
+
 void ClusterDetailViewPrivate::compute_total_time()
 {
     m_total_time_sec = q->mvContext()->currentTimeseries().N2() / q->mvContext()->sampleRate();
@@ -756,7 +775,7 @@ QString truncate_based_on_font_and_width(QString txt, QFont font, double width)
     return txt;
 }
 
-void ClusterView::paint(QPainter* painter, QRectF rect)
+void ClusterView::paint(QPainter* painter, QRectF rect, bool render_image_mode)
 {
     int xmargin = 1;
     int ymargin = 8;
@@ -770,15 +789,21 @@ void ClusterView::paint(QPainter* painter, QRectF rect)
         background_color = q->mvContext()->color("view_background_selected");
     else if (m_hovered)
         background_color = q->mvContext()->color("view_background_hovered");
+    if (render_image_mode)
+        background_color = Qt::white;
     painter->fillRect(rect, QColor(220, 220, 225));
     painter->fillRect(rect2, background_color);
 
     QPen pen_frame;
     pen_frame.setWidth(1);
+    if (render_image_mode)
+        pen_frame.setWidth(2);
     if (m_selected)
         pen_frame.setColor(q->mvContext()->color("view_frame_selected"));
     else
         pen_frame.setColor(q->mvContext()->color("view_frame"));
+    if (render_image_mode)
+        pen_frame.setColor(Qt::white);
     painter->setPen(pen_frame);
     painter->drawRect(rect2);
 
@@ -789,7 +814,9 @@ void ClusterView::paint(QPainter* painter, QRectF rect)
     int Tmid = (int)((T + 1) / 2) - 1;
     m_T = T;
 
-    int top_height = 20, bottom_height = 60;
+    int top_height = 10 + d->m_properties.cluster_number_font_size, bottom_height = 60;
+    if (render_image_mode)
+        bottom_height = 20;
     m_rect = rect;
     m_top_rect = QRectF(rect2.x(), rect2.y(), rect2.width(), top_height);
     m_template_rect = QRectF(rect2.x(), rect2.y() + top_height, rect2.width(), rect2.height() - bottom_height - top_height);
@@ -811,6 +838,8 @@ void ClusterView::paint(QPainter* painter, QRectF rect)
         QPen pen;
         pen.setWidth(1);
         pen.setColor(col);
+        if (render_image_mode)
+            pen.setWidth(3);
         painter->setPen(pen);
         if (d->m_stdev_shading) {
             QColor quite_light_gray(200, 200, 205);
@@ -853,13 +882,14 @@ void ClusterView::paint(QPainter* painter, QRectF rect)
     if (rect2.width() < 60)
         compressed_info = true;
 
+    // Group (or cluster) label
     QString group_label = d->group_label_for_k(m_CD.k);
     {
         txt = QString("%1").arg(group_label);
         //font.setPixelSize(16);
         //if (compressed_info)
         //font.setPixelSize(12);
-        font.setPixelSize(12);
+        font.setPixelSize(d->m_properties.cluster_number_font_size);
 
         txt = truncate_based_on_font_and_width(txt, font, m_top_rect.width());
 
@@ -874,42 +904,45 @@ void ClusterView::paint(QPainter* painter, QRectF rect)
     font.setPixelSize(11);
     int text_height = 13;
 
-    if (!compressed_info) {
-        RR = QRectF(m_bottom_rect.x(), m_bottom_rect.y() + m_bottom_rect.height() - text_height, m_bottom_rect.width(), text_height);
-        txt = QString("%1 spikes").arg(m_CD.num_events);
-        QPen pen;
-        pen.setWidth(1);
-        pen.setColor(q->mvContext()->color("info_text"));
-        painter->setFont(font);
-        painter->setPen(pen);
-        painter->drawText(RR, Qt::AlignCenter | Qt::AlignBottom, txt);
-    }
+    if (!render_image_mode) {
+        // Stats at and tags at bottom
+        if (!compressed_info) {
+            RR = QRectF(m_bottom_rect.x(), m_bottom_rect.y() + m_bottom_rect.height() - text_height, m_bottom_rect.width(), text_height);
+            txt = QString("%1 spikes").arg(m_CD.num_events);
+            QPen pen;
+            pen.setWidth(1);
+            pen.setColor(q->mvContext()->color("info_text"));
+            painter->setFont(font);
+            painter->setPen(pen);
+            painter->drawText(RR, Qt::AlignCenter | Qt::AlignBottom, txt);
+        }
 
-    {
-        QPen pen;
-        pen.setWidth(1);
-        RR = QRectF(m_bottom_rect.x(), m_bottom_rect.y() + m_bottom_rect.height() - text_height * 2, m_bottom_rect.width(), text_height);
-        double rate = m_CD.num_events * 1.0 / d->m_total_time_sec;
-        pen.setColor(get_firing_rate_text_color(rate));
-        if (!compressed_info)
-            txt = QString("%1 sp/sec").arg(QString::number(rate, 'g', 2));
-        else
-            txt = QString("%1").arg(QString::number(rate, 'g', 2));
-        painter->setFont(font);
-        painter->setPen(pen);
-        painter->drawText(RR, Qt::AlignCenter | Qt::AlignBottom, txt);
-    }
+        {
+            QPen pen;
+            pen.setWidth(1);
+            RR = QRectF(m_bottom_rect.x(), m_bottom_rect.y() + m_bottom_rect.height() - text_height * 2, m_bottom_rect.width(), text_height);
+            double rate = m_CD.num_events * 1.0 / d->m_total_time_sec;
+            pen.setColor(get_firing_rate_text_color(rate));
+            if (!compressed_info)
+                txt = QString("%1 sp/sec").arg(QString::number(rate, 'g', 2));
+            else
+                txt = QString("%1").arg(QString::number(rate, 'g', 2));
+            painter->setFont(font);
+            painter->setPen(pen);
+            painter->drawText(RR, Qt::AlignCenter | Qt::AlignBottom, txt);
+        }
 
-    {
-        QPen pen;
-        pen.setWidth(1);
-        RR = QRectF(m_bottom_rect.x(), m_bottom_rect.y() + m_bottom_rect.height() - text_height * 3, m_bottom_rect.width(), text_height);
-        QJsonArray aa = m_attributes["tags"].toArray();
-        QStringList aa_strlist = jsonarray2stringlist(aa);
-        txt = aa_strlist.join(" ");
-        painter->setFont(font);
-        painter->setPen(pen);
-        painter->drawText(RR, Qt::AlignCenter | Qt::AlignBottom, txt);
+        {
+            QPen pen;
+            pen.setWidth(1);
+            RR = QRectF(m_bottom_rect.x(), m_bottom_rect.y() + m_bottom_rect.height() - text_height * 3, m_bottom_rect.width(), text_height);
+            QJsonArray aa = m_attributes["tags"].toArray();
+            QStringList aa_strlist = jsonarray2stringlist(aa);
+            txt = aa_strlist.join(" ");
+            painter->setFont(font);
+            painter->setPen(pen);
+            painter->drawText(RR, Qt::AlignCenter | Qt::AlignBottom, txt);
+        }
     }
 }
 
@@ -918,9 +951,14 @@ double ClusterView::spaceNeeded()
     return 1;
 }
 
-void ClusterDetailViewPrivate::do_paint(QPainter& painter, int W_in, int H_in)
+void ClusterDetailViewPrivate::do_paint(QPainter& painter, int W_in, int H_in, bool render_image_mode)
 {
-    painter.fillRect(0, 0, W_in, H_in, q->mvContext()->color("background"));
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    QColor background_color = q->mvContext()->color("background");
+    if (render_image_mode)
+        background_color = Qt::white;
+    painter.fillRect(0, 0, W_in, H_in, background_color);
 
     int right_margin = 10; //make some room for the icon
     int left_margin = 30; //make room for the axis
@@ -979,18 +1017,26 @@ void ClusterDetailViewPrivate::do_paint(QPainter& painter, int W_in, int H_in)
             m_space_ratio = 300;
     }
 
+    double space_ratio = m_space_ratio;
+    double scroll_x = m_scroll_x;
+
+    if (render_image_mode) {
+        space_ratio = W / total_space_needed;
+        scroll_x = 0;
+    }
+
     ChannelSpacingInfo csi = compute_channel_spacing_info(cluster_data_merged, m_vscale_factor);
 
     float x0_before_scaling = 0;
     ClusterView* first_view = 0;
     for (int i = 0; i < m_views.count(); i++) {
         ClusterView* V = m_views[i];
-        QRectF rect(left_margin + x0_before_scaling * m_space_ratio - m_scroll_x, 0, V->spaceNeeded() * m_space_ratio, H);
+        QRectF rect(left_margin + x0_before_scaling * space_ratio - scroll_x, 0, V->spaceNeeded() * space_ratio, H);
         V->setChannelSpacingInfo(csi);
         if ((rect.x() + rect.width() >= left_margin) && (rect.x() <= left_margin + W)) {
             first_view = V;
             QRegion save_clip_region = painter.clipRegion();
-            V->paint(&painter, rect);
+            V->paint(&painter, rect, render_image_mode);
             painter.setClipRegion(save_clip_region);
         }
         V->x_position_before_scaling = x0_before_scaling;
@@ -998,7 +1044,7 @@ void ClusterDetailViewPrivate::do_paint(QPainter& painter, int W_in, int H_in)
     }
 
     painter.setClipRect(0, 0, W_in, H_in);
-    if (first_view) {
+    if ((first_view) && (!render_image_mode)) {
         double fac0 = 0.95; //to leave a bit of a gap
         ClusterView* V = first_view;
         int M = cluster_data_merged[0].template0.N1();
@@ -1024,7 +1070,7 @@ void ClusterDetailViewPrivate::do_paint(QPainter& painter, int W_in, int H_in)
         }
     }
 
-    if (q->isCalculating()) {
+    if ((q->isCalculating()) && (!render_image_mode)) {
         QFont font = painter.font();
         font.setPointSize(20);
         painter.setFont(font);
@@ -1035,7 +1081,9 @@ void ClusterDetailViewPrivate::do_paint(QPainter& painter, int W_in, int H_in)
 
 void ClusterDetailViewPrivate::export_image()
 {
-    QImage img = q->renderImage();
+    int W = m_properties.export_image_width;
+    int H = m_properties.export_image_height;
+    QImage img = q->renderImage(W, H);
     user_save_image(img);
 }
 

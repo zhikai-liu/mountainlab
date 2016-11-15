@@ -62,6 +62,7 @@ private slots:
     void slot_vertical_zoom_out();
     void slot_export_static_view();
     void slot_update_sort_order();
+    void slot_view_properties();
 
 private:
     ClusterDetailViewPrivate* d;

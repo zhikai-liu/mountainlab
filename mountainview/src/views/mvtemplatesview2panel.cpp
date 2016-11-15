@@ -87,6 +87,8 @@ void MVTemplatesView2Panel::setFiringRateDiskDiameter(double val)
 
 void MVTemplatesView2Panel::paint(QPainter* painter)
 {
+    painter->setRenderHint(QPainter::Antialiasing);
+
     QSize ss = this->windowSize();
     QPen pen = painter->pen();
 
