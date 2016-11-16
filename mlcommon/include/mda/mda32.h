@@ -45,6 +45,7 @@ public:
     bool write32(const QString& path) const;
     ///Write the array to the .mda file specified by path, with file format 64-bit float
     bool write64(const QString& path) const;
+    bool writeCsv(const QString& path) const;
 #endif
     ///Create an array with content read from the .mda file specified by path
     bool read(const char* path);

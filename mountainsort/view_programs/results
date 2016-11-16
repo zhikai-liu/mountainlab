@@ -35,12 +35,18 @@ if (file_exists(outfolder+'/filt.mda')) {
 if (file_exists(outfolder+'/pre.mda')) {
 	args+=' --pre='+outfolder+'/pre.mda';
 }
-if (file_exists(dsfolder+'/geom.csv')) {
+
+if (file_exists(outfolder+'/geom.csv')) {
+	args+=' --geom='+outfolder+'/geom.csv';
+}
+else if (file_exists(dsfolder+'/geom.csv')) {
 	args+=' --geom='+dsfolder+'/geom.csv';
 }
+
 if (file_exists(outfolder+'/cluster_metrics.csv')) {
 	args+=' --cluster_metrics='+outfolder+'/cluster_metrics.csv';
 }
+
 if (file_exists(outfolder+'/cluster_pair_metrics.csv')) {
 	args+=' --cluster_pair_metrics='+outfolder+'/cluster_pair_metrics.csv';
 }

@@ -34,6 +34,7 @@
 #include "merge_across_channels_processor.h"
 #include "merge_across_channels_v2_processor.h"
 #include "geom2adj_processor.h"
+#include "extract_geom_processor.h"
 #include "create_multiscale_timeseries_processor.h"
 #include "extract_channel_values_processor.h"
 #include "mv_discrimhist_processor.h"
@@ -115,6 +116,7 @@ void MSProcessManager::loadDefaultProcessors()
     loadProcessor(new merge_across_channels_Processor);
     loadProcessor(new merge_across_channels_v2_Processor);
     loadProcessor(new geom2adj_Processor);
+    loadProcessor(new extract_geom_Processor);
     loadProcessor(new linear_adjacency_matrix_Processor);
     loadProcessor(new create_multiscale_timeseries_Processor);
     loadProcessor(new extract_channel_values_Processor);

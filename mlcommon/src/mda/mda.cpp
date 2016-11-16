@@ -228,6 +228,11 @@ bool Mda::write32i(const QString& path) const
     return true;
 }
 
+bool Mda::writeCsv(const QString& path) const
+{
+    return d->write_to_text_file(path);
+}
+
 bool Mda::read(const char* path)
 {
     if ((QString(path).endsWith(".txt")) || (QString(path).endsWith(".csv"))) {

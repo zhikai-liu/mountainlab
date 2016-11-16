@@ -46,6 +46,7 @@ public:
     bool write32ui(const QString& path) const;
     bool write16i(const QString& path) const;
     bool write32i(const QString& path) const;
+    bool writeCsv(const QString& path) const;
     ///Create an array with content read from the .mda file specified by path
     bool read(const char* path);
     ///Write the array to the .mda file specified by path, with file format 8-bit integer (numbers should be integers between 0 and 255)

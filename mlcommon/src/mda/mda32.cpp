@@ -130,6 +130,11 @@ bool Mda32::write64(const QString& path) const
     return write64(path.toLatin1().data());
 }
 
+bool Mda32::writeCsv(const QString& path) const
+{
+    return d->write_to_text_file(path);
+}
+
 bool Mda32::read(const char* path)
 {
     if ((QString(path).endsWith(".txt")) || (QString(path).endsWith(".csv"))) {

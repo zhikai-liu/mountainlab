@@ -34,7 +34,9 @@ function run_mountainsort(params) {
 			adjacency_matrix=Process('linear_adjacency_matrix',{timeseries:params.raw},{adjacency_radius:adjacency_radius});
 		}
 		else {
-			adjacency_matrix=Process('geom2adj',{input:params.geom},{radius:params.adjacency_radius,channels:params.extract_raw_channels}).output;
+			if (params.extract_raw_channels)
+				params.geom=Process('extract_geom',{input:params.geom},{channels:params.extract_raw_channels}).output;
+			adjacency_matrix=Process('geom2adj',{input:params.geom},{radius:params.adjacency_radius}).output;
 		}
 	}
 	if (adjacency_matrix) {
@@ -106,6 +108,7 @@ function run_mountainsort(params) {
 	write_prv(filt,params.outpath+'/filt.mda.prv');
 	write_prv(pre,params.outpath+'/pre.mda.prv');
 	write_file(firings3,params.outpath+'/firings.mda');
+	if (params.geom) write_file(params.geom,params.outpath+'/geom.csv');
 
 	run_pipeline();
 }

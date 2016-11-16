@@ -339,6 +339,7 @@ ClipsGroup grab_clips_subset(ClipsGroup clips, const QVector<long>& inds)
 
 QVector<int> split_clusters(ClipsGroup clips, const QVector<int>& original_labels, const isocluster_v1_opts& opts, int channel_for_display)
 {
+    Q_UNUSED(channel_for_display)
     //printf("Splitting clusters for channel %d\n", channel_for_display + 1);
     int K = MLCompute::max(original_labels);
     QVector<int> new_labels(original_labels.count());

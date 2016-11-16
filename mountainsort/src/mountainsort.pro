@@ -117,7 +117,8 @@ HEADERS += \
     processors/kdtree.h \
     isosplit/isocut4.h \
     processors/concat_mda_processor.h \
-    processors/split_timeseries_processor.h
+    processors/split_timeseries_processor.h \
+    processors/extract_geom_processor.h
 
 SOURCES += \
     core/msprocessmanager.cpp \
@@ -216,7 +217,8 @@ SOURCES += \
     isosplit5/isocut5.cpp \
     isosplit5/jisotonic5.cpp \
     processors/concat_mda_processor.cpp \
-    processors/split_timeseries_processor.cpp
+    processors/split_timeseries_processor.cpp \
+    processors/extract_geom_processor.cpp
 #!macx {
 #SOURCES_NOCXX11 += \ #see below
 #    isosplit/isosplit2.cpp \
