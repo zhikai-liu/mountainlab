@@ -14,7 +14,7 @@ extract_geom_Processor::extract_geom_Processor()
     d->q = this;
 
     this->setName("extract_geom");
-    this->setVersion("0.12");
+    this->setVersion("0.13");
     this->setInputFileParameters("input");
     this->setOutputFileParameters("output");
     this->setOptionalParameters("channels");
@@ -39,7 +39,8 @@ bool extract_geom_Processor::run(const QMap<QString, QVariant>& params)
     QString channels_str = params["channels"].toString();
     QVector<int> channels = str_to_intlist(channels_str);
 
-    Mda X(input);
+    Mda X;
+    X.readCsv(input);
     int N = X.N1(); // note transposed rel to appearance in CSV
     int M = X.N2();
 

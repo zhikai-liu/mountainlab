@@ -19,7 +19,7 @@ geom2adj_Processor::geom2adj_Processor()
     d->q = this;
 
     this->setName("geom2adj");
-    this->setVersion("0.16");
+    this->setVersion("0.17");
     this->setInputFileParameters("input");
     this->setOutputFileParameters("output");
     this->setRequiredParameters("radius");
@@ -46,7 +46,8 @@ bool geom2adj_Processor::run(const QMap<QString, QVariant>& params)
     QString channels_str = params["channels"].toString();
     QVector<int> channels = str_to_intlist(channels_str);
 
-    Mda X(input);
+    Mda X;
+    X.readCsv(input);
     Mda Y;
     int N = X.N1(); // note transposed rel to appearance in CSV
     int M = X.N2();
@@ -78,7 +79,7 @@ bool geom2adj_Processor::run(const QMap<QString, QVariant>& params)
         }
     }
 
-    return Y2.write32(output);
+    return Y2.writeCsv(output);
 }
 
 class linear_adjacency_matrix_ProcessorPrivate {

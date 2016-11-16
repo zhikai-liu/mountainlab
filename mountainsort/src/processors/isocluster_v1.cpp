@@ -534,7 +534,7 @@ bool isocluster_v1(const QString& timeseries_path, const QString& detect_path, c
     // Read the adjacency matrix, or set it to all ones
     Mda AM;
     if (!adjacency_matrix_path.isEmpty()) {
-        AM.read(adjacency_matrix_path);
+        AM.readCsv(adjacency_matrix_path);
     }
     else {
         AM.allocate(M, M);

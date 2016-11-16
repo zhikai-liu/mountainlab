@@ -13,7 +13,7 @@ isocluster_v1_Processor::isocluster_v1_Processor()
     d->q = this;
 
     this->setName("isocluster_v1");
-    this->setVersion("0.11");
+    this->setVersion("0.12");
     this->setInputFileParameters("timeseries", "detect", "adjacency_matrix");
     this->setOutputFileParameters("firings_out");
     this->setRequiredParameters("clip_size", "num_features", "num_features2");
