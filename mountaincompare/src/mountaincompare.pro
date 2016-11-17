@@ -27,8 +27,9 @@ SOURCES += clusterdetailplugin.cpp clipsviewplugin.cpp \
 
 INCLUDEPATH += ../../mountainview/src/msv/views
 VPATH += ../../mountainview/src/msv/views
-HEADERS += clusterdetailview.h
-SOURCES += clusterdetailview.cpp
+HEADERS += clusterdetailview.h clusterdetailviewpropertiesdialog.h
+SOURCES += clusterdetailview.cpp clusterdetailviewpropertiesdialog.cpp
+FORMS += clusterdetailviewpropertiesdialog.ui
 
 SOURCES += mountaincomparemain.cpp \
     mvmainwindow.cpp \
