@@ -159,7 +159,7 @@ bool Mda32::read(const char* path)
     return true;
 }
 
-bool Mda32::readCsv(const QString &path)
+bool Mda32::readCsv(const QString& path)
 {
     return d->read_from_text_file(path);
 }

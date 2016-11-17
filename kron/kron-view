@@ -1,7 +1,7 @@
 #!/usr/bin/env nodejs
 
 function print_usage() {
-	console.log ('kron_view [view_program_name] [pipeline_names] [dataset_names] --outpath=[output(default)]');
+	console.log ('kron_view [view_program_name] [pipeline_names] [dataset_names] --outpath=[output(default)] [--output-to-dataset-folder]');
 	console.log ('kron_view [view_program_name] [dataset_names] --outpath=[output(default)]');
 }
 
@@ -47,6 +47,7 @@ if (CLP.unnamedParameters.length==2) {
 	dsnames=CLP.unnamedParameters[1].split(',');
 }
 var outpath=CLP.namedParameters.outpath||'output';
+var output_to_dataset_folder=('output-to-dataset-folder' in CLP.namedParameters);
 var pipelines_path='pipelines.txt';
 var datasets_path='datasets.txt';
 
@@ -67,18 +68,21 @@ if (!view_program_file) {
 	process.exit(-1);	
 }
 
-var output_folders=[];
-for (var i in pipnames) {
-	var outfolder=outpath+'/'+pipnames[i]+'--'+dsnames[i];
-	if (i<session_names.length) outfolder+='/'+session_names[i];
-	output_folders.push(outfolder);
-}
-console.log('=========================================');
-console.log(JSON.stringify(output_folders));
 var dataset_folders=[];
 for (var i in datasets) {
 	var dsfolder=datasets[i].absolute_folder_path;
 	dataset_folders.push(dsfolder);
+}
+
+var output_folders=[];
+for (var i in pipnames) {
+	var outfolder=outpath+'/'+pipnames[i]+'--'+dsnames[i];
+	if (output_to_dataset_folder) {
+		common.mkdir_safe(dataset_folders[0]+'/output');
+		outfolder=dataset_folders[0]+'/output/'+pipnames[i];
+	}
+	if (i<session_names.length) outfolder+='/'+session_names[i];
+	output_folders.push(outfolder);
 }
 
 var args='';

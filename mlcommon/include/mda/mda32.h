@@ -49,7 +49,7 @@ public:
 #endif
     ///Create an array with content read from the .mda file specified by path
     bool read(const char* path);
-    bool readCsv(const QString &path);
+    bool readCsv(const QString& path);
     ///Write the array to the .mda file specified by path, with file format 8-bit integer (numbers should be integers between 0 and 255)
     bool write8(const char* path) const;
     ///Write the array to the .mda file specified by path, with file format 32-bit float

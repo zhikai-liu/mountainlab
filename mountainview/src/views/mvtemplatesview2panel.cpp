@@ -243,7 +243,7 @@ void MVTemplatesView2PanelPrivate::setup_electrode_boxes(double W, double H)
     }
 
     double spacing = estimate_spacing(coords);
-    spacing=spacing*0.75;
+    spacing = spacing * 0.75;
 
     //double W0 = maxs.value(0) - mins.value(0);
     //double H0 = maxs.value(1) - mins.value(1);

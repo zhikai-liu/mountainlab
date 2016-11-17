@@ -1,7 +1,7 @@
 #!/usr/bin/env nodejs
 
 function print_usage() {
-	console.log ('kron_run [pipeline_names] [dataset_names] --outpath=[output(default)]');
+	console.log ('kron_run [pipeline_names] [dataset_names] --outpath=[output(default)] [--output-to-dataset-folder]');
 }
 
 var fs=require('fs');
@@ -12,6 +12,7 @@ var CLP=new common.CLParams(process.argv);
 var pipnames=CLP.unnamedParameters[0];
 var dsnames=CLP.unnamedParameters[1];
 var outpath=CLP.namedParameters.outpath||'output';
+var output_to_dataset_folder=('output-to-dataset-folder' in CLP.namedParameters);
 var pipelines_path='pipelines.txt';
 var datasets_path='datasets.txt';
 
@@ -20,7 +21,8 @@ if ((!pipnames)||(!dsnames)||(!outpath)||(!pipelines_path)||(!datasets_path)) {
 	process.exit(-1);
 }
 
-common.mkdir_safe(outpath);
+if (!output_to_dataset_folder)
+	common.mkdir_safe(outpath);
 
 var pipelines=common.read_pipelines_from_text_file(pipelines_path);
 var datasets=common.read_datasets_from_text_file(datasets_path);
@@ -41,11 +43,15 @@ common.wait_for_system_calls_to_finish(function() {
 });
 
 function run_pipeline(pipeline,dataset,callback) {
-	var outpath0=outpath+'/'+pipeline.name+'--'+dataset.name;
-	common.mkdir_safe(outpath0);
-
 	var ds_folder=dataset.absolute_folder_path;
 	var pipeline_script_path=pipeline.absolute_script_path;
+
+	var outpath0=outpath+'/'+pipeline.name+'--'+dataset.name;
+	if (output_to_dataset_folder) {
+		common.mkdir_safe(ds_folder+'/output');
+		outpath0=ds_folder+'/output/'+pipeline.name;
+	}
+	common.mkdir_safe(outpath0);
 
 	if (!ds_folder) {
 		console.log ('Unable to find dataset: '+ds_folder);
