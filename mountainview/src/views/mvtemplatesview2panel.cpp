@@ -183,7 +183,8 @@ void MVTemplatesView2Panel::paint(QPainter* painter)
         pen.setColor(QColor(180, 200, 200));
         pen.setWidth(1);
         painter->setPen(pen);
-        if (d->m_draw_ellipses)
+        //if (d->m_draw_ellipses)
+        if (true)
             painter->drawEllipse(box);
     }
 }
@@ -242,6 +243,7 @@ void MVTemplatesView2PanelPrivate::setup_electrode_boxes(double W, double H)
     }
 
     double spacing = estimate_spacing(coords);
+    spacing=spacing*0.75;
 
     //double W0 = maxs.value(0) - mins.value(0);
     //double H0 = maxs.value(1) - mins.value(1);
