@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += testlib
+QT       += testlib qml
 
 QT       -= gui
 
@@ -17,5 +17,7 @@ TEMPLATE = app
 include(../../../mlcommon/mlcommon.pri)
 
 
+SOURCES += ../../../mountainview/src/misc/jscounter.cpp
+INCLUDEPATH += ../../../mountainview/src/misc/
 SOURCES += tst_counterstest.cpp
 DEFINES += SRCDIR=\\\"$$PWD/\\\"

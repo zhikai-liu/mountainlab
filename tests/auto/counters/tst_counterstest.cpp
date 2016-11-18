@@ -1,6 +1,7 @@
 #include <QString>
 #include <QtTest>
 #include "icounter.h"
+#include "jscounter.h"
 
 class CountersTest : public QObject {
     Q_OBJECT
@@ -15,6 +16,8 @@ private Q_SLOTS:
     void testDoubleCounter();
     void testCustomCounter();
     void testAggregateCounter();
+    void testJSCounter_expression();
+    void testJSCounter_function();
 };
 
 CountersTest::CountersTest()
@@ -153,6 +156,35 @@ void CountersTest::testAggregateCounter()
     QVERIFY(c2.add(100) == 100);
     QCOMPARE(sum.value(), 200L);
     QVERIFY2(sum.add(100) == 200, "aggregate counter is read-only, value cannot be set directly");
+}
+
+void CountersTest::testJSCounter_expression()
+{
+    IIntCounter c1("C1");
+    IIntCounter c2("C2");
+    JSCounter exprCounter("JSexpr");
+    exprCounter.addCounter(&c1);
+    exprCounter.addCounter(&c2);
+    exprCounter.setEvaluationExpression("Math.max(C1, C2)");
+    c1.add(100);
+    QVERIFY(exprCounter.value<int>() == 100);
+    c2.add(200);
+    QVERIFY(exprCounter.value<int>() == 200);
+
+}
+
+void CountersTest::testJSCounter_function()
+{
+    IIntCounter c1("C1");
+    IIntCounter c2("C2");
+    JSCounter exprCounter("JSexpr");
+    exprCounter.addCounter(&c1);
+    exprCounter.addCounter(&c2);
+    exprCounter.setEvaluationFunction("function() { return Math.max(C1/2, C2/2) }");
+    c1.add(100);
+    QVERIFY(exprCounter.value<int>() == 50);
+    c2.add(200);
+    QVERIFY(exprCounter.value<int>() == 100);
 }
 
 QTEST_APPLESS_MAIN(CountersTest)

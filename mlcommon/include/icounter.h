@@ -12,7 +12,8 @@ public:
     enum Type {
         Unknown,
         Integer,
-        Double
+        Double,
+        Variant
     };
     Q_ENUM(Type)
     ICounterBase(const QString& name, QObject *parent = 0);
