@@ -12,10 +12,6 @@
 
 class MdaDataFloat : public MdaData<float> {};
 
-    IIntCounter* allocatedCounter = nullptr;
-    IIntCounter* freedCounter = nullptr;
-    IIntCounter* bytesReadCounter = nullptr;
-    IIntCounter* bytesWrittenCounter = nullptr;
 Mda32::Mda32(long N1, long N2, long N3, long N4, long N5, long N6)
 {
     d = new MdaDataFloat;
