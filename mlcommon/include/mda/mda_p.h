@@ -63,12 +63,12 @@ public:
     void allocate(size_t size) {
         m_data = (value_type*)::allocate(size*sizeof(value_type));
         if (!m_data) return;
-        allocatedCounter->add(totalSize()*sizeof(value_type));
+        incrementBytesAllocatedCounter(totalSize()*sizeof(value_type));
     }
     void deallocate() {
         if (!m_data) return;
         free(m_data);
-        freedCounter->add(totalSize()*sizeof(value_type));
+        incrementBytesFreedCounter(totalSize()*sizeof(value_type));
         m_data = 0;
     }
     inline size_t totalSize() const { return total_size; }

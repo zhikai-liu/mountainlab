@@ -1,6 +1,7 @@
 #include <QString>
 #include <QtTest>
 #include "mda/mda.h"
+#include <objectregistry.h>
 
 using VD = QVector<double>;
 
@@ -17,6 +18,8 @@ private Q_SLOTS:
     void allocate_data();
     void get1();
     void get1_data();
+private:
+    ObjectRegistry m_registry; // prevent warnings about missing registry
 };
 
 MdaTest::MdaTest()
