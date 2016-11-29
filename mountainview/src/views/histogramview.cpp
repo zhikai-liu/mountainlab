@@ -527,6 +527,16 @@ QColor modify_color_for_second_histogram2(QColor col)
     return ret;
 }
 
+QVector<double> sum(const QVector<double>& V1, const QVector<double>& V2)
+{
+    QVector<double> ret;
+    ret.resize(qMax(V1.size(), V2.size()));
+    for (int i = 0; i < ret.count(); i++) {
+        ret[i] = V1.value(i) + V2.value(i);
+    }
+    return ret;
+}
+
 void HistogramViewPrivate::do_paint(QPainter& painter, int W, int H)
 {
     //d->m_colors["view_background"]=QColor(245,245,245);
@@ -575,18 +585,25 @@ void HistogramViewPrivate::do_paint(QPainter& painter, int W, int H)
     if (num_bins < 2)
         return;
 
-    for (int pass = 1; pass <= 2; pass++) {
+    for (int pass = 0; pass <= 2; pass++) {
         QVector<double> bin_densities;
-        if (pass == 1)
-            bin_densities = m_bin_densities;
-        else
-            bin_densities = m_second_bin_densities;
-        QColor col = m_fill_color;
-        QColor line_color = m_line_color;
-        if (pass == 2) {
-            col = modify_color_for_second_histogram2(col);
-            line_color = modify_color_for_second_histogram2(line_color);
+        QColor col, line_color;
+        if (pass == 0) {
+            bin_densities = sum(m_bin_densities, m_second_bin_densities);
+            col = Qt::gray;
+            line_color = Qt::gray;
         }
+        else if (pass == 1) {
+            bin_densities = m_bin_densities;
+            col = m_fill_color;
+            line_color = m_line_color;
+        }
+        else if (pass == 2) {
+            bin_densities = m_second_bin_densities;
+            col = modify_color_for_second_histogram2(m_fill_color);
+            line_color = modify_color_for_second_histogram2(m_line_color);
+        }
+
         for (int i = 0; i < num_bins; i++) {
             QPointF pt1 = coord2pix(QPointF(m_bin_lefts[i], 0), W, H);
             QPointF pt2 = coord2pix(QPointF(m_bin_rights[i], bin_densities[i]), W, H);

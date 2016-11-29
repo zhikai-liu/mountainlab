@@ -719,8 +719,8 @@ QString locate_file_with_checksum(QString checksum, QString checksum1000, long s
     if (!allow_downloads)
         extra_args += "--local-only";
     QString cmd = QString("prv locate --checksum=%1 --checksum1000=%2 --size=%3 %4").arg(checksum).arg(checksum1000).arg(size).arg(extra_args);
-    QString ret=system_call_return_output(cmd);
-    QStringList lines=ret.split("\n");
+    QString ret = system_call_return_output(cmd);
+    QStringList lines = ret.split("\n");
     return lines.last();
 }
 

@@ -164,7 +164,8 @@ public:
         m_cMode = m;
         if (m_cMode == CTM_HiddenIfOlderThan) {
             m_timerId = startTimer(1000);
-        } else if (m_timerId) {
+        }
+        else if (m_timerId) {
             killTimer(m_timerId);
             m_timerId = 0;
         }
@@ -185,7 +186,8 @@ public:
             return;
         m_ctmThreshold = secs;
         if (completeTasksMode() == CTM_HiddenIfOlderThan) {
-            if (m_timerId) killTimer(m_timerId);
+            if (m_timerId)
+                killTimer(m_timerId);
             m_timerId = startTimer(1000);
             invalidateFilter();
         }
@@ -231,7 +233,8 @@ protected:
         return (TaskManager::TaskProgressModel*)sourceModel();
     }
 
-    void timerEvent(QTimerEvent *event) {
+    void timerEvent(QTimerEvent* event)
+    {
         if (event->timerId() == m_timerId) {
             invalidateFilter();
         }
@@ -398,7 +401,7 @@ void TaskProgressView::setupActions()
     activeMode->setCheckable(true);
     modeMenu->addAction(activeMode);
 
-    QMenu *finishedWithin = new QMenu("Active and finished within", this);
+    QMenu* finishedWithin = new QMenu("Active and finished within", this);
     modeMenu->addMenu(finishedWithin);
 
     QActionGroup* grp = new QActionGroup(this);
@@ -407,28 +410,28 @@ void TaskProgressView::setupActions()
 
     struct __delay {
         int secs;
-        const char *description;
+        const char* description;
     };
 
     __delay arr[] = {
         { 1, "1 second" },
         { 5, "5 seconds" },
-        {10, "10 seconds" },
-        {30, "30 seconds" },
-        {60, "1 minute" },
-        {300, "5 minutes" },
-        {1800, "30 minutes" },
-        {3600, "1 hour" }
+        { 10, "10 seconds" },
+        { 30, "30 seconds" },
+        { 60, "1 minute" },
+        { 300, "5 minutes" },
+        { 1800, "30 minutes" },
+        { 3600, "1 hour" }
     };
-    const int arrsize = sizeof(arr)/sizeof(arr[0]);
+    const int arrsize = sizeof(arr) / sizeof(arr[0]);
     for (int i = 0; i < arrsize; ++i) {
         QAction* delay = new QAction(arr[i].description, this);
         delay->setCheckable(true);
         finishedWithin->addAction(delay);
         grp->addAction(delay);
         const int time = arr[i].secs;
-        delay->setProperty("delay", time*1000);
-        connect(delay, &QAction::toggled, [time,this](bool checked) {
+        delay->setProperty("delay", time * 1000);
+        connect(delay, &QAction::toggled, [time, this](bool checked) {
             if(!checked) return;
             int t = time;
             d->proxyModel->setCompleteTasksModeThreshold(t);
@@ -436,10 +439,10 @@ void TaskProgressView::setupActions()
         });
     }
 
-    QAction *custom = new QAction("Custom time...", this);
+    QAction* custom = new QAction("Custom time...", this);
     finishedWithin->addSeparator();
     finishedWithin->addAction(custom);
-    connect(custom, &QAction::triggered, [grp,defMode,this]() {
+    connect(custom, &QAction::triggered, [grp, defMode, this]() {
        bool ok;
        int secs = QInputDialog::getInt(this, "Custom time", "Enter time in seconds:", 60, 1, 1000000, 1, &ok);
        if (!ok) {

@@ -265,9 +265,10 @@ void MVDiscrimHistViewPrivate::set_views()
         //if (q->mvContext()->clusterIsVisible(k1)) {
         {
             HistogramView* HV = new HistogramView;
-            QVector<double> tmp = m_histograms[ii].data1;
-            tmp.append(m_histograms[ii].data2);
-            HV->setData(tmp);
+            //QVector<double> tmp = m_histograms[ii].data1;
+            //tmp.append(m_histograms[ii].data2);
+            //HV->setData(tmp);
+            HV->setData(m_histograms[ii].data1);
             HV->setSecondData(m_histograms[ii].data2);
             HV->setColors(q->mvContext()->colors());
             //HV->autoSetBins(50);
