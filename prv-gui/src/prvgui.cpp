@@ -129,7 +129,7 @@ QString PrvGuiWorkerThread::check_if_on_server(PrvRecord prv, QString server_nam
     args << QString("--size=%1").arg(prv.size);
     args << "--server=" + server_name;
     QString output = exec_process_and_return_output(cmd, args);
-    return output;
+    return output.split("\n").last();
 }
 
 QList<PrvRecord> find_prvs(QString label, const QJsonValue& X)
@@ -303,7 +303,7 @@ QString PrvRecord::find_local_file() const
     args << QString("--original_path=%1").arg(this->original_path);
     args << "--local-only";
     QString output = exec_process_and_return_output(cmd, args);
-    return output;
+    return output.split("\n").last();
 }
 
 QString PrvRecord::find_remote_url(QString server_name) const
@@ -317,7 +317,7 @@ QString PrvRecord::find_remote_url(QString server_name) const
     args << QString("--size=%1").arg(this->size);
     args << "--server=" + server_name;
     QString output = exec_process_and_return_output(cmd, args);
-    return output;
+    return output.split("\n").last();
 }
 
 QString get_server_url_for_name(QString server_name)

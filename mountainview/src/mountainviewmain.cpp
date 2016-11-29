@@ -898,7 +898,7 @@ QString check_if_on_local_disk(PrvRecord prv)
     args << QString("--original_path=%1").arg(prv.original_path);
     args << "--local-only";
     QString output = exec_process_and_return_output(cmd, args);
-    return output;
+    return output.split("\n").last();
 }
 
 bool check_whether_prv_objects_need_to_be_downloaded_or_regenerated(QList<PrvRecord> prvs)
