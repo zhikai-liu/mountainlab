@@ -720,8 +720,9 @@ QString locate_file_with_checksum(QString checksum, QString checksum1000, long s
         extra_args += "--local-only";
     QString cmd = QString("prv locate --checksum=%1 --checksum1000=%2 --size=%3 %4").arg(checksum).arg(checksum1000).arg(size).arg(extra_args);
     QString ret = system_call_return_output(cmd);
-    QStringList lines = ret.split("\n");
-    return lines.last();
+    //QStringList lines = ret.split("\n");
+    //return lines.last();
+    return ret;
 }
 
 QString download_file_to_temp_dir(QString url)

@@ -125,7 +125,7 @@ void PrvGuiMainControlWidget::slot_upload()
                 uploader->setProperty("size", (long long)prvs[i].size);
                 uploader->setProperty("original_path", prvs[i].original_path);
                 uploader->setProperty("server", dlg.selectedServer());
-                QObject::connect(uploader, SIGNAL(finished()), this, SLOT(slot_uploader_finished));
+                QObject::connect(uploader, SIGNAL(finished()), this, SLOT(slot_uploader_finished()));
             }
         }
     }

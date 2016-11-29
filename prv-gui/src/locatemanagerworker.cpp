@@ -91,10 +91,12 @@ bool LocateManagerWorker::isFinished() const
 void LocateManagerWorker::slot_process_finished()
 {
     QString output = d->m_process.readAll().trimmed();
-    QStringList lines = output.split("\n"); //use the last line because there might be some warnings that we need to ignore (indeed there are).
+
+    //use the last line because there might be some warnings that we need to ignore (indeed there are).
     /// Witold, could you help supress warning messages in the prv program? For example: qt.network.ssl: QSslSocket: cannot resolve SSLv2_client_method
-    output = lines.value(lines.count() - 1);
-    if (output.isEmpty()) {
+    output = output.split("\n").last();
+
+    if ((output.isEmpty()) || ((!d->m_server.isEmpty()) && (!output.startsWith("http:")))) {
         d->m_result.state = fuzzybool::NO;
     }
     else {
