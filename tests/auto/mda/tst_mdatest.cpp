@@ -1,6 +1,7 @@
 #include <QString>
 #include <QtTest>
 #include "mda/mda.h"
+#include <objectregistry.h>
 
 using VD = QVector<double>;
 
@@ -17,6 +18,9 @@ private Q_SLOTS:
     void allocate_data();
     void get1();
     void get1_data();
+    void invalid_readfile();
+private:
+    ObjectRegistry m_registry; // prevent warnings about missing registry
 };
 
 MdaTest::MdaTest()
@@ -208,6 +212,14 @@ void MdaTest::get1_data()
     QTest::addColumn<VD>("input");
     QTest::newRow("12345678") << VD({ 1, 2, 3, 4, 5, 6, 7, 8 });
     QTest::newRow("negative") << VD(8, -1);
+}
+
+void MdaTest::invalid_readfile()
+{
+    Mda mda("invalidfile.mda");
+    QCOMPARE(mda.ndims(), 2); // minimum to have a matrix
+    QCOMPARE(mda.N1(), 1L);
+    QCOMPARE(mda.N2(), 1L);
 }
 
 QTEST_APPLESS_MAIN(MdaTest)

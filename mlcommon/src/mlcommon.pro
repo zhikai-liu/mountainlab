@@ -17,6 +17,7 @@ VPATH += ../include
 HEADERS += mlcommon.h sumit.h \
     ../include/mda/mda32.h \
     ../include/mda/diskreadmda32.h \
+    ../include/mda/mda_p.h \
     ../include/mliterator.h \
     ../include/objectregistry.h \
     ../include/mlprivate.h \

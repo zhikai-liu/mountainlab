@@ -1,14 +1,11 @@
 #include "mda.h"
+#include "mda_p.h"
 #include "mdaio.h"
 #include <cachemanager.h>
 #include <stdio.h>
-#include "mlcommon.h"
 #include <icounter.h>
 #include <objectregistry.h>
-#include <QSharedData>
-#include <cstring>
 
-#define MDA_MAX_DIMS 6
 
 #ifdef USE_SSE2
 static void* malloc_aligned(const long alignValue, const long nbytes)
@@ -33,66 +30,18 @@ void* allocate(unsigned long nbytes)
 #endif
 }
 
-class MdaData : public QSharedData {
-public:
-    MdaData();
-    MdaData(const MdaData& other);
-    ~MdaData();
-    bool allocate(double value, long N1, long N2, long N3 = 1, long N4 = 1, long N5 = 1, long N6 = 1);
 
-    inline long dim(long idx) const;
-    inline long N1() const;
-    inline long N2() const;
-
-    void allocate(long size);
-    void deallocate();
-    inline long totalSize() const;
-    inline void setTotalSize(long ts);
-    inline double* data();
-    inline const double* constData() const;
-    inline double at(long idx) const;
-    inline double at(long i1, long i2) const;
-    inline void set(double val, long idx);
-    inline void set(double val, long i1, long i2);
-
-    inline long dims(long idx) const;
-    void setDims(long n1, long n2, long n3, long n4, long n5, long n6);
-
-    int determine_num_dims(long N1, long N2, long N3, long N4, long N5, long N6) const;
-    bool safe_index(long i) const;
-    bool safe_index(long i1, long i2) const;
-    bool safe_index(long i1, long i2, long i3) const;
-    bool safe_index(long i1, long i2, long i3, long i4, long i5, long i6) const;
-
-    bool read_from_text_file(const QString& path);
-    bool write_to_text_file(const QString& path) const;
-
-    void incrementBytesAllocatedCounter(int64_t size) const;
-    void incrementBytesFreedCounter(int64_t size) const;
-    void incrementBytesReadCounter(int64_t size) const;
-    void incrementBytesWrittenCounter(int64_t size) const;
-
-private:
-    double* m_data;
-    //std::vector<long> m_dims;
-    QVector<long> m_dims;
-    long total_size;
-    // TODO: Consider making static:
-    mutable IIntCounter* bytesAllocatedCounter;
-    mutable IIntCounter* bytesFreedCounter;
-    mutable IIntCounter* bytesReadCounter;
-    mutable IIntCounter* bytesWrittenCounter;
-};
+class MdaDataDouble : public MdaData<double> {};
 
 Mda::Mda(long N1, long N2, long N3, long N4, long N5, long N6)
 {
-    d = new MdaData;
+    d = new MdaDataDouble;
     this->allocate(N1, N2, N3, N4, N5, N6);
 }
 
 Mda::Mda(const QString& mda_filename)
 {
-    d = new MdaData;
+    d = new MdaDataDouble;
     this->read(mda_filename);
 }
 
@@ -236,17 +185,23 @@ bool Mda::writeCsv(const QString& path) const
 bool Mda::read(const char* path)
 {
     if ((QString(path).endsWith(".txt")) || (QString(path).endsWith(".csv"))) {
-        return d->read_from_text_file(path);
+        if (!d->read_from_text_file(path)) {
+            *this = Mda(1);
+            return false;
+        }
+        return true;
     }
     FILE* input_file = fopen(path, "rb");
     if (!input_file) {
         printf("Warning: Unable to open mda file for reading: %s\n", path);
+        *this = Mda(1);
         return false;
     }
     MDAIO_HEADER H;
     if (!mda_read_header(&H, input_file)) {
         qWarning() << "Problem reading mda file: " + QString(path);
         fclose(input_file);
+        *this = Mda(1);
         return false;
     }
     this->allocate(H.dims[0], H.dims[1], H.dims[2], H.dims[3], H.dims[4], H.dims[5]);
@@ -430,7 +385,12 @@ double Mda::get(long i1, long i2, long i3) const
 
 double Mda::get(long i1, long i2, long i3, long i4, long i5, long i6) const
 {
-    return d->at(i1 + d->dims(0) * i2 + d->dims(0) * d->dims(1) * i3 + d->dims(0) * d->dims(1) * d->dims(2) * i4 + d->dims(0) * d->dims(1) * d->dims(2) * d->dims(3) * i5 + d->dims(0) * d->dims(1) * d->dims(2) * d->dims(3) * d->dims(4) * i6);
+    const long d01 = d->dims(0)*d->dims(1);
+    const long d02 = d01 * d->dims(2);
+    const long d03 = d02 * d->dims(3);
+    const long d04 = d03 * d->dims(4);
+
+    return d->at(i1 + d->dims(0) * i2 + d01 * i3 + d02 * i4 + d03 * i5 + d04 * i6);
 }
 
 double Mda::value(long i) const
@@ -501,22 +461,27 @@ const double* Mda::constDataPtr() const
 
 double* Mda::dataPtr(long i)
 {
-    return &d->data()[i];
+    return d->data()+i;
 }
 
 double* Mda::dataPtr(long i1, long i2)
 {
-    return &d->data()[i1 + N1() * i2];
+    return d->data()+(i1 + N1() * i2);
 }
 
 double* Mda::dataPtr(long i1, long i2, long i3)
 {
-    return &d->data()[i1 + N1() * i2 + N1() * N2() * i3];
+    return d->data()+(i1 + N1() * i2 + N1() * N2() * i3);
 }
 
 double* Mda::dataPtr(long i1, long i2, long i3, long i4, long i5, long i6)
 {
-    return &d->data()[i1 + N1() * i2 + N1() * N2() * i3 + N1() * N2() * N3() * i4 + N1() * N2() * N3() * N4() * i5 + N1() * N2() * N3() * N4() * N5() * i6];
+    const long N12 = N1()*N2();
+    const long N13 = N12*N3();
+    const long N14 = N13*N4();
+    const long N15 = N14*N5();
+
+    return d->data()+(i1 + N1() * i2 + N12 * i3 + N13 * i4 + N14 * i5 + N15 * i6);
 }
 
 void Mda::getChunk(Mda& ret, long i, long size) const
@@ -525,14 +490,14 @@ void Mda::getChunk(Mda& ret, long i, long size) const
     long a_begin = i;
     long x_begin = 0;
     long a_end = i + size - 1;
-    long x_end = size - 1;
+//    long x_end = size - 1;  // unused?
 
     if (a_begin < 0) {
         x_begin += 0 - a_begin;
         a_begin += 0 - a_begin;
     }
     if (a_end >= (long)d->totalSize()) {
-        x_end += (long)d->totalSize() - 1 - a_end;
+//        x_end += (long)d->totalSize() - 1 - a_end; // unused?
         a_end += (long)d->totalSize() - 1 - a_end;
     }
 
@@ -541,11 +506,7 @@ void Mda::getChunk(Mda& ret, long i, long size) const
     const double* ptr1 = this->constDataPtr();
     double* ptr2 = ret.dataPtr();
 
-    long ii = 0;
-    for (long a = a_begin; a <= a_end; a++) {
-        ptr2[x_begin + ii] = ptr1[a_begin + ii];
-        ii++; //it was a bug that this was left out, fixed on 5/31/16 by jfm
-    }
+    std::copy(ptr1+a_begin, ptr1+a_end+1, ptr2+x_begin);
 }
 
 void Mda::getChunk(Mda& ret, long i1, long i2, long size1, long size2) const
@@ -677,6 +638,7 @@ void Mda::setChunk(Mda& X, long i)
     long ii = 0;
     for (long a = a_begin; a <= a_end; a++) {
         ptr1[a_begin + ii] = ptr2[x_begin + ii];
+        ii++;
     }
 }
 
@@ -793,12 +755,7 @@ double Mda::minimum() const
     if ((!NN) || (!ptr)) {
         return 0;
     }
-    double ret = ptr[0];
-    for (long i = 0; i < NN; i++) {
-        if (ptr[i] < ret)
-            ret = ptr[i];
-    }
-    return ret;
+    return *std::min_element(ptr, ptr+NN);
 }
 
 double Mda::maximum() const
@@ -808,12 +765,7 @@ double Mda::maximum() const
     if ((!NN) || (!ptr)) {
         return 0;
     }
-    double ret = ptr[0];
-    for (long i = 0; i < NN; i++) {
-        if (ptr[i] > ret)
-            ret = ptr[i];
-    }
-    return ret;
+    return *std::max_element(ptr, ptr+NN);
 }
 
 bool Mda::reshape(int N1b, int N2b, int N3b, int N4b, int N5b, int N6b)
@@ -835,260 +787,26 @@ void Mda::detach()
 
 void Mda::set(double val, long i)
 {
-    d->data()[i] = val;
+    d->set(val, i);
 }
 
 void Mda::set(double val, long i1, long i2)
 {
-    d->data()[i1 + d->dims(0) * i2] = val;
+    d->set(val, i1 + d->dims(0) * i2);
 }
 
 void Mda::set(double val, long i1, long i2, long i3)
 {
-    d->data()[i1 + d->dims(0) * i2 + d->dims(0) * d->dims(1) * i3] = val;
+    d->set(val, i1 + d->dims(0) * i2 + d->dims(0) * d->dims(1) * i3);
 }
 
 void Mda::set(double val, long i1, long i2, long i3, long i4, long i5, long i6)
 {
-    d->data()[i1 + d->dims(0) * i2 + d->dims(0) * d->dims(1) * i3 + d->dims(0) * d->dims(1) * d->dims(2) * i4 + d->dims(0) * d->dims(1) * d->dims(2) * d->dims(3) * i5 + d->dims(0) * d->dims(1) * d->dims(2) * d->dims(3) * d->dims(4) * i6]
-        = val;
+    const long d01 = d->dims(0)*d->dims(1);
+    const long d02 = d01 * d->dims(2);
+    const long d03 = d02*d->dims(3);
+    const long d04 = d03*d->dims(4);
+
+    d->set(val, i1 + d->dims(0) * i2 + d01 * i3 + d02 * i4 + d03 * i5 + d04 * i6);
 }
 
-MdaData::MdaData()
-    : QSharedData()
-    , m_data(0)
-    , total_size(0)
-    , bytesAllocatedCounter(0)
-    , bytesFreedCounter(0)
-    , bytesReadCounter(0)
-    , bytesWrittenCounter(0)
-{
-    ICounterManager* manager = ObjectRegistry::getObject<ICounterManager>();
-    if (manager) {
-        bytesAllocatedCounter = static_cast<IIntCounter*>(manager->counter("allocated_bytes"));
-        bytesFreedCounter = static_cast<IIntCounter*>(manager->counter("freed_bytes"));
-        bytesReadCounter = static_cast<IIntCounter*>(manager->counter("bytes_read"));
-        bytesWrittenCounter = static_cast<IIntCounter*>(manager->counter("bytes_written"));
-    }
-}
-
-MdaData::MdaData(const MdaData& other)
-    : QSharedData(other)
-    , m_data(0)
-    , m_dims(other.m_dims)
-    , total_size(other.total_size)
-    , bytesAllocatedCounter(other.bytesAllocatedCounter)
-    , bytesFreedCounter(other.bytesFreedCounter)
-    , bytesWrittenCounter(other.bytesWrittenCounter)
-{
-    allocate(total_size);
-    std::copy(other.m_data, other.m_data + other.totalSize(), m_data);
-}
-
-MdaData::~MdaData()
-{
-    deallocate();
-}
-
-bool MdaData::allocate(double value, long N1, long N2, long N3, long N4, long N5, long N6)
-{
-    deallocate();
-    setDims(N1, N2, N3, N4, N5, N6);
-    if (N1 > 0 && N2 > 0 && N3 > 0 && N4 > 0 && N5 > 0 && N6 > 0)
-        setTotalSize(N1 * N2 * N3 * N4 * N5 * N6);
-    else
-        setTotalSize(0);
-
-    if (totalSize() > 0) {
-        allocate(totalSize());
-        if (!constData()) {
-            qCritical() << QString("Unable to allocate Mda of size %1x%2x%3x%4x%5x%6 (total=%7)").arg(N1).arg(N2).arg(N3).arg(N4).arg(N5).arg(N6).arg(totalSize());
-            exit(-1);
-        }
-        if (value == 0.0) {
-            std::memset(data(), 0, totalSize() * sizeof(double));
-        }
-        else
-            std::fill(data(), data() + totalSize(), value);
-    }
-    return true;
-}
-
-long MdaData::dim(long idx) const { return m_dims.value(idx); }
-
-long MdaData::N1() const { return dim(0); }
-
-long MdaData::N2() const { return dim(1); }
-
-void MdaData::allocate(long size)
-{
-    m_data = (double*)::allocate(size * sizeof(double));
-    if (!m_data)
-        return;
-    incrementBytesAllocatedCounter(totalSize());
-}
-
-void MdaData::deallocate()
-{
-    if (!m_data)
-        return;
-    free(m_data);
-    incrementBytesFreedCounter(totalSize());
-    m_data = 0;
-}
-
-long MdaData::totalSize() const { return total_size; }
-
-void MdaData::setTotalSize(long ts) { total_size = ts; }
-
-double* MdaData::data() { return m_data; }
-
-const double* MdaData::constData() const { return m_data; }
-
-double MdaData::at(long idx) const { return *(constData() + idx); }
-
-double MdaData::at(long i1, long i2) const { return at(i1 + dim(0) * i2); }
-
-void MdaData::set(double val, long idx) { m_data[idx] = val; }
-
-void MdaData::set(double val, long i1, long i2) { set(val, i1 + dim(0) * i2); }
-
-long MdaData::dims(long idx) const
-{
-    return m_dims.at(idx);
-}
-
-void MdaData::setDims(long n1, long n2, long n3, long n4, long n5, long n6)
-{
-    m_dims.resize(MDA_MAX_DIMS);
-    m_dims[0] = n1;
-    m_dims[1] = n2;
-    m_dims[2] = n3;
-    m_dims[3] = n4;
-    m_dims[4] = n5;
-    m_dims[5] = n6;
-}
-
-int MdaData::determine_num_dims(long N1, long N2, long N3, long N4, long N5, long N6) const
-{
-    if (!(N6 > 0 && N5 > 0 && N4 > 0 && N3 > 0 && N2 > 0 && N1 > 0))
-        return 0;
-    if (N6 > 1)
-        return 6;
-    if (N5 > 1)
-        return 5;
-    if (N4 > 1)
-        return 4;
-    if (N3 > 1)
-        return 3;
-    return 2;
-}
-
-bool MdaData::safe_index(long i) const
-{
-    return ((i >= 0) && (i < totalSize()));
-}
-
-bool MdaData::safe_index(long i1, long i2) const
-{
-    return ((i1 >= 0) && (i2 >= 0) && (i1 < dims(0)) && (i2 < dims(1)));
-}
-
-bool MdaData::safe_index(long i1, long i2, long i3) const
-{
-    return ((i1 >= 0) && (i2 >= 0) && (i3 >= 0) && (i1 < dims(0)) && (i2 < dims(1)) && (i3 < dims(2)));
-}
-
-bool MdaData::safe_index(long i1, long i2, long i3, long i4, long i5, long i6) const
-{
-    return (
-        (0 <= i1) && (i1 < dims(0))
-        && (0 <= i2) && (i2 < dims(1))
-        && (0 <= i3) && (i3 < dims(2))
-        && (0 <= i4) && (i4 < dims(3))
-        && (0 <= i5) && (i5 < dims(4))
-        && (0 <= i6) && (i6 < dims(5)));
-}
-
-bool MdaData::read_from_text_file(const QString& path)
-{
-    QString txt = TextFile::read(path);
-    QStringList lines = txt.split("\n", QString::SkipEmptyParts);
-    QStringList lines2;
-    for (int i = 0; i < lines.count(); i++) {
-        QString line = lines[i].trimmed();
-        if (!line.isEmpty()) {
-            if (i == 0) {
-                //check whether this is a header line, if so, don't include it
-                line = line.split(",", QString::SkipEmptyParts).join(" ");
-                QList<QString> vals = line.split(QRegExp("\\s+"), QString::SkipEmptyParts);
-                bool ok;
-                vals.value(0).toDouble(&ok);
-                if (ok) {
-                    lines2 << line;
-                }
-            }
-            else {
-                lines2 << line;
-            }
-        }
-    }
-    for (int i = 0; i < lines2.count(); i++) {
-        QString line = lines2[i].trimmed();
-        line = line.split(",", QString::SkipEmptyParts).join(" ");
-        QList<QString> vals = line.split(QRegExp("\\s+"), QString::SkipEmptyParts);
-        if (i == 0) {
-            allocate(0, vals.count(), lines2.count());
-        }
-        for (int j = 0; j < vals.count(); j++) {
-            set(vals[j].toDouble(), j, i);
-        }
-    }
-    return true;
-}
-
-bool MdaData::write_to_text_file(const QString& path) const
-{
-    char sep = ' ';
-    if (path.endsWith(".csv"))
-        sep = ',';
-    long max_num_entries = 1e6;
-    if (N1() * N2() == max_num_entries) {
-        qWarning() << "mda is too large to write text file";
-        return false;
-    }
-    QList<QString> lines;
-    for (long i = 0; i < N2(); i++) {
-        QStringList vals;
-        for (long j = 0; j < N1(); j++) {
-            vals << QString("%1").arg(at(j, i));
-        }
-        QString line = vals.join(sep);
-        lines << line;
-    }
-    return TextFile::write(path, lines.join("\n"));
-}
-
-void MdaData::incrementBytesAllocatedCounter(int64_t size) const
-{
-    if (bytesAllocatedCounter)
-        bytesAllocatedCounter->add(size);
-}
-
-void MdaData::incrementBytesFreedCounter(int64_t size) const
-{
-    if (bytesFreedCounter)
-        bytesFreedCounter->add(size);
-}
-
-void MdaData::incrementBytesReadCounter(int64_t size) const
-{
-    if (bytesReadCounter)
-        bytesReadCounter->add(size);
-}
-
-void MdaData::incrementBytesWrittenCounter(int64_t size) const
-{
-    if (bytesWrittenCounter)
-        bytesWrittenCounter->add(size);
-}
