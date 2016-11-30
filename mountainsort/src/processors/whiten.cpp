@@ -13,6 +13,7 @@
 #include "msmisc.h"
 
 //Mda get_whitening_matrix(Mda& COV);
+void quantize(long N,double *X,double unit);
 
 bool whiten(const QString& input, const QString& output)
 {
@@ -107,6 +108,9 @@ bool whiten(const QString& input, const QString& output)
             }
 #pragma omp critical(lock2)
             {
+                // The following is needed to make the output deterministic, due to a very tricky floating-point problem that I honestly could not track down
+                // It has something to do with multiplying by very small values of WWptr[bb]. But I truly could not pinpoint the exact problem.
+                quantize(chunk_out.totalSize(),chunk_out.dataPtr(),0.001);
                 Y.writeChunk(chunk_out, 0, timepoint);
                 num_timepoints_handled += qMin(chunk_size, N - timepoint);
                 if ((timer.elapsed() > 5000) || (num_timepoints_handled == N)) {
@@ -119,6 +123,16 @@ bool whiten(const QString& input, const QString& output)
     Y.close();
 
     return true;
+}
+
+double quantize(double X,double unit) {
+    return (floor(X/unit+0.5))*unit;
+}
+
+void quantize(long N,double *X,double unit) {
+    for (long i=0; i<N; i++) {
+        X[i]=quantize(X[i],unit);
+    }
 }
 
 /*
