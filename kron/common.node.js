@@ -85,7 +85,7 @@ exports.read_datasets_from_text_file=function(file_path) {
 					}
 					catch(err) {
 						console.log ('Error parsing json from file: '+params_fname);
-						console.log (common.read_text_file(params_fname));
+						//console.log (common.read_text_file(params_fname));
 					}
 					datasets.push({
 						name:vals[0],
@@ -102,7 +102,7 @@ exports.read_datasets_from_text_file=function(file_path) {
 			}
 		}
 	}
-	console.log(datasets);
+	//console.log(datasets);
 	return datasets;
 };
 

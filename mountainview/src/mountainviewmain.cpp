@@ -380,7 +380,7 @@ int main(int argc, char* argv[])
 
             QJsonObject mv2 = dc.toMV2FileObject();
             QString debug = QJsonDocument(mv2["timeseries"].toObject()).toJson();
-            printf("%s\n", debug.toUtf8().data());
+            //printf("%s\n", debug.toUtf8().data());
             mv2_fname = CacheManager::globalInstance()->makeLocalFile() + ".mv2";
             QString mv2_text = QJsonDocument(mv2).toJson();
             TextFile::write(mv2_fname, mv2_text);

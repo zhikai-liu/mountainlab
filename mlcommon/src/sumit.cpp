@@ -18,6 +18,7 @@
 
 QString compute_the_file_hash(const QString& path, long num_bytes)
 {
+    printf("compute_the_file_hash: %s (%ld)",path.toUtf8().data(),num_bytes);
     QCryptographicHash hash(QCryptographicHash::Sha1);
     QFile FF(path);
     if (!FF.open(QFile::ReadOnly))
