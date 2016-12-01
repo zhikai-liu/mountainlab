@@ -62,7 +62,7 @@ void LocateManagerWorker::startSearch()
     d->m_was_started = true;
     QObject::connect(&d->m_process, SIGNAL(finished(int)), this, SLOT(slot_process_finished()));
     d->m_process.setReadChannelMode(QProcess::MergedChannels);
-    QString cmd = QString("prv locate --checksum=%1 --checksum1000=%2 --size=%3 --original_path=%4").arg(d->m_prv.checksum).arg(d->m_prv.checksum1000).arg(d->m_prv.size).arg(d->m_prv.original_path);
+    QString cmd = QString("prv locate --checksum=%1 --fcs=%2 --size=%3 --original_path=%4").arg(d->m_prv.checksum).arg(d->m_prv.fcs).arg(d->m_prv.size).arg(d->m_prv.original_path);
     if (d->m_server.isEmpty()) {
         cmd += " --local-only";
     }

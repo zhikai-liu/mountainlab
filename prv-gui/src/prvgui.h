@@ -30,7 +30,7 @@ struct PrvRecord {
 
     QString checksum;
     long size = 0;
-    QString checksum1000;
+    QString fcs;
     QString original_path;
 
     QList<PrvProcessRecord> processes;
@@ -47,7 +47,7 @@ private:
         label = other.label;
         checksum = other.checksum;
         size = other.size;
-        checksum1000 = other.checksum1000;
+        fcs = other.fcs;
         original_path = other.original_path;
         processes = other.processes;
     }

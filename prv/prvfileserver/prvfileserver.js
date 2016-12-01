@@ -153,7 +153,7 @@ var SERVER=http.createServer(function (REQ, RESP) {
 				return;
 			}
 			console.log('+++++++++++++++++ DEBUG0');
-			run_process_and_read_stdout(__dirname+'/../bin/prv',['locate','--path='+absolute_data_directory(),'--checksum='+query.checksum,'--size='+query.size,'--checksum1000='+(query.checksum1000||'')],function(txt) {
+			run_process_and_read_stdout(__dirname+'/../bin/prv',['locate','--path='+absolute_data_directory(),'--checksum='+query.checksum,'--size='+query.size,'--fcs='+(query.fcs||'')],function(txt) {
 				txt=txt.trim();
 				console.log('+++++++++++++++++ DEBUG1: '+txt);
 				if (txt) {
@@ -161,7 +161,7 @@ var SERVER=http.createServer(function (REQ, RESP) {
 						txt=txt+'?passcode='+config.passcode;
 				}
 				else {
-					find_in_subserver({checksum:query.checksum,size:query.size,checksum1000:(query.checksum1000||'')});
+					find_in_subserver({checksum:query.checksum,size:query.size,fcs:(query.fcs||'')});
 					return;
 				}
 				if (txt) txt=txt.slice(absolute_data_directory().length+1);
@@ -435,7 +435,7 @@ var SERVER=http.createServer(function (REQ, RESP) {
 				return;
 			}
 			var subserver_path=subserver0.path||'';
-			var url0=subserver0.host+':'+subserver0.port+subserver_path+'?a=locate&checksum='+info.checksum+'&size='+info.size+'&checksum1000='+(info.checksum1000||'')+'&recursion_index='+(Number(recursion_index)-1);
+			var url0=subserver0.host+':'+subserver0.port+subserver_path+'?a=locate&checksum='+info.checksum+'&size='+info.size+'&fcs='+(info.fcs||'')+'&recursion_index='+(Number(recursion_index)-1);
 			http_get_text_file(url0,function(txt0) {
 				if (txt0) {
 					var txt1=txt0;

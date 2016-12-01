@@ -247,7 +247,7 @@ QJsonObject DiskReadMda32::toPrvObject() const
         QString path0 = this->makePath();
         ret["original_size"] = QFileInfo(path0).size();
         ret["original_checksum"] = MLUtil::computeSha1SumOfFile(d->m_path);
-        ret["original_checksum_1000"] = MLUtil::computeSha1SumOfFileHead(d->m_path, 1000);
+        ret["original_fcs"] = "head1000-" + MLUtil::computeSha1SumOfFileHead(d->m_path, 1000);
         ret["original_path"] = path0;
         return ret;
     }

@@ -10,7 +10,8 @@
 
 #define MDA_MAX_DIMS 6
 
-class MdaDataFloat : public MdaData<float> {};
+class MdaDataFloat : public MdaData<float> {
+};
 
 Mda32::Mda32(long N1, long N2, long N3, long N4, long N5, long N6)
 {
@@ -266,7 +267,7 @@ dtype32 Mda32::get(long i1, long i2, long i3) const
 
 dtype32 Mda32::get(long i1, long i2, long i3, long i4, long i5, long i6) const
 {
-    const long d01 = d->dims(0)*d->dims(1);
+    const long d01 = d->dims(0) * d->dims(1);
     const long d02 = d01 * d->dims(2);
     const long d03 = d02 * d->dims(3);
     const long d04 = d03 * d->dims(4);
@@ -342,27 +343,27 @@ const dtype32* Mda32::constDataPtr() const
 
 dtype32* Mda32::dataPtr(long i)
 {
-    return d->data()+i;
+    return d->data() + i;
 }
 
 dtype32* Mda32::dataPtr(long i1, long i2)
 {
-    return d->data()+(i1 + N1() * i2);
+    return d->data() + (i1 + N1() * i2);
 }
 
 dtype32* Mda32::dataPtr(long i1, long i2, long i3)
 {
-    return d->data()+(i1 + N1() * i2 + N1() * N2() * i3);
+    return d->data() + (i1 + N1() * i2 + N1() * N2() * i3);
 }
 
 dtype32* Mda32::dataPtr(long i1, long i2, long i3, long i4, long i5, long i6)
 {
-    const long N12 = N1()*N2();
-    const long N13 = N12*N3();
-    const long N14 = N13*N4();
-    const long N15 = N14*N5();
+    const long N12 = N1() * N2();
+    const long N13 = N12 * N3();
+    const long N14 = N13 * N4();
+    const long N15 = N14 * N5();
 
-    return d->data()+(i1 + N1() * i2 + N12 * i3 + N13 * i4 + N14 * i5 + N15 * i6);
+    return d->data() + (i1 + N1() * i2 + N12 * i3 + N13 * i4 + N14 * i5 + N15 * i6);
 }
 
 void Mda32::getChunk(Mda32& ret, long i, long size) const
@@ -371,14 +372,14 @@ void Mda32::getChunk(Mda32& ret, long i, long size) const
     long a_begin = i;
     long x_begin = 0;
     long a_end = i + size - 1;
-//    long x_end = size - 1;  // unused?
+    //    long x_end = size - 1;  // unused?
 
     if (a_begin < 0) {
         x_begin += 0 - a_begin;
         a_begin += 0 - a_begin;
     }
     if (a_end >= (long)d->totalSize()) {
-//        x_end += (long)d->totalSize() - 1 - a_end; // unused?
+        //        x_end += (long)d->totalSize() - 1 - a_end; // unused?
         a_end += (long)d->totalSize() - 1 - a_end;
     }
 
@@ -387,7 +388,7 @@ void Mda32::getChunk(Mda32& ret, long i, long size) const
     const float* ptr1 = this->constDataPtr();
     float* ptr2 = ret.dataPtr();
 
-    std::copy(ptr1+a_begin, ptr1+a_end+1, ptr2+x_begin);
+    std::copy(ptr1 + a_begin, ptr1 + a_end + 1, ptr2 + x_begin);
 }
 
 void Mda32::getChunk(Mda32& ret, long i1, long i2, long size1, long size2) const
@@ -636,7 +637,7 @@ dtype32 Mda32::minimum() const
     if ((!NN) || (!ptr)) {
         return 0;
     }
-    return *std::min_element(ptr, ptr+NN);
+    return *std::min_element(ptr, ptr + NN);
 }
 
 dtype32 Mda32::maximum() const
@@ -646,7 +647,7 @@ dtype32 Mda32::maximum() const
     if ((!NN) || (!ptr)) {
         return 0;
     }
-    return *std::max_element(ptr, ptr+NN);
+    return *std::max_element(ptr, ptr + NN);
 }
 
 bool Mda32::reshape(int N1b, int N2b, int N3b, int N4b, int N5b, int N6b)
@@ -678,10 +679,10 @@ void Mda32::set(dtype32 val, long i1, long i2, long i3)
 
 void Mda32::set(dtype32 val, long i1, long i2, long i3, long i4, long i5, long i6)
 {
-    const long d01 = d->dims(0)*d->dims(1);
+    const long d01 = d->dims(0) * d->dims(1);
     const long d02 = d01 * d->dims(2);
-    const long d03 = d02*d->dims(3);
-    const long d04 = d03*d->dims(4);
+    const long d03 = d02 * d->dims(3);
+    const long d04 = d03 * d->dims(4);
 
     d->set(val, i1 + d->dims(0) * i2 + d01 * i3 + d02 * i4 + d03 * i5 + d04 * i6);
 }

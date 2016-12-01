@@ -302,7 +302,7 @@ bool PrvGuiMainControlWidgetPrivate::regenerate_prv(const PrvRecord& prv)
     PrvRecord prv_new = prv;
     prv_new.checksum = MLUtil::computeSha1SumOfFile(output_file_path);
     prv_new.size = QFileInfo(output_file_path).size();
-    prv_new.checksum1000 = MLUtil::computeSha1SumOfFileHead(output_file_path, 1000);
+    prv_new.fcs = "head1000-" + MLUtil::computeSha1SumOfFileHead(output_file_path, 1000);
     if (prv.checksum != prv_new.checksum) {
         QString str = QString("Note: the checksum or the prv object has changed %1 <> %2, sizes: %3, %4").arg(prv_new.checksum).arg(prv.checksum).arg(prv_new.size).arg(prv.size);
         task.log() << str;

@@ -78,42 +78,42 @@ PrvGuiMainWindow::~PrvGuiMainWindow()
     delete d;
 }
 
-void replace_prv(QJsonObject& prv_object, QString original_path, QString new_checksum, long new_size, QString new_checksum1000);
-void replace_prv(QJsonArray& prv_array, QString original_path, QString new_checksum, long new_size, QString new_checksum1000)
+void replace_prv(QJsonObject& prv_object, QString original_path, QString new_checksum, long new_size, QString new_fcs);
+void replace_prv(QJsonArray& prv_array, QString original_path, QString new_checksum, long new_size, QString new_fcs)
 {
     for (int i = 0; i < prv_array.count(); i++) {
         if (prv_array[i].isArray()) {
             QJsonArray X = prv_array[i].toArray();
-            replace_prv(X, original_path, new_checksum, new_size, new_checksum1000);
+            replace_prv(X, original_path, new_checksum, new_size, new_fcs);
             prv_array[i] = X;
         }
         else if (prv_array[i].isObject()) {
             QJsonObject X = prv_array[i].toObject();
-            replace_prv(X, original_path, new_checksum, new_size, new_checksum1000);
+            replace_prv(X, original_path, new_checksum, new_size, new_fcs);
             prv_array[i] = X;
         }
     }
 }
 
-void replace_prv(QJsonObject& prv_object, QString original_path, QString new_checksum, long new_size, QString new_checksum1000)
+void replace_prv(QJsonObject& prv_object, QString original_path, QString new_checksum, long new_size, QString new_fcs)
 {
     if ((prv_object.contains("original_checksum")) && (prv_object.contains("original_size")) && (prv_object.contains("original_path"))) {
         if (prv_object.value("original_path").toString() == original_path) {
             prv_object["original_checksum"] = new_checksum;
             prv_object["original_size"] = (long long)new_size;
-            prv_object["original_checksum_1000"] = new_checksum1000;
+            prv_object["original_fcs"] = new_fcs;
         }
     }
     QStringList keys = prv_object.keys();
     foreach (QString key, keys) {
         if (prv_object[key].isArray()) {
             QJsonArray X = prv_object[key].toArray();
-            replace_prv(X, original_path, new_checksum, new_size, new_checksum1000);
+            replace_prv(X, original_path, new_checksum, new_size, new_fcs);
             prv_object[key] = X;
         }
         else if (prv_object[key].isObject()) {
             QJsonObject X = prv_object[key].toObject();
-            replace_prv(X, original_path, new_checksum, new_size, new_checksum1000);
+            replace_prv(X, original_path, new_checksum, new_size, new_fcs);
             prv_object[key] = X;
         }
     }
@@ -123,7 +123,7 @@ bool PrvGuiMainWindow::savePrv(QString prv_file_name)
 {
     QList<PrvRecord> prvs = d->m_tree->prvs();
     for (int i = 0; i < prvs.count(); i++) {
-        replace_prv(d->m_original_object, prvs[i].original_path, prvs[i].checksum, prvs[i].size, prvs[i].checksum1000);
+        replace_prv(d->m_original_object, prvs[i].original_path, prvs[i].checksum, prvs[i].size, prvs[i].fcs);
     }
     QString json = QJsonDocument(d->m_original_object).toJson();
     if (!TextFile::write(prv_file_name, json)) {

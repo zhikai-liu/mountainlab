@@ -9,14 +9,19 @@
 
 #define MDA_MAX_DIMS 6
 
-template<typename T>
+template <typename T>
 class MdaData : public QSharedData {
 public:
     typedef T value_type;
     typedef T* pointer;
     typedef T& reference;
 
-    MdaData() : QSharedData(), m_data(0), m_dims(1,1), total_size(0) {
+    MdaData()
+        : QSharedData()
+        , m_data(0)
+        , m_dims(1, 1)
+        , total_size(0)
+    {
         ICounterManager* manager = ObjectRegistry::getObject<ICounterManager>();
         if (manager) {
             allocatedCounter = static_cast<IIntCounter*>(manager->counter("allocated_bytes"));
@@ -25,22 +30,31 @@ public:
             bytesWrittenCounter = static_cast<IIntCounter*>(manager->counter("bytes_written"));
         }
     }
-    MdaData(const MdaData &other)
-        : QSharedData(other), m_data(0), m_dims(other.m_dims), total_size(other.total_size)
-    , allocatedCounter(other.allocatedCounter), freedCounter(other.freedCounter)
-    , bytesReadCounter(other.bytesReadCounter), bytesWrittenCounter(other.bytesWrittenCounter) {
+    MdaData(const MdaData& other)
+        : QSharedData(other)
+        , m_data(0)
+        , m_dims(other.m_dims)
+        , total_size(other.total_size)
+        , allocatedCounter(other.allocatedCounter)
+        , freedCounter(other.freedCounter)
+        , bytesReadCounter(other.bytesReadCounter)
+        , bytesWrittenCounter(other.bytesWrittenCounter)
+    {
         allocate(total_size);
-        std::copy(other.m_data, other.m_data+other.totalSize(), m_data);
+        std::copy(other.m_data, other.m_data + other.totalSize(), m_data);
     }
-    ~MdaData() {
+    ~MdaData()
+    {
         deallocate();
     }
-    bool allocate(T value, long N1, long N2, long N3 = 1, long N4 = 1, long N5 = 1, long N6 = 1) {
+    bool allocate(T value, long N1, long N2, long N3 = 1, long N4 = 1, long N5 = 1, long N6 = 1)
+    {
         deallocate();
         setDims(N1, N2, N3, N4, N5, N6);
         if (N1 > 0 && N2 > 0 && N3 > 0 && N4 > 0 && N5 > 0 && N6 > 0)
             setTotalSize(N1 * N2 * N3 * N4 * N5 * N6);
-        else setTotalSize(0);
+        else
+            setTotalSize(0);
 
         if (totalSize() > 0) {
             allocate(totalSize());
@@ -49,9 +63,10 @@ public:
                 exit(-1);
             }
             if (value == 0.0) {
-                std::memset(data(), 0, totalSize()*sizeof(value_type));
-            } else
-                std::fill(data(), data()+totalSize(), value);
+                std::memset(data(), 0, totalSize() * sizeof(value_type));
+            }
+            else
+                std::fill(data(), data() + totalSize(), value);
         }
         return true;
     }
@@ -60,30 +75,35 @@ public:
     inline long N1() const { return dim(0); }
     inline long N2() const { return dim(1); }
 
-    void allocate(size_t size) {
-        m_data = (value_type*)::allocate(size*sizeof(value_type));
-        if (!m_data) return;
-        incrementBytesAllocatedCounter(totalSize()*sizeof(value_type));
+    void allocate(size_t size)
+    {
+        m_data = (value_type*)::allocate(size * sizeof(value_type));
+        if (!m_data)
+            return;
+        incrementBytesAllocatedCounter(totalSize() * sizeof(value_type));
     }
-    void deallocate() {
-        if (!m_data) return;
+    void deallocate()
+    {
+        if (!m_data)
+            return;
         free(m_data);
-        incrementBytesFreedCounter(totalSize()*sizeof(value_type));
+        incrementBytesFreedCounter(totalSize() * sizeof(value_type));
         m_data = 0;
     }
     inline size_t totalSize() const { return total_size; }
     inline void setTotalSize(size_t ts) { total_size = ts; }
-    inline T *data() { return m_data; }
+    inline T* data() { return m_data; }
     inline const T* constData() const { return m_data; }
-    inline T at(size_t idx) const { return *(constData()+idx); }
+    inline T at(size_t idx) const { return *(constData() + idx); }
     inline T at(size_t i1, size_t i2) const { return at(i1 + dim(0) * i2); }
     inline void set(T val, size_t idx) { m_data[idx] = val; }
     inline void set(T val, size_t i1, size_t i2) { set(val, i1 + dim(0) * i2); }
 
     inline long dims(size_t idx) const
     {
-        if (idx < 0 || idx >= m_dims.size()) return 0;
-        return *(m_dims.data()+idx);
+        if (idx < 0 || idx >= m_dims.size())
+            return 0;
+        return *(m_dims.data() + idx);
     }
     void setDims(long n1, long n2, long n3, long n4, long n5, long n6)
     {
@@ -98,7 +118,8 @@ public:
 
     int determine_num_dims(long N1, long N2, long N3, long N4, long N5, long N6) const
     {
-        if (!(N6 > 0 && N5 > 0 && N4 > 0 && N3 > 0 && N2 > 0 && N1 > 0)) return 0;
+        if (!(N6 > 0 && N5 > 0 && N4 > 0 && N3 > 0 && N2 > 0 && N1 > 0))
+            return 0;
         if (N6 > 1)
             return 6;
         if (N5 > 1)
@@ -124,13 +145,12 @@ public:
     bool safe_index(long i1, long i2, long i3, long i4, long i5, long i6) const
     {
         return (
-                    (0 <= i1) && (i1 < dims(0))
-                    && (0 <= i2) && (i2 < dims(1))
-                    && (0 <= i3) && (i3 < dims(2))
-                    && (0 <= i4) && (i4 < dims(3))
-                    && (0 <= i5) && (i5 < dims(4))
-                    && (0 <= i6) && (i6 < dims(5))
-                    );
+            (0 <= i1) && (i1 < dims(0))
+            && (0 <= i2) && (i2 < dims(1))
+            && (0 <= i3) && (i3 < dims(2))
+            && (0 <= i4) && (i4 < dims(3))
+            && (0 <= i5) && (i5 < dims(4))
+            && (0 <= i6) && (i6 < dims(5)));
     }
 
     bool read_from_text_file(const QString& path)
@@ -194,19 +214,23 @@ public:
         return TextFile::write(path, lines.join("\n"));
     }
 
-    void incrementBytesAllocatedCounter(int64_t size) const {
+    void incrementBytesAllocatedCounter(int64_t size) const
+    {
         if (allocatedCounter)
             allocatedCounter->add(size);
     }
-    void incrementBytesFreedCounter(int64_t size) const {
+    void incrementBytesFreedCounter(int64_t size) const
+    {
         if (freedCounter)
             freedCounter->add(size);
     }
-    void incrementBytesReadCounter(int64_t size) const {
+    void incrementBytesReadCounter(int64_t size) const
+    {
         if (bytesReadCounter)
             bytesReadCounter->add(size);
     }
-    void incrementBytesWrittenCounter(int64_t size) const {
+    void incrementBytesWrittenCounter(int64_t size) const
+    {
         if (bytesWrittenCounter)
             bytesWrittenCounter->add(size);
     }
@@ -220,6 +244,5 @@ private:
     mutable IIntCounter* bytesReadCounter = nullptr;
     mutable IIntCounter* bytesWrittenCounter = nullptr;
 };
-
 
 #endif // MDA_P_H

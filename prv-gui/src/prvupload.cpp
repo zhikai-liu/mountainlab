@@ -55,7 +55,7 @@ MLNetwork::PrvParallelUploader* PrvUpload::initiateUploadToServer(QString server
         return 0;
     }
 
-    QString checksum00_1000 = MLUtil::computeSha1SumOfFileHead(local_path, 1000);
+    QString fcs00 = "head1000-" + MLUtil::computeSha1SumOfFileHead(local_path, 1000);
 
     QString server_url = get_server_url_for_name(server_name);
     if (server_url.isEmpty()) {
@@ -71,7 +71,7 @@ MLNetwork::PrvParallelUploader* PrvUpload::initiateUploadToServer(QString server
     QUrlQuery query;
     query.addQueryItem("checksum", checksum00);
     query.addQueryItem("size", QString::number(size0));
-    query.addQueryItem("checksum1000", checksum00_1000);
+    query.addQueryItem("fcs", fcs00);
     query.addQueryItem("passcode", passcode);
 
     QJsonObject info;

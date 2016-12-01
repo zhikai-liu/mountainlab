@@ -194,7 +194,7 @@ private:
             return -1;
         QJsonObject obj;
         obj["checksum"] = checksum;
-        obj["checksum1000"] = MLUtil::computeSha1SumOfFileHead(path, 1000);
+        obj["fcs"] = "head1000-" + MLUtil::computeSha1SumOfFileHead(path, 1000);
         obj["size"] = QFileInfo(path).size();
         println(QJsonDocument(obj).toJson());
         return 0;
@@ -601,9 +601,9 @@ public:
         if (m_cmd == "locate") {
             parser.addPositionalArgument("file_name", "PRV file name", "[file_name]");
         }
-        // --checksum=[] --checksum1000=[optional] --size=[]
+        // --checksum=[] --fcs=[optional] --size=[]
         parser.addOption(QCommandLineOption("checksum", "checksum", "[]"));
-        parser.addOption(QCommandLineOption("checksum1000", "checksum1000", "[optional]"));
+        parser.addOption(QCommandLineOption("fcs", "fcs", "[optional]"));
         parser.addOption(QCommandLineOption("original_path", "original_path", "[optional]"));
         parser.addOption(QCommandLineOption("size", "size", "[]"));
         parser.addOption(QCommandLineOption("server", "name of the server to search", "[server name]"));
@@ -632,7 +632,7 @@ public:
         QJsonObject obj;
         if (parser.isSet("checksum")) {
             obj["original_checksum"] = parser.value("checksum");
-            obj["original_checksum_1000"] = parser.value("checksum1000");
+            obj["original_fcs"] = parser.value("fcs");
             obj["original_size"] = parser.value("size").toLongLong();
             obj["original_path"] = parser.value("original_path");
         }
@@ -652,7 +652,7 @@ public:
             else {
                 if (m_cmd == "locate") {
                     obj["original_checksum"] = MLUtil::computeSha1SumOfFile(src_path);
-                    obj["original_checksum_1000"] = MLUtil::computeSha1SumOfFileHead(src_path, 1000);
+                    obj["original_fcs"] = "head1000-" + MLUtil::computeSha1SumOfFileHead(src_path, 1000);
                     obj["original_size"] = QFileInfo(src_path).size();
                 }
                 else {

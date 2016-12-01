@@ -29,6 +29,7 @@ void mkdirIfNeeded(const QString& path);
 QString computeSha1SumOfFile(const QString& path);
 QString computeSha1SumOfFileHead(const QString& path, long num_bytes);
 QString computeSha1SumOfString(const QString& str);
+bool matchesFastChecksum(QString path, QString fcs);
 QList<int> stringListToIntList(const QStringList& list);
 QStringList intListToStringList(const QList<int>& list);
 QJsonValue toJsonValue(const QByteArray& X);

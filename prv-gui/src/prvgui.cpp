@@ -125,7 +125,7 @@ QString PrvGuiWorkerThread::check_if_on_server(PrvRecord prv, QString server_nam
     QStringList args;
     args << "locate";
     args << "--checksum=" + prv.checksum;
-    args << "--checksum1000=" + prv.checksum1000;
+    args << "--fcs=" + prv.fcs;
     args << QString("--size=%1").arg(prv.size);
     args << "--server=" + server_name;
     QString output = exec_process_and_return_output(cmd, args);
@@ -242,7 +242,7 @@ PrvRecord::PrvRecord(QString label_in, QJsonObject obj)
     this->label = label_in;
     this->original_path = obj["original_path"].toString();
     this->checksum = obj["original_checksum"].toString();
-    this->checksum1000 = obj["original_checksum_1000"].toString();
+    this->fcs = obj["original_fcs"].toString();
     this->size = obj["original_size"].toVariant().toLongLong();
 
     QJsonArray X = obj["processes"].toArray();
@@ -259,7 +259,7 @@ QVariantMap PrvRecord::toVariantMap() const
     ret["label"] = this->label;
 
     ret["checksum"] = this->checksum;
-    ret["checksum1000"] = this->checksum1000;
+    ret["fcs"] = this->fcs;
     ret["size"] = (long long)this->size;
     ret["original_path"] = this->original_path;
 
@@ -276,7 +276,7 @@ PrvRecord PrvRecord::fromVariantMap(QVariantMap X)
 {
     QJsonObject obj;
     obj["original_checksum"] = X["checksum"].toString();
-    obj["original_checksum_1000"] = X["checksum1000"].toString();
+    obj["original_fcs"] = X["fcs"].toString();
     obj["original_size"] = X["size"].toLongLong();
     obj["original_path"] = X["original_path"].toString();
     PrvRecord ret(X["label"].toString(), obj);
@@ -298,7 +298,7 @@ QString PrvRecord::find_local_file() const
     QStringList args;
     args << "locate";
     args << "--checksum=" + this->checksum;
-    args << "--checksum1000=" + this->checksum1000;
+    args << "--fcs=" + this->fcs;
     args << QString("--size=%1").arg(this->size);
     args << QString("--original_path=%1").arg(this->original_path);
     args << "--local-only";
@@ -313,7 +313,7 @@ QString PrvRecord::find_remote_url(QString server_name) const
     QStringList args;
     args << "locate";
     args << "--checksum=" + this->checksum;
-    args << "--checksum1000=" + this->checksum1000;
+    args << "--fcs=" + this->fcs;
     args << QString("--size=%1").arg(this->size);
     args << "--server=" + server_name;
     QString output = exec_process_and_return_output(cmd, args);

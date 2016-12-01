@@ -19,6 +19,7 @@ private Q_SLOTS:
     void get1();
     void get1_data();
     void invalid_readfile();
+
 private:
     ObjectRegistry m_registry; // prevent warnings about missing registry
 };

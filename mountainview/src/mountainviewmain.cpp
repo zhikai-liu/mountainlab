@@ -893,7 +893,7 @@ QString check_if_on_local_disk(PrvRecord prv)
     QStringList args;
     args << "locate";
     args << "--checksum=" + prv.checksum;
-    args << "--checksum1000=" + prv.checksum1000;
+    args << "--fcs=" + prv.fcs;
     args << QString("--size=%1").arg(prv.size);
     args << QString("--original_path=%1").arg(prv.original_path);
     args << "--local-only";
