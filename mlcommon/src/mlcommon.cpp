@@ -189,7 +189,7 @@ void MLUtil::mkdirIfNeeded(const QString& path)
 #include "sumit.h"
 QString MLUtil::computeSha1SumOfFile(const QString& path)
 {
-    printf("Looking up sha1: %s\n",path.toUtf8().data());
+    //printf("Looking up sha1: %s\n",path.toUtf8().data());
     return sumit(path);
     /*
     QFile file(path);
