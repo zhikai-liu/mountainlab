@@ -2,13 +2,12 @@ TEMPLATE = subdirs
 
 # usage:
 # qmake
-# qmake "COMPONENTS = mountainview mountainbrowser"
+# qmake "COMPONENTS = mountainview"
 
-#COMPONENTS = mdaconvert  mountainprocess mountainview mountainbrowser prv prv-gui
+#COMPONENTS = mdaconvert  mountainprocess mountainview prv prv-gui
 
 isEmpty(COMPONENTS) {
     COMPONENTS = mdaconvert mountainprocess mountainsort mountainview mountaincompare prv prv-gui
-    #we intentionally exclude mountainbrowser -- use: qmake "COMPONENTS = mountainbrowser"
 }
 
 CONFIG += ordered
