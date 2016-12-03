@@ -313,13 +313,13 @@ void MVClusterWidget::setTransformation(const AffineTransformation& T)
 
 void MVClusterWidget::slot_view_current_event_changed()
 {
-    MVClusterView* V0 = (MVClusterView*)sender();
+    MVClusterView* V0 = qobject_cast<MVClusterView*>(sender());
     mvContext()->setCurrentEvent(V0->currentEvent());
 }
 
 void MVClusterWidget::slot_view_transformation_changed()
 {
-    MVClusterView* V0 = (MVClusterView*)sender();
+    MVClusterView* V0 = qobject_cast<MVClusterView*>(sender());
     AffineTransformation T = V0->transformation();
     foreach (MVClusterView* V, d->m_views) {
         V->setTransformation(T);
@@ -328,8 +328,7 @@ void MVClusterWidget::slot_view_transformation_changed()
 
 void MVClusterWidget::slot_view_active_cluster_numbers_changed()
 {
-    /// TODO (LOW) replace all these casts with qobject_cast's
-    MVClusterView* V0 = (MVClusterView*)sender();
+    MVClusterView* V0 = qobject_cast<MVClusterView*>(sender());
     QSet<int> active_cluster_numbers = V0->activeClusterNumbers();
     foreach (MVClusterView* V, d->m_views) {
         V->setActiveClusterNumbers(active_cluster_numbers);
@@ -338,14 +337,14 @@ void MVClusterWidget::slot_view_active_cluster_numbers_changed()
 
 void MVClusterWidget::slot_show_clip_view_clicked()
 {
-    bool val = ((QCheckBox*)sender())->isChecked();
+    bool val = qobject_cast<QCheckBox*>(sender())->isChecked();
     d->m_clips_view->setVisible(val);
 }
 
 void MVClusterWidget::slot_show_view_clicked()
 {
     int index = sender()->property("view_index").toInt();
-    bool val = ((QCheckBox*)sender())->isChecked();
+    bool val = qobject_cast<QCheckBox*>(sender())->isChecked();
     if ((index >= 0) && (index < d->m_views.count())) {
         d->m_views[index]->setVisible(val);
     }
