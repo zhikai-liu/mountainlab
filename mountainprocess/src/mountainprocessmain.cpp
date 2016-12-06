@@ -525,6 +525,24 @@ int main(int argc, char* argv[])
         return 0;
     }
     */
+    else if (arg1 == "print-log") {
+        MPDaemonInterface X;
+        QJsonObject log = X.getLog();
+        QJsonArray arr = log["log"].toArray();
+        QTextStream qout(stdout);
+        foreach(QJsonValue v, arr) {
+            QJsonObject logRecord = v.toObject();
+            qout << logRecord["timestamp"].toString() << '\t'
+                 << logRecord["record_type"].toString() << '\t'
+                 << QJsonDocument(logRecord["data"].toObject()).toJson() << endl;
+        }
+        return 0;
+    }
+    else if (arg1 == "log") {
+        MPDaemonInterface X;
+        X.logLoop();
+        return 0;
+    }
     else if (arg1 == "daemon-state") { //Print some information on the state of the daemon
         MPDaemonInterface X;
         QJsonObject state = X.getDaemonState();
