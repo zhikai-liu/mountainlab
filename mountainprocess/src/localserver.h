@@ -47,7 +47,7 @@ public:
     {
         socket()->write(ba);
     }
-    void close()
+    virtual void close()
     {
         socket()->disconnectFromServer();
     }

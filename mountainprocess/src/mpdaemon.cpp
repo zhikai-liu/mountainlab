@@ -45,6 +45,8 @@ public:
     {
     }
 
+    void close();
+
 protected:
     bool handleMessage(const QByteArray& ba) Q_DECL_OVERRIDE;
     bool getState();
@@ -60,6 +62,17 @@ public:
         , m_priv(priv)
     {
     }
+    void distributeLogMessage(const QJsonObject &msg) {
+        foreach(LocalServer::Client *client, m_listeners) {
+            client->writeMessage(QJsonDocument(msg).toJson());
+        }
+    }
+    void registerLogListener(LocalServer::Client* listener) {
+        m_listeners.append(listener);
+    }
+    void unregisterLogListener(LocalServer::Client* listener) {
+        m_listeners.removeOne(listener);
+    }
 
 protected:
     LocalServer::Client* createClient(QLocalSocket* sock) Q_DECL_OVERRIDE
@@ -70,6 +83,7 @@ protected:
 
 private:
     MPDaemonPrivate* m_priv;
+    QList<LocalServer::Client*> m_listeners;
 };
 
 class MPDaemonPrivate {
@@ -80,7 +94,8 @@ public:
     ProcessResources m_total_resources_available;
     QString m_log_path;
     QSharedMemory* shm = nullptr;
-    LocalServer::Server* m_server = nullptr;
+    MountainProcessServer* m_server = nullptr;
+    QJsonArray m_log;
 
     void process_command(QJsonObject obj);
     void writeLogRecord(QString record_type, QString key1 = "", QVariant val1 = QVariant(), QString key2 = "", QVariant val2 = QVariant(), QString key3 = "", QVariant val3 = QVariant());
@@ -236,7 +251,7 @@ bool MPDaemon::run()
     long num_cycles = 0;
     while (!stopDaemon && d->m_is_running) {
         if (timer1.elapsed() > 5000) {
-            d->writeLogRecord("timer1", "num_cycles", (long long)num_cycles);
+//            d->writeLogRecord("timer1", "num_cycles", (long long)num_cycles);
             num_cycles = 0;
             timer1.restart();
             printf(".");
@@ -548,6 +563,10 @@ void MPDaemonPrivate::writeLogRecord(QString record_type, const QJsonObject& obj
     X["timestamp"] = QDateTime::currentDateTime().toString("yyyy-MM-dd|hh:mm:ss.zzz");
     X["data"] = obj;
     QString line = QJsonDocument(X).toJson(QJsonDocument::Compact);
+    while(m_log.size() >= 10) m_log.pop_front();
+    m_log.push_back(X);
+    if (m_server)
+        m_server->distributeLogMessage(X);
     if (!m_log_path.isEmpty()) {
         append_line_to_file(m_log_path + "/mpdaemon.log", line);
     }
@@ -1413,6 +1432,12 @@ bool MountainProcessServerClient::getState()
     return true;
 }
 
+void MountainProcessServerClient::close() {
+    MountainProcessServer *srvr = static_cast<MountainProcessServer*>(server());
+    srvr->unregisterLogListener(this);
+    LocalServer::Client::close();
+}
+
 bool MountainProcessServerClient::handleMessage(const QByteArray& ba)
 {
     QJsonParseError error;
@@ -1422,6 +1447,20 @@ bool MountainProcessServerClient::handleMessage(const QByteArray& ba)
     }
     if (obj["command"] == "get-daemon-state") {
         return getState();
+    }
+    if (obj["command"] == "get-log") {
+        QJsonObject log;
+        log["log"] = m_priv->m_log;
+        writeMessage(QJsonDocument(log).toJson());
+        return true;
+    }
+    if (obj["command"] == "log-listener") {
+        MountainProcessServer *srvr = static_cast<MountainProcessServer*>(server());
+        srvr->registerLogListener(this);
+        QJsonObject log;
+        log["log"] = m_priv->m_log;
+        writeMessage(QJsonDocument(log).toJson());
+        return true;
     }
     m_priv->process_command(obj);
     //        qDebug().noquote() << ba;

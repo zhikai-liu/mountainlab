@@ -73,6 +73,8 @@ public:
     bool send_daemon_command(QJsonObject obj, qint64 timeout_msec);
     QDateTime get_time_from_timestamp_of_fname(QString fname);
     QJsonObject get_last_daemon_state();
+    QJsonObject get_log();
+    void log_loop();
 
     QString shmName() const
     {
@@ -156,6 +158,16 @@ bool MPDaemonInterface::stop()
 QJsonObject MPDaemonInterface::getDaemonState()
 {
     return d->get_last_daemon_state();
+}
+
+QJsonObject MPDaemonInterface::getLog()
+{
+    return d->get_log();
+}
+
+void MPDaemonInterface::logLoop()
+{
+    d->log_loop();
 }
 
 static QString daemon_message = "Open a terminal and run [mountainprocess daemon-start], and keep that terminal open. Alternatively use tmux to run the daemon in the background.";
@@ -247,6 +259,47 @@ QJsonObject MPDaemonInterfacePrivate::get_last_daemon_state()
         qWarning() << "Error in get_last_daemon_state parsing json";
     }
     return ret;
+}
+
+QJsonObject MPDaemonInterfacePrivate::get_log()
+{
+    QJsonObject ret;
+    client->connectToServer(socketName());
+    if (!client->waitForConnected()) {
+        qWarning() << "Can't connect to daemon";
+        ret["error"] = "Can't connect to daemon";
+        return ret;
+    }
+    QJsonObject obj;
+    obj["command"] = "get-log";
+    client->writeMessage(QJsonDocument(obj).toJson());
+    QByteArray msg = client->waitForMessage();
+    if (msg.isEmpty()) return ret;
+    QJsonParseError error;
+    ret = QJsonDocument::fromJson(msg, &error).object();
+    return ret;
+}
+
+void MPDaemonInterfacePrivate::log_loop()
+{
+    QJsonObject ret;
+    client->connectToServer(socketName());
+    if (!client->waitForConnected()) {
+        qWarning() << "Can't connect to daemon";
+        ret["error"] = "Can't connect to daemon";
+        return;
+    }
+    QJsonObject obj;
+    obj["command"] = "log-listener";
+    client->writeMessage(QJsonDocument(obj).toJson());
+    while(1) {
+        QByteArray msg = client->waitForMessage();
+        if (msg.isEmpty())
+            continue;
+        QTextStream(stdout) << msg << endl;
+    //    QJsonParseError error;
+    //    ret = QJsonDocument::fromJson(msg, &error).object();
+    }
 }
 
 QDateTime MPDaemonInterfacePrivate::get_time_from_timestamp_of_fname(QString fname)
