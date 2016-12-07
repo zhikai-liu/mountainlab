@@ -26,7 +26,7 @@ if ~isfield(opts,'K_init') opts.K_init=200; end;
 if ~isfield(opts,'refine_clusters'), opts.refine_clusters=true; end;
 if ~isfield(opts,'max_iterations'), opts.max_iterations_per_pass=500; end;
 if ~isfield(opts,'verbose') opts.verbose=0; end;
-if ~isfield(opts,'verbose_pause_duration') opts.verbose_pause_duration=0.5; end;
+if ~isfield(opts,'verbose_pause_duration') opts.verbose_pause_duration=2.0; end;
 if ~isfield(opts,'whiten_cluster_pairs') opts.whiten_cluster_pairs=1; end;
 
 %% Initialize the timers for diagnostic
@@ -396,7 +396,7 @@ figure; ms_view_clusters_0(X(1:2,:),true_labels);
 title('Truth');
 
 ttt=tic;
-[labels2,info]=isosplit5(X,struct('verbose',0,'refine_clusters',0,'whiten_cluster_pairs',1));
+[labels2,info]=isosplit5(X,struct('verbose',1,'refine_clusters',0,'whiten_cluster_pairs',1));
 fprintf('Time for isosplit5: %g\n',toc(ttt));
 figure; ms_view_clusters_0(X(1:2,:),labels2);
 title('isosplit5');
