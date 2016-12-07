@@ -329,6 +329,7 @@ QJsonObject make_prv_object_2(QString path)
     QJsonObject obj;
     obj["original_path"] = path;
     obj["original_checksum"] = MLUtil::computeSha1SumOfFile(path);
+    obj["original_fcs"] = "head1000-"+MLUtil::computeSha1SumOfFileHead(path,1000);
     obj["original_size"] = QFileInfo(path).size();
     return obj;
 }
