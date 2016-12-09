@@ -23,6 +23,10 @@ public:
     virtual bool clearProcessing() = 0;
     virtual bool start() = 0;
     virtual bool stop() = 0;
+    static QString daemonDirName() {
+        return substitute("mpdaemon-%u");
+    }
+
 protected:
     QString socketName() const;
     QString shmName() const;
