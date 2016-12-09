@@ -82,6 +82,7 @@ struct MPDaemonPript {
     QJsonObject runtime_results;
     qint64 parent_pid = 0;
     bool force_run;
+    QString daemon_id;
     QString working_path;
     QDateTime timestamp_queued;
     QDateTime timestamp_started;

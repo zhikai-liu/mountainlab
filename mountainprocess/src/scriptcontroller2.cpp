@@ -84,6 +84,7 @@ public:
     //QStringList m_server_urls;
     //QString m_server_base_path;
     bool m_force_run = false;
+    QString m_daemon_id;
     QString m_working_path;
     QJsonObject m_results;
     int m_num_threads = 0;
@@ -133,6 +134,11 @@ void ScriptController2::setServerBasePath(const QString& path)
 void ScriptController2::setForceRun(bool force_run)
 {
     d->m_force_run = force_run;
+}
+
+void ScriptController2::setDaemonId(QString daemon_id)
+{
+    d->m_daemon_id = daemon_id;
 }
 
 void ScriptController2::setWorkingPath(QString working_path)
@@ -392,6 +398,7 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
     if (force_run) {
         args << "--_force_run";
     }
+    args << "--_daemon_id=" + m_daemon_id;
     args << "--_process_output=" + process_output_fname;
     if (request_num_threads)
         args << QString("--_request_num_threads=%1").arg(request_num_threads);

@@ -19,6 +19,7 @@ public:
     bool start();
     bool stop();
     QJsonObject getDaemonState();
+    bool daemonIsRunning();
     bool queueScript(const MPDaemonPript& script);
     bool queueProcess(const MPDaemonPript& process);
     bool clearProcessing();

@@ -77,6 +77,9 @@ public:
     QString shmName() const
     {
         QString tpl = QStringLiteral("mountainprocess-%1");
+        QString daemon_id = qApp->property("daemon_id").toString();
+        return tpl.arg(daemon_id);
+        /*
     #ifdef Q_OS_UNIX
         QString username = qgetenv("USER");
     #elif defined(Q_OS_WIN)
@@ -85,11 +88,15 @@ public:
         QString username = "unknown";
     #endif
         return tpl.arg(username);
+        */
     }
 
     QString socketName() const
     {
         QString tpl = QStringLiteral("mountainprocess-%1.sock");
+        QString daemon_id = qApp->property("daemon_id").toString();
+        return tpl.arg(daemon_id);
+        /*
     #ifdef Q_OS_UNIX
         QString username = qgetenv("USER");
     #elif defined(Q_OS_WIN)
@@ -98,6 +105,7 @@ public:
         QString username = "unknown";
     #endif
         return tpl.arg(username);
+        */
     }
 };
 
@@ -119,16 +127,22 @@ bool MPDaemonInterface::start()
     }
     QString exe = qApp->applicationFilePath();
     QStringList args;
-    args << "daemon-start";
+    args << "daemon-start-internal";
     if (!QProcess::startDetached(exe, args)) {
         printf("Unable to startDetached: %s\n", exe.toLatin1().data());
         return false;
     }
+    MPDaemon::wait(500);
     for (int i = 0; i < 10; i++) {
-        MPDaemon::wait(100);
-        if (d->daemon_is_running())
+        printf(".");
+        if (d->daemon_is_running()) {
+            printf("\n");
+            printf("Daemon is now running.\n");
             return true;
+        }
+        MPDaemon::wait(1000);
     }
+    printf("\n");
     printf("Unable to start daemon after waiting.\n");
     return false;
 }
@@ -141,21 +155,32 @@ bool MPDaemonInterface::stop()
     }
     QJsonObject obj;
     obj["command"] = "stop";
-    d->send_daemon_command(obj, 5000);
-    QThread::sleep(1);
-    if (!d->daemon_is_running()) {
-        printf("daemon has been stopped.\n");
-        return true;
-    }
-    else {
-        printf("Failed to stop daemon\n");
+    if (!d->send_daemon_command(obj, 5000)) {
+        printf("Unable to send daemon command after waiting.\n");
         return false;
     }
+    QTime timer;
+    timer.start();
+    while (d->daemon_is_running()) {
+        MPDaemon::wait(100);
+        //QThread::sleep(1);
+        if (timer.elapsed() > 10000) {
+            printf("Failed to stop daemon after waiting.\n");
+            return false;
+        }
+    }
+    printf("daemon has been stopped.\n");
+    return true;
 }
 
 QJsonObject MPDaemonInterface::getDaemonState()
 {
     return d->get_last_daemon_state();
+}
+
+bool MPDaemonInterface::daemonIsRunning()
+{
+    return d->daemon_is_running();
 }
 
 static QString daemon_message = "Open a terminal and run [mountainprocess daemon-start], and keep that terminal open. Alternatively use tmux to run the daemon in the background.";

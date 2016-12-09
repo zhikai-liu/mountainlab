@@ -100,6 +100,7 @@ struct run_script_opts {
     }
 
     bool nodaemon;
+    QString daemon_id;
     //QStringList server_urls;
     //QString server_base_path;
     bool force_run;
@@ -119,6 +120,23 @@ int main(int argc, char* argv[])
 {
     QCoreApplication app(argc, argv);
     CLParams CLP(argc, argv);
+
+    QString daemon_id;
+    if (CLP.named_parameters.contains("_daemon_id")) {
+        daemon_id = CLP.named_parameters["_daemon_id"].toString();
+    }
+    if (daemon_id.isEmpty()) {
+#ifdef Q_OS_UNIX
+        QString username = qgetenv("USER");
+#elif defined(Q_OS_WIN)
+        QString username = qgetenv("USERNAME");
+#else
+        QString username = "unknown";
+#endif
+        daemon_id = username;
+    }
+    // Witold, is this the right way to set a global parameter?
+    qApp->setProperty("daemon_id", daemon_id);
 
     //log_begin(argc,argv);
 
@@ -345,6 +363,7 @@ int main(int argc, char* argv[])
         run_script_opts opts;
         opts.nodaemon = CLP.named_parameters.contains("_nodaemon");
         opts.force_run = CLP.named_parameters.contains("_force_run");
+        opts.daemon_id = daemon_id;
         opts.working_path = QDir::currentPath(); // this should get passed through to the processors
         QJsonObject results;
         // actually run the script
@@ -444,6 +463,32 @@ int main(int argc, char* argv[])
         }
     }
     else if (arg1 == "daemon-start") {
+        MPDaemonInterface MPDI;
+        if (MPDI.daemonIsRunning()) {
+            printf("Daemon is already running.\n");
+            return 0;
+        }
+        QString cmd = qApp->applicationFilePath() + " daemon-start-internal " + QString("--_daemon_id=%1").arg(qApp->property("daemon_id").toString());
+        if (!QProcess::startDetached(cmd)) {
+            printf("Unexpected problem: Unable to start program for daemon-start-internal.\n");
+            return -1;
+        }
+        QTime timer;
+        timer.start();
+        MPDaemon::wait(500);
+        while (!MPDI.daemonIsRunning()) {
+            printf(".");
+            MPDaemon::wait(1000);
+            if (timer.elapsed() > 10000) {
+                printf("Daemon was not started after waiting.\n");
+                return -1;
+            }
+        }
+        printf("Daemon has been started ().\n");
+        return 0;
+    }
+    else if (arg1 == "daemon-start-internal") {
+
 // Start the mountainprocess daemon
 /*
          *  The following magic ensures we detach from the parent process
@@ -494,10 +539,13 @@ int main(int argc, char* argv[])
         RR.memory_gb = 0;
         RR.num_processes = MLUtil::configValue("mountainprocess", "max_num_simultaneous_processes").toDouble();
         X.setTotalResourcesAvailable(RR);
+
+        // Start running the daemon
         if (!X.run()) {
             //log_end();
             return -1;
         }
+
         //log_end();
         return 0;
     }
@@ -668,6 +716,7 @@ bool run_script(const QStringList& script_fnames, const QVariantMap& params, con
     //Controller2.setServerUrls(opts.server_urls);
     //Controller2.setServerBasePath(opts.server_base_path);
     Controller2.setForceRun(opts.force_run);
+    Controller2.setDaemonId(opts.daemon_id);
     Controller2.setWorkingPath(opts.working_path);
     QJSValue MP2 = engine.newQObject(&Controller2);
     engine.globalObject().setProperty("_MP2", MP2);
@@ -703,14 +752,14 @@ void print_usage()
 {
     printf("Usage:\n");
     printf("mountainprocess run-process [processor_name] --[param1]=[val1] --[param2]=[val2] ... [--_force_run] [--_request_num_threads=4]\n");
-    printf("mountainprocess run-script [script1].js [script2.js] ... [file1].par [file2].par ... [--_force_run] [--_request_num_threads=4]\n");
+    printf("mountainprocess run-script [script1].js [script2.js] ... [file1].par [file2].par ... [--_force_run] [--_request_num_threads=4] [--_daemon_id=id]\n");
     printf("mountainprocess daemon-start\n");
     printf("mountainprocess daemon-stop\n");
     printf("mountainprocess daemon-restart\n");
     printf("mountainprocess daemon-state\n");
     printf("mountainprocess daemon-state-summary\n");
-    printf("mountainprocess queue-script --_script_output=[optional_output_fname] [script1].js [script2.js] ... [file1].par [file2].par ...  [--_force_run]\n");
-    printf("mountainprocess queue-process [processor_name] --_process_output=[optional_output_fname] --[param1]=[val1] --[param2]=[val2] ... [--_force_run]\n");
+    printf("mountainprocess queue-script --_script_output=[optional_output_fname] [script1].js [script2.js] ... [file1].par [file2].par ...  [--_force_run] [--_daemon_id=id]\n");
+    printf("mountainprocess queue-process [processor_name] --_process_output=[optional_output_fname] --[param1]=[val1] --[param2]=[val2] ... [--_force_run] [--_daemon_id=id]\n");
     printf("mountainprocess list-processors\n");
     printf("mountainprocess spec [processor_name]\n");
     printf("mountainprocess cleanup-cache\n");
@@ -805,6 +854,7 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
 
     PP.force_run = CLP.named_parameters.contains("_force_run"); // do not check if processes have already run
     PP.working_path = QDir::currentPath(); // all processes and scripts should be run in this working path
+    PP.daemon_id = qApp->property("daemon_id").toString();
 
     MPDaemonInterface X;
     // ensure daemon is running

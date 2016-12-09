@@ -176,6 +176,7 @@ MPDaemon::MPDaemon()
 
 void kill_process_and_children(QProcess* P)
 {
+    /// Witold, do we need to worry about making this cross-platform?
     int pid = P->processId();
     QString cmd = QString("CPIDS=$(pgrep -P %1); (sleep 33 && kill -KILL $CPIDS &); kill -TERM $CPIDS").arg(pid);
     system(cmd.toUtf8().data());
@@ -233,7 +234,7 @@ bool MPDaemon::run()
     timer1.start();
     QTime timer2;
     timer2.start();
-    long num_cycles = 0;
+    long num_cycles = 0; // report the number of cycles since last timer1 record
     while (!stopDaemon && d->m_is_running) {
         if (timer1.elapsed() > 5000) {
             d->writeLogRecord("timer1", "num_cycles", (long long)num_cycles);
@@ -244,9 +245,9 @@ bool MPDaemon::run()
         if (timer2.elapsed() > 10 * 60000) {
             d->writeLogRecord("timer2");
             timer2.restart();
-            printf("\n");
+            printf("\n"); // end the console line periodically
         }
-        iterate();
+        iterate(); // run a single iteration
         qApp->processEvents();
         MPDaemon::wait(100);
         num_cycles++;
@@ -261,9 +262,23 @@ bool MPDaemon::run()
 
 void MPDaemon::iterate()
 {
+    QTime timer;
+    timer.start();
+
     d->stop_orphan_processes_and_scripts();
+    if (timer.restart() > 1000) {
+        d->writeLogRecord("timer-warning", "method", "stop_orphan_processes_and_scripts", "elapsed_ms", (long long)timer.elapsed());
+    }
+
     d->handle_scripts();
+    if (timer.restart() > 1000) {
+        d->writeLogRecord("timer-warning", "method", "handle_scripts", "elapsed_ms", (long long)timer.elapsed());
+    }
+
     d->handle_processes();
+    if (timer.restart() > 1000) {
+        d->writeLogRecord("timer-warning", "method", "handle_processes", "elapsed_ms", (long long)timer.elapsed());
+    }
 }
 
 void MPDaemon::clearProcessing()
@@ -327,6 +342,7 @@ bool MPDaemon::waitForFileToAppear(QString fname, qint64 timeout_ms, bool remove
             if (QFile::exists(stdout_fname)) {
                 if (!stdout_file.isOpen()) {
                     if (!stdout_file.open(QFile::ReadOnly)) {
+                        //d->writeLogRecord("error","Unable to open stdout file for reading: "+stdout_fname);
                         qCritical() << "Unable to open stdout file for reading: " + stdout_fname;
                         failed_to_open_stdout_file = true;
                     }
@@ -564,6 +580,7 @@ bool MPDaemonPrivate::handle_scripts()
             }
             else {
                 if (num_pending_scripts() == old_num_pending_scripts) {
+                    writeLogRecord("critical-error", "method", "handle_scripts", "message", "Failed to launch_next_script and the number of pending scripts has not decreased (unexpected). This has potential for infinite loop. So we are aborting.");
                     qCritical() << "Failed to launch_next_script and the number of pending scripts has not decreased (unexpected). This has potential for infinite loop. So we are aborting.";
                     abort();
                 }
@@ -596,17 +613,20 @@ bool MPDaemonPrivate::launch_pript(QString pript_id)
 
     MPDaemonPript* S;
     if (!m_pripts.contains(pript_id)) {
+        writeLogRecord("critical-error", "method", "launch_pript", "No pript exists with id: " + pript_id);
         qCritical() << "Unexpected problem. No pript exists with id: " + pript_id;
         abort();
         return false;
     }
     S = &m_pripts[pript_id];
     if (S->is_running) {
+        writeLogRecord("critical-error", "method", "launch_pript", "Pript is already running: " + pript_id);
         qCritical() << "Unexpected problem. Pript is already running: " + pript_id;
         abort();
         return false;
     }
     if (S->is_finished) {
+        writeLogRecord("critical-error", "method", "launch_pript", "Pript is already finished: " + pript_id);
         qCritical() << "Unexpected problem. Pript is already finished: " + pript_id;
         abort();
         return false;
@@ -670,6 +690,7 @@ bool MPDaemonPrivate::launch_pript(QString pript_id)
     if (S->force_run) {
         args << "--_force_run";
     }
+    args << "--_daemon_id=" + S->daemon_id;
     args << "--_working_path=" + S->working_path;
     debug_log(__FUNCTION__, __FILE__, __LINE__);
     QProcess* qprocess = new QProcess;
@@ -708,8 +729,8 @@ bool MPDaemonPrivate::launch_pript(QString pript_id)
         if (!S->stdout_fname.isEmpty()) {
             S->stdout_file = new QFile(S->stdout_fname);
             if (!S->stdout_file->open(QFile::WriteOnly)) {
-                qCritical() << "Unable to open stdout file for writing: " + S->stdout_fname;
                 writeLogRecord("error", "message", "Unable to open stdout file for writing: " + S->stdout_fname);
+                qCritical() << "Unable to open stdout file for writing: " + S->stdout_fname;
                 delete S->stdout_file;
                 S->stdout_file = 0;
             }
@@ -860,7 +881,11 @@ bool MPDaemonPrivate::releaseSocket()
 
 QString MPDaemonPrivate::shmName() const
 {
+    qApp->property("daemon_id").toString();
     QString tpl = QStringLiteral("mountainprocess-%1");
+    QString daemon_id = qApp->property("daemon_id").toString();
+    return tpl.arg(daemon_id);
+    /*
 #ifdef Q_OS_UNIX
     QString username = qgetenv("USER");
 #elif defined(Q_OS_WIN)
@@ -869,11 +894,15 @@ QString MPDaemonPrivate::shmName() const
     QString username = "unknown";
 #endif
     return tpl.arg(username);
+    */
 }
 
 QString MPDaemonPrivate::socketName() const
 {
     QString tpl = QStringLiteral("mountainprocess-%1.sock");
+    QString daemon_id = qApp->property("daemon_id").toString();
+    return tpl.arg(daemon_id);
+    /*
 #ifdef Q_OS_UNIX
     QString username = qgetenv("USER");
 #elif defined(Q_OS_WIN)
@@ -882,11 +911,15 @@ QString MPDaemonPrivate::socketName() const
     QString username = "unknown";
 #endif
     return tpl.arg(username);
+    */
 }
 
 QString MPDaemonPrivate::daemonDirName()
 {
     QString tpl = QStringLiteral("mpdaemon-%1");
+    QString daemon_id = qApp->property("daemon_id").toString();
+    return tpl.arg(daemon_id);
+    /*
 #ifdef Q_OS_UNIX
     QString username = qgetenv("USER");
 #elif defined(Q_OS_WIN)
@@ -895,6 +928,7 @@ QString MPDaemonPrivate::daemonDirName()
     QString username = "unknown";
 #endif
     return tpl.arg(username);
+    */
 }
 
 bool MPDaemonPrivate::handle_processes()
@@ -1323,6 +1357,7 @@ QJsonObject pript_struct_to_obj(MPDaemonPript S, RecordType rt)
         ret["parent_pid"] = QString("%1").arg(S.parent_pid);
     }
     ret["force_run"] = S.force_run;
+    ret["daemon_id"] = S.daemon_id;
     ret["working_path"] = S.working_path;
     ret["id"] = S.id;
     ret["success"] = S.success;
@@ -1363,6 +1398,7 @@ MPDaemonPript pript_obj_to_struct(QJsonObject obj)
     ret.stdout_fname = obj.value("stdout_fname").toString();
     ret.success = obj.value("success").toBool();
     ret.error = obj.value("error").toString();
+    ret.daemon_id = obj.value("daemon_id").toString();
     ret.parent_pid = obj.value("parent_pid").toString().toLongLong();
     ret.force_run = obj.value("force_run").toBool();
     ret.working_path = obj.value("working_path").toString();

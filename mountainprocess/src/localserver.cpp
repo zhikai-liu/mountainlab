@@ -16,7 +16,7 @@ bool Server::listen(const QString& path)
     bool res = socket()->listen(path);
     if (res) {
         QFile socketFile(socket()->fullServerName());
-        socketFile.setPermissions(QFile::ReadOwner|QFile::WriteOwner|QFile::ExeOwner);
+        socketFile.setPermissions(QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
     }
     return res;
 }

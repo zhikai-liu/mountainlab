@@ -20,6 +20,7 @@ public:
     void setServerUrls(const QStringList& urls);
     void setServerBasePath(const QString& path);
     void setForceRun(bool force_run);
+    void setDaemonId(QString daemon_id);
     void setWorkingPath(QString working_path);
     QJsonObject getResults();
 
