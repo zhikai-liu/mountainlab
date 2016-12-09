@@ -1,5 +1,7 @@
 #include "localserver.h"
 
+#include <QFile>
+
 namespace LocalServer {
 Server::Server(QObject* parent)
     : QObject(parent)
@@ -11,7 +13,12 @@ Server::Server(QObject* parent)
 bool Server::listen(const QString& path)
 {
     QLocalServer::removeServer(path);
-    return socket()->listen(path);
+    bool res = socket()->listen(path);
+    if (res) {
+        QFile socketFile(socket()->fullServerName());
+        socketFile.setPermissions(QFile::ReadOwner|QFile::WriteOwner|QFile::ExeOwner);
+    }
+    return res;
 }
 
 void Server::shutdown()

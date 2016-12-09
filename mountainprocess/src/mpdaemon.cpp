@@ -129,6 +129,9 @@ public:
     bool releaseServer();
     bool acquireSocket();
     bool releaseSocket();
+    QString shmName() const;
+    QString socketName() const;
+    static QString daemonDirName();
 };
 
 void append_line_to_file(QString fname, QString line)
@@ -273,7 +276,8 @@ void MPDaemon::clearProcessing()
 
 QString MPDaemon::daemonPath()
 {
-    QString ret = CacheManager::globalInstance()->localTempPath() + "/mpdaemon";
+
+    QString ret = CacheManager::globalInstance()->localTempPath() + "/" + MPDaemonPrivate::daemonDirName();
     MLUtil::mkdirIfNeeded(ret);
     MLUtil::mkdirIfNeeded(ret + "/completed_processes");
     return ret;
@@ -765,11 +769,11 @@ ProcessResources MPDaemonPrivate::compute_process_resources_needed(MPDaemonPript
 bool MPDaemonPrivate::acquireServer()
 {
     if (!shm)
-        shm = new QSharedMemory("mountainprocess", q);
+        shm = new QSharedMemory(shmName(), q);
     else if (shm->isAttached())
         shm->detach();
 
-    // algrithm:
+    // algorithm:
     // create a shared memory segment
     // if successful, there is no active server, so we become one
     //   - write your own PID into the segment
@@ -845,13 +849,52 @@ bool MPDaemonPrivate::releaseServer()
 bool MPDaemonPrivate::acquireSocket()
 {
     m_server = new MountainProcessServer(this, q);
-    return m_server->listen("mountainprocess.sock");
+    return m_server->listen(socketName());
 }
 
 bool MPDaemonPrivate::releaseSocket()
 {
     m_server->shutdown();
     return true;
+}
+
+QString MPDaemonPrivate::shmName() const
+{
+    QString tpl = QStringLiteral("mountainprocess-%1");
+#ifdef Q_OS_UNIX
+    QString username = qgetenv("USER");
+#elif defined(Q_OS_WIN)
+    QString username = qgetenv("USERNAME");
+#else
+    QString username = "unknown";
+#endif
+    return tpl.arg(username);
+}
+
+QString MPDaemonPrivate::socketName() const
+{
+    QString tpl = QStringLiteral("mountainprocess-%1.sock");
+#ifdef Q_OS_UNIX
+    QString username = qgetenv("USER");
+#elif defined(Q_OS_WIN)
+    QString username = qgetenv("USERNAME");
+#else
+    QString username = "unknown";
+#endif
+    return tpl.arg(username);
+}
+
+QString MPDaemonPrivate::daemonDirName()
+{
+    QString tpl = QStringLiteral("mpdaemon-%1");
+#ifdef Q_OS_UNIX
+    QString username = qgetenv("USER");
+#elif defined(Q_OS_WIN)
+    QString username = qgetenv("USERNAME");
+#else
+    QString username = "unknown";
+#endif
+    return tpl.arg(username);
 }
 
 bool MPDaemonPrivate::handle_processes()

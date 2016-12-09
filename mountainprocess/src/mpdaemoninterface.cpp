@@ -73,6 +73,32 @@ public:
     bool send_daemon_command(QJsonObject obj, qint64 timeout_msec);
     QDateTime get_time_from_timestamp_of_fname(QString fname);
     QJsonObject get_last_daemon_state();
+
+    QString shmName() const
+    {
+        QString tpl = QStringLiteral("mountainprocess-%1");
+    #ifdef Q_OS_UNIX
+        QString username = qgetenv("USER");
+    #elif defined(Q_OS_WIN)
+        QString username = qgetenv("USERNAME");
+    #else
+        QString username = "unknown";
+    #endif
+        return tpl.arg(username);
+    }
+
+    QString socketName() const
+    {
+        QString tpl = QStringLiteral("mountainprocess-%1.sock");
+    #ifdef Q_OS_UNIX
+        QString username = qgetenv("USER");
+    #elif defined(Q_OS_WIN)
+        QString username = qgetenv("USERNAME");
+    #else
+        QString username = "unknown";
+    #endif
+        return tpl.arg(username);
+    }
 };
 
 MPDaemonInterface::MPDaemonInterface()
@@ -169,7 +195,7 @@ bool MPDaemonInterface::clearProcessing()
 
 bool MPDaemonInterfacePrivate::daemon_is_running()
 {
-    QSharedMemory shm("mountainprocess");
+    QSharedMemory shm(shmName());
     if (!shm.attach(QSharedMemory::ReadOnly))
         return false;
     shm.lock();
@@ -184,7 +210,7 @@ bool MPDaemonInterfacePrivate::send_daemon_command(QJsonObject obj, qint64 msec_
     if (!msec_timeout)
         msec_timeout = 1000;
     if (!client->isConnected()) {
-        client->connectToServer("mountainprocess.sock");
+        client->connectToServer(socketName());
     }
     if (!client->waitForConnected())
         return false;
@@ -203,7 +229,7 @@ QJsonObject MPDaemonInterfacePrivate::get_last_daemon_state()
         ret["is_running"] = false;
         return ret;
     }
-    client->connectToServer("mountainprocess.sock");
+    client->connectToServer(socketName());
     if (!client->waitForConnected()) {
         qWarning() << "Can't connect to daemon";
         return ret;
