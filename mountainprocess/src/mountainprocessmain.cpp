@@ -488,22 +488,16 @@ int main(int argc, char* argv[])
         cleaner.addPath(mdachunk_data_path + "/tmp_long_term", MAX_MDACHUNK_GB);
         */
 
-//        MPDaemon X;
         MountainProcessServer server;
+        server.setLogPath(log_path);
 
-
-//        X.setLogPath(log_path);
         ProcessResources RR; // these are the rules for determining how many processes to run simultaneously
         //RR.num_threads = qMax(0.0, MLUtil::configValue("mountainprocess", "max_num_simultaneous_threads").toDouble());
         //RR.memory_gb = qMax(0.0, MLUtil::configValue("mountainprocess", "max_total_memory_gb").toDouble());
         RR.num_threads = 0;
         RR.memory_gb = 0;
         RR.num_processes = MLUtil::configValue("mountainprocess", "max_num_simultaneous_processes").toDouble();
-//        X.setTotalResourcesAvailable(RR);
-//        if (!X.run()) {
-//            //log_end();
-//            return -1;
-//        }
+        server.setTotalResourcesAvailable(RR);
         if (!server.start())
             return -1;
         return 0;
