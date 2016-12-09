@@ -69,6 +69,8 @@ If anything crashes along the way, every involved QProcess is killed.
 #include <fcntl.h>
 #endif
 
+#define NO_FORK
+
 /// TODO security in scripts that are able to be submitted
 /// TODO title on mountainview from mountainbrowser
 /// TODO on startup of mountainprocess daemon show all the loaded processors
@@ -141,8 +143,7 @@ int main(int argc, char* argv[])
         }
         else {
             qWarning() << missing_prvs.keys();
-            QString msg = QString("One or more prvs could not be found. To resolve these using the GUI, run this command again with the --_prvgui option.");
-            printf("%s\n", msg.toUtf8().data());
+            QTextStream(stdout) << "One or more prvs could not be found. To resolve these using the GUI, run this command again with the --_prvgui option." << endl;
             return -1;
         }
     }
@@ -353,7 +354,7 @@ int main(int argc, char* argv[])
         }
 
         QJsonObject obj; //the output info
-        obj["script_fnames"] = stringlist_to_json_array(script_fnames);
+        obj["script_fnames"] = QJsonArray::fromStringList(script_fnames);
         obj["parameters"] = variantmap_to_json_obj(params);
         obj["success"] = (ret == 0);
         obj["results"] = results;
@@ -445,7 +446,8 @@ int main(int argc, char* argv[])
     }
     else if (arg1 == "daemon-start") {
 // Start the mountainprocess daemon
-/*
+#ifndef NO_FORK
+        /*
          *  The following magic ensures we detach from the parent process
          *  and from the controlling terminal. This is to prevent process
          *  that spawned us to wait for our children to complete.
@@ -468,7 +470,7 @@ int main(int argc, char* argv[])
         Q_UNUSED(dup2(devnull, STDOUT_FILENO));
         Q_UNUSED(dup2(devnull, STDERR_FILENO));
 #endif
-
+#endif
         if (!initialize_process_manager()) { // load the processor plugins etc
             //log_end();
             return -1;
@@ -485,34 +487,34 @@ int main(int argc, char* argv[])
         cleaner.addPath(mdachunk_data_path + "/tmp_short_term", MAX_MDACHUNK_GB);
         cleaner.addPath(mdachunk_data_path + "/tmp_long_term", MAX_MDACHUNK_GB);
         */
-        MPDaemon X;
-        X.setLogPath(log_path);
+
+//        MPDaemon X;
+        MountainProcessServer server;
+
+
+//        X.setLogPath(log_path);
         ProcessResources RR; // these are the rules for determining how many processes to run simultaneously
         //RR.num_threads = qMax(0.0, MLUtil::configValue("mountainprocess", "max_num_simultaneous_threads").toDouble());
         //RR.memory_gb = qMax(0.0, MLUtil::configValue("mountainprocess", "max_total_memory_gb").toDouble());
         RR.num_threads = 0;
         RR.memory_gb = 0;
         RR.num_processes = MLUtil::configValue("mountainprocess", "max_num_simultaneous_processes").toDouble();
-        X.setTotalResourcesAvailable(RR);
-        if (!X.run()) {
-            //log_end();
+//        X.setTotalResourcesAvailable(RR);
+//        if (!X.run()) {
+//            //log_end();
+//            return -1;
+//        }
+        if (!server.start())
             return -1;
-        }
-        //log_end();
         return 0;
     }
     else if (arg1 == "daemon-stop") { //Stop the daemon
-        MPDaemonInterface X;
-        if (X.stop())
-            return 0;
-        else
-            return -1;
+        MPDaemonClient client;
+        return client.stop() ? 0 : -1;
     }
     else if (arg1 == "daemon-restart") { //Restart the daemon
-        MPDaemonInterface X;
-        if (!X.stop())
-            return -1;
-        if (!X.start())
+        MPDaemonClient client;
+        if (!client.stop() || !client.start())
             return -1;
         printf("Daemon has been restarted.\n");
         return 0;
@@ -526,9 +528,8 @@ int main(int argc, char* argv[])
     }
     */
     else if (arg1 == "print-log") {
-        MPDaemonInterface X;
-        QJsonObject log = X.getLog();
-        QJsonArray arr = log["log"].toArray();
+        MPDaemonClient client;
+        QJsonArray arr = client.log();
         QTextStream qout(stdout);
         foreach(QJsonValue v, arr) {
             QJsonObject logRecord = v.toObject();
@@ -539,28 +540,32 @@ int main(int argc, char* argv[])
         return 0;
     }
     else if (arg1 == "log") {
-        MPDaemonInterface X;
-        X.logLoop();
+        MPDaemonClient client;
+        client.contignousLog();
         return 0;
     }
     else if (arg1 == "daemon-state") { //Print some information on the state of the daemon
-        MPDaemonInterface X;
-        QJsonObject state = X.getDaemonState();
+        MPDaemonClient client;
+        QJsonObject state = client.state();
+        if (state.isEmpty()) {
+            qWarning() << "Can't connect to daemon";
+            return 0;
+        }
         QString json = QJsonDocument(state).toJson();
-        printf("%s", json.toLatin1().data());
+        printf("%s", json.toLatin1().constData());
         //log_end();
         return 0;
     }
     else if (arg1 == "daemon-state-summary") { //Print some information on the state of the daemon
-        MPDaemonInterface X;
-        QString txt = get_daemon_state_summary(X.getDaemonState());
-        printf("%s", txt.toLatin1().data());
+        MPDaemonClient client;
+        QString txt = get_daemon_state_summary(client.state());
+        printf("%s", txt.toLatin1().constData());
         //log_end();
         return 0;
     }
     else if (arg1 == "clear-processing") { // stop all active processing including running or queued pripts
-        MPDaemonInterface X;
-        X.clearProcessing();
+        MPDaemonClient client;
+        client.clearProcessing();
         //log_end();
         return 0;
     }
@@ -824,19 +829,19 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
     PP.force_run = CLP.named_parameters.contains("_force_run"); // do not check if processes have already run
     PP.working_path = QDir::currentPath(); // all processes and scripts should be run in this working path
 
-    MPDaemonInterface X;
+    MPDaemonClient client;
     // ensure daemon is running
 
     if (prtype == ScriptType) {
         // It is a script
-        if (!X.queueScript(PP)) { //queue the script
+        if (!client.queueScript(PP)) { //queue the script
             qWarning() << "Error queueing script";
             return false;
         }
     }
     else {
         // It is a process
-        if (!X.queueProcess(PP)) { //queue the process
+        if (!client.queueProcess(PP)) { //queue the process
             qWarning() << "Error queueing process";
             return false;
         }

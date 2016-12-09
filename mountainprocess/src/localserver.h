@@ -92,11 +92,12 @@ public:
     explicit Server(QObject* parent = 0);
     ~Server()
     {
-        foreach (Client* c, m_clients) {
-            c->disconnect(this);
-            c->close();
-        }
-        m_clients.clear();
+        shutdown();
+//        foreach (Client* c, m_clients) {
+//            c->disconnect(this);
+//            c->close();
+//        }
+//        m_clients.clear();
     }
     bool listen(const QString& path);
     void shutdown();
@@ -109,6 +110,7 @@ protected:
     {
         return new Client(sock, this);
     }
+    virtual void clientAboutToBeDestroyed(Client *c) {}
     void broadcast(const QByteArray& message)
     {
         foreach (Client* client, m_clients) {
@@ -126,6 +128,7 @@ private slots:
     }
     void handleClientDisconnected(Client* client)
     {
+        clientAboutToBeDestroyed(client);
         m_clients.removeOne(client);
         client->deleteLater();
     }
