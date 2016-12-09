@@ -14,6 +14,9 @@
 #include <QJsonObject>
 #include <QProcess>
 #include <QFile>
+#include <QJsonArray>
+#include "localserver.h"
+#include "mpdaemoninterface.h"
 #include "processmanager.h" //for RequestProcessResources
 
 struct ProcessResources {
@@ -35,8 +38,8 @@ public:
     void clearProcessing();
 
     static QString daemonPath();
-    static QString makeTimestamp(const QDateTime& dt = QDateTime::currentDateTime());
-    static QDateTime parseTimestamp(const QString& timestamp);
+//    static QString makeTimestamp(const QDateTime& dt = QDateTime::currentDateTime());
+//    static QDateTime parseTimestamp(const QString& timestamp);
     static bool waitForFileToAppear(QString fname, qint64 timeout_ms = -1, bool remove_on_appear = false, qint64 parent_pid = 0, QString stdout_fname = "");
     static void wait(qint64 msec);
     static bool pidExists(qint64 pid);
@@ -49,6 +52,46 @@ private slots:
 
 private:
     MPDaemonPrivate* d;
+};
+
+class QSharedMemory;
+class MountainProcessServer : public LocalServer::Server, public MPDaemonIface {
+public:
+    MountainProcessServer(QObject* parent = 0);
+    void distributeLogMessage(const QJsonObject &msg);
+    void registerLogListener(LocalServer::Client* listener);
+    void unregisterLogListener(LocalServer::Client* listener);
+
+    QJsonObject state() override;
+    QJsonArray log() override;
+    void contignousLog() override;
+    bool queueScript(const MPDaemonPript &script) override;
+    bool queueProcess(const MPDaemonPript &process) override;
+    bool clearProcessing() override;
+    bool start() override;
+    bool stop() override;
+
+protected:
+    LocalServer::Client* createClient(QLocalSocket* sock);
+    void clientAboutToBeDestroyed(LocalServer::Client* client);
+
+    bool startServer();
+    void stopServer();
+    bool acquireServer();
+    bool releaseServer();
+    bool acquireSocket();
+    bool releaseSocket();
+    void iterate();
+
+    void writeLogRecord(QString record_type, QString key1 = "", QVariant val1 = QVariant(), QString key2 = "", QVariant val2 = QVariant(), QString key3 = "", QVariant val3 = QVariant());
+    void writeLogRecord(QString record_type, const QJsonObject& obj);
+
+private:
+    QList<LocalServer::Client*> m_listeners;
+    bool m_is_running = false;
+    QSharedMemory *shm = nullptr;
+    QJsonArray m_log;
+    QMap<QString, MPDaemonPript> m_pripts;
 };
 
 struct ProcessRuntimeOpts {
@@ -109,10 +152,8 @@ enum RecordType {
 
 QJsonObject pript_struct_to_obj(MPDaemonPript S, RecordType rt);
 MPDaemonPript pript_obj_to_struct(QJsonObject obj);
-QJsonArray stringlist_to_json_array(QStringList list);
 QStringList json_array_to_stringlist(QJsonArray X);
 QJsonObject variantmap_to_json_obj(QVariantMap map);
-QVariantMap json_obj_to_variantmap(QJsonObject obj);
 QJsonObject runtime_opts_struct_to_obj(ProcessRuntimeOpts opts);
 
 // this has to be a POD -> no pointers, no dynamic memory allocation

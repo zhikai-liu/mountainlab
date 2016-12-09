@@ -24,6 +24,12 @@ bool Server::listen(const QString& path)
 void Server::shutdown()
 {
     socket()->close();
+    foreach (Client* c, m_clients) {
+        c->disconnect(this);
+        c->close();
+        c->deleteLater();
+    }
+    m_clients.clear();
 }
 
 Client::Client(QLocalSocket* sock, LocalServer::Server* parent)

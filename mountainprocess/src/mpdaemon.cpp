@@ -23,22 +23,22 @@
 #include "mlcommon.h"
 #include <QSharedMemory>
 #include <signal.h>
-#include "localserver.h"
 
 static bool stopDaemon = false;
 
 void sighandler(int num)
 {
-    if (num == SIGINT || num == SIGTERM)
+    if (num == SIGINT || num == SIGTERM) {
         stopDaemon = true;
+        qApp->quit();
+    }
 }
 
 class MPDaemonPrivate;
 class MountainProcessServerClient : public LocalServer::Client {
 public:
-    MountainProcessServerClient(QLocalSocket* sock, LocalServer::Server* parent, MPDaemonPrivate* priv)
+    MountainProcessServerClient(QLocalSocket* sock, LocalServer::Server* parent)
         : LocalServer::Client(sock, parent)
-        , m_priv(priv)
     {
     }
     ~MountainProcessServerClient()
@@ -50,41 +50,9 @@ public:
 protected:
     bool handleMessage(const QByteArray& ba) Q_DECL_OVERRIDE;
     bool getState();
-
-private:
-    MPDaemonPrivate* m_priv;
 };
 
-class MountainProcessServer : public LocalServer::Server {
-public:
-    MountainProcessServer(MPDaemonPrivate* priv, QObject* parent = 0)
-        : LocalServer::Server(parent)
-        , m_priv(priv)
-    {
-    }
-    void distributeLogMessage(const QJsonObject &msg) {
-        foreach(LocalServer::Client *client, m_listeners) {
-            client->writeMessage(QJsonDocument(msg).toJson());
-        }
-    }
-    void registerLogListener(LocalServer::Client* listener) {
-        m_listeners.append(listener);
-    }
-    void unregisterLogListener(LocalServer::Client* listener) {
-        m_listeners.removeOne(listener);
-    }
 
-protected:
-    LocalServer::Client* createClient(QLocalSocket* sock) Q_DECL_OVERRIDE
-    {
-        MountainProcessServerClient* client = new MountainProcessServerClient(sock, this, m_priv);
-        return client;
-    }
-
-private:
-    MPDaemonPrivate* m_priv;
-    QList<LocalServer::Client*> m_listeners;
-};
 
 class MPDaemonPrivate {
 public:
@@ -108,7 +76,7 @@ public:
     QStringList get_input_paths(MPDaemonPript P);
     QStringList get_output_paths(MPDaemonPript P);
     bool startServer();
-    void write_daemon_state();
+    void stopServer();
     QByteArray getState();
     bool stop_or_remove_pript(const QString& key);
     void write_pript_file(const MPDaemonPript& P);
@@ -243,34 +211,17 @@ bool MPDaemon::run()
     d->m_is_running = true;
 
     d->writeLogRecord("start-daemon");
-
-    QTime timer1;
-    timer1.start();
-    QTime timer2;
-    timer2.start();
-    long num_cycles = 0;
-    while (!stopDaemon && d->m_is_running) {
-        if (timer1.elapsed() > 5000) {
-//            d->writeLogRecord("timer1", "num_cycles", (long long)num_cycles);
-            num_cycles = 0;
-            timer1.restart();
-            printf(".");
-        }
-        if (timer2.elapsed() > 10 * 60000) {
-            d->writeLogRecord("timer2");
-            timer2.restart();
-            printf("\n");
-        }
+    QTimer timer;
+    connect(&timer, &QTimer::timeout, [this]() {
         iterate();
-        qApp->processEvents();
-        MPDaemon::wait(100);
-        num_cycles++;
-    }
-
+    });
+    timer.start(100);
+    qApp->exec();
+    d->m_is_running = false;
     d->writeLogRecord("stop-daemon");
     signal(SIGINT, SIG_DFL);
     signal(SIGTERM, SIG_DFL);
-
+    d->stopServer();
     return true;
 }
 
@@ -291,22 +242,21 @@ void MPDaemon::clearProcessing()
 
 QString MPDaemon::daemonPath()
 {
-
     QString ret = CacheManager::globalInstance()->localTempPath() + "/" + MPDaemonPrivate::daemonDirName();
     MLUtil::mkdirIfNeeded(ret);
     MLUtil::mkdirIfNeeded(ret + "/completed_processes");
     return ret;
 }
 
-QString MPDaemon::makeTimestamp(const QDateTime& dt)
-{
-    return dt.toString("yyyy-MM-dd-hh-mm-ss-zzz");
-}
+//QString MPDaemon::makeTimestamp(const QDateTime& dt)
+//{
+//    return dt.toString("yyyy-MM-dd-hh-mm-ss-zzz");
+//}
 
-QDateTime MPDaemon::parseTimestamp(const QString& timestamp)
-{
-    return QDateTime::fromString(timestamp, "yyyy-MM-dd-hh-mm-ss-zzz");
-}
+//QDateTime MPDaemon::parseTimestamp(const QString& timestamp)
+//{
+//    return QDateTime::fromString(timestamp, "yyyy-MM-dd-hh-mm-ss-zzz");
+//}
 
 bool MPDaemon::waitForFileToAppear(QString fname, qint64 timeout_ms, bool remove_on_appear, qint64 parent_pid, QString stdout_fname)
 {
@@ -500,6 +450,7 @@ void MPDaemonPrivate::process_command(QJsonObject obj)
     if (command == "stop") {
         debug_log(__FUNCTION__, __FILE__, __LINE__);
         m_is_running = false;
+        qApp->quit();
     }
     else if (command == "queue-script") {
         debug_log(__FUNCTION__, __FILE__, __LINE__);
@@ -867,7 +818,7 @@ bool MPDaemonPrivate::releaseServer()
 
 bool MPDaemonPrivate::acquireSocket()
 {
-    m_server = new MountainProcessServer(this, q);
+    m_server = new MountainProcessServer(q);
     return m_server->listen(socketName());
 }
 
@@ -1049,59 +1000,9 @@ bool MPDaemonPrivate::startServer()
     return true;
 }
 
-void MPDaemonPrivate::write_daemon_state()
+void MPDaemonPrivate::stopServer()
 {
-    static long num = 1;
-    QString timestamp = MPDaemon::makeTimestamp();
-    QString fname = QString("%1/daemon_state/%2.%3.json").arg(MPDaemon::daemonPath()).arg(timestamp).arg(num, 7, 10, QChar('0'));
-    num++;
-
-    QJsonObject state;
-
-    state["is_running"] = m_is_running;
-
-    {
-        QJsonObject scripts;
-        QJsonObject processes;
-        QStringList keys = m_pripts.keys();
-        foreach (QString key, keys) {
-            if (m_pripts[key].prtype == ScriptType)
-                scripts[key] = pript_struct_to_obj(m_pripts[key], AbbreviatedRecord);
-            else
-                processes[key] = pript_struct_to_obj(m_pripts[key], AbbreviatedRecord);
-        }
-        state["scripts"] = scripts;
-        state["processes"] = processes;
-    }
-
-    QString json = QJsonDocument(state).toJson();
-    TextFile::write(fname + ".tmp", json);
-    /// Witold I don't think rename is an atomic operation. Is there a way to guarantee that I don't read the file halfway through the rename?
-    /// Jeremy: rename is atomic, at least when done within the same file system
-    QFile::rename(fname + ".tmp", fname);
-
-    //remove the pripts that have been finished for a while
-    {
-        QStringList keys = m_pripts.keys();
-        foreach (QString key, keys) {
-            if (m_pripts[key].is_finished) {
-                double elapsed_sec = m_pripts[key].timestamp_finished.secsTo(QDateTime::currentDateTime());
-                if (elapsed_sec > 20) {
-                    m_pripts.remove(key);
-                }
-            }
-        }
-    }
-
-    //finally, clean up
-    QStringList list = QDir(MPDaemon::daemonPath() + "/daemon_state").entryList(QStringList("*.json"), QDir::Files, QDir::Name);
-    foreach (QString fname, list) {
-        QString path0 = MPDaemon::daemonPath() + "/daemon_state/" + fname;
-        qint64 secs = QFileInfo(path0).lastModified().secsTo(QDateTime::currentDateTime());
-        if ((secs <= -60) || (secs >= 60)) { //I feel a bit paranoid. That's why I allow some future stuff.
-            QFile::remove(path0);
-        }
-    }
+    releaseServer();
 }
 
 QByteArray MPDaemonPrivate::getState()
@@ -1282,15 +1183,6 @@ int MPDaemonPrivate::num_pending_pripts(PriptType prtype)
     return ret;
 }
 
-QJsonArray stringlist_to_json_array(QStringList list)
-{
-    QJsonArray ret;
-    foreach (QString str, list) {
-        ret << QJsonValue(str);
-    }
-    return ret;
-}
-
 QStringList json_array_to_stringlist(QJsonArray X)
 {
     QStringList ret;
@@ -1302,23 +1194,7 @@ QStringList json_array_to_stringlist(QJsonArray X)
 
 QJsonObject variantmap_to_json_obj(QVariantMap map)
 {
-    QJsonObject ret;
-    QStringList keys = map.keys();
-    foreach (QString key, keys) {
-        /// Witold I would like to map numbers to numbers here. Can you help?
-        ret[key] = QJsonValue::fromVariant(map[key]);
-    }
-    return ret;
-}
-
-QVariantMap json_obj_to_variantmap(QJsonObject obj)
-{
-    QVariantMap ret;
-    QStringList keys = obj.keys();
-    foreach (QString key, keys) {
-        ret[key] = obj[key].toVariant();
-    }
-    return ret;
+    return QJsonObject::fromVariantMap(map);
 }
 
 QStringList paths_to_file_names(const QStringList& paths)
@@ -1353,11 +1229,11 @@ QJsonObject pript_struct_to_obj(MPDaemonPript S, RecordType rt)
     if (S.prtype == ScriptType) {
         ret["prtype"] = "script";
         if (rt != AbbreviatedRecord) {
-            ret["script_paths"] = stringlist_to_json_array(S.script_paths);
-            ret["script_path_checksums"] = stringlist_to_json_array(S.script_path_checksums);
+            ret["script_paths"] = QJsonArray::fromStringList(S.script_paths);
+            ret["script_path_checksums"] = QJsonArray::fromStringList(S.script_path_checksums);
         }
         else {
-            ret["script_names"] = stringlist_to_json_array(paths_to_file_names(S.script_paths));
+            ret["script_names"] = QJsonArray::fromStringList(paths_to_file_names(S.script_paths));
         }
     }
     else {
@@ -1376,7 +1252,7 @@ MPDaemonPript pript_obj_to_struct(QJsonObject obj)
     MPDaemonPript ret;
     ret.is_finished = obj.value("is_finished").toBool();
     ret.is_running = obj.value("is_running").toBool();
-    ret.parameters = json_obj_to_variantmap(obj.value("parameters").toObject());
+    ret.parameters = obj.value("parameters").toObject().toVariantMap();
     ret.id = obj.value("id").toString();
     ret.output_fname = obj.value("output_fname").toString();
     ret.stdout_fname = obj.value("stdout_fname").toString();
@@ -1428,7 +1304,8 @@ QJsonObject runtime_opts_struct_to_obj(ProcessRuntimeOpts opts)
 
 bool MountainProcessServerClient::getState()
 {
-    writeMessage(m_priv->getState());
+    MountainProcessServer *s = static_cast<MountainProcessServer*>(server());
+    writeMessage(QJsonDocument(s->state()).toJson());
     return true;
 }
 
@@ -1445,25 +1322,274 @@ bool MountainProcessServerClient::handleMessage(const QByteArray& ba)
     if (error.error != QJsonParseError::NoError) {
         qCritical() << "Error in slot_commands_directory_changed parsing json file";
     }
+    printf("Received commmand: %s\n", obj["command"].toString().toUtf8().constData());
+    if (obj["command"] == "stop") {
+        MountainProcessServer *s = static_cast<MountainProcessServer*>(server());
+        s->stop();
+    }
     if (obj["command"] == "get-daemon-state") {
         return getState();
     }
     if (obj["command"] == "get-log") {
-        QJsonObject log;
-        log["log"] = m_priv->m_log;
+        MountainProcessServer *s = static_cast<MountainProcessServer*>(server());
+        QJsonArray log = s->log();
         writeMessage(QJsonDocument(log).toJson());
         return true;
     }
     if (obj["command"] == "log-listener") {
         MountainProcessServer *srvr = static_cast<MountainProcessServer*>(server());
         srvr->registerLogListener(this);
-        QJsonObject log;
-        log["log"] = m_priv->m_log;
-        writeMessage(QJsonDocument(log).toJson());
+        writeMessage(QJsonDocument(srvr->log()).toJson());
         return true;
     }
-    m_priv->process_command(obj);
+    // m_priv->process_command(obj); // TODO
     //        qDebug().noquote() << ba;
     writeMessage("OK");
     return true;
+}
+
+MountainProcessServer::MountainProcessServer(QObject *parent)
+    : LocalServer::Server(parent)
+{
+}
+
+void MountainProcessServer::distributeLogMessage(const QJsonObject &msg) {
+    foreach(LocalServer::Client *client, m_listeners) {
+        client->writeMessage(QJsonDocument(msg).toJson());
+    }
+}
+
+void MountainProcessServer::registerLogListener(LocalServer::Client *listener) {
+    m_listeners.append(listener);
+}
+
+void MountainProcessServer::unregisterLogListener(LocalServer::Client *listener) {
+    m_listeners.removeOne(listener);
+}
+
+QJsonObject MountainProcessServer::state()
+{
+    QJsonObject ret;
+
+    ret["is_running"] = m_is_running;
+    QJsonObject scripts;
+    QJsonObject processes;
+    QStringList keys = m_pripts.keys();
+    foreach (QString key, keys) {
+        if (m_pripts[key].prtype == ScriptType)
+            scripts[key] = pript_struct_to_obj(m_pripts[key], AbbreviatedRecord);
+        else
+            processes[key] = pript_struct_to_obj(m_pripts[key], AbbreviatedRecord);
+    }
+    ret["scripts"] = scripts;
+    ret["processes"] = processes;
+    return ret;
+
+}
+
+QJsonArray MountainProcessServer::log()
+{
+    return m_log;
+}
+
+void MountainProcessServer::contignousLog()
+{
+}
+
+bool MountainProcessServer::queueScript(const MPDaemonPript &script)
+{
+
+}
+
+bool MountainProcessServer::queueProcess(const MPDaemonPript &process)
+{
+}
+
+bool MountainProcessServer::clearProcessing()
+{
+    //        QStringList keys = d->m_pripts.keys();
+    //        foreach (QString key, keys) {
+    //            d->stop_or_remove_pript(key);
+    //        }
+}
+
+bool MountainProcessServer::start()
+{
+    if(m_is_running) return false;
+
+    if (!startServer())
+        return false;
+
+    signal(SIGINT, sighandler);
+    signal(SIGTERM, sighandler);
+
+    m_is_running = true;
+
+    writeLogRecord("start-daemon");
+    QTimer timer;
+    connect(&timer, &QTimer::timeout, [this]() {
+        iterate();
+    });
+    timer.start(100);
+    qApp->exec();
+    m_is_running = false;
+    writeLogRecord("stop-daemon");
+    signal(SIGINT, SIG_DFL);
+    signal(SIGTERM, SIG_DFL);
+    stopServer();
+    return true;
+}
+
+bool MountainProcessServer::stop()
+{
+    m_is_running = false;
+    qApp->quit();
+}
+
+LocalServer::Client *MountainProcessServer::createClient(QLocalSocket *sock)
+{
+    MountainProcessServerClient* client = new MountainProcessServerClient(sock, this);
+    return client;
+}
+
+void MountainProcessServer::clientAboutToBeDestroyed(LocalServer::Client *client) {
+    unregisterLogListener(client);
+}
+
+bool MountainProcessServer::startServer()
+{
+    if (!acquireServer()) {
+        printf("Another daemon seems to be running. Closing.\n");
+        return false;
+    }
+    return true;
+}
+
+void MountainProcessServer::stopServer()
+{
+    releaseServer();
+}
+
+bool MountainProcessServer::acquireServer()
+{
+    if (!shm)
+        shm = new QSharedMemory(shmName(), this);
+    else if (shm->isAttached())
+        shm->detach();
+    // algorithm:
+    // create a shared memory segment
+    // if successful, there is no active server, so we become one
+    //   - write your own PID into the segment
+    // otherwise try to attach to the segment
+    //   - check the pid stored in the segment
+    //   - see if process with that pid exists
+    //   - if yes, bail out
+    //   - if not, overwrite the pid with your own
+    // repeat the process until either create or attach is successfull
+
+    while (true) {
+        if (shm->create(sizeof(MountainProcessDescriptor))) {
+            shm->lock(); // there is potentially a race condition here -> someone might have locked the segment
+            // before we did and written its own pid there
+            // we assume that by default memory is zeroed (it seems to be on Linux)
+            // so we can check the version
+            MountainProcessDescriptor* desc = reinterpret_cast<MountainProcessDescriptor*>(shm->data());
+
+            // on Linux the memory seems to be zeroed by default
+            if (desc->version != 0) {
+                // someone has hijacked our segment
+                shm->unlock();
+                shm->detach();
+                continue; // try again
+            }
+            desc->version = 1;
+            desc->pid = (pid_t)QCoreApplication::applicationPid();
+            acquireSocket();
+            shm->unlock();
+            return true;
+        }
+        if (shm->attach()) {
+            shm->lock();
+            MountainProcessDescriptor* desc = reinterpret_cast<MountainProcessDescriptor*>(shm->data());
+            // on Linux the memory seems to be zeroed by default
+            if (desc->version != 0) {
+                if (kill(desc->pid, 0) == 0) {
+                    // pid exists, server is likely active
+                    shm->unlock();
+                    shm->detach();
+                    return false;
+                }
+            }
+            // server has crashed or we have hijacked the segment
+            desc->version = 1;
+            desc->pid = (pid_t)QCoreApplication::applicationPid();
+            acquireSocket();
+            shm->unlock();
+            return true;
+        }
+    }
+}
+
+bool MountainProcessServer::releaseServer()
+{
+    qDebug() << Q_FUNC_INFO;
+    if (shm && shm->isAttached()) {
+        shm->lock();
+        MountainProcessDescriptor* desc = reinterpret_cast<MountainProcessDescriptor*>(shm->data());
+        // just to be sure we're the reigning server:
+        if (desc->pid == (pid_t)QCoreApplication::applicationPid()) {
+            // to avoid a race condition (released the server but not ended the process just yet), empty the block
+            desc->version = 0;
+            desc->pid = 0;
+            releaseSocket();
+        }
+        shm->unlock();
+        shm->detach();
+        return true;
+    }
+    return false;
+}
+
+bool MountainProcessServer::acquireSocket()
+{
+    return listen(socketName());
+}
+
+bool MountainProcessServer::releaseSocket()
+{
+    shutdown();
+    return true;
+}
+
+void MountainProcessServer::iterate()
+{
+
+}
+
+void MountainProcessServer::writeLogRecord(QString record_type, QString key1, QVariant val1, QString key2, QVariant val2, QString key3, QVariant val3)
+{
+    QVariantMap map;
+    if (!key1.isEmpty()) {
+        map[key1] = val1;
+    }
+    if (!key2.isEmpty()) {
+        map[key2] = val2;
+    }
+    if (!key3.isEmpty()) {
+        map[key3] = val3;
+    }
+    QJsonObject obj = variantmap_to_json_obj(map);
+    writeLogRecord(record_type, obj);
+}
+
+void MountainProcessServer::writeLogRecord(QString record_type, const QJsonObject &obj)
+{
+    QJsonObject X;
+    X["record_type"] = record_type;
+    X["timestamp"] = QDateTime::currentDateTime().toString("yyyy-MM-dd|hh:mm:ss.zzz");
+    X["data"] = obj;
+    QString line = QJsonDocument(X).toJson(QJsonDocument::Compact);
+    while(m_log.size() >= 10) m_log.pop_front();
+    m_log.push_back(X);
+    distributeLogMessage(X);
 }
