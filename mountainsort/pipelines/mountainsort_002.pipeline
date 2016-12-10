@@ -51,9 +51,15 @@ function run_mountainsort(params) {
 	}
 
 	// Bandpass filter
-	var filt=Process('bandpass_filter',{timeseries:raw},{
-			samplerate:params.samplerate,freq_min:params.freq_min,freq_max:params.freq_max
-		}).timeseries_out;
+	var filt;
+	if (params.freq_max) {
+		filt=Process('bandpass_filter',{timeseries:raw},{
+				samplerate:params.samplerate,freq_min:params.freq_min,freq_max:params.freq_max
+			}).timeseries_out;
+	}
+	else {
+		filt=raw;
+	}
 
 	// Mask out artifacts
 	if (('mask_out_artifacts_threshold' in params)&&(params.mask_out_artifacts_threshold)) {

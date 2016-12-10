@@ -16,7 +16,7 @@ qmake -recursive
 
 if [ $1 == "default" ]
 then
-qmake
+echo qmake
 else
 eval qmake \"COMPONENTS = $@\"
 fi
