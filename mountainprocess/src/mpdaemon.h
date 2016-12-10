@@ -33,11 +33,11 @@ enum PriptType {
 // temporary:
 
 namespace MPDaemon {
-    QString daemonPath();
-    bool waitForFileToAppear(QString fname, qint64 timeout_ms = -1, bool remove_on_appear = false, qint64 parent_pid = 0, QString stdout_fname = "");
-    void wait(qint64 msec);
-    bool waitForFinishedAndWriteOutput(QProcess* P);
-    bool pidExists(qint64 pid);
+QString daemonPath();
+bool waitForFileToAppear(QString fname, qint64 timeout_ms = -1, bool remove_on_appear = false, qint64 parent_pid = 0, QString stdout_fname = "");
+void wait(qint64 msec);
+bool waitForFinishedAndWriteOutput(QProcess* P);
+bool pidExists(qint64 pid);
 }
 
 #if 0
@@ -78,21 +78,21 @@ class MountainProcessServer : public LocalServer::Server, public MPDaemonIface {
 public:
     MountainProcessServer(QObject* parent = 0);
     ~MountainProcessServer();
-    void distributeLogMessage(const QJsonObject &msg);
+    void distributeLogMessage(const QJsonObject& msg);
     void registerLogListener(LocalServer::Client* listener);
     void unregisterLogListener(LocalServer::Client* listener);
 
     QJsonObject state() override;
     QJsonArray log() override;
     void contignousLog() override;
-    bool queueScript(const MPDaemonPript &script) override;
-    bool queueProcess(const MPDaemonPript &process) override;
+    bool queueScript(const MPDaemonPript& script) override;
+    bool queueProcess(const MPDaemonPript& process) override;
     bool clearProcessing() override;
     bool start() override;
     bool stop() override;
 
     QString logPath() const { return m_logPath; }
-    void setLogPath(const QString &lp);
+    void setLogPath(const QString& lp);
     void setTotalResourcesAvailable(ProcessResources PR);
 
 protected:
@@ -154,7 +154,7 @@ private slots:
 private:
     QList<LocalServer::Client*> m_listeners;
     bool m_is_running = false;
-    QSharedMemory *shm = nullptr;
+    QSharedMemory* shm = nullptr;
     QJsonArray m_log;
     QMap<QString, MPDaemonPript> m_pripts;
     QString m_logPath;

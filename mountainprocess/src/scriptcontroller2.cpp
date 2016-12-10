@@ -291,7 +291,7 @@ bool ScriptController2::runPipeline()
         }
 
         if (!done) {
-//            MPDaemon::wait(100);
+            //            MPDaemon::wait(100);
             usleep(100 * 1000);
             qApp->processEvents(); //important I think for detecting when processes end.
         }

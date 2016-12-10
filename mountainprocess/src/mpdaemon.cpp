@@ -34,7 +34,6 @@ void sighandler(int num)
     }
 }
 
-
 class MountainProcessServerClient : public LocalServer::Client {
 public:
     MountainProcessServerClient(QLocalSocket* sock, LocalServer::Server* parent)
@@ -1335,13 +1334,14 @@ QJsonObject runtime_opts_struct_to_obj(ProcessRuntimeOpts opts)
 
 bool MountainProcessServerClient::getState()
 {
-    MountainProcessServer *s = static_cast<MountainProcessServer*>(server());
+    MountainProcessServer* s = static_cast<MountainProcessServer*>(server());
     writeMessage(QJsonDocument(s->state()).toJson());
     return true;
 }
 
-void MountainProcessServerClient::close() {
-    MountainProcessServer *srvr = static_cast<MountainProcessServer*>(server());
+void MountainProcessServerClient::close()
+{
+    MountainProcessServer* srvr = static_cast<MountainProcessServer*>(server());
     srvr->unregisterLogListener(this);
     LocalServer::Client::close();
 }
@@ -1355,26 +1355,26 @@ bool MountainProcessServerClient::handleMessage(const QByteArray& ba)
     }
     printf("Received commmand: %s\n", obj["command"].toString().toUtf8().constData());
     if (obj["command"] == "stop") {
-        MountainProcessServer *s = static_cast<MountainProcessServer*>(server());
+        MountainProcessServer* s = static_cast<MountainProcessServer*>(server());
         s->stop();
     }
     if (obj["command"] == "get-daemon-state") {
         return getState();
     }
     if (obj["command"] == "get-log") {
-        MountainProcessServer *s = static_cast<MountainProcessServer*>(server());
+        MountainProcessServer* s = static_cast<MountainProcessServer*>(server());
         QJsonArray log = s->log();
         writeMessage(QJsonDocument(log).toJson());
         return true;
     }
     if (obj["command"] == "log-listener") {
-        MountainProcessServer *srvr = static_cast<MountainProcessServer*>(server());
+        MountainProcessServer* srvr = static_cast<MountainProcessServer*>(server());
         srvr->registerLogListener(this);
         writeMessage(QJsonDocument(srvr->log()).toJson());
         return true;
     }
     if (obj["command"] == "queue-script") {
-        MountainProcessServer *srvr = static_cast<MountainProcessServer*>(server());
+        MountainProcessServer* srvr = static_cast<MountainProcessServer*>(server());
         MPDaemonPript S = pript_obj_to_struct(obj);
         S.prtype = ScriptType;
         S.timestamp_queued = QDateTime::currentDateTime();
@@ -1384,7 +1384,7 @@ bool MountainProcessServerClient::handleMessage(const QByteArray& ba)
         return true;
     }
     if (obj["command"] == "queue-process") {
-        MountainProcessServer *srvr = static_cast<MountainProcessServer*>(server());
+        MountainProcessServer* srvr = static_cast<MountainProcessServer*>(server());
         MPDaemonPript P = pript_obj_to_struct(obj);
         P.prtype = ProcessType;
         P.timestamp_queued = QDateTime::currentDateTime();
@@ -1394,7 +1394,7 @@ bool MountainProcessServerClient::handleMessage(const QByteArray& ba)
         return true;
     }
     if (obj["command"] == "clear-processing") {
-        MountainProcessServer *srvr = static_cast<MountainProcessServer*>(server());
+        MountainProcessServer* srvr = static_cast<MountainProcessServer*>(server());
         srvr->clearProcessing();
         return true;
     }
@@ -1402,27 +1402,29 @@ bool MountainProcessServerClient::handleMessage(const QByteArray& ba)
     return true;
 }
 
-MountainProcessServer::MountainProcessServer(QObject *parent)
+MountainProcessServer::MountainProcessServer(QObject* parent)
     : LocalServer::Server(parent)
 {
 }
 
 MountainProcessServer::~MountainProcessServer()
 {
-
 }
 
-void MountainProcessServer::distributeLogMessage(const QJsonObject &msg) {
-    foreach(LocalServer::Client *client, m_listeners) {
+void MountainProcessServer::distributeLogMessage(const QJsonObject& msg)
+{
+    foreach (LocalServer::Client* client, m_listeners) {
         client->writeMessage(QJsonDocument(msg).toJson());
     }
 }
 
-void MountainProcessServer::registerLogListener(LocalServer::Client *listener) {
+void MountainProcessServer::registerLogListener(LocalServer::Client* listener)
+{
     m_listeners.append(listener);
 }
 
-void MountainProcessServer::unregisterLogListener(LocalServer::Client *listener) {
+void MountainProcessServer::unregisterLogListener(LocalServer::Client* listener)
+{
     m_listeners.removeOne(listener);
 }
 
@@ -1443,7 +1445,6 @@ QJsonObject MountainProcessServer::state()
     ret["scripts"] = scripts;
     ret["processes"] = processes;
     return ret;
-
 }
 
 QJsonArray MountainProcessServer::log()
@@ -1455,13 +1456,13 @@ void MountainProcessServer::contignousLog()
 {
 }
 
-bool MountainProcessServer::queueScript(const MPDaemonPript &script)
+bool MountainProcessServer::queueScript(const MPDaemonPript& script)
 {
     if (m_pripts.contains(script.id)) {
         writeLogRecord("error",
-                       "message",
-                       QString("Unable to queue script. "
-                       "Process or script with id %1 already exists: ").arg(script.id));
+            "message",
+            QString("Unable to queue script. "
+                    "Process or script with id %1 already exists: ").arg(script.id));
         return false;
     }
     writeLogRecord("queue-script", "pript_id", script.id);
@@ -1470,13 +1471,13 @@ bool MountainProcessServer::queueScript(const MPDaemonPript &script)
     return true;
 }
 
-bool MountainProcessServer::queueProcess(const MPDaemonPript &process)
+bool MountainProcessServer::queueProcess(const MPDaemonPript& process)
 {
     if (m_pripts.contains(process.id)) {
         writeLogRecord("error",
-                       "message",
-                       QString("Unable to queue process. "
-                       "Process or script with id %1 already exists: ").arg(process.id));
+            "message",
+            QString("Unable to queue process. "
+                    "Process or script with id %1 already exists: ").arg(process.id));
         return false;
     }
     writeLogRecord("queue-process", process.id);
@@ -1496,7 +1497,8 @@ bool MountainProcessServer::clearProcessing()
 
 bool MountainProcessServer::start()
 {
-    if(m_is_running) return false;
+    if (m_is_running)
+        return false;
 
     if (!startServer())
         return false;
@@ -1528,9 +1530,10 @@ bool MountainProcessServer::stop()
     return true;
 }
 
-void MountainProcessServer::setLogPath(const QString &lp)
+void MountainProcessServer::setLogPath(const QString& lp)
 {
-    if (m_logPath == lp) return;
+    if (m_logPath == lp)
+        return;
     m_logPath = lp;
 }
 
@@ -1539,13 +1542,14 @@ void MountainProcessServer::setTotalResourcesAvailable(ProcessResources PR)
     m_total_resources_available = PR;
 }
 
-LocalServer::Client *MountainProcessServer::createClient(QLocalSocket *sock)
+LocalServer::Client* MountainProcessServer::createClient(QLocalSocket* sock)
 {
     MountainProcessServerClient* client = new MountainProcessServerClient(sock, this);
     return client;
 }
 
-void MountainProcessServer::clientAboutToBeDestroyed(LocalServer::Client *client) {
+void MountainProcessServer::clientAboutToBeDestroyed(LocalServer::Client* client)
+{
     unregisterLogListener(client);
 }
 
@@ -1676,19 +1680,20 @@ void MountainProcessServer::writeLogRecord(QString record_type, QString key1, QV
     writeLogRecord(record_type, obj);
 }
 
-void MountainProcessServer::writeLogRecord(QString record_type, const QJsonObject &obj)
+void MountainProcessServer::writeLogRecord(QString record_type, const QJsonObject& obj)
 {
     QJsonObject X;
     X["record_type"] = record_type;
     X["timestamp"] = QDateTime::currentDateTime().toString("yyyy-MM-dd|hh:mm:ss.zzz");
     X["data"] = obj;
     QString line = QJsonDocument(X).toJson(QJsonDocument::Compact);
-    while(m_log.size() >= 10) m_log.pop_front();
+    while (m_log.size() >= 10)
+        m_log.pop_front();
     m_log.push_back(X);
     distributeLogMessage(X);
 }
 
-void MountainProcessServer::write_pript_file(const MPDaemonPript &P)
+void MountainProcessServer::write_pript_file(const MPDaemonPript& P)
 {
     if (m_logPath.isEmpty())
         return;
@@ -1706,7 +1711,7 @@ void MountainProcessServer::write_pript_file(const MPDaemonPript &P)
     TextFile::write(fname, json);
 }
 
-bool MountainProcessServer::stop_or_remove_pript(const QString &key)
+bool MountainProcessServer::stop_or_remove_pript(const QString& key)
 {
     if (!m_pripts.contains(key))
         return false;
@@ -1735,7 +1740,7 @@ bool MountainProcessServer::stop_or_remove_pript(const QString &key)
     return true;
 }
 
-void MountainProcessServer::finish_and_finalize(MPDaemonPript &P)
+void MountainProcessServer::finish_and_finalize(MPDaemonPript& P)
 {
     P.is_finished = true;
     P.is_running = false;
@@ -2051,7 +2056,7 @@ ProcessResources MountainProcessServer::compute_process_resources_needed(MPDaemo
     return ret;
 }
 
-bool MountainProcessServer::process_parameters_are_okay(const QString &key) const
+bool MountainProcessServer::process_parameters_are_okay(const QString& key) const
 {
     //check that the processor is registered and that the parameters are okay
     ProcessManager* PM = ProcessManager::globalInstance();
@@ -2070,7 +2075,7 @@ bool MountainProcessServer::process_parameters_are_okay(const QString &key) cons
     return true;
 }
 
-bool MountainProcessServer::okay_to_run_process(const QString &key) const
+bool MountainProcessServer::okay_to_run_process(const QString& key) const
 {
     //next we check that there are no running processes where the input or output files conflict with the proposed input or output files
     //but note that it is okay for the same input file to be used in more than one simultaneous process
@@ -2321,7 +2326,7 @@ QString MPDaemon::daemonPath()
     return ret;
 }
 
-bool MPDaemon::waitForFinishedAndWriteOutput(QProcess *P)
+bool MPDaemon::waitForFinishedAndWriteOutput(QProcess* P)
 {
     debug_log(__FUNCTION__, __FILE__, __LINE__);
 

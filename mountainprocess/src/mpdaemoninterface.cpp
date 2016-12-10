@@ -82,26 +82,26 @@ public:
     QString shmName() const
     {
         QString tpl = QStringLiteral("mountainprocess-%1");
-    #ifdef Q_OS_UNIX
+#ifdef Q_OS_UNIX
         QString username = qgetenv("USER");
-    #elif defined(Q_OS_WIN)
+#elif defined(Q_OS_WIN)
         QString username = qgetenv("USERNAME");
-    #else
+#else
         QString username = "unknown";
-    #endif
+#endif
         return tpl.arg(username);
     }
 
     QString socketName() const
     {
         QString tpl = QStringLiteral("mountainprocess-%1.sock");
-    #ifdef Q_OS_UNIX
+#ifdef Q_OS_UNIX
         QString username = qgetenv("USER");
-    #elif defined(Q_OS_WIN)
+#elif defined(Q_OS_WIN)
         QString username = qgetenv("USERNAME");
-    #else
+#else
         QString username = "unknown";
-    #endif
+#endif
         return tpl.arg(username);
     }
 };
@@ -328,12 +328,14 @@ QDateTime MPDaemonInterfacePrivate::get_time_from_timestamp_of_fname(QString fna
 
 #endif
 
-MPDaemonClient::MPDaemonClient() {
+MPDaemonClient::MPDaemonClient()
+{
     m_client = new MountainProcessClient;
     m_connected = connectToServer();
 }
 
-MPDaemonClient::~MPDaemonClient() {
+MPDaemonClient::~MPDaemonClient()
+{
     delete m_client;
 }
 
@@ -359,20 +361,20 @@ void MPDaemonClient::contignousLog()
 {
 }
 
-bool MPDaemonClient::queueScript(const MPDaemonPript &script)
+bool MPDaemonClient::queueScript(const MPDaemonPript& script)
 {
-    if (!ensureDaemonRunning())
-        return false;
+    //if (!ensureDaemonRunning())
+    //    return false;
     QJsonObject obj = pript_struct_to_obj(script, FullRecord);
     obj["command"] = "queue-script";
     sendOneWay(obj);
     return true;
 }
 
-bool MPDaemonClient::queueProcess(const MPDaemonPript &process)
+bool MPDaemonClient::queueProcess(const MPDaemonPript& process)
 {
-    if (!ensureDaemonRunning())
-        return false;
+    //if (!ensureDaemonRunning())
+    //    return false;
     QJsonObject obj = pript_struct_to_obj(process, FullRecord);
     obj["command"] = "queue-process";
     sendOneWay(obj);
@@ -419,6 +421,7 @@ bool MPDaemonClient::stop()
     return !daemonRunning();
 }
 
+/*
 bool MPDaemonClient::ensureDaemonRunning() {
     if (daemonRunning())
         return true;
@@ -436,32 +439,39 @@ bool MPDaemonClient::ensureDaemonRunning() {
     }
     return daemonRunning();
 }
+*/
 
-bool MPDaemonClient::connectToServer() {
+bool MPDaemonClient::connectToServer()
+{
     m_client->connectToServer(socketName());
     return m_client->waitForConnected();
 }
 
-void MPDaemonClient::sendOneWay(const QJsonObject &req) {
+void MPDaemonClient::sendOneWay(const QJsonObject& req)
+{
     m_client->writeMessage(QJsonDocument(req).toJson());
 }
 
-QJsonDocument MPDaemonClient::send(const QJsonObject &req, int ms) {
+QJsonDocument MPDaemonClient::send(const QJsonObject& req, int ms)
+{
     m_client->writeMessage(QJsonDocument(req).toJson());
     QByteArray ret = m_client->waitForMessage(ms);
-    if (ret.isEmpty()) return QJsonDocument();
+    if (ret.isEmpty())
+        return QJsonDocument();
     QJsonParseError error;
     QJsonDocument result = QJsonDocument::fromJson(ret, &error);
     return result;
 }
 
-QJsonObject MPDaemonClient::commandTemplate(const QString &cmd) const {
+QJsonObject MPDaemonClient::commandTemplate(const QString& cmd) const
+{
     QJsonObject obj;
     obj["command"] = cmd;
     return obj;
 }
 
-bool MPDaemonClient::daemonRunning() const {
+bool MPDaemonClient::daemonRunning() const
+{
     QSharedMemory shm(shmName());
     if (!shm.attach(QSharedMemory::ReadOnly))
         return false;
