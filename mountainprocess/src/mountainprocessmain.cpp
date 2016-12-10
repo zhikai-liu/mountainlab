@@ -445,6 +445,32 @@ int main(int argc, char* argv[])
         }
     }
     else if (arg1 == "daemon-start") {
+        MPDaemonInterface MPDI;
+        if (MPDI.daemonIsRunning()) {
+            printf("Daemon is already running.\n");
+            return 0;
+        }
+        QString cmd = qApp->applicationFilePath() + " daemon-start-internal " + QString("--_daemon_id=%1").arg(qApp->property("daemon_id").toString());
+        if (!QProcess::startDetached(cmd)) {
+            printf("Unexpected problem: Unable to start program for daemon-start-internal.\n");
+            return -1;
+        }
+        QTime timer;
+        timer.start();
+        MPDaemon::wait(500);
+        while (!MPDI.daemonIsRunning()) {
+            printf(".");
+            MPDaemon::wait(1000);
+            if (timer.elapsed() > 10000) {
+                printf("Daemon was not started after waiting.\n");
+                return -1;
+            }
+        }
+        printf("Daemon has been started ().\n");
+        return 0;
+    }
+    else if (arg1 == "daemon-start-internal") {
+
 // Start the mountainprocess daemon
 #ifndef NO_FORK
         /*
