@@ -69,7 +69,7 @@ If anything crashes along the way, every involved QProcess is killed.
 #include <fcntl.h>
 #endif
 
-#define NO_FORK
+//#define NO_FORK
 
 /// TODO security in scripts that are able to be submitted
 /// TODO title on mountainview from mountainbrowser
