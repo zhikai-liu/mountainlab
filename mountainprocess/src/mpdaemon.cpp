@@ -161,6 +161,7 @@ MPDaemon::MPDaemon()
 
 void kill_process_and_children(QProcess* P)
 {
+    /// Witold, do we need to worry about making this cross-platform?
     int pid = P->processId();
     QString cmd = QString("CPIDS=$(pgrep -P %1); (sleep 33 && kill -KILL $CPIDS &); kill -TERM $CPIDS").arg(pid);
     system(cmd.toUtf8().data());
@@ -230,9 +231,23 @@ bool MPDaemon::run()
 
 void MPDaemon::iterate()
 {
+    QTime timer;
+    timer.start();
+
     d->stop_orphan_processes_and_scripts();
+    if (timer.restart() > 1000) {
+        d->writeLogRecord("timer-warning", "method", "stop_orphan_processes_and_scripts", "elapsed_ms", (long long)timer.elapsed());
+    }
+
     d->handle_scripts();
+    if (timer.restart() > 1000) {
+        d->writeLogRecord("timer-warning", "method", "handle_scripts", "elapsed_ms", (long long)timer.elapsed());
+    }
+
     d->handle_processes();
+    if (timer.restart() > 1000) {
+        d->writeLogRecord("timer-warning", "method", "handle_processes", "elapsed_ms", (long long)timer.elapsed());
+    }
 }
 
 void MPDaemon::clearProcessing()
@@ -537,6 +552,7 @@ bool MPDaemonPrivate::handle_scripts()
             }
             else {
                 if (num_pending_scripts() == old_num_pending_scripts) {
+                    writeLogRecord("critical-error", "method", "handle_scripts", "message", "Failed to launch_next_script and the number of pending scripts has not decreased (unexpected). This has potential for infinite loop. So we are aborting.");
                     qCritical() << "Failed to launch_next_script and the number of pending scripts has not decreased (unexpected). This has potential for infinite loop. So we are aborting.";
                     abort();
                 }
@@ -569,17 +585,20 @@ bool MPDaemonPrivate::launch_pript(QString pript_id)
 
     MPDaemonPript* S;
     if (!m_pripts.contains(pript_id)) {
+        writeLogRecord("critical-error", "method", "launch_pript", "No pript exists with id: " + pript_id);
         qCritical() << "Unexpected problem. No pript exists with id: " + pript_id;
         abort();
         return false;
     }
     S = &m_pripts[pript_id];
     if (S->is_running) {
+        writeLogRecord("critical-error", "method", "launch_pript", "Pript is already running: " + pript_id);
         qCritical() << "Unexpected problem. Pript is already running: " + pript_id;
         abort();
         return false;
     }
     if (S->is_finished) {
+        writeLogRecord("critical-error", "method", "launch_pript", "Pript is already finished: " + pript_id);
         qCritical() << "Unexpected problem. Pript is already finished: " + pript_id;
         abort();
         return false;
