@@ -9,3 +9,5 @@ test_in_docker
 */*/*/*/*/*.mda
 */*/*/*/*/*/*.mda
 tmp
+log
+WIP
