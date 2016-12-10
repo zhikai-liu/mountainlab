@@ -93,11 +93,11 @@ public:
     ~Server()
     {
         shutdown();
-//        foreach (Client* c, m_clients) {
-//            c->disconnect(this);
-//            c->close();
-//        }
-//        m_clients.clear();
+        //        foreach (Client* c, m_clients) {
+        //            c->disconnect(this);
+        //            c->close();
+        //        }
+        //        m_clients.clear();
     }
     bool listen(const QString& path);
     void shutdown();
@@ -110,7 +110,7 @@ protected:
     {
         return new Client(sock, this);
     }
-    virtual void clientAboutToBeDestroyed(Client *c) {}
+    virtual void clientAboutToBeDestroyed(Client* c) {}
     void broadcast(const QByteArray& message)
     {
         foreach (Client* client, m_clients) {
@@ -191,6 +191,10 @@ public:
         uint32_t size = ba.size();
         std::copy((char*)&size, (char*)&size + 4, sizeArray.data());
         message.prepend(sizeArray);
+        if (!socket()->isOpen()) {
+            printf("Error in writeMessage: Socket is not open\n");
+            return;
+        }
         socket()->write(message);
         socket()->flush();
     }

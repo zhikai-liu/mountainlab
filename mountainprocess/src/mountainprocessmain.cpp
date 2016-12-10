@@ -444,6 +444,7 @@ int main(int argc, char* argv[])
             return -1;
         }
     }
+    /*
     else if (arg1 == "daemon-start") {
         MPDaemonInterface MPDI;
         if (MPDI.daemonIsRunning()) {
@@ -470,10 +471,12 @@ int main(int argc, char* argv[])
         return 0;
     }
     else if (arg1 == "daemon-start-internal") {
+    */
+    else if (arg1 == "daemon-start") {
 
 // Start the mountainprocess daemon
 #ifndef NO_FORK
-        /*
+/*
          *  The following magic ensures we detach from the parent process
          *  and from the controlling terminal. This is to prevent process
          *  that spawned us to wait for our children to complete.
@@ -551,7 +554,7 @@ int main(int argc, char* argv[])
         MPDaemonClient client;
         QJsonArray arr = client.log();
         QTextStream qout(stdout);
-        foreach(QJsonValue v, arr) {
+        foreach (QJsonValue v, arr) {
             QJsonObject logRecord = v.toObject();
             qout << logRecord["timestamp"].toString() << '\t'
                  << logRecord["record_type"].toString() << '\t'
@@ -850,7 +853,10 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
     PP.working_path = QDir::currentPath(); // all processes and scripts should be run in this working path
 
     MPDaemonClient client;
-    // ensure daemon is running
+    if (!client.isConnected()) {
+        qWarning() << "Could not connect to daemon.";
+        return false;
+    }
 
     if (prtype == ScriptType) {
         // It is a script

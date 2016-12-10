@@ -14,7 +14,7 @@
 class MPDaemonPript;
 class MPDaemonIface {
 public:
-    virtual ~MPDaemonIface(){}
+    virtual ~MPDaemonIface() {}
     virtual QJsonObject state() = 0;
     virtual QJsonArray log() = 0;
     virtual void contignousLog() = 0;
@@ -23,7 +23,8 @@ public:
     virtual bool clearProcessing() = 0;
     virtual bool start() = 0;
     virtual bool stop() = 0;
-    static QString daemonDirName() {
+    static QString daemonDirName()
+    {
         return substitute("mpdaemon-%u");
     }
 
@@ -31,7 +32,8 @@ protected:
     QString socketName() const;
     QString shmName() const;
 
-    static QString substitute(const QString &tpl) {
+    static QString substitute(const QString& tpl)
+    {
 #ifdef Q_OS_UNIX
         QString username = qgetenv("USER");
 #elif defined(Q_OS_WIN)
@@ -54,21 +56,21 @@ public:
     QJsonObject state() override;
     QJsonArray log() override;
     void contignousLog() override;
-    bool queueScript(const MPDaemonPript &script) override;
-    bool queueProcess(const MPDaemonPript &process) override;
+    bool queueScript(const MPDaemonPript& script) override;
+    bool queueProcess(const MPDaemonPript& process) override;
     bool clearProcessing() override;
     bool start() override;
     bool stop() override;
 
-    bool ensureDaemonRunning();
+    //bool ensureDaemonRunning();
     bool isConnected() const { return m_connected; }
 
 protected:
     bool connectToServer();
-    void sendOneWay(const QJsonObject &req);
+    void sendOneWay(const QJsonObject& req);
 
-    QJsonDocument send(const QJsonObject &req, int ms = 30000);
-    QJsonObject commandTemplate(const QString &cmd) const;
+    QJsonDocument send(const QJsonObject& req, int ms = 30000);
+    QJsonObject commandTemplate(const QString& cmd) const;
     bool daemonRunning() const;
 
 private:
