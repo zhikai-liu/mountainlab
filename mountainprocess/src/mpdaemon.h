@@ -76,7 +76,7 @@ class MountainProcessServer : public LocalServer::Server, public MPDaemonIface {
     Q_OBJECT
     Q_PROPERTY(QString logPath READ logPath WRITE setLogPath)
 public:
-    MountainProcessServer(QObject* parent = 0);
+    MountainProcessServer(QString daemon_id, QObject* parent = 0);
     ~MountainProcessServer();
     void distributeLogMessage(const QJsonObject& msg);
     void registerLogListener(LocalServer::Client* listener);
@@ -159,6 +159,7 @@ private:
     QMap<QString, MPDaemonPript> m_pripts;
     QString m_logPath;
     ProcessResources m_total_resources_available;
+    QString m_daemon_id;
 };
 
 struct ProcessRuntimeOpts {
