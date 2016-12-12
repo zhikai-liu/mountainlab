@@ -23,15 +23,12 @@ public:
     virtual bool clearProcessing() = 0;
     virtual bool start() = 0;
     virtual bool stop() = 0;
-    static QString daemonDirName()
-    {
-        return substitute("mpdaemon-%u");
-    }
 
 protected:
-    QString socketName() const;
-    QString shmName() const;
+    QString socketName(QString daemon_id) const;
+    QString shmName(QString daemon_id) const;
 
+    /*
     static QString substitute(const QString& tpl)
     {
 #ifdef Q_OS_UNIX
@@ -45,12 +42,13 @@ protected:
         result.replace("%u", username);
         return result;
     }
+    */
 };
 
 class MountainProcessClient;
 class MPDaemonClient : public MPDaemonIface {
 public:
-    MPDaemonClient();
+    MPDaemonClient(QString daemon_id);
     ~MPDaemonClient();
 
     QJsonObject state() override;
@@ -74,6 +72,7 @@ protected:
     bool daemonRunning() const;
 
 private:
+    QString m_daemon_id;
     MountainProcessClient* m_client;
     bool m_connected = false;
 };
