@@ -110,7 +110,7 @@ protected:
     {
         return new Client(sock, this);
     }
-    virtual void clientAboutToBeDestroyed(Client* c) {}
+    virtual void clientAboutToBeDestroyed(Client* c) { Q_UNUSED(c) }
     void broadcast(const QByteArray& message)
     {
         foreach (Client* client, m_clients) {
@@ -214,7 +214,7 @@ signals:
 
 protected:
     QLocalSocket* socket() const { return m_socket; }
-    virtual void handleMessage(const QByteArray& ba) {}
+    virtual void handleMessage(const QByteArray& ba) { Q_UNUSED(ba) }
     void messageLoop()
     {
         uint32_t msgSize;

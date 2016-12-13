@@ -163,7 +163,8 @@ void kill_process_and_children(QProcess* P)
     /// Witold, do we need to worry about making this cross-platform?
     int pid = P->processId();
     QString cmd = QString("CPIDS=$(pgrep -P %1); (sleep 33 && kill -KILL $CPIDS &); kill -TERM $CPIDS").arg(pid);
-    system(cmd.toUtf8().data());
+    int ret = system(cmd.toUtf8().data());
+    Q_UNUSED(ret);
 }
 
 #if 0
@@ -1402,10 +1403,9 @@ bool MountainProcessServerClient::handleMessage(const QByteArray& ba)
     return true;
 }
 
-MountainProcessServer::MountainProcessServer(QString daemon_id, QObject* parent)
+MountainProcessServer::MountainProcessServer(QObject* parent)
     : LocalServer::Server(parent)
 {
-    m_daemon_id = daemon_id;
 }
 
 MountainProcessServer::~MountainProcessServer()
@@ -1571,7 +1571,7 @@ void MountainProcessServer::stopServer()
 bool MountainProcessServer::acquireServer()
 {
     if (!shm)
-        shm = new QSharedMemory(shmName(m_daemon_id), this);
+        shm = new QSharedMemory(shmName(), this);
     else if (shm->isAttached())
         shm->detach();
     // algorithm:
@@ -1649,7 +1649,7 @@ bool MountainProcessServer::releaseServer()
 
 bool MountainProcessServer::acquireSocket()
 {
-    return listen(socketName(m_daemon_id));
+    return listen(socketName());
 }
 
 bool MountainProcessServer::releaseSocket()
@@ -2321,7 +2321,7 @@ bool MPDaemon::waitForFileToAppear(QString fname, qint64 timeout_ms, bool remove
 
 QString MPDaemon::daemonPath()
 {
-    // Witold, it turns out we don't want a separate path for each daemon id. This causes problems with needing to pass the daemon id to the process manager
+    // Witold, it turns out we don't want a separate path for each daemon id. This causes problems.
     QString ret = CacheManager::globalInstance()->localTempPath() + "/mpdaemon";
     MLUtil::mkdirIfNeeded(ret);
     MLUtil::mkdirIfNeeded(ret + "/completed_processes");

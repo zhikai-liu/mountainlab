@@ -25,8 +25,8 @@ public:
     virtual bool stop() = 0;
 
 protected:
-    QString socketName(QString daemon_id) const;
-    QString shmName(QString daemon_id) const;
+    QString socketName() const;
+    QString shmName() const;
 
     /*
     static QString substitute(const QString& tpl)
@@ -48,7 +48,7 @@ protected:
 class MountainProcessClient;
 class MPDaemonClient : public MPDaemonIface {
 public:
-    MPDaemonClient(QString daemon_id);
+    MPDaemonClient();
     ~MPDaemonClient();
 
     QJsonObject state() override;

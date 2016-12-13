@@ -328,9 +328,8 @@ QDateTime MPDaemonInterfacePrivate::get_time_from_timestamp_of_fname(QString fna
 
 #endif
 
-MPDaemonClient::MPDaemonClient(QString daemon_id)
+MPDaemonClient::MPDaemonClient()
 {
-    m_daemon_id = daemon_id;
     m_client = new MountainProcessClient;
     m_connected = connectToServer();
 }
@@ -444,7 +443,7 @@ bool MPDaemonClient::ensureDaemonRunning() {
 
 bool MPDaemonClient::connectToServer()
 {
-    m_client->connectToServer(socketName(m_daemon_id));
+    m_client->connectToServer(socketName());
     return m_client->waitForConnected();
 }
 
@@ -473,7 +472,7 @@ QJsonObject MPDaemonClient::commandTemplate(const QString& cmd) const
 
 bool MPDaemonClient::daemonRunning() const
 {
-    QSharedMemory shm(shmName(m_daemon_id));
+    QSharedMemory shm(shmName());
     if (!shm.attach(QSharedMemory::ReadOnly))
         return false;
     shm.lock();
@@ -483,12 +482,14 @@ bool MPDaemonClient::daemonRunning() const
     return ret;
 }
 
-QString MPDaemonIface::socketName(QString daemon_id) const
+QString MPDaemonIface::socketName() const
 {
+    QString daemon_id = qgetenv("MP_DAEMON_ID");
     return QString("mountainprocess-%1.sock").arg(daemon_id);
 }
 
-QString MPDaemonIface::shmName(QString daemon_id) const
+QString MPDaemonIface::shmName() const
 {
+    QString daemon_id = qgetenv("MP_DAEMON_ID");
     return QString("mountainprocess-%1").arg(daemon_id);
 }

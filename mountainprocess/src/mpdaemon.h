@@ -76,7 +76,7 @@ class MountainProcessServer : public LocalServer::Server, public MPDaemonIface {
     Q_OBJECT
     Q_PROPERTY(QString logPath READ logPath WRITE setLogPath)
 public:
-    MountainProcessServer(QString daemon_id, QObject* parent = 0);
+    MountainProcessServer(QObject* parent = 0);
     ~MountainProcessServer();
     void distributeLogMessage(const QJsonObject& msg);
     void registerLogListener(LocalServer::Client* listener);

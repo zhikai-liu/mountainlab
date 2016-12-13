@@ -89,7 +89,7 @@ bool load_parameter_file(QVariantMap& params, const QString& fname);
 bool run_script(const QStringList& script_fnames, const QVariantMap& params, const run_script_opts& opts, QString& error_message, QJsonObject& results);
 bool initialize_process_manager();
 void remove_system_parameters(QVariantMap& params);
-bool queue_pript(PriptType prtype, const CLParams& CLP, QString daemon_id);
+bool queue_pript(PriptType prtype, const CLParams& CLP);
 QString get_daemon_state_summary(const QJsonObject& state);
 
 #define EXIT_ON_CRITICAL_ERROR
@@ -119,6 +119,7 @@ double compute_avg_cpu_pct(const QList<MonitorStats>& stats);
 bool get_missing_prvs(const QVariantMap& clparams, QJsonObject& missing_prvs);
 QString get_default_daemon_id();
 void set_default_daemon_id(QString daemon_id);
+void print_default_daemon_id();
 
 int main(int argc, char* argv[])
 {
@@ -149,6 +150,21 @@ int main(int argc, char* argv[])
             QTextStream(stdout) << "One or more prvs could not be found. To resolve these using the GUI, run this command again with the --_prvgui option." << endl;
             return -1;
         }
+    }
+
+    // Make sure the MP_DAEMON_ID environment variable is set
+    // This will be used in all calls to queue-process (and queue-script)
+    // But note that the id argument needs to be used for daemon-start, daemon-stop, daemon-state, etc.
+    {
+        QString daemon_id = qgetenv("MP_DAEMON_ID");
+        if (daemon_id.isEmpty()) {
+            QSettings settings("Magland", "MountainLab");
+            daemon_id = settings.value("default_daemon_id").toString();
+        }
+        if (CLP.named_parameters.contains("_daemon_id")) {
+            daemon_id = CLP.named_parameters["_daemon_id"].toString();
+        }
+        qputenv("MP_DAEMON_ID", daemon_id.toUtf8().data());
     }
 
     QString arg1 = CLP.unnamed_parameters.value(0);
@@ -298,11 +314,10 @@ int main(int argc, char* argv[])
         return ret; //returns exit code 0 if okay
     }
     else if (arg1 == "run-script") { // run a script synchronously (although note that individual processes will be queued (unless --_nodaemon is specified), but the script will wait for them to complete before exiting)
-
-        // This will be needed once processes are queued
-        QString daemon_id = get_default_daemon_id();
-        if (daemon_id.isEmpty()) {
-            printf("\nCANNOT RUN SCRIPT: You must set the default daemon id.\n");
+        QString daemon_id = qgetenv("MP_DAEMON_ID");
+        if ((daemon_id.isEmpty()) && (!CLP.named_parameters.contains("_nodaemon"))) {
+            printf("\nCANNOT RUN SCRIPT: No daemon has been specified.\n");
+            printf("Use the --_nodaemon flag or do the following:\n");
             print_daemon_instructions();
             return -1;
         }
@@ -436,19 +451,24 @@ int main(int argc, char* argv[])
         //log_end();
         return ret;
     }
-    else if (arg1 == "set-daemon") {
+    else if (arg1 == "set-default-daemon") {
         set_default_daemon_id(arg2);
         return 0;
     }
+    else if (arg1 == "get-default-daemon") {
+        print_default_daemon_id();
+        return 0;
+    }
     else if (arg1 == "queue-script") { //Queue a script -- to be executed when resources are available
-        QString daemon_id = get_default_daemon_id();
+        QString daemon_id = qgetenv("MP_DAEMON_ID");
         if (daemon_id.isEmpty()) {
-            printf("\nCANNOT QUEUE SCRIPT: You must set the default daemon id.\n");
+            printf("\nCANNOT QUEUE SCRIPT: No daemon has been specified.\n");
+            printf("Use the --_nodaemon flag or do the following:\n");
             print_daemon_instructions();
             return -1;
         }
 
-        if (queue_pript(ScriptType, CLP, daemon_id)) {
+        if (queue_pript(ScriptType, CLP)) {
             //log_end();
             return 0;
         }
@@ -458,14 +478,15 @@ int main(int argc, char* argv[])
         }
     }
     else if (arg1 == "queue-process") {
-        QString daemon_id = get_default_daemon_id();
+        QString daemon_id = qgetenv("MP_DAEMON_ID");
         if (daemon_id.isEmpty()) {
-            printf("\nCANNOT QUEUE PROCESS: You must set the default daemon id.\n");
+            printf("\nCANNOT QUEUE PROCESS: No daemon has been specified.\n");
+            printf("Use the --_nodaemon flag or do the following:\n");
             print_daemon_instructions();
             return -1;
         }
 
-        if (queue_pript(ProcessType, CLP, daemon_id)) {
+        if (queue_pript(ProcessType, CLP)) {
             //log_end();
             return 0;
         }
@@ -513,6 +534,7 @@ int main(int argc, char* argv[])
             printf("daemon-start [some_id]\n");
             exit(-1);
         }
+        qputenv("MP_DAEMON_ID", daemon_id.toUtf8().data());
 
 // Start the mountainprocess daemon
 #ifndef NO_FORK
@@ -557,7 +579,7 @@ int main(int argc, char* argv[])
         cleaner.addPath(mdachunk_data_path + "/tmp_long_term", MAX_MDACHUNK_GB);
         */
 
-        MountainProcessServer server(daemon_id);
+        MountainProcessServer server;
         server.setLogPath(log_path);
 
         ProcessResources RR; // these are the rules for determining how many processes to run simultaneously
@@ -578,8 +600,9 @@ int main(int argc, char* argv[])
             printf("daemon-stop [some_id]\n");
             exit(-1);
         }
+        qputenv("MP_DAEMON_ID", daemon_id.toUtf8().data());
 
-        MPDaemonClient client(daemon_id);
+        MPDaemonClient client;
         return client.stop() ? 0 : -1;
     }
     else if (arg1 == "daemon-restart") { //Restart the daemon
@@ -589,8 +612,9 @@ int main(int argc, char* argv[])
             printf("daemon-restart [some_id]\n");
             exit(-1);
         }
+        qputenv("MP_DAEMON_ID", daemon_id.toUtf8().data());
 
-        MPDaemonClient client(daemon_id);
+        MPDaemonClient client;
         if (!client.stop() || !client.start())
             return -1;
         printf("Daemon has been restarted.\n");
@@ -611,8 +635,9 @@ int main(int argc, char* argv[])
             printf("print-log [some_id]\n");
             exit(-1);
         }
+        qputenv("MP_DAEMON_ID", daemon_id.toUtf8().data());
 
-        MPDaemonClient client(daemon_id);
+        MPDaemonClient client;
         QJsonArray arr = client.log();
         QTextStream qout(stdout);
         foreach (QJsonValue v, arr) {
@@ -630,8 +655,9 @@ int main(int argc, char* argv[])
             printf("log [some_id]\n");
             exit(-1);
         }
+        qputenv("MP_DAEMON_ID", daemon_id.toUtf8().data());
 
-        MPDaemonClient client(daemon_id);
+        MPDaemonClient client;
         client.contignousLog();
         return 0;
     }
@@ -642,8 +668,9 @@ int main(int argc, char* argv[])
             printf("daemon-state [some_id]\n");
             exit(-1);
         }
+        qputenv("MP_DAEMON_ID", daemon_id.toUtf8().data());
 
-        MPDaemonClient client(daemon_id);
+        MPDaemonClient client;
         QJsonObject state = client.state();
         if (state.isEmpty()) {
             qWarning() << "Can't connect to daemon";
@@ -661,8 +688,9 @@ int main(int argc, char* argv[])
             printf("daemon-state-summary [some_id]\n");
             exit(-1);
         }
+        qputenv("MP_DAEMON_ID", daemon_id.toUtf8().data());
 
-        MPDaemonClient client(daemon_id);
+        MPDaemonClient client;
         QString txt = get_daemon_state_summary(client.state());
         printf("%s", txt.toLatin1().constData());
         //log_end();
@@ -675,8 +703,9 @@ int main(int argc, char* argv[])
             printf("clear-processing [some_id]\n");
             exit(-1);
         }
+        qputenv("MP_DAEMON_ID", daemon_id.toUtf8().data());
 
-        MPDaemonClient client(daemon_id);
+        MPDaemonClient client;
         client.clearProcessing();
         //log_end();
         return 0;
@@ -837,31 +866,32 @@ bool run_script(const QStringList& script_fnames, const QVariantMap& params, con
 void print_usage()
 {
     printf("Usage:\n");
-    printf("mountainprocess run-process [processor_name] --[param1]=[val1] --[param2]=[val2] ... [--_force_run] [--_request_num_threads=4]\n");
-    printf("mountainprocess run-script [script1].js [script2.js] ... [file1].par [file2].par ... [--_force_run] [--_request_num_threads=4]\n");
-    printf("mountainprocess list-daemons\n");
-    printf("mountainprocess daemon-start [some daemon id]\n");
-    printf("mountainprocess daemon-stop [some daemon id]\n");
-    printf("mountainprocess daemon-restart [some daemon id]\n");
-    printf("mountainprocess daemon-state [some daemon id]\n");
-    printf("mountainprocess daemon-state-summary [some daemon id]\n");
-    printf("mountainprocess set-daemon [some daemon id]\n");
+    printf("mp-run-process [processor_name] --[param1]=[val1] --[param2]=[val2] ... [--_force_run] [--_request_num_threads=4]\n");
+    printf("mp-run-script [script1].js [script2.js] ... [file1].par [file2].par ... [--_force_run] [--_request_num_threads=4]\n");
+    printf("mp-list-daemons\n");
+    printf("mp-daemon-start [some daemon id]\n");
+    printf("mp-daemon-stop [some daemon id]\n");
+    printf("mp-daemon-restart [some daemon id]\n");
+    printf("mp-daemon-state [some daemon id]\n");
+    printf("mp-daemon-state-summary [some daemon id]\n");
+    printf("mp-get-default-daemon\n");
+    printf("mp-set-default-daemon [some daemon id]\n");
     printf("mountainprocess clear-processing [some daemon id]\n");
-    printf("mountainprocess queue-script --_script_output=[optional_output_fname] [script1].js [script2.js] ... [file1].par [file2].par ...  [--_force_run]\n");
-    printf("mountainprocess queue-process [processor_name] --_process_output=[optional_output_fname] --[param1]=[val1] --[param2]=[val2] ... [--_force_run]\n");
-    printf("mountainprocess list-processors\n");
-    printf("mountainprocess spec [processor_name]\n");
-    printf("mountainprocess cleanup-cache\n");
+    printf("mp-queue-process [processor_name] --_process_output=[optional_output_fname] --[param1]=[val1] --[param2]=[val2] ... [--_force_run]\n");
+    printf("mp-list-processors\n");
+    printf("mp-spec [processor_name]\n");
+    printf("mp-cleanup-cache\n");
 }
 
 void print_daemon_instructions()
 {
     printf("\nTo connect to a currently running daemon:\n");
-    printf("> mountainprocess set-daemon [some daemon id]\n\n");
-    printf("Otherwise, to start a new daemon:\n");
-    printf("> mountainprocess daemon-start [some daemon id, for example your user name]\n\n");
+    printf("Set the MP_DAEMON_ID environment variable, or\n");
+    printf("> mp-set-default-daemon [some daemon id]\n\n");
+    printf("To start a new daemon:\n");
+    printf("> mp-daemon-start [some daemon id, for example your user name]\n\n");
     printf("To list all running daemons:\n");
-    printf("> mountainprocess list-daemons\n\n");
+    printf("> mp-list-daemons\n\n");
     return;
 }
 
@@ -876,7 +906,7 @@ void remove_system_parameters(QVariantMap& params)
 }
 
 // Queue a script or process
-bool queue_pript(PriptType prtype, const CLParams& CLP, QString daemon_id)
+bool queue_pript(PriptType prtype, const CLParams& CLP)
 {
     MPDaemonPript PP;
 
@@ -955,9 +985,11 @@ bool queue_pript(PriptType prtype, const CLParams& CLP, QString daemon_id)
     PP.force_run = CLP.named_parameters.contains("_force_run"); // do not check if processes have already run
     PP.working_path = QDir::currentPath(); // all processes and scripts should be run in this working path
 
-    MPDaemonClient client(daemon_id);
+    MPDaemonClient client;
     if (!client.isConnected()) {
+        QString daemon_id = qgetenv("MP_DAEMON_ID");
         printf("\nCould not connect to daemon: %s\n", daemon_id.toUtf8().data());
+        printf("Use the --_nodaemon option or do the following:\n");
         print_daemon_instructions();
         return false;
     }
@@ -1216,6 +1248,13 @@ void set_default_daemon_id(QString daemon_id)
 {
     QSettings settings("Magland", "MountainLab");
     settings.setValue("default_daemon_id", daemon_id);
+}
+
+void print_default_daemon_id()
+{
+    QSettings settings("Magland", "MountainLab");
+    QString val = settings.value("default_daemon_id").toString();
+    printf("%s\n", val.toUtf8().data());
 }
 
 /*
