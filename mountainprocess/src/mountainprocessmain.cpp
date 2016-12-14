@@ -753,8 +753,9 @@ bool initialize_process_manager()
     ProcessManager* PM = ProcessManager::globalInstance();
     foreach (QString processor_path, processor_paths) {
         //printf("Searching for processors in %s\n", p0.toLatin1().data());
+        int previous_num_processors = PM->processorNames().count();
         PM->loadProcessors(processor_path);
-        int num_processors = PM->processorNames().count();
+        int num_processors = PM->processorNames().count() - previous_num_processors;
         printf("Loaded %d processors in %s\n", num_processors, processor_path.toLatin1().data());
     }
 
