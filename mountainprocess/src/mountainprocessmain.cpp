@@ -546,6 +546,7 @@ int main(int argc, char* argv[])
         if (daemon_id.isEmpty()) {
             printf("You must specify a daemon id like this:\n");
             printf("daemon-start [some_id]\n");
+            printf("For example you can use your user name\n");
             exit(-1);
         }
         qputenv("MP_DAEMON_ID", daemon_id.toUtf8().data());
