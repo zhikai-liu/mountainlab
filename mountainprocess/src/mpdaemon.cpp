@@ -21,6 +21,7 @@
 #include <sys/stat.h> //for mkfifo
 #include "processmanager.h"
 #include "mlcommon.h"
+#include <QSettings>
 #include <QSharedMemory>
 #include <signal.h>
 
@@ -1570,6 +1571,17 @@ void MountainProcessServer::stopServer()
 
 bool MountainProcessServer::acquireServer()
 {
+    // hack by jfm to temporarily implement mp-list-daemons
+    {
+        QString daemon_id = qgetenv("MP_DAEMON_ID");
+        QSettings settings("Magland", "MountainLab");
+        QStringList list = settings.value("mp-list-daemons-candidates").toStringList();
+        if (!list.contains(daemon_id)) {
+            list.append(daemon_id);
+            settings.setValue("mp-list-daemons-candidates", list);
+        }
+    }
+
     if (!shm)
         shm = new QSharedMemory(shmName(), this);
     else if (shm->isAttached())

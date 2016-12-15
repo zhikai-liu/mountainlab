@@ -496,7 +496,21 @@ int main(int argc, char* argv[])
         }
     }
     else if (arg1 == "list-daemons") {
-        printf("Not yet implemented.\n");
+        // hack by jfm to temporarily implement mp-list-daemons
+        {
+            QSettings settings("Magland", "MountainLab");
+            QStringList candidates = settings.value("mp-list-daemons-candidates").toStringList();
+            printf("Daemons:\n");
+            foreach (QString candidate, candidates) {
+                qputenv("MP_DAEMON_ID", candidate.toUtf8().data());
+                MPDaemonClient client;
+                QJsonObject state = client.state();
+                if (!state.isEmpty()) {
+                    printf("%s ", candidate.toUtf8().data());
+                }
+            }
+            printf("\n");
+        }
         return 0;
     }
     /*
