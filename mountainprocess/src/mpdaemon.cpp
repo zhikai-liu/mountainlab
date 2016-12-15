@@ -1574,7 +1574,7 @@ bool MountainProcessServer::acquireServer()
     // hack by jfm to temporarily implement mp-list-daemons
     {
         QString daemon_id = qgetenv("MP_DAEMON_ID");
-        QSettings settings("Magland", "MountainLab");
+        QSettings settings(QSettings::SystemScope, "Magland", "MountainLab");
         QStringList list = settings.value("mp-list-daemons-candidates").toStringList();
         if (!list.contains(daemon_id)) {
             list.append(daemon_id);

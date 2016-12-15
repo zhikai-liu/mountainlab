@@ -498,7 +498,7 @@ int main(int argc, char* argv[])
     else if (arg1 == "list-daemons") {
         // hack by jfm to temporarily implement mp-list-daemons
         {
-            QSettings settings("Magland", "MountainLab");
+            QSettings settings(QSettings::SystemScope, "Magland", "MountainLab");
             QStringList candidates = settings.value("mp-list-daemons-candidates").toStringList();
             printf("Daemons:\n");
             foreach (QString candidate, candidates) {
