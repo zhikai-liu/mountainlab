@@ -398,7 +398,7 @@ bool MPDaemonClient::start()
     }
     QString exe = qApp->applicationFilePath();
     QStringList args;
-    args << "daemon-start";
+    args << "daemon-start" << qgetenv("MP_DAEMON_ID");
     if (!QProcess::startDetached(exe, args)) {
         printf("Unable to startDetached: %s\n", exe.toLatin1().data());
         return false;
