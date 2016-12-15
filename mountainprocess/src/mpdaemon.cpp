@@ -1571,17 +1571,6 @@ void MountainProcessServer::stopServer()
 
 bool MountainProcessServer::acquireServer()
 {
-    // hack by jfm to temporarily implement mp-list-daemons
-    {
-        QString daemon_id = qgetenv("MP_DAEMON_ID");
-        QSettings settings(QSettings::SystemScope, "Magland", "MountainLab");
-        QStringList list = settings.value("mp-list-daemons-candidates").toStringList();
-        if (!list.contains(daemon_id)) {
-            list.append(daemon_id);
-            settings.setValue("mp-list-daemons-candidates", list);
-        }
-    }
-
     if (!shm)
         shm = new QSharedMemory(shmName(), this);
     else if (shm->isAttached())
@@ -1672,6 +1661,17 @@ bool MountainProcessServer::releaseSocket()
 
 void MountainProcessServer::iterate()
 {
+    // hack by jfm to temporarily implement mp-list-daemons
+    {
+        QString daemon_id = qgetenv("MP_DAEMON_ID");
+        QSettings settings(QSettings::UserScope, "Magland", "MountainLab");
+        QStringList list = settings.value("mp-list-daemons-candidates").toStringList();
+        if (!list.contains(daemon_id)) {
+            list.append(daemon_id);
+            settings.setValue("mp-list-daemons-candidates", list);
+        }
+    }
+
     stop_orphan_processes_and_scripts();
     handle_scripts();
     handle_processes();
