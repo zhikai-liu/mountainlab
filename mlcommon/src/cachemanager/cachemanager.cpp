@@ -49,6 +49,10 @@ void CacheManager::setLocalBasePath(const QString& path)
     if (!QDir(path + "/tmp_long_term").exists()) {
         QDir(path).mkdir("tmp_long_term");
     }
+    QFile::Permissions perm=QFileDevice::ReadUser|QFileDevice::WriteUser|QFileDevice::ExeUser|QFileDevice::ReadGroup|QFileDevice::WriteGroup|QFileDevice::ExeGroup|QFileDevice::ReadOther|QFileDevice::WriteOther|QFileDevice::ExeOther;
+    QFile::setPermissions(path,perm);
+    QFile::setPermissions(path+"/tmp_short_term",perm);
+    QFile::setPermissions(path+"/tmp_long_term",perm);
 }
 
 QString CacheManager::makeRemoteFile(const QString& mlproxy_url, const QString& file_name_in, CacheManager::Duration duration)

@@ -398,6 +398,7 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
         args << QString("--_request_num_threads=%1").arg(request_num_threads);
     QProcess* P1 = new QProcess;
     P1->setReadChannelMode(QProcess::MergedChannels);
+    qDebug().noquote() << exe+" "+args.join(" ");
     P1->start(exe, args);
     if (!P1->waitForStarted()) {
         qWarning() << "Error waiting for process to start: " + processor_name;
@@ -564,7 +565,7 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
             }
         }
         else {
-            printf("Queuing process %s\n", node->processor_name.toLatin1().data());
+            printf("Queuing process from script controller: %s\n", node->processor_name.toLatin1().data());
             P1 = queue_process(node->processor_name, parameters0, false, m_force_run, node->process_output_fname, m_num_threads);
             if (!P1) {
                 qWarning() << "Unable to queue process: " + node->processor_name;

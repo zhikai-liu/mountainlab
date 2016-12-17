@@ -392,6 +392,8 @@ void ProcessManager::slot_process_finished()
                 QFile::remove(fname); //shouldn't be needed
             if (TextFile::write(fname + ".tmp", json)) {
                 QFile::rename(fname + ".tmp", fname);
+                QFile::Permissions perm=QFileDevice::ReadUser|QFileDevice::WriteUser|QFileDevice::ExeUser|QFileDevice::ReadGroup|QFileDevice::WriteGroup|QFileDevice::ExeGroup|QFileDevice::ReadOther|QFileDevice::WriteOther|QFileDevice::ExeOther;
+                QFile::setPermissions(fname,perm);
             }
         }
     }

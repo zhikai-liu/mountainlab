@@ -136,7 +136,7 @@ void append_line_to_file(QString fname, QString line)
 
 void debug_log(const char* function, const char* file, int line)
 {
-    QString fname = CacheManager::globalInstance()->localTempPath() + "/mpdaemon_debug.log";
+    QString fname = CacheManager::globalInstance()->localTempPath() + QString("/mpdaemon_debug_%1.log").arg(QString(qgetenv("USER")));
     QString line0 = QString("%1: %2 %3:%4").arg(QDateTime::currentDateTime().toString("yy-MM-dd:hh:mm:ss.zzz")).arg(function).arg(file).arg(line);
     line0 += " ARGS: ";
     foreach (QString arg, qApp->arguments()) {
@@ -1161,7 +1161,10 @@ bool MPDaemon::pidExists(qint64 pid)
 bool pidExists(qint64 pid)
 {
     // check whether process exists (works on Linux)
-    return (kill(pid, 0) == 0);
+    //return (kill(pid, 0) == 0);
+
+    // the following is supposed to work even when the process is owned by a different user
+    return (getpgid(pid) >= 0);
 }
 
 #if 0
@@ -2337,6 +2340,9 @@ QString MPDaemon::daemonPath()
     QString ret = CacheManager::globalInstance()->localTempPath() + "/mpdaemon";
     MLUtil::mkdirIfNeeded(ret);
     MLUtil::mkdirIfNeeded(ret + "/completed_processes");
+    QFile::Permissions perm=QFileDevice::ReadUser|QFileDevice::WriteUser|QFileDevice::ExeUser|QFileDevice::ReadGroup|QFileDevice::WriteGroup|QFileDevice::ExeGroup|QFileDevice::ReadOther|QFileDevice::WriteOther|QFileDevice::ExeOther;
+    QFile::setPermissions(ret,perm);
+    QFile::setPermissions(ret+"/completed_processes",perm);
     return ret;
 }
 
