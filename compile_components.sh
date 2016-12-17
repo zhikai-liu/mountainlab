@@ -1,22 +1,21 @@
 #!/bin/bash
 
-if [ -z "$1" ]; then
-    echo ""
-    echo "usage:"
-    echo "./compile_components.sh default"
-    echo "./compile_components.sh mountainview mountainbrowser"
-    echo "example components: mdachunk mdaconvert mountainbrowser mountainoverlook mountainprocess mountainsort mountainview mountaincompare prv"
-    echo ""
-    echo "Note that mountainbrowser is intentionally not compiled by default."
-    echo ""
-    exit 0
-fi
+#if [ -z "$1" ]; then
+#    echo ""
+#    echo "usage:"
+#    echo "./compile_components.sh default"
+#    echo "./compile_components.sh mountainview"
+#    echo "example components: mdachunk mdaconvert mountainprocess mountainsort mountainview mountaincompare prv"
+#    exit 0
+#fi
 
 qmake -recursive
 
 if [ $1 == "default" ]
 then
-echo qmake
+eval qmake
+elif [ -z "$1" ]; then
+eval qmake
 else
 eval qmake \"COMPONENTS = $@\"
 fi
