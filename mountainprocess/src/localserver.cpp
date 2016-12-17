@@ -7,7 +7,7 @@ Server::Server(QObject* parent)
     : QObject(parent)
 {
     m_socket = new QLocalServer(this);
-    m_socket->setSocketOptions(QLocalServer::WorldAccessOption);
+    //m_socket->setSocketOptions(QLocalServer::WorldAccessOption);
     connect(m_socket, SIGNAL(newConnection()), this, SLOT(handleNewConnection()));
 }
 
@@ -17,7 +17,8 @@ bool Server::listen(const QString& path)
     bool res = socket()->listen(path);
     if (res) {
         QFile socketFile(socket()->fullServerName());
-        socketFile.setPermissions(QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
+
+        //socketFile.setPermissions(QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
     }
     return res;
 }
