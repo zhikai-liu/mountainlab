@@ -453,6 +453,8 @@ int main(int argc, char* argv[])
     }
     else if (arg1 == "set-default-daemon") {
         set_default_daemon_id(arg2);
+        printf("default daemon id is set to: ");
+        print_default_daemon_id();
         return 0;
     }
     else if (arg1 == "get-default-daemon") {
