@@ -144,8 +144,6 @@ public:
     static TaskProgressMonitor* globalInstance();
 
     virtual TaskProgressModel* model() const = 0;
-signals:
-    void quantitiesChanged();
 };
 
 class TaskProgressAgentPrivate;

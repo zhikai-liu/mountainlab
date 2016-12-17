@@ -36,7 +36,8 @@ HEADERS += clusterdetailplugin.h clusterdetailview.h \
     core/resolveprvsdialog.h \
     views/mvgridview.h \
     views/mvgridviewpropertiesdialog.h \
-    views/renderablewidget.h
+    views/renderablewidget.h \
+    misc/jscounter.h
 SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
     clusterdetailviewpropertiesdialog.cpp \
     msv/views/matrixview.cpp \
@@ -50,7 +51,8 @@ SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
     core/resolveprvsdialog.cpp \
     views/mvgridview.cpp \
     views/mvgridviewpropertiesdialog.cpp \
-    views/renderablewidget.cpp
+    views/renderablewidget.cpp \
+    misc/jscounter.cpp
 FORMS += clusterdetailviewpropertiesdialog.ui
 
 INCLUDEPATH += ../../prv-gui/src

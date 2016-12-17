@@ -2,21 +2,43 @@
 #include <QHash>
 #include <objectregistry.h>
 
+/*!
+ * \class ICounterBase
+ * \brief Base class for all counters
+ *
+ */
+
+/*!
+ * \brief ICounterBase::label
+ * \return
+ */
 QString ICounterBase::label() const
 {
     return genericValue().toString();
 }
 
+/*!
+ * \brief IAggregateCounter::add
+ * \return
+ */
 QVariant IAggregateCounter::add(const QVariant&)
 {
     return genericValue();
 }
 
+/*!
+ * \brief IAggregateCounter::counters
+ * \return
+ */
 QList<ICounterBase*> IAggregateCounter::counters() const
 {
     return m_counters;
 }
 
+/*!
+ * \brief IAggregateCounter::addCounter
+ * \param c
+ */
 void IAggregateCounter::addCounter(ICounterBase* c)
 {
     m_counters << c;
@@ -24,6 +46,10 @@ void IAggregateCounter::addCounter(ICounterBase* c)
     updateValue();
 }
 
+/*!
+ * \brief IAggregateCounter::addCounters
+ * \param list
+ */
 void IAggregateCounter::addCounters(const QList<ICounterBase*>& list)
 {
     foreach (ICounterBase* c, list) {
@@ -33,11 +59,20 @@ void IAggregateCounter::addCounters(const QList<ICounterBase*>& list)
     updateValue();
 }
 
+/*!
+ * \brief ICounterManager::ICounterManager
+ * \param parent
+ */
 ICounterManager::ICounterManager(QObject* parent)
     : QObject(parent)
 {
 }
 
+/*!
+ * \brief CounterManager::CounterManager
+ * \param parent
+ * \internal
+ */
 CounterManager::CounterManager(QObject* parent)
     : ICounterManager(parent)
 {
@@ -123,12 +158,102 @@ QStringList CounterManager::availableGroups() const
     return m_groupNames;
 }
 
-ICounterBase::ICounterBase(const QString& name)
-    : m_name(name)
+/*!
+ * \brief ICounterBase::ICounterBase
+ * \param name
+ * \param parent
+ */
+ICounterBase::ICounterBase(const QString& name, QObject *parent)
+    : QObject(parent), m_name(name)
 {
 }
 
+/*!
+ * \brief ICounterBase::name
+ * \return
+ */
 QString ICounterBase::name() const
 {
     return m_name;
+}
+
+/*!
+ * \brief CounterProxy::CounterProxy
+ * \param name
+ * \param parent
+ */
+CounterProxy::CounterProxy(const QString &name, QObject *parent)
+    : ICounterBase(name, parent) {}
+
+/*!
+ * \brief CounterProxy::CounterProxy
+ * \param name
+ * \param c
+ * \param parent
+ */
+CounterProxy::CounterProxy(const QString &name, ICounterBase *c, QObject *parent)
+    : ICounterBase(name, parent) {
+    setBaseCounter(c);
+}
+
+/*!
+ * \brief CounterProxy::setBaseCounter
+ * \param c
+ */
+void CounterProxy::setBaseCounter(ICounterBase *c) {
+    if (m_base) {
+        disconnect(c, SIGNAL(valueChanged()), this, SLOT(updateValue()));
+    }
+    m_base = c;
+    if (c) {
+        connect(c, SIGNAL(valueChanged()), this, SLOT(updateValue()));
+    }
+}
+
+/*!
+ * \brief CounterProxy::baseCounter
+ * \return
+ */
+ICounterBase *CounterProxy::baseCounter() const { return m_base; }
+
+/*!
+ * \brief CounterProxy::type
+ * \return
+ */
+ICounterBase::Type CounterProxy::type() const {
+    return baseCounter() ? baseCounter()->type() : Unknown;
+}
+
+/*!
+ * \brief CounterProxy::label
+ * \return
+ */
+QString CounterProxy::label() const {
+    return baseCounter() ? baseCounter()->label() : QString();
+}
+
+/*!
+ * \brief CounterProxy::genericValue
+ * \return
+ */
+QVariant CounterProxy::genericValue() const {
+    return baseCounter() ? baseCounter()->genericValue() : QVariant();
+}
+
+/*!
+ * \brief CounterProxy::add
+ * \param v
+ * \return
+ */
+QVariant CounterProxy::add(const QVariant &v) {
+    if (!baseCounter())
+        return 0;
+    return baseCounter()->add(v);
+}
+
+/*!
+ * \brief CounterProxy::updateValue
+ */
+void CounterProxy::updateValue() {
+    emit valueChanged();
 }
