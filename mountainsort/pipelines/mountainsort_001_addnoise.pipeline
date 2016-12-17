@@ -86,12 +86,15 @@ function Process(processor_name,inputs,parameters) {
 }
 
 function write_file(input,output) {
+	_MP2.addCopyFile(input,output);
+	/*
 	_MP2.addProcess(
 		'copy',
 		JSON.stringify({input:input}),
 		JSON.stringify({}),
 		JSON.stringify({output:output})
 	);
+	*/
 }
 
 function write_prv(input,output) {

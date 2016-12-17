@@ -2340,9 +2340,9 @@ QString MPDaemon::daemonPath()
     QString ret = CacheManager::globalInstance()->localTempPath() + "/mpdaemon";
     MLUtil::mkdirIfNeeded(ret);
     MLUtil::mkdirIfNeeded(ret + "/completed_processes");
-    QFile::Permissions perm=QFileDevice::ReadUser|QFileDevice::WriteUser|QFileDevice::ExeUser|QFileDevice::ReadGroup|QFileDevice::WriteGroup|QFileDevice::ExeGroup|QFileDevice::ReadOther|QFileDevice::WriteOther|QFileDevice::ExeOther;
-    QFile::setPermissions(ret,perm);
-    QFile::setPermissions(ret+"/completed_processes",perm);
+    QFile::Permissions perm = QFileDevice::ReadUser | QFileDevice::WriteUser | QFileDevice::ExeUser | QFileDevice::ReadGroup | QFileDevice::WriteGroup | QFileDevice::ExeGroup | QFileDevice::ReadOther | QFileDevice::WriteOther | QFileDevice::ExeOther;
+    QFile::setPermissions(ret, perm);
+    QFile::setPermissions(ret + "/completed_processes", perm);
     return ret;
 }
 

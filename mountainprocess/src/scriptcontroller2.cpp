@@ -166,7 +166,7 @@ QVariant filter_process_output(QVariant X, QString processor_name, QVariantMap i
 
 // Add a process to the processing pipeline
 QString ScriptController2::addProcess(QString processor_name, QString inputs_json, QString parameters_json, QString outputs_json)
-{   
+{
     // Find the processor in the process manager
     MLProcessor PP = ProcessManager::globalInstance()->processor(processor_name);
     if (PP.name != processor_name) { //rather use PP.isNull()
@@ -408,7 +408,6 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
         args << QString("--_request_num_threads=%1").arg(request_num_threads);
     QProcess* P1 = new QProcess;
     P1->setReadChannelMode(QProcess::MergedChannels);
-    qDebug().noquote() << exe+" "+args.join(" ");
     P1->start(exe, args);
     if (!P1->waitForStarted()) {
         qWarning() << "Error waiting for process to start: " + processor_name;
@@ -557,7 +556,7 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
     if (node->copy_file) {
         QString input_path = node->inputs["input"].toString();
         QString output_path = node->outputs["output"].toString();
-        printf("COPYING FILE: %s -> %s",input_path.toUtf8().data(),output_path.toUtf8().data());
+        printf("COPYING FILE: %s -> %s", input_path.toUtf8().data(), output_path.toUtf8().data());
         if (input_path.isEmpty()) {
             qWarning() << "Input path for copy_file is empty.";
             return false;
@@ -569,11 +568,11 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
 
         if (QFile::exists(output_path)) {
             if (!QFile::remove(output_path)) {
-                printf("Unable to remove output file: %s\n",output_path.toUtf8().data());
+                printf("Unable to remove output file: %s\n", output_path.toUtf8().data());
             }
         }
-        if (!QFile::copy(input_path,output_path)) {
-            printf("Unable to copy file: %s %s\n",input_path.toUtf8().data(),output_path.toUtf8().data());
+        if (!QFile::copy(input_path, output_path)) {
+            printf("Unable to copy file: %s %s\n", input_path.toUtf8().data(), output_path.toUtf8().data());
             return false;
         }
 

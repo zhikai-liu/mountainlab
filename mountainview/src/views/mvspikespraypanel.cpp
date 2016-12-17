@@ -318,7 +318,7 @@ MVSpikeSprayPanelControl::~MVSpikeSprayPanelControl()
         d->renderer->wait(); // and wait for it to die
     }
     d->renderThread->quit();
-    if( !d->renderThread->wait(1000*10)) {
+    if (!d->renderThread->wait(1000 * 10)) {
         qWarning() << "Render thread wouldn't terminate";
     }
     if (d->renderer)
