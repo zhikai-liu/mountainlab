@@ -42,6 +42,7 @@ struct PipelineNode2 {
     QVariantMap parameters;
     QVariantMap outputs;
     bool create_prv = false;
+    bool copy_file = false;
     bool completed;
     bool running;
     QString process_output_fname; //internal
@@ -165,7 +166,7 @@ QVariant filter_process_output(QVariant X, QString processor_name, QVariantMap i
 
 // Add a process to the processing pipeline
 QString ScriptController2::addProcess(QString processor_name, QString inputs_json, QString parameters_json, QString outputs_json)
-{
+{   
     // Find the processor in the process manager
     MLProcessor PP = ProcessManager::globalInstance()->processor(processor_name);
     if (PP.name != processor_name) { //rather use PP.isNull()
@@ -213,6 +214,15 @@ void ScriptController2::addPrv(QString input_path, QString output_path)
     node.inputs["input"] = d->make_absolute_path(input_path);
     node.outputs["output"] = d->make_absolute_path(output_path);
     node.create_prv = true;
+    d->m_pipeline_nodes << node;
+}
+
+void ScriptController2::addCopyFile(QString input_path, QString output_path)
+{
+    PipelineNode2 node;
+    node.inputs["input"] = d->make_absolute_path(input_path);
+    node.outputs["output"] = d->make_absolute_path(output_path);
+    node.copy_file = true;
     d->m_pipeline_nodes << node;
 }
 
@@ -543,6 +553,32 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
             qWarning() << "Unable to write prv file: " << output_path;
             return false;
         }
+    }
+    if (node->copy_file) {
+        QString input_path = node->inputs["input"].toString();
+        QString output_path = node->outputs["output"].toString();
+        printf("COPYING FILE: %s -> %s",input_path.toUtf8().data(),output_path.toUtf8().data());
+        if (input_path.isEmpty()) {
+            qWarning() << "Input path for copy_file is empty.";
+            return false;
+        }
+        if (!QFile::exists(input_path)) {
+            qWarning() << "Input file for copy_file does not exist: " + input_path;
+            return false;
+        }
+
+        if (QFile::exists(output_path)) {
+            if (!QFile::remove(output_path)) {
+                printf("Unable to remove output file: %s\n",output_path.toUtf8().data());
+            }
+        }
+        if (!QFile::copy(input_path,output_path)) {
+            printf("Unable to copy file: %s %s\n",input_path.toUtf8().data(),output_path.toUtf8().data());
+            return false;
+        }
+
+        node->completed = true;
+        return true;
     }
     if (!PM->checkParameters(node->processor_name, parameters0)) {
         qWarning() << "Error checking parameters for processor: " + node->processor_name;
