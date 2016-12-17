@@ -313,7 +313,14 @@ MVSpikeSprayPanelControl::MVSpikeSprayPanelControl(QObject* parent)
 
 MVSpikeSprayPanelControl::~MVSpikeSprayPanelControl()
 {
-    d->renderThread->terminate();
+    if (d->renderer) {
+        d->renderer->requestInterruption(); // stop the old rendering
+        d->renderer->wait(); // and wait for it to die
+    }
+    d->renderThread->quit();
+    if( !d->renderThread->wait(1000*10)) {
+        qWarning() << "Render thread wouldn't terminate";
+    }
     if (d->renderer)
         d->renderer->deleteLater();
     d->renderThread->deleteLater();
