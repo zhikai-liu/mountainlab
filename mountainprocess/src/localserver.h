@@ -47,7 +47,7 @@ public:
     {
         socket()->write(ba);
     }
-    void close()
+    virtual void close()
     {
         socket()->disconnectFromServer();
     }
@@ -92,11 +92,12 @@ public:
     explicit Server(QObject* parent = 0);
     ~Server()
     {
-        foreach (Client* c, m_clients) {
-            c->disconnect(this);
-            c->close();
-        }
-        m_clients.clear();
+        shutdown();
+        //        foreach (Client* c, m_clients) {
+        //            c->disconnect(this);
+        //            c->close();
+        //        }
+        //        m_clients.clear();
     }
     bool listen(const QString& path);
     void shutdown();
@@ -109,6 +110,7 @@ protected:
     {
         return new Client(sock, this);
     }
+    virtual void clientAboutToBeDestroyed(Client* c) { Q_UNUSED(c) }
     void broadcast(const QByteArray& message)
     {
         foreach (Client* client, m_clients) {
@@ -126,6 +128,7 @@ private slots:
     }
     void handleClientDisconnected(Client* client)
     {
+        clientAboutToBeDestroyed(client);
         m_clients.removeOne(client);
         client->deleteLater();
     }
@@ -188,6 +191,10 @@ public:
         uint32_t size = ba.size();
         std::copy((char*)&size, (char*)&size + 4, sizeArray.data());
         message.prepend(sizeArray);
+        if (!socket()->isOpen()) {
+            printf("Error in writeMessage: Socket is not open\n");
+            return;
+        }
         socket()->write(message);
         socket()->flush();
     }
@@ -207,7 +214,7 @@ signals:
 
 protected:
     QLocalSocket* socket() const { return m_socket; }
-    virtual void handleMessage(const QByteArray& ba) {}
+    virtual void handleMessage(const QByteArray& ba) { Q_UNUSED(ba) }
     void messageLoop()
     {
         uint32_t msgSize;

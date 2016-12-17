@@ -20,6 +20,7 @@
 #include <QCoreApplication>
 #include <QThread>
 #include <QTimer>
+#include <cachemanager.h>
 #include "mpdaemon.h"
 
 struct PMProcess {
@@ -221,7 +222,13 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     QObject::connect(PP.qprocess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(slot_process_finished()));
     printf("STARTING: %s.\n", PP.info.exe_command.toLatin1().data());
     PP.info.start_time = QDateTime::currentDateTime();
-    PP.qprocess->start(PP.info.exe_command);
+
+    // Do it this way so that special characters are handled exactly like a system call
+    QString bash_script_fname = CacheManager::globalInstance()->makeLocalFile();
+    TextFile::write(bash_script_fname, "#!/bin/bash\n" + PP.info.exe_command);
+    PP.qprocess->start("/bin/bash", QStringList(bash_script_fname));
+    //PP.qprocess->start(PP.info.exe_command);
+
     PP.qprocess->setProperty("pp_id", id);
     if (!PP.qprocess->waitForStarted(2000)) {
         qWarning() << "Problem starting process: " + exe_command;

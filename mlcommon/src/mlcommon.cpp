@@ -190,7 +190,7 @@ void MLUtil::mkdirIfNeeded(const QString& path)
 QString MLUtil::computeSha1SumOfFile(const QString& path)
 {
     //printf("Looking up sha1: %s\n",path.toUtf8().data());
-    return sumit(path,0,MLUtil::tempPath());
+    return sumit(path, 0, MLUtil::tempPath());
     /*
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly))
