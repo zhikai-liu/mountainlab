@@ -5,6 +5,7 @@ Server::Server(QObject* parent)
     : QObject(parent)
 {
     m_socket = new QLocalServer(this);
+    m_socket->setSocketOptions(QLocalServer::WorldAccessOption);
     connect(m_socket, SIGNAL(newConnection()), this, SLOT(handleNewConnection()));
 }
 
