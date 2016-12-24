@@ -72,7 +72,7 @@ void CountersTest::testDoubleCounter()
     IDoubleCounter counter("DoubleCounter");
     QCOMPARE(counter.name(), QStringLiteral("DoubleCounter"));
     QSignalSpy spy(&counter, SIGNAL(valueChanged()));
-    QCOMPARE(counter.value(), 0.0);
+    QVERIFY(qFuzzyCompare(counter.value(), 0.0));
     QCOMPARE(counter.genericValue(), QVariant(0.0));
     QCOMPARE(counter.label(), QVariant(0.0).toString());
     counter.add(42.5);
@@ -187,6 +187,6 @@ void CountersTest::testJSCounter_function()
     QVERIFY(exprCounter.value<int>() == 100);
 }
 
-QTEST_APPLESS_MAIN(CountersTest)
+QTEST_MAIN(CountersTest)
 
 #include "tst_counterstest.moc"

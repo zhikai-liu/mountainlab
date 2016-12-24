@@ -78,7 +78,7 @@ public:
 
 private:
     mutable QReadWriteLock m_lock;
-    T m_value;
+    T m_value = T();
 };
 
 template <typename T>
