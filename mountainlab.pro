@@ -55,3 +55,9 @@ equals(GUI,"on") {
 }
 
 DISTFILES += features/*
+DISTFILES += debian/*
+
+deb.target = deb
+deb.commands = debuild $(DEBUILD_OPTS) -us -uc
+
+QMAKE_EXTRA_TARGETS += deb

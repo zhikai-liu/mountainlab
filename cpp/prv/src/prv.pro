@@ -12,3 +12,10 @@ SOURCES += prvmain.cpp \
 
 CONFIG += mlcommon taskprogress mlnetwork
 
+
+
+AUX.files=bin/prv-create bin/prv-download
+AUX.path=/bin
+INSTALLS += AUX
+
+include(../../installbin.pri)

@@ -14,3 +14,4 @@ HEADERS +=
 SOURCES += mdamain.cpp
 
 CONFIG += mlcommon
+include(../../installbin.pri)

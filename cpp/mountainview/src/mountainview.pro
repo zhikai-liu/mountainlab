@@ -174,3 +174,4 @@ DISTFILES += \
     msv/views/curationprogram.js
 
 
+include(../../installbin.pri)

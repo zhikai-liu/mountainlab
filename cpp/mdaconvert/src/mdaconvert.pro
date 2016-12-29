@@ -16,3 +16,4 @@ SOURCES += mdaconvertmain.cpp \
     mdaconvert.cpp
 
 CONFIG += mlcommon
+include(../../installbin.pri)

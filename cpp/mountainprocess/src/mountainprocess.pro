@@ -53,3 +53,5 @@ test {
 } else {
     SOURCES += mountainprocessmain.cpp
 }
+
+include(../../installbin.pri)

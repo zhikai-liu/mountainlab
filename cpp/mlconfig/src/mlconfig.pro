@@ -18,3 +18,4 @@ SOURCES += mlconfigmain.cpp \
     mlconfigquestion.cpp
 
 
+include(../../installbin.pri)

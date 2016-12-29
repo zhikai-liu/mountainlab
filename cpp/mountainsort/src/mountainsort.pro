@@ -370,3 +370,8 @@ test {
 } else {
     SOURCES += mountainsortmain.cpp
 }
+
+#target.path = /bin
+#INSTALLS += target
+
+include(../../installbin.pri)
