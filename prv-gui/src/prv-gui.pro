@@ -51,3 +51,6 @@ HEADERS += \
 FORMS += \
     prvguiuploaddialog.ui prvguidownloaddialog.ui \
     jsoneditorwindow.ui
+
+target.path=/bin
+INSTALLS += target
