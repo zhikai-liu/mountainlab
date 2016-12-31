@@ -9,7 +9,7 @@ class MVDiscrimHistViewGuide : public MVHistogramGrid {
     Q_OBJECT
 public:
     friend class MVDiscrimHistViewGuidePrivate;
-    MVDiscrimHistViewGuide(MVContext* context);
+    MVDiscrimHistViewGuide(MVAbstractContext* context);
     virtual ~MVDiscrimHistViewGuide();
 
     void setNumHistograms(int num);

@@ -99,18 +99,22 @@ public:
     void update_panel_factors();
 };
 
-MVSpikeSprayView::MVSpikeSprayView(MVContext* context)
+MVSpikeSprayView::MVSpikeSprayView(MVAbstractContext* context)
     : MVAbstractView(context)
 {
     d = new MVSpikeSprayViewPrivate;
     d->q = this;
-    d->m_context = context;
+
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    d->m_context = c;
 
     recalculateOnOptionChanged("clip_size");
     recalculateOnOptionChanged("timeseries_for_spikespray");
-    recalculateOn(mvContext(), SIGNAL(clusterMergeChanged()));
-    recalculateOn(mvContext(), SIGNAL(timeseriesNamesChanged()));
-    recalculateOn(mvContext(), SIGNAL(visibleChannelsChanged()));
+    recalculateOn(c, SIGNAL(clusterMergeChanged()));
+    recalculateOn(c, SIGNAL(timeseriesNamesChanged()));
+    recalculateOn(c, SIGNAL(visibleChannelsChanged()));
     this->recalculateOn(context, SIGNAL(firingsChanged()), false);
     onOptionChanged("cluster_color_index_shift", this, SLOT(onCalculationFinished()));
 
@@ -553,11 +557,14 @@ QString MVSpikeSprayFactory::title() const
     return tr("Spike Spray");
 }
 
-MVAbstractView* MVSpikeSprayFactory::createView(MVContext* context)
+MVAbstractView* MVSpikeSprayFactory::createView(MVAbstractContext* context)
 {
-    QList<int> ks = context->selectedClusters();
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    QList<int> ks = c->selectedClusters();
     if (ks.isEmpty())
-        ks = context->clusterVisibilityRule().subset.toList();
+        ks = c->clusterVisibilityRule().subset.toList();
     qSort(ks);
     if (ks.isEmpty()) {
         QMessageBox::warning(0, "Unable to open spike spray", "You must select at least one cluster.");

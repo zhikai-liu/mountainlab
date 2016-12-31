@@ -46,7 +46,7 @@ public:
     QSet<int> get_clusters_to_exclude();
 };
 
-MVDiscrimHistViewGuide::MVDiscrimHistViewGuide(MVContext* context)
+MVDiscrimHistViewGuide::MVDiscrimHistViewGuide(MVAbstractContext* context)
     : MVHistogramGrid(context)
 {
     d = new MVDiscrimHistViewGuidePrivate;
@@ -323,7 +323,7 @@ MVAbstractView* MVDiscrimHistGuideFactory::createView(MVAbstractContext* context
     return X;
 }
 
-bool MVDiscrimHistGuideFactory::isEnabled(MVContext* context) const
+bool MVDiscrimHistGuideFactory::isEnabled(MVAbstractContext* context) const
 {
     Q_UNUSED(context)
     return true;

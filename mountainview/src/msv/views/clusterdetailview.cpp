@@ -736,7 +736,7 @@ void ClusterDetailViewPrivate::ensure_view_visible(ClusterView* V)
 
 void ClusterDetailViewPrivate::zoom(double factor)
 {
-    MVContext* c = qobject_cast<MVContext*>(c);
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
     Q_ASSERT(c);
 
     int current_k = c->currentCluster();
