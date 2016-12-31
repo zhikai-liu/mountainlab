@@ -25,7 +25,7 @@ public:
     };
 
     friend class ConfusionMatrixViewPrivate;
-    ConfusionMatrixView(MVContext* mvcontext);
+    ConfusionMatrixView(MVAbstractContext* mvcontext);
     virtual ~ConfusionMatrixView();
 
     void prepareCalculation() Q_DECL_OVERRIDE;
@@ -55,7 +55,7 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
-    MVAbstractView* createView(MVContext* context) Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
 private slots:
     //void openClipsForTemplate();
 };

@@ -46,7 +46,7 @@ closemehandler.h flowlayout.h imagesavedialog.h \
 mountainprocessrunner.h mvabstractcontextmenuhandler.h \
 mvabstractcontrol.h mvabstractview.h mvabstractviewfactory.h \
 mvcontrolpanel2.h mvstatusbar.h \
-mvcontext.h tabber.h tabberframe.h taskprogressview.h actionfactory.h \
+mvcontext.h mvabstractcontext.h tabber.h tabberframe.h taskprogressview.h actionfactory.h \
     mvmainwindow.h \
     mccontext.h \
     views/confusionmatrixview.h \
@@ -63,7 +63,7 @@ closemehandler.cpp flowlayout.cpp imagesavedialog.cpp \
 mountainprocessrunner.cpp mvabstractcontextmenuhandler.cpp \
 mvabstractcontrol.cpp mvabstractview.cpp mvabstractviewfactory.cpp \
 mvcontrolpanel2.cpp mvstatusbar.cpp \
-mvcontext.cpp tabber.cpp tabberframe.cpp taskprogressview.cpp actionfactory.cpp \
+mvcontext.cpp mvabstractcontext.cpp tabber.cpp tabberframe.cpp taskprogressview.cpp actionfactory.cpp \
 resolveprvsdialog.cpp
 
 FORMS += resolveprvsdialog.ui

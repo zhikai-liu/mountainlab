@@ -105,7 +105,7 @@ public:
     void set_current_clusters(int k1, int k2);
 };
 
-ConfusionMatrixView::ConfusionMatrixView(MVContext* mvcontext)
+ConfusionMatrixView::ConfusionMatrixView(MVAbstractContext* mvcontext)
     : MVAbstractView(mvcontext)
 {
     d = new ConfusionMatrixViewPrivate;
@@ -345,7 +345,7 @@ QString ConfusionMatrixViewFactory::title() const
     return tr("Confusion Matrix");
 }
 
-MVAbstractView* ConfusionMatrixViewFactory::createView(MVContext* context)
+MVAbstractView* ConfusionMatrixViewFactory::createView(MVAbstractContext* context)
 {
     ConfusionMatrixView* X = new ConfusionMatrixView(context);
 

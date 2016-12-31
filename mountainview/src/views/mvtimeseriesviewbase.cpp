@@ -502,7 +502,7 @@ void TimeAxisLayer::paint(QPainter* painter)
 
 void TimeAxisLayer::paint_time_axis(QPainter* painter, double W, double H)
 {
-    MVContext* c = qobject_cast<MVContext*>(c);
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
     Q_ASSERT(c);
 
     if (!d->m_prefs.show_time_axis)
@@ -558,7 +558,7 @@ void TimeAxisLayer::paint_time_axis_unit(QPainter* painter, double W, double H, 
 {
     Q_UNUSED(W)
 
-    MVContext* c = qobject_cast<MVContext*>(c);
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
     Q_ASSERT(c);
 
     double view_t1 = c->currentTimeRange().min;

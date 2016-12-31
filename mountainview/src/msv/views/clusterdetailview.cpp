@@ -680,7 +680,7 @@ void ClusterDetailView::slot_view_properties()
 
 void ClusterDetailViewPrivate::compute_total_time()
 {
-    MVContext* c = qobject_cast<MVContext*>(c);
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
     Q_ASSERT(c);
 
     m_total_time_sec = c->currentTimeseries().N2() / c->sampleRate();
@@ -756,7 +756,7 @@ void ClusterDetailViewPrivate::zoom(double factor)
 
 QString ClusterDetailViewPrivate::group_label_for_k(int k)
 {
-    MVContext* c = qobject_cast<MVContext*>(c);
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
     Q_ASSERT(c);
 
     if (c->viewMerged()) {
@@ -769,7 +769,7 @@ QString ClusterDetailViewPrivate::group_label_for_k(int k)
 
 int ClusterDetailViewPrivate::get_current_view_index()
 {
-    MVContext* c = qobject_cast<MVContext*>(c);
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
     Q_ASSERT(c);
 
     int k = c->currentCluster();
@@ -806,7 +806,7 @@ QString truncate_based_on_font_and_width(QString txt, QFont font, double width)
 
 void ClusterView::paint(QPainter* painter, QRectF rect, bool render_image_mode)
 {
-    MVContext* c = qobject_cast<MVContext*>(c);
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
     Q_ASSERT(c);
 
     int xmargin = 1;
