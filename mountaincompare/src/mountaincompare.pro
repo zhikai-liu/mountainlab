@@ -66,6 +66,8 @@ mvcontrolpanel2.cpp mvstatusbar.cpp \
 mvcontext.cpp tabber.cpp tabberframe.cpp taskprogressview.cpp actionfactory.cpp \
 resolveprvsdialog.cpp
 
+FORMS += resolveprvsdialog.ui
+
 INCLUDEPATH += ../../mountainview/src/misc
 VPATH += ../../mountainview/src/misc
 HEADERS += \
