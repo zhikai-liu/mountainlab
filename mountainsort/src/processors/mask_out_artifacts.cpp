@@ -51,6 +51,7 @@ bool mask_out_artifacts(const QString& timeseries_path, const QString& timeserie
         }
         double sigma0 = MLCompute::stdev(vals);
         double mean0 = MLCompute::mean(vals);
+        printf("For channel %d: mean=%g, stdev=%g, interval size = %d\n",m,mean0,sigma0,interval_size);
         for (int i = 0; i < norms.N2(); i++) {
             if (norms.value(m, i) > mean0 + sigma0 * threshold) {
                 use_it[i - 1] = 0; //don't use the neighbor chunks either

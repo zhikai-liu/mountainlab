@@ -497,6 +497,12 @@ void MVContext::setFirings(const DiskReadMda& F)
 
 void MVContext::setSampleRate(double sample_rate)
 {
+    if (!d->m_sample_rate) {
+        if (sample_rate<1000) { //assume eeg
+            d->m_options["cc_max_dt_msec"]=10000;
+            d->m_options["cc_bin_size_msec"]=50;
+        }
+    }
     d->m_sample_rate = sample_rate;
 }
 

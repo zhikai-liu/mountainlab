@@ -21,9 +21,9 @@ TEMPLATE = app
 INCLUDEPATH += ../../mountainview/src/msv/plugins
 VPATH += ../../mountainview/src/msv/plugins
 HEADERS += clusterdetailplugin.h clipsviewplugin.h \
-    ../../mountainview/src/views/renderablewidget.h
+    ../../mountainview/src/misc/renderablewidget.h
 SOURCES += clusterdetailplugin.cpp clipsviewplugin.cpp \
-    ../../mountainview/src/views/renderablewidget.cpp
+    ../../mountainview/src/misc/renderablewidget.cpp
 
 INCLUDEPATH += ../../mountainview/src/msv/views
 VPATH += ../../mountainview/src/msv/views
