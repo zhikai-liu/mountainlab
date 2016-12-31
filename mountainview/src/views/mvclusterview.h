@@ -7,10 +7,10 @@
 #define MVCLUSTERVIEW_H
 
 #include <QWidget>
+#include <mvabstractcontext.h>
 #include "mda.h"
 #include "mvutils.h"
 #include "affinetransformation.h"
-#include "mvcontext.h"
 #include "paintlayer.h"
 
 #define MVCV_MODE_HEAT_DENSITY 1

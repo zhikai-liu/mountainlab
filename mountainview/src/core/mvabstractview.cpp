@@ -12,6 +12,7 @@
 #include <QTimer>
 #include <QToolButton>
 #include <QContextMenuEvent>
+#include <QJsonObject>
 
 class CalculationThread : public QThread {
 public:

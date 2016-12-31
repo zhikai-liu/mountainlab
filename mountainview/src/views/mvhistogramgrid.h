@@ -11,6 +11,8 @@
 #include "histogramview.h"
 #include "mvgridview.h"
 
+#include <mvcontext.h>
+
 struct HorizontalScaleAxisData {
     bool use_it = false;
     QString label;

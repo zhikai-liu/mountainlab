@@ -29,11 +29,15 @@ public:
     void update_activated();
 };
 
-SpikeSpyWidget::SpikeSpyWidget(MVContext* context)
+SpikeSpyWidget::SpikeSpyWidget(MVAbstractContext* context)
 {
     d = new SpikeSpyWidgetPrivate;
     d->q = this;
-    d->m_context = context;
+
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    d->m_context = c;
     d->m_current_view_index = 0;
 
     d->m_splitter = new QSplitter(Qt::Vertical);

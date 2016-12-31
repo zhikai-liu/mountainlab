@@ -1,5 +1,6 @@
 #include "mvclipsview.h"
 #include <QDebug>
+#include <mvcontext.h>
 
 struct mvclipsview_coord {
     mvclipsview_coord(long i, int m, double t0, double v0)

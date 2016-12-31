@@ -14,6 +14,7 @@
 #include "mvtimeseriesview2.h"
 #include "mvmainwindow.h"
 #include <QMessageBox>
+#include <mvcontext.h>
 #include "actionfactory.h"
 
 /// TODO: (HIGH) merge should apply to all widgets

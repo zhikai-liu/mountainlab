@@ -8,6 +8,7 @@
 #include "ftelectrodearrayview.h"
 
 #include <QHBoxLayout>
+#include <mvcontext.h>
 
 /// TODO show current cluster waveform in firetrackview
 

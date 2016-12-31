@@ -1,6 +1,7 @@
 //#include "mvclustercontextmenu.h"
 #include "clusterdetailview.h"
 #include "mvmainwindow.h"
+#include "mvcontext.h"
 #include "tabber.h"
 #include "taskprogress.h"
 #include "actionfactory.h"
@@ -162,7 +163,7 @@ public:
     static QList<ClusterData> merge_cluster_data(const ClusterMerge& CM, const QList<ClusterData>& CD);
 };
 
-ClusterDetailView::ClusterDetailView(MVContext* context)
+ClusterDetailView::ClusterDetailView(MVAbstractContext* context)
     : MVAbstractView(context)
 {
     d = new ClusterDetailViewPrivate;
@@ -178,15 +179,18 @@ ClusterDetailView::ClusterDetailView(MVContext* context)
     d->m_stdev_shading = false;
     d->m_zoomed_out_once = false;
 
-    QObject::connect(context, SIGNAL(clusterMergeChanged()), this, SLOT(update()));
-    QObject::connect(context, SIGNAL(currentClusterChanged()), this, SLOT(update()));
-    QObject::connect(context, SIGNAL(selectedClustersChanged()), this, SLOT(update()));
-    connect(context, SIGNAL(clusterVisibilityChanged()), this, SLOT(update()));
-    connect(context, SIGNAL(viewMergedChanged()), this, SLOT(update()));
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
 
-    this->recalculateOn(context, SIGNAL(firingsChanged()), false);
-    recalculateOn(context, SIGNAL(currentTimeseriesChanged()));
-    recalculateOn(context, SIGNAL(visibleChannelsChanged()));
+    QObject::connect(c, SIGNAL(clusterMergeChanged()), this, SLOT(update()));
+    QObject::connect(c, SIGNAL(currentClusterChanged()), this, SLOT(update()));
+    QObject::connect(c, SIGNAL(selectedClustersChanged()), this, SLOT(update()));
+    connect(c, SIGNAL(clusterVisibilityChanged()), this, SLOT(update()));
+    connect(c, SIGNAL(viewMergedChanged()), this, SLOT(update()));
+
+    this->recalculateOn(c, SIGNAL(firingsChanged()), false);
+    recalculateOn(c, SIGNAL(currentTimeseriesChanged()));
+    recalculateOn(c, SIGNAL(visibleChannelsChanged()));
     recalculateOnOptionChanged("clip_size");
 
     this->setMouseTracking(true);

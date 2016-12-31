@@ -7,7 +7,7 @@
 #ifndef MVABSTRACTVIEW_H
 #define MVABSTRACTVIEW_H
 
-#include "mvcontext.h"
+#include "mvabstractcontext.h"
 #include "mlcommon.h"
 #include <QMimeData>
 #include <QWidget>

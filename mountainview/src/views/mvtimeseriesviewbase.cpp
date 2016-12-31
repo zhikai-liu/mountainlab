@@ -13,6 +13,7 @@
 #include <QImageWriter>
 #include <QMouseEvent>
 #include <QPainter>
+#include <mvcontext.h>
 
 struct TickStruct {
     TickStruct(QString str0, long min_pixel_spacing_between_ticks0, double tick_height0, double timepoint_interval0)

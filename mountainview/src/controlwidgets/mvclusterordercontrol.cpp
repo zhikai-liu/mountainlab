@@ -22,6 +22,7 @@
 #include <QTextBrowser>
 #include <mountainprocessrunner.h>
 #include <computationthread.h>
+#include <mvcontext.h>
 #include "taskprogress.h"
 
 class MVClusterOrderComputationThread : public ComputationThread {
@@ -40,7 +41,7 @@ public:
     MVClusterOrderComputationThread m_computation_thread;
 };
 
-MVClusterOrderControl::MVClusterOrderControl(MVContext* context, MVMainWindow* mw)
+MVClusterOrderControl::MVClusterOrderControl(MVAbstractContext* context, MVMainWindow* mw)
     : MVAbstractControl(context, mw)
 {
     d = new MVClusterOrderControlPrivate;
@@ -79,15 +80,18 @@ void MVClusterOrderControl::updateControls()
 
 void MVClusterOrderControl::slot_order_by_detectability()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     if (d->m_computation_thread.isRunning()) {
         d->m_computation_thread.stopComputation();
     }
 
     QVariantMap params;
-    params["timeseries"] = mvContext()->currentTimeseries().makePath();
-    params["firings"] = mvContext()->firings().makePath();
+    params["timeseries"] = c->currentTimeseries().makePath();
+    params["firings"] = c->firings().makePath();
     params["clip_size"] = 80;
-    params["detect_threshold"] = mvContext()->option("amp_thresh_display", 0).toDouble();
+    params["detect_threshold"] = c->option("amp_thresh_display", 0).toDouble();
     params["add_noise_level"] = 1;
     params["cluster_scores_only"] = 1;
     d->m_computation_thread.params = params;
@@ -96,13 +100,16 @@ void MVClusterOrderControl::slot_order_by_detectability()
 
 void MVClusterOrderControl::slot_computation_finished()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     d->m_computation_thread.stopComputation(); //paranoid
     DiskReadMda cluster_scores(d->m_computation_thread.cluster_scores_path);
     QList<double> scores0;
     for (int i = 0; i < cluster_scores.N2(); i++) {
         scores0 << cluster_scores.value(1, i); //are we sure it will be in the right order?
     }
-    mvContext()->setClusterOrderScores("detectability", scores0);
+    c->setClusterOrderScores("detectability", scores0);
 }
 
 void MVClusterOrderComputationThread::compute()

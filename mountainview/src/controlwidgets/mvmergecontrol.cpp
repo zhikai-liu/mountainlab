@@ -8,6 +8,7 @@
 
 #include <QToolButton>
 #include <flowlayout.h>
+#include <mvcontext.h>
 
 class MVMergeControlPrivate {
 public:
@@ -16,7 +17,7 @@ public:
     void do_merge_or_unmerge(bool merge);
 };
 
-MVMergeControl::MVMergeControl(MVContext* context, MVMainWindow* mw)
+MVMergeControl::MVMergeControl(MVAbstractContext* context, MVMainWindow* mw)
     : MVAbstractControl(context, mw)
 {
     d = new MVMergeControlPrivate;
@@ -63,28 +64,37 @@ QString MVMergeControl::title() const
 
 void MVMergeControl::updateContext()
 {
-    mvContext()->setViewMerged(this->controlValue("view_merged").toBool());
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    c->setViewMerged(this->controlValue("view_merged").toBool());
 }
 
 void MVMergeControl::updateControls()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     bool can_merge_or_unmerge = false;
-    if (!mvContext()->selectedClusterPairs().isEmpty()) {
+    if (!c->selectedClusterPairs().isEmpty()) {
         can_merge_or_unmerge = true;
     }
-    if (mvContext()->selectedClusters().count() >= 2) {
+    if (c->selectedClusters().count() >= 2) {
         can_merge_or_unmerge = true;
     }
     this->setControlEnabled("merge_selected", can_merge_or_unmerge);
     this->setControlEnabled("unmerge_selected", can_merge_or_unmerge);
 
-    this->setControlValue("view_merged", mvContext()->viewMerged());
+    this->setControlValue("view_merged", c->viewMerged());
 }
 
 void MVMergeControl::slot_merge_selected()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     d->do_merge_or_unmerge(true);
-    mvContext()->setViewMerged(true);
+    c->setViewMerged(true);
 }
 
 void MVMergeControl::slot_unmerge_selected()
@@ -94,30 +104,33 @@ void MVMergeControl::slot_unmerge_selected()
 
 void MVMergeControlPrivate::do_merge_or_unmerge(bool merge)
 {
-    QSet<ClusterPair> selected_cluster_pairs = q->mvContext()->selectedClusterPairs();
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    QSet<ClusterPair> selected_cluster_pairs = c->selectedClusterPairs();
     if (selected_cluster_pairs.count() >= 1) {
         foreach (ClusterPair pair, selected_cluster_pairs) {
-            QSet<QString> tags = q->mvContext()->clusterPairTags(pair);
+            QSet<QString> tags = c->clusterPairTags(pair);
             if (merge)
                 tags.insert("merged");
             else
                 tags.remove("merged");
-            q->mvContext()->setClusterPairTags(pair, tags);
+            c->setClusterPairTags(pair, tags);
         }
     }
     else {
-        QList<int> selected_clusters = q->mvContext()->selectedClusters();
+        QList<int> selected_clusters = c->selectedClusters();
         //we need to do something special since it is overkill to merge every pair -- and expensive for large # clusters
         if (merge) {
-            ClusterMerge CM = q->mvContext()->clusterMerge();
+            ClusterMerge CM = c->clusterMerge();
             for (int i1 = 0; i1 < selected_clusters.count() - 1; i1++) {
                 int i2 = i1 + 1;
                 ClusterPair pair(selected_clusters[i1], selected_clusters[i2]);
                 if (CM.representativeLabel(pair.k1()) != CM.representativeLabel(pair.k2())) {
                     //not already merged
-                    QSet<QString> tags = q->mvContext()->clusterPairTags(pair);
+                    QSet<QString> tags = c->clusterPairTags(pair);
                     tags.insert("merged");
-                    q->mvContext()->setClusterPairTags(pair, tags);
+                    c->setClusterPairTags(pair, tags);
                     QSet<int> tmp;
                     tmp.insert(pair.k1());
                     tmp.insert(pair.k2());
@@ -127,12 +140,12 @@ void MVMergeControlPrivate::do_merge_or_unmerge(bool merge)
         }
         else {
             QSet<int> selected_clusters_set = selected_clusters.toSet();
-            QList<ClusterPair> keys = q->mvContext()->clusterPairAttributesKeys();
+            QList<ClusterPair> keys = c->clusterPairAttributesKeys();
             foreach (ClusterPair pair, keys) {
                 if ((selected_clusters_set.contains(pair.k1())) || (selected_clusters_set.contains(pair.k2()))) {
-                    QSet<QString> tags = q->mvContext()->clusterPairTags(pair);
+                    QSet<QString> tags = c->clusterPairTags(pair);
                     tags.remove("merged");
-                    q->mvContext()->setClusterPairTags(pair, tags);
+                    c->setClusterPairTags(pair, tags);
                 }
             }
         }

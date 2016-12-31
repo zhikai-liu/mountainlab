@@ -14,7 +14,7 @@ class MVOpenViewsControl : public MVAbstractControl {
     Q_OBJECT
 public:
     friend class MVOpenViewsControlPrivate;
-    MVOpenViewsControl(MVContext* context, MVMainWindow* mw);
+    MVOpenViewsControl(MVAbstractContext* context, MVMainWindow* mw);
     virtual ~MVOpenViewsControl();
 
     QString title() const Q_DECL_OVERRIDE;

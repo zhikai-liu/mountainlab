@@ -6,6 +6,7 @@
 
 #include "mvgridview.h"
 #include "mvgridviewpropertiesdialog.h"
+#include "mvutils.h"
 
 #include <QHBoxLayout>
 #include <QScrollArea>

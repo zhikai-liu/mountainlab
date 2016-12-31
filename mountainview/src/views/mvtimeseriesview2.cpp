@@ -14,6 +14,7 @@
 #include <QImageWriter>
 #include <QMouseEvent>
 #include <QPainter>
+#include <mvcontext.h>
 
 struct mvtsv_channel {
     long channel;

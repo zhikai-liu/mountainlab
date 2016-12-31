@@ -14,7 +14,7 @@ class MVExportControl : public MVAbstractControl {
     Q_OBJECT
 public:
     friend class MVExportControlPrivate;
-    MVExportControl(MVContext* context, MVMainWindow* mw);
+    MVExportControl(MVAbstractContext* context, MVMainWindow* mw);
     virtual ~MVExportControl();
 
     QString title() const Q_DECL_OVERRIDE;

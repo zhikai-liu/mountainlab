@@ -6,7 +6,7 @@
 #ifndef HISTOGRAMLAYER_H
 #define HISTOGRAMLAYER_H
 
-#include "mvcontext.h"
+#include "mvabstractcontext.h"
 #include "paintlayer.h"
 
 #include <QObject>

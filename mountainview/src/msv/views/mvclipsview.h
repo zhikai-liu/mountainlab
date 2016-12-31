@@ -7,9 +7,9 @@
 #define MVCLIPSVIEW_H
 
 #include "mvutils.h"
-#include "mvcontext.h"
 
 #include <QWidget>
+#include <mvabstractcontext.h>
 
 /** \class MVClipsView
  *  \brief View a set of clips. Usually each clip contains a single spike.

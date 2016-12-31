@@ -2,8 +2,9 @@
 #define MVCLUSTERPAIRCONTEXTMENUHANDLER_H
 
 #include <QObject>
+#include <mvcontext.h>
 #include "mvabstractcontextmenuhandler.h"
-#include "mvcontext.h"
+#include "mvabstractcontext.h"
 
 class MVClusterPairContextMenuHandler : public QObject, public MVAbstractContextMenuHandler {
 public:

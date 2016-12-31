@@ -2,7 +2,6 @@
 #define CLUSTERANNOTATIONGUIDE_H
 
 #include <QWizard>
-#include "mvcontext.h"
 #include "mvmainwindow.h"
 
 class ClusterCurationGuidePrivate;

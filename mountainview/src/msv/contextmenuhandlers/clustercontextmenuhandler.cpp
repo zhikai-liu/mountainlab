@@ -8,6 +8,7 @@
 #include "cachemanager.h"
 #include <QApplication>
 #include <QProcess>
+#include <mvcontext.h>
 
 MVClusterContextMenuHandler::MVClusterContextMenuHandler(MVMainWindow* mw, QObject* parent)
     : QObject(parent)

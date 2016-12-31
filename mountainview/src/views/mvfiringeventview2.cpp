@@ -16,6 +16,7 @@
 #include "mvclusterlegend.h"
 #include "paintlayerstack.h"
 #include "mvamphistview3.h" //for compute_amplitudes()
+#include "mvcontext.h"
 
 /// TODO: (MEDIUM) control brightness in firing event view
 
@@ -91,16 +92,19 @@ public:
     double ypix2val(double ypix);
 };
 
-MVFiringEventView2::MVFiringEventView2(MVContext* context)
+MVFiringEventView2::MVFiringEventView2(MVAbstractContext* context)
     : MVTimeSeriesViewBase(context)
 {
     d = new MVFiringEventView2Private;
     d->q = this;
 
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
     this->setMouseTracking(true);
 
     d->m_legend = new MVClusterLegend;
-    d->m_legend->setClusterColors(context->clusterColors());
+    d->m_legend->setClusterColors(c->clusterColors());
 
     d->m_content_layer = new FiringEventContentLayer;
 
@@ -122,10 +126,10 @@ MVFiringEventView2::MVFiringEventView2(MVContext* context)
     p.colors.background_color = Qt::black;
     this->setPrefs(p);
 
-    connect(context, SIGNAL(currentTimeRangeChanged()), SLOT(slot_update_image()));
+    connect(c, SIGNAL(currentTimeRangeChanged()), SLOT(slot_update_image()));
 
-    this->recalculateOn(context, SIGNAL(clusterMergeChanged()));
-    this->recalculateOn(context, SIGNAL(firingsChanged()), false);
+    this->recalculateOn(c, SIGNAL(clusterMergeChanged()));
+    this->recalculateOn(c, SIGNAL(firingsChanged()), false);
     this->recalculate();
 }
 

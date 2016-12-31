@@ -12,6 +12,7 @@
 #include <QVBoxLayout>
 #include <QToolButton>
 #include <QStackedLayout>
+#include <QPainter>
 
 class TabberFramePrivate {
 public:

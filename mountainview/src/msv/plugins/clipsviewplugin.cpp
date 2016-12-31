@@ -8,6 +8,7 @@
 
 #include <QAction>
 #include <mvclipswidget.h>
+#include <mvcontext.h>
 
 class ClipsViewPluginPrivate {
 public:

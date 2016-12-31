@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include "mvabstractcontextmenuhandler.h"
-#include "mvcontext.h"
 
 class MVClusterContextMenuHandler : public QObject, public MVAbstractContextMenuHandler {
     Q_OBJECT

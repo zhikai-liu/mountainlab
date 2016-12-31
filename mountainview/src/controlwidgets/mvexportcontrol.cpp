@@ -24,13 +24,14 @@
 #include "taskprogress.h"
 #include <QThread>
 #include <cachemanager.h>
+#include <mvcontext.h>
 
 class MVExportControlPrivate {
 public:
     MVExportControl* q;
 };
 
-MVExportControl::MVExportControl(MVContext* context, MVMainWindow* mw)
+MVExportControl::MVExportControl(MVAbstractContext* context, MVMainWindow* mw)
     : MVAbstractControl(context, mw)
 {
     d = new MVExportControlPrivate;
@@ -172,6 +173,9 @@ private:
 
 void MVExportControl::slot_export_mv2_document()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     //QSettings settings("SCDA", "MountainView");
     //QString default_dir = settings.value("default_export_dir", "").toString();
     QString default_dir = QDir::currentPath();
@@ -183,10 +187,10 @@ void MVExportControl::slot_export_mv2_document()
         fname = fname + ".mv2";
     TaskProgress task("export mv2 document");
     task.log() << "Writing: " + fname;
-    QJsonObject obj = this->mvContext()->toMV2FileObject();
+    QJsonObject obj = c->toMV2FileObject();
     QString json = QJsonDocument(obj).toJson();
     if (TextFile::write(fname, json)) {
-        this->mvContext()->setMV2FileName(fname);
+        c->setMV2FileName(fname);
         task.log() << QString("Wrote %1 kilobytes").arg(json.count() * 1.0 / 1000);
     }
     else {
@@ -206,7 +210,7 @@ void MVExportControl::slot_export_mv_document()
     //settings.setValue("default_export_dir", QFileInfo(fname).path());
     if (QFileInfo(fname).suffix() != "mv")
         fname = fname + ".mv";
-    QJsonObject obj = this->mvContext()->toMVFileObject();
+    QJsonObject obj = this->c->toMVFileObject();
     QString json = QJsonDocument(obj).toJson();
     if (!TextFile::write(fname, json)) {
         TaskProgress task("export mountainview document");
@@ -271,6 +275,9 @@ void export_file(QString source_path, QString dest_path, bool use_float64)
 
 void MVExportControl::slot_export_firings()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     //QSettings settings("SCDA", "MountainView");
     //QString default_dir = settings.value("default_export_dir", "").toString();
     QString default_dir = QDir::currentPath();
@@ -281,12 +288,13 @@ void MVExportControl::slot_export_firings()
     if (QFileInfo(fname).suffix() != "mda")
         fname = fname + ".mda";
 
-    DiskReadMda firings = mvContext()->firings();
+    DiskReadMda firings = c->firings();
     export_file(firings.makePath(), fname, true);
 }
 
 QString get_local_path_of_firings_file_or_current_path(const DiskReadMda& X)
 {
+    Q_UNUSED(X)
     /*QString path = X.makePath();
     if (!path.isEmpty()) {
         if (!path.startsWith("http:")) {
@@ -300,15 +308,17 @@ QString get_local_path_of_firings_file_or_current_path(const DiskReadMda& X)
 
 void MVExportControl::slot_export_curated_firings()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
 
-    QString default_dir = get_local_path_of_firings_file_or_current_path(mvContext()->firings());
+    QString default_dir = get_local_path_of_firings_file_or_current_path(c->firings());
     QString fname = QFileDialog::getSaveFileName(this, "Export curated firings file", default_dir + "/firings.curated.mda", "*.mda");
     if (fname.isEmpty())
         return;
     if (QFileInfo(fname).suffix() != "mda")
         fname = fname + ".mda";
 
-    DiskReadMda F = mvContext()->firings();
+    DiskReadMda F = c->firings();
 
     QVector<int> labels;
     for (long i = 0; i < F.N2(); i++) {
@@ -321,9 +331,9 @@ void MVExportControl::slot_export_curated_firings()
     QSet<int> accepted_clusters;
     QMap<int, int> merge_map;
     for (int k = 1; k <= K; k++) {
-        if (!mvContext()->clusterTags(k).contains("rejected")) {
+        if (!c->clusterTags(k).contains("rejected")) {
             accepted_clusters.insert(k);
-            merge_map[k] = mvContext()->clusterMerge().representativeLabel(k);
+            merge_map[k] = c->clusterMerge().representativeLabel(k);
         }
     }
 
@@ -353,10 +363,13 @@ void MVExportControl::slot_export_curated_firings()
 
 void MVExportControl::slot_open_prv_manager()
 {
-    QString fname = this->mvContext()->mv2FileName();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    QString fname = c->mv2FileName();
     if (fname.isEmpty()) {
         fname = CacheManager::globalInstance()->makeLocalFile() + ".prv";
-        QJsonObject obj = this->mvContext()->toMV2FileObject();
+        QJsonObject obj = c->toMV2FileObject();
         QString json = QJsonDocument(obj).toJson();
         if (!TextFile::write(fname, json)) {
             TaskProgress errtask;
@@ -374,13 +387,13 @@ void MVExportControl::slot_export_cluster_curation_file()
     //first row is the cluster number
     //second row is 0 if not accepted, 1 if accepted
     //third row is the merge label (i.e., smallest cluster number in the merge group)
-    QSet<int> clusters_set = mvContext()->clustersSubset();
+    QSet<int> clusters_set = c->clustersSubset();
     if (clusters_set.isEmpty()) {
-        QList<int> keys = mvContext()->clusterAttributesKeys();
+        QList<int> keys = c->clusterAttributesKeys();
         foreach (int key, keys) {
             clusters_set.insert(key);
         }
-        QList<ClusterPair> pairs = mvContext()->clusterPairAttributesKeys();
+        QList<ClusterPair> pairs = c->clusterPairAttributesKeys();
         foreach (ClusterPair pair, pairs) {
             clusters_set.insert(pair.k1());
             clusters_set.insert(pair.k2());
@@ -392,9 +405,9 @@ void MVExportControl::slot_export_cluster_curation_file()
     Mda cluster_curation(3, num);
     for (int i = 0; i < num; i++) {
         int accepted = 0;
-        if (mvContext()->clusterTags(clusters[i]).contains("accepted"))
+        if (c->clusterTags(clusters[i]).contains("accepted"))
             accepted = 1;
-        int merge_label = mvContext()->clusterMerge().representativeLabel(clusters[i]);
+        int merge_label = c->clusterMerge().representativeLabel(clusters[i]);
         cluster_curation.setValue(clusters[i], 0, i);
         cluster_curation.setValue(accepted, 1, i);
         cluster_curation.setValue(merge_label, 2, i);

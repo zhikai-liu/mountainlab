@@ -8,8 +8,9 @@
 #define MVTEMPLATESVIEW2PANEL_H
 
 #include "paintlayer.h"
-#include "mvcontext.h"
 #include <QWidget>
+#include <mda.h>
+#include <mvcontext.h>
 
 class MVTemplatesView2PanelPrivate;
 class MVTemplatesView2Panel : public PaintLayer {

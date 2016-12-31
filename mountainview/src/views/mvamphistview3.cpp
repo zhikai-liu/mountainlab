@@ -10,6 +10,7 @@
 #include <QVBoxLayout>
 #include <diskreadmda32.h>
 #include <mountainprocessrunner.h>
+#include <mvcontext.h>
 #include <taskprogress.h>
 
 struct AmpHistogram3 {

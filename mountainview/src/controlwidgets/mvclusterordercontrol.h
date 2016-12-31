@@ -14,7 +14,7 @@ class MVClusterOrderControl : public MVAbstractControl {
     Q_OBJECT
 public:
     friend class MVClusterOrderControlPrivate;
-    MVClusterOrderControl(MVContext* context, MVMainWindow* mw);
+    MVClusterOrderControl(MVAbstractContext* context, MVMainWindow* mw);
     virtual ~MVClusterOrderControl();
 
     QString title() const Q_DECL_OVERRIDE;

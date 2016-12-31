@@ -13,6 +13,7 @@
 #include <QSettings>
 #include <QThread>
 #include <math.h>
+#include <mvcontext.h>
 #include "mountainprocessrunner.h"
 
 /// TODO: (MEDIUM) control brightness in 3D density view
