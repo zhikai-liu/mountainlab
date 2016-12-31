@@ -52,7 +52,8 @@ mvcontext.h tabber.h tabberframe.h taskprogressview.h actionfactory.h \
     views/confusionmatrixview.h \
     views/matrixview.h \
     mcviewfactories.h \
-    views/compareclusterview.h
+    views/compareclusterview.h \
+    resolveprvsdialog.h
 
 HEADERS += mvabstractplugin.h
 SOURCES += mvabstractplugin.cpp
@@ -62,7 +63,8 @@ closemehandler.cpp flowlayout.cpp imagesavedialog.cpp \
 mountainprocessrunner.cpp mvabstractcontextmenuhandler.cpp \
 mvabstractcontrol.cpp mvabstractview.cpp mvabstractviewfactory.cpp \
 mvcontrolpanel2.cpp mvstatusbar.cpp \
-mvcontext.cpp tabber.cpp tabberframe.cpp taskprogressview.cpp actionfactory.cpp
+mvcontext.cpp tabber.cpp tabberframe.cpp taskprogressview.cpp actionfactory.cpp \
+resolveprvsdialog.cpp
 
 INCLUDEPATH += ../../mountainview/src/misc
 VPATH += ../../mountainview/src/misc
