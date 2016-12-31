@@ -69,7 +69,7 @@ public:
     void set_data_on_visible_views();
 };
 
-MVClusterWidget::MVClusterWidget(MVContext* context)
+MVClusterWidget::MVClusterWidget(MVAbstractContext* context)
     : MVAbstractView(context)
 {
     d = new MVClusterWidgetPrivate;
@@ -208,10 +208,13 @@ MVClusterWidget::~MVClusterWidget()
 
 void MVClusterWidget::prepareCalculation()
 {
-    d->m_computer.mlproxy_url = mvContext()->mlProxyUrl();
-    d->m_computer.timeseries = mvContext()->currentTimeseries();
-    d->m_computer.firings = mvContext()->firings();
-    d->m_computer.clip_size = mvContext()->option("clip_size").toInt();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    d->m_computer.mlproxy_url = c->mlProxyUrl();
+    d->m_computer.timeseries = c->currentTimeseries();
+    d->m_computer.firings = c->firings();
+    d->m_computer.clip_size = c->option("clip_size").toInt();
     d->m_computer.labels_to_use = d->m_labels_to_use;
     d->m_computer.features_mode = d->m_feature_mode;
     d->m_computer.channels = d->m_channels;
@@ -224,9 +227,12 @@ void MVClusterWidget::runCalculation()
 
 void MVClusterWidget::onCalculationFinished()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     QVector<int> merged_labels = d->m_computer.labels;
-    if (mvContext()->viewMerged()) {
-        merged_labels = this->mvContext()->clusterMerge().mapLabels(merged_labels);
+    if (c->viewMerged()) {
+        merged_labels = c->clusterMerge().mapLabels(merged_labels);
     }
 
     this->setTimes(d->m_computer.times);
@@ -280,8 +286,11 @@ void MVClusterWidget::setAmplitudes(const QVector<double>& amps)
 
 void MVClusterWidget::slot_current_event_changed()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     foreach (MVClusterView* V, d->m_views) {
-        V->setCurrentEvent(mvContext()->currentEvent());
+        V->setCurrentEvent(c->currentEvent());
     }
     d->update_clips_view();
 }
@@ -313,8 +322,11 @@ void MVClusterWidget::setTransformation(const AffineTransformation& T)
 
 void MVClusterWidget::slot_view_current_event_changed()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     MVClusterView* V0 = qobject_cast<MVClusterView*>(sender());
-    mvContext()->setCurrentEvent(V0->currentEvent());
+    c->setCurrentEvent(V0->currentEvent());
 }
 
 void MVClusterWidget::slot_view_transformation_changed()
@@ -382,7 +394,10 @@ void MVClusterWidgetPrivate::connect_view(MVClusterView* V)
 
 void MVClusterWidgetPrivate::update_clips_view()
 {
-    MVEvent evt = q->mvContext()->currentEvent();
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    MVEvent evt = c->currentEvent();
     QString info_txt;
     if (evt.time >= 0) {
         QVector<double> times;
@@ -394,8 +409,8 @@ void MVClusterWidgetPrivate::update_clips_view()
             m_clips_view_thread.wait();
         }
 
-        m_clips_view_thread.timeseries = q->mvContext()->currentTimeseries();
-        m_clips_view_thread.clip_size = q->mvContext()->option("clip_size").toInt();
+        m_clips_view_thread.timeseries = c->currentTimeseries();
+        m_clips_view_thread.clip_size = c->option("clip_size").toInt();
         m_clips_view_thread.times = times;
 
         m_clips_view_thread.start();
@@ -551,11 +566,14 @@ QString MVPCAFeaturesFactory::title() const
     return tr("PCA features");
 }
 
-MVAbstractView* MVPCAFeaturesFactory::createView(MVContext* context)
+MVAbstractView* MVPCAFeaturesFactory::createView(MVAbstractContext* context)
 {
-    QList<int> ks = context->selectedClusters();
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    QList<int> ks = c->selectedClusters();
     if (ks.isEmpty())
-        ks = context->clusterVisibilityRule().subset.toList();
+        ks = c->clusterVisibilityRule().subset.toList();
     qSort(ks);
     if (ks.count() == 0) {
         QMessageBox::information(0, "Unable to open clusters", "You must select at least one cluster.");
@@ -567,9 +585,12 @@ MVAbstractView* MVPCAFeaturesFactory::createView(MVContext* context)
     return X;
 }
 
-bool MVPCAFeaturesFactory::isEnabled(MVContext* context) const
+bool MVPCAFeaturesFactory::isEnabled(MVAbstractContext* context) const
 {
-    return (!context->selectedClusters().isEmpty());
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    return (!c->selectedClusters().isEmpty());
 }
 
 MVChannelFeaturesFactory::MVChannelFeaturesFactory(MVMainWindow* mw, QObject* parent)
@@ -592,8 +613,11 @@ QString MVChannelFeaturesFactory::title() const
     return tr("Ch. features");
 }
 
-MVAbstractView* MVChannelFeaturesFactory::createView(MVContext* context)
+MVAbstractView* MVChannelFeaturesFactory::createView(MVAbstractContext* context)
 {
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
     QSettings settings("SCDA", "MountainView");
     QString str = settings.value("open_channel_features_channels", "1,2,3").toString();
     str = QInputDialog::getText(0, "Open Channel Features", "Channels:", QLineEdit::Normal, str);
@@ -610,9 +634,9 @@ MVAbstractView* MVChannelFeaturesFactory::createView(MVContext* context)
     }
     settings.setValue("open_channel_features_channels", strlist.join(","));
 
-    QList<int> ks = context->selectedClusters();
+    QList<int> ks = c->selectedClusters();
     if (ks.isEmpty())
-        ks = context->clusterVisibilityRule().subset.toList();
+        ks = c->clusterVisibilityRule().subset.toList();
     qSort(ks);
     if (ks.isEmpty()) {
         QMessageBox::warning(0, "Unable to open clusters", "You must select at least one cluster.");
@@ -625,9 +649,12 @@ MVAbstractView* MVChannelFeaturesFactory::createView(MVContext* context)
     return X;
 }
 
-bool MVChannelFeaturesFactory::isEnabled(MVContext* context) const
+bool MVChannelFeaturesFactory::isEnabled(MVAbstractContext* context) const
 {
-    return (!context->selectedClusters().isEmpty());
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    return (!c->selectedClusters().isEmpty());
 }
 
 #include "extract_clips.h"

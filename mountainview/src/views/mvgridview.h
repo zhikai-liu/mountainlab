@@ -16,7 +16,7 @@ class MVGridView : public MVAbstractView {
     Q_OBJECT
 public:
     friend class MVGridViewPrivate;
-    MVGridView(MVContext* context);
+    MVGridView(MVAbstractContext* context);
     virtual ~MVGridView();
 
     void setPreferredViewWidth(int width);

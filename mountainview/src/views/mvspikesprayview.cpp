@@ -254,9 +254,12 @@ Mda extract_channels_from_clips(const Mda& clips, QList<int> channels)
 
 void MVSpikeSprayView::onCalculationFinished()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     d->m_clips_to_render = d->m_computer.clips_to_render;
     d->m_labels_to_render = d->m_computer.labels_to_render;
-    if (mvContext()->viewMerged()) {
+    if (c->viewMerged()) {
         d->m_labels_to_render = d->m_context->clusterMerge().mapLabels(d->m_labels_to_render);
     }
 
@@ -267,8 +270,8 @@ void MVSpikeSprayView::onCalculationFinished()
         }
     }
 
-    if (!mvContext()->visibleChannels().isEmpty())
-        d->m_clips_to_render_subchannels = extract_channels_from_clips(d->m_clips_to_render, mvContext()->visibleChannels());
+    if (!c->visibleChannels().isEmpty())
+        d->m_clips_to_render_subchannels = extract_channels_from_clips(d->m_clips_to_render, c->visibleChannels());
     else
         d->m_clips_to_render_subchannels = d->m_clips_to_render;
     for (long i = 0; i < d->m_panels.count(); i++) {
@@ -349,9 +352,12 @@ void MVSpikeSprayView::slot_vertical_zoom_out()
 
 void MVSpikeSprayView::slot_shift_colors_left(int step)
 {
-    int shift = this->mvContext()->option("cluster_color_index_shift", 0).toInt();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    int shift = c->option("cluster_color_index_shift", 0).toInt();
     shift += step;
-    this->mvContext()->setOption("cluster_color_index_shift", shift);
+    c->setOption("cluster_color_index_shift", shift);
     //this->onCalculationFinished();
 }
 
@@ -585,5 +591,5 @@ QList<QAction*> MVSpikeSprayFactory::actions(const QMimeData& md)
 void MVSpikeSprayFactory::updateEnabled(MVContext* context)
 {
     Q_UNUSED(context)
-    //setEnabled(!mvContext()->selectedClusters().isEmpty());
+    //setEnabled(!c->selectedClusters().isEmpty());
 }

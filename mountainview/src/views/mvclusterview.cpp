@@ -73,12 +73,16 @@ public slots:
 };
 #include "mvclusterview.moc"
 
-MVClusterView::MVClusterView(MVContext* context, QWidget* parent)
+MVClusterView::MVClusterView(MVAbstractContext* context, QWidget* parent)
     : QWidget(parent)
 {
     d = new MVClusterViewPrivate;
     d->q = this;
-    d->m_context = context;
+
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    d->m_context = c;
     d->m_grid_N1 = d->m_grid_N2 = 300;
     d->m_grid_update_needed = false;
     d->m_data_proj_needed = true;
@@ -95,7 +99,7 @@ MVClusterView::MVClusterView(MVContext* context, QWidget* parent)
     d->m_max_amplitude = 1;
     this->setMouseTracking(true);
 
-    d->m_legend.setClusterColors(context->clusterColors());
+    d->m_legend.setClusterColors(c->clusterColors());
 
     context->onOptionChanged("cluster_color_index_shift", this, SLOT(slot_update_colors()));
 

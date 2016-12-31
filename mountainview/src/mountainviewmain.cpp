@@ -159,7 +159,7 @@ int main(int argc, char* argv[])
 
     QList<ICounterBase*> counters = ObjectRegistry::getObjects<ICounterBase>();
     counterManager->setCounters(counters);
-    counterManager->connect(ObjectRegistry::instance(), &ObjectRegistry::objectAdded, [counterManager](QObject *o) {
+    counterManager->connect(ObjectRegistry::instance(), &ObjectRegistry::objectAdded, [counterManager](QObject* o) {
       if (ICounterBase *cntr = qobject_cast<ICounterBase*>(o)) {
           counterManager->addCounter(cntr);
       }

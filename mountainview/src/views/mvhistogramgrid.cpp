@@ -46,7 +46,7 @@ public:
     void update_layout();
 };
 
-MVHistogramGrid::MVHistogramGrid(MVContext* context)
+MVHistogramGrid::MVHistogramGrid(MVAbstractContext* context)
     : MVGridView(context)
 {
     d = new MVHistogramGridPrivate;
@@ -54,11 +54,14 @@ MVHistogramGrid::MVHistogramGrid(MVContext* context)
 
     d->m_horizontal_scale_axis = new HorizontalScaleAxis;
 
-    QObject::connect(context, SIGNAL(clusterAttributesChanged(int)), this, SLOT(slot_cluster_attributes_changed(int)));
-    QObject::connect(context, SIGNAL(clusterPairAttributesChanged(ClusterPair)), this, SLOT(slot_cluster_pair_attributes_changed(ClusterPair)));
-    QObject::connect(context, SIGNAL(currentClusterChanged()), this, SLOT(slot_update_highlighting()));
-    QObject::connect(context, SIGNAL(selectedClustersChanged()), this, SLOT(slot_update_highlighting()));
-    QObject::connect(context, SIGNAL(selectedClusterPairsChanged()), this, SLOT(slot_update_highlighting()));
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    QObject::connect(c, SIGNAL(clusterAttributesChanged(int)), this, SLOT(slot_cluster_attributes_changed(int)));
+    QObject::connect(c, SIGNAL(clusterPairAttributesChanged(ClusterPair)), this, SLOT(slot_cluster_pair_attributes_changed(ClusterPair)));
+    QObject::connect(c, SIGNAL(currentClusterChanged()), this, SLOT(slot_update_highlighting()));
+    QObject::connect(c, SIGNAL(selectedClustersChanged()), this, SLOT(slot_update_highlighting()));
+    QObject::connect(c, SIGNAL(selectedClusterPairsChanged()), this, SLOT(slot_update_highlighting()));
 }
 
 MVHistogramGrid::~MVHistogramGrid()
@@ -71,15 +74,21 @@ void MVHistogramGrid::paintEvent(QPaintEvent* evt)
 {
     QWidget::paintEvent(evt);
 
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     QPainter painter(this);
     if (isCalculating()) {
         //show that something is computing
-        painter.fillRect(QRectF(0, 0, width(), height()), mvContext()->color("calculation-in-progress"));
+        painter.fillRect(QRectF(0, 0, width(), height()), c->color("calculation-in-progress"));
     }
 }
 
 void MVHistogramGrid::keyPressEvent(QKeyEvent* evt)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     QList<HistogramView*> histogram_views = this->histogramViews();
     if ((evt->key() == Qt::Key_A) && (evt->modifiers() & Qt::ControlModifier)) {
         if (d->m_pair_mode) {
@@ -89,7 +98,7 @@ void MVHistogramGrid::keyPressEvent(QKeyEvent* evt)
                 int k2 = histogram_views[i]->property("k2").toInt();
                 pairs.insert(ClusterPair(k1, k2));
             }
-            mvContext()->setSelectedClusterPairs(pairs);
+            c->setSelectedClusterPairs(pairs);
         }
         else {
             QList<int> ks;
@@ -99,7 +108,7 @@ void MVHistogramGrid::keyPressEvent(QKeyEvent* evt)
                     ks << k;
                 }
             }
-            mvContext()->setSelectedClusters(ks);
+            c->setSelectedClusters(ks);
         }
     }
     else {
@@ -154,14 +163,17 @@ QStringList cluster_pair_set_to_string_list(const QSet<ClusterPair>& pairs)
 
 void MVHistogramGrid::prepareMimeData(QMimeData& mimeData, const QPoint& pos)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     QByteArray ba;
     QDataStream ds(&ba, QIODevice::WriteOnly);
     if (this->pairMode()) {
-        ds << cluster_pair_set_to_string_list(mvContext()->selectedClusterPairs());
+        ds << cluster_pair_set_to_string_list(c->selectedClusterPairs());
         mimeData.setData("application/x-msv-cluster-pairs", ba); // selected cluster pairs data
     }
     else {
-        ds << mvContext()->selectedClusters();
+        ds << c->selectedClusters();
         mimeData.setData("application/x-msv-clusters", ba); // selected cluster data
     }
     MVAbstractView::prepareMimeData(mimeData, pos);
@@ -179,22 +191,25 @@ bool MVHistogramGrid::pairMode() const
 
 void MVHistogramGrid::slot_histogram_view_clicked(Qt::KeyboardModifiers modifiers)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     if (d->m_pair_mode) {
         int k1 = sender()->property("k1").toInt();
         int k2 = sender()->property("k2").toInt();
-        mvContext()->clickClusterPair(ClusterPair(k1, k2), modifiers);
+        c->clickClusterPair(ClusterPair(k1, k2), modifiers);
     }
     else {
         int k = sender()->property("k").toInt();
         if (modifiers & Qt::ControlModifier) {
-            mvContext()->clickCluster(k, Qt::ControlModifier);
+            c->clickCluster(k, Qt::ControlModifier);
         }
         else if (modifiers & Qt::ShiftModifier) {
-            int k0 = mvContext()->currentCluster();
+            int k0 = c->currentCluster();
             d->shift_select_clusters_between(k0, k);
         }
         else {
-            mvContext()->clickCluster(k, Qt::NoModifier);
+            c->clickCluster(k, Qt::NoModifier);
         }
     }
 }
@@ -234,8 +249,11 @@ void MVHistogramGrid::slot_context_menu(const QPoint& pt)
 
 void MVHistogramGridPrivate::do_highlighting_and_captions()
 {
-    QList<int> selected_clusters = q->mvContext()->selectedClusters();
-    QSet<ClusterPair> selected_cluster_pairs = q->mvContext()->selectedClusterPairs();
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    QList<int> selected_clusters = c->selectedClusters();
+    QSet<ClusterPair> selected_cluster_pairs = c->selectedClusterPairs();
     QList<HistogramView*> histogram_views = q->histogramViews();
     for (int i = 0; i < histogram_views.count(); i++) {
         HistogramView* HV = histogram_views[i];
@@ -248,11 +266,11 @@ void MVHistogramGridPrivate::do_highlighting_and_captions()
                 //HV->setSelected((selected_clusters.contains(k1)) && (selected_clusters.contains(k2)));
             }
             title0 = QString("%1/%2").arg(k1).arg(k2);
-            caption0 = q->mvContext()->clusterPairTagsList(ClusterPair(k1, k2)).join(", ");
+            caption0 = c->clusterPairTagsList(ClusterPair(k1, k2)).join(", ");
         }
         else {
             int k = HV->property("k").toInt();
-            if (k == q->mvContext()->currentCluster()) {
+            if (k == c->currentCluster()) {
                 HV->setCurrent(true);
             }
             else {
@@ -265,7 +283,7 @@ void MVHistogramGridPrivate::do_highlighting_and_captions()
                 HV->setSelected(false);
             }
             title0 = QString("%1").arg(k);
-            caption0 = q->mvContext()->clusterTagsList(k).join(", ");
+            caption0 = c->clusterTagsList(k).join(", ");
         }
         HV->setTitle(title0);
         HV->setCaption(caption0);
@@ -274,10 +292,13 @@ void MVHistogramGridPrivate::do_highlighting_and_captions()
 
 void MVHistogramGridPrivate::shift_select_clusters_between(int kA, int kB)
 {
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
     QList<HistogramView*> histogram_views = q->histogramViews();
     if (!m_pair_mode) {
         /// TODO (low) handle pair mode case
-        QSet<int> selected_clusters = q->mvContext()->selectedClusters().toSet();
+        QSet<int> selected_clusters = c->selectedClusters().toSet();
         int ind1 = find_view_index_for_k(kA);
         int ind2 = find_view_index_for_k(kB);
         if ((ind1 >= 0) && (ind2 >= 0)) {
@@ -291,7 +312,7 @@ void MVHistogramGridPrivate::shift_select_clusters_between(int kA, int kB)
         else if (ind2 >= 0) {
             selected_clusters.insert(histogram_views[ind2]->property("k2").toInt());
         }
-        q->mvContext()->setSelectedClusters(QList<int>::fromSet(selected_clusters));
+        c->setSelectedClusters(QList<int>::fromSet(selected_clusters));
     }
 }
 

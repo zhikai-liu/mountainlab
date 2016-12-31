@@ -249,14 +249,16 @@ ClusterDetailView::~ClusterDetailView()
 
 void ClusterDetailView::prepareCalculation()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
 
     if (!d->m_calculator.loaded_from_static_output) {
         d->compute_total_time();
     }
-    d->m_calculator.mlproxy_url = mvContext()->mlProxyUrl();
-    d->m_calculator.timeseries = mvContext()->currentTimeseries();
-    d->m_calculator.firings = mvContext()->firings();
-    d->m_calculator.clip_size = mvContext()->option("clip_size", 100).toInt();
+    d->m_calculator.mlproxy_url = c->mlProxyUrl();
+    d->m_calculator.timeseries = c->currentTimeseries();
+    d->m_calculator.firings = c->firings();
+    d->m_calculator.clip_size = c->option("clip_size", 100).toInt();
     update();
 }
 
@@ -287,9 +289,12 @@ void extract_channels_from_templates(QList<ClusterData>& CD, QList<int> channels
 
 void ClusterDetailView::onCalculationFinished()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     d->m_cluster_data = d->m_calculator.cluster_data;
-    if (!mvContext()->visibleChannels().isEmpty()) {
-        extract_channels_from_templates(d->m_cluster_data, mvContext()->visibleChannels());
+    if (!c->visibleChannels().isEmpty()) {
+        extract_channels_from_templates(d->m_cluster_data, c->visibleChannels());
     }
     if (!d->m_zoomed_out_once) {
         this->zoomAllTheWayOut();
@@ -306,6 +311,9 @@ void ClusterDetailView::zoomAllTheWayOut()
 
 QImage ClusterDetailView::renderImage(int W, int H)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     if (!W)
         W = 1600;
     if (!H)
@@ -313,13 +321,13 @@ QImage ClusterDetailView::renderImage(int W, int H)
     QImage ret = QImage(W, H, QImage::Format_RGB32);
     QPainter painter(&ret);
 
-    int current_k = mvContext()->currentCluster();
-    QList<int> selected_ks = mvContext()->selectedClusters();
-    mvContext()->setCurrentCluster(-1);
-    mvContext()->setSelectedClusters(QList<int>());
+    int current_k = c->currentCluster();
+    QList<int> selected_ks = c->selectedClusters();
+    c->setCurrentCluster(-1);
+    c->setSelectedClusters(QList<int>());
     d->do_paint(painter, W, H, true);
-    mvContext()->setCurrentCluster(current_k);
-    mvContext()->setSelectedClusters(selected_ks);
+    c->setCurrentCluster(current_k);
+    c->setSelectedClusters(selected_ks);
     this->update(); //make sure we update, because some internal stuff has changed!
 
     return ret;
@@ -397,6 +405,9 @@ void ClusterDetailView::paintEvent(QPaintEvent* evt)
 
 void ClusterDetailView::keyPressEvent(QKeyEvent* evt)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     double factor = 1.15;
     if (evt->key() == Qt::Key_Up) {
         d->m_vscale_factor *= factor;
@@ -417,7 +428,7 @@ void ClusterDetailView::keyPressEvent(QKeyEvent* evt)
         for (int i = 0; i < d->m_views.count(); i++) {
             ks << d->m_views[i]->k();
         }
-        mvContext()->setSelectedClusters(ks);
+        c->setSelectedClusters(ks);
     }
     else if (evt->key() == Qt::Key_Left) {
         int view_index = d->get_current_view_index();
@@ -425,11 +436,11 @@ void ClusterDetailView::keyPressEvent(QKeyEvent* evt)
             int k = d->m_views[view_index - 1]->k();
             QList<int> ks;
             if (evt->modifiers() & Qt::ShiftModifier) {
-                ks = mvContext()->selectedClusters();
+                ks = c->selectedClusters();
                 ks << k;
             }
-            mvContext()->setSelectedClusters(ks);
-            mvContext()->setCurrentCluster(k);
+            c->setSelectedClusters(ks);
+            c->setCurrentCluster(k);
         }
     }
     else if (evt->key() == Qt::Key_Right) {
@@ -438,11 +449,11 @@ void ClusterDetailView::keyPressEvent(QKeyEvent* evt)
             int k = d->m_views[view_index + 1]->k();
             QList<int> ks;
             if (evt->modifiers() & Qt::ShiftModifier) {
-                ks = mvContext()->selectedClusters();
+                ks = c->selectedClusters();
                 ks << k;
             }
-            mvContext()->setSelectedClusters(ks);
-            mvContext()->setCurrentCluster(k);
+            c->setSelectedClusters(ks);
+            c->setCurrentCluster(k);
         }
     }
     else if (evt->matches(QKeySequence::SelectAll)) {
@@ -450,7 +461,7 @@ void ClusterDetailView::keyPressEvent(QKeyEvent* evt)
         for (int i = 0; i < d->m_views.count(); i++) {
             all_ks << d->m_views[i]->k();
         }
-        mvContext()->setSelectedClusters(all_ks);
+        c->setSelectedClusters(all_ks);
     }
     else
         evt->ignore();
@@ -467,6 +478,9 @@ void ClusterDetailView::mousePressEvent(QMouseEvent* evt)
 
 void ClusterDetailView::mouseReleaseEvent(QMouseEvent* evt)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     QPoint pt = evt->pos();
 
     int view_index = d->find_view_index_at(pt);
@@ -484,11 +498,11 @@ void ClusterDetailView::mouseReleaseEvent(QMouseEvent* evt)
         if (view_index >= 0) {
             int k = d->m_views[view_index]->k();
             if (evt->modifiers() & Qt::ShiftModifier) {
-                int k0 = mvContext()->currentCluster();
+                int k0 = c->currentCluster();
                 d->shift_select_clusters_between(k0, k);
             }
             else {
-                mvContext()->clickCluster(k, evt->modifiers());
+                c->clickCluster(k, evt->modifiers());
             }
         }
     }
@@ -532,17 +546,20 @@ void ClusterDetailView::wheelEvent(QWheelEvent* evt)
 
 void ClusterDetailView::prepareMimeData(QMimeData& mimeData, const QPoint& pos)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     int view_index = d->find_view_index_at(pos);
     if (view_index >= 0) {
         int k = d->m_views[view_index]->k();
-        if (!mvContext()->selectedClusters().contains(k)) {
-            mvContext()->clickCluster(k, Qt::NoModifier);
+        if (!c->selectedClusters().contains(k)) {
+            c->clickCluster(k, Qt::NoModifier);
         }
     }
 
     QByteArray ba;
     QDataStream ds(&ba, QIODevice::WriteOnly);
-    ds << mvContext()->selectedClusters();
+    ds << c->selectedClusters();
     mimeData.setData("application/x-msv-clusters", ba); // selected cluster data
 
     MVAbstractView::prepareMimeData(mimeData, pos); // call base class implementation
@@ -663,7 +680,10 @@ void ClusterDetailView::slot_view_properties()
 
 void ClusterDetailViewPrivate::compute_total_time()
 {
-    m_total_time_sec = q->mvContext()->currentTimeseries().N2() / q->mvContext()->sampleRate();
+    MVContext* c = qobject_cast<MVContext*>(c);
+    Q_ASSERT(c);
+
+    m_total_time_sec = c->currentTimeseries().N2() / c->sampleRate();
 }
 
 void ClusterDetailViewPrivate::set_hovered_k(int k)
@@ -716,7 +736,10 @@ void ClusterDetailViewPrivate::ensure_view_visible(ClusterView* V)
 
 void ClusterDetailViewPrivate::zoom(double factor)
 {
-    int current_k = q->mvContext()->currentCluster();
+    MVContext* c = qobject_cast<MVContext*>(c);
+    Q_ASSERT(c);
+
+    int current_k = c->currentCluster();
     if ((current_k >= 0) && (find_view_for_k(current_k))) {
         ClusterView* view = find_view_for_k(current_k);
         double current_screen_x = view->x_position_before_scaling * m_space_ratio - m_scroll_x;
@@ -733,8 +756,11 @@ void ClusterDetailViewPrivate::zoom(double factor)
 
 QString ClusterDetailViewPrivate::group_label_for_k(int k)
 {
-    if (q->mvContext()->viewMerged()) {
-        return QString("%1").arg(q->mvContext()->clusterMerge().clusterLabelText(k));
+    MVContext* c = qobject_cast<MVContext*>(c);
+    Q_ASSERT(c);
+
+    if (c->viewMerged()) {
+        return QString("%1").arg(c->clusterMerge().clusterLabelText(k));
     }
     else {
         return QString("%1").arg(k);
@@ -743,7 +769,10 @@ QString ClusterDetailViewPrivate::group_label_for_k(int k)
 
 int ClusterDetailViewPrivate::get_current_view_index()
 {
-    int k = q->mvContext()->currentCluster();
+    MVContext* c = qobject_cast<MVContext*>(c);
+    Q_ASSERT(c);
+
+    int k = c->currentCluster();
     if (k < 0)
         return -1;
     return find_view_index_for_k(k);
@@ -777,18 +806,21 @@ QString truncate_based_on_font_and_width(QString txt, QFont font, double width)
 
 void ClusterView::paint(QPainter* painter, QRectF rect, bool render_image_mode)
 {
+    MVContext* c = qobject_cast<MVContext*>(c);
+    Q_ASSERT(c);
+
     int xmargin = 1;
     int ymargin = 8;
     QRectF rect2(rect.x() + xmargin, rect.y() + ymargin, rect.width() - xmargin * 2, rect.height() - ymargin * 2);
     painter->setClipRect(rect, Qt::IntersectClip);
 
-    QColor background_color = q->mvContext()->color("view_background");
+    QColor background_color = c->color("view_background");
     if (m_highlighted)
-        background_color = q->mvContext()->color("view_background_highlighted");
+        background_color = c->color("view_background_highlighted");
     else if (m_selected)
-        background_color = q->mvContext()->color("view_background_selected");
+        background_color = c->color("view_background_selected");
     else if (m_hovered)
-        background_color = q->mvContext()->color("view_background_hovered");
+        background_color = c->color("view_background_hovered");
     if (render_image_mode)
         background_color = Qt::white;
     painter->fillRect(rect, QColor(220, 220, 225));
@@ -799,9 +831,9 @@ void ClusterView::paint(QPainter* painter, QRectF rect, bool render_image_mode)
     if (render_image_mode)
         pen_frame.setWidth(2);
     if (m_selected)
-        pen_frame.setColor(q->mvContext()->color("view_frame_selected"));
+        pen_frame.setColor(c->color("view_frame_selected"));
     else
-        pen_frame.setColor(q->mvContext()->color("view_frame"));
+        pen_frame.setColor(c->color("view_frame"));
     if (render_image_mode)
         pen_frame.setColor(Qt::white);
     painter->setPen(pen_frame);
@@ -834,7 +866,7 @@ void ClusterView::paint(QPainter* painter, QRectF rect, bool render_image_mode)
     }
 
     for (int m = 0; m < M; m++) {
-        QColor col = q->mvContext()->channelColor(m);
+        QColor col = c->channelColor(m);
         QPen pen;
         pen.setWidth(1);
         pen.setColor(col);
@@ -895,7 +927,7 @@ void ClusterView::paint(QPainter* painter, QRectF rect, bool render_image_mode)
 
         QPen pen;
         pen.setWidth(1);
-        pen.setColor(q->mvContext()->color("cluster_label"));
+        pen.setColor(c->color("cluster_label"));
         painter->setFont(font);
         painter->setPen(pen);
         painter->drawText(m_top_rect, Qt::AlignCenter | Qt::AlignBottom, txt);
@@ -911,7 +943,7 @@ void ClusterView::paint(QPainter* painter, QRectF rect, bool render_image_mode)
             txt = QString("%1 spikes").arg(m_CD.num_events);
             QPen pen;
             pen.setWidth(1);
-            pen.setColor(q->mvContext()->color("info_text"));
+            pen.setColor(c->color("info_text"));
             painter->setFont(font);
             painter->setPen(pen);
             painter->drawText(RR, Qt::AlignCenter | Qt::AlignBottom, txt);
@@ -953,9 +985,12 @@ double ClusterView::spaceNeeded()
 
 void ClusterDetailViewPrivate::do_paint(QPainter& painter, int W_in, int H_in, bool render_image_mode)
 {
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
     painter.setRenderHint(QPainter::Antialiasing);
 
-    QColor background_color = q->mvContext()->color("background");
+    QColor background_color = c->color("background");
     if (render_image_mode)
         background_color = Qt::white;
     painter.fillRect(0, 0, W_in, H_in, background_color);
@@ -968,8 +1003,8 @@ void ClusterDetailViewPrivate::do_paint(QPainter& painter, int W_in, int H_in, b
     painter.setClipRect(QRectF(left_margin, 0, W, H));
 
     QList<ClusterData> cluster_data_merged;
-    if (q->mvContext()->viewMerged()) {
-        cluster_data_merged = merge_cluster_data(q->mvContext()->clusterMerge(), m_cluster_data);
+    if (c->viewMerged()) {
+        cluster_data_merged = merge_cluster_data(c->clusterMerge(), m_cluster_data);
     }
     else {
         cluster_data_merged = m_cluster_data;
@@ -981,17 +1016,17 @@ void ClusterDetailViewPrivate::do_paint(QPainter& painter, int W_in, int H_in, b
 
     qDeleteAll(m_views);
     m_views.clear();
-    QList<int> selected_clusters = q->mvContext()->selectedClusters();
+    QList<int> selected_clusters = c->selectedClusters();
     for (int i = 0; i < cluster_data_merged.count(); i++) {
         ClusterData CD = cluster_data_merged[i];
-        if (q->mvContext()->clusterIsVisible(CD.k)) {
+        if (c->clusterIsVisible(CD.k)) {
             ClusterView* V = new ClusterView(q, this);
             V->setStdevShading(m_stdev_shading);
-            V->setHighlighted(CD.k == q->mvContext()->currentCluster());
+            V->setHighlighted(CD.k == c->currentCluster());
             V->setSelected(selected_clusters.contains(CD.k));
             V->setHovered(CD.k == m_hovered_k);
             V->setClusterData(CD);
-            V->setAttributes(q->mvContext()->clusterAttributes(CD.k));
+            V->setAttributes(c->clusterAttributes(CD.k));
             m_views << V;
         }
     }
@@ -1074,7 +1109,7 @@ void ClusterDetailViewPrivate::do_paint(QPainter& painter, int W_in, int H_in, b
         QFont font = painter.font();
         font.setPointSize(20);
         painter.setFont(font);
-        painter.fillRect(QRectF(0, 0, q->width(), q->height()), q->mvContext()->color("calculation-in-progress"));
+        painter.fillRect(QRectF(0, 0, q->width(), q->height()), c->color("calculation-in-progress"));
         painter.drawText(QRectF(left_margin, 0, W, H), Qt::AlignCenter | Qt::AlignVCenter, "Calculating...");
     }
 }
@@ -1095,7 +1130,10 @@ void ClusterDetailViewPrivate::toggle_stdev_shading()
 
 void ClusterDetailViewPrivate::shift_select_clusters_between(int k1, int k2)
 {
-    QSet<int> selected_clusters = q->mvContext()->selectedClusters().toSet();
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    QSet<int> selected_clusters = c->selectedClusters().toSet();
     int ind1 = find_view_index_for_k(k1);
     int ind2 = find_view_index_for_k(k2);
     if ((ind1 >= 0) && (ind2 >= 0)) {
@@ -1109,7 +1147,7 @@ void ClusterDetailViewPrivate::shift_select_clusters_between(int k1, int k2)
     else if (ind2 >= 0) {
         selected_clusters.insert(m_views[ind2]->k());
     }
-    q->mvContext()->setSelectedClusters(QList<int>::fromSet(selected_clusters));
+    c->setSelectedClusters(QList<int>::fromSet(selected_clusters));
 }
 
 ClusterData combine_cluster_data_group(const QList<ClusterData>& group, ClusterData main_CD)
@@ -1191,7 +1229,10 @@ QPointF ClusterView::template_coord2pix(int m, double t, double val)
 
 void ClusterDetailViewPrivate::sort_cluster_data(QList<ClusterData>& CD)
 {
-    QList<double> cluster_order_scores = q->mvContext()->clusterOrderScores();
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    QList<double> cluster_order_scores = c->clusterOrderScores();
     QVector<double> sort_scores;
     for (int i = 0; i < CD.count(); i++) {
         sort_scores << cluster_order_scores.value(CD[i].k - 1, 0);

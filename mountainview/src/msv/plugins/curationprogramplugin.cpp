@@ -37,7 +37,7 @@ QString CurationProgramPlugin::description()
     return "";
 }
 
-void compute_basic_metrics(MVContext* mv_context);
+void compute_basic_metrics(MVAbstractContext* mv_context);
 void CurationProgramPlugin::initialize(MVMainWindow* mw)
 {
     mw->registerViewFactory(new CurationProgramFactory(mw));
@@ -64,8 +64,10 @@ QString CurationProgramFactory::title() const
     return tr("Curation Program");
 }
 
-MVAbstractView* CurationProgramFactory::createView(MVContext* context)
+MVAbstractView* CurationProgramFactory::createView(MVAbstractContext* context)
 {
-    CurationProgramView* X = new CurationProgramView(context);
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+    CurationProgramView* X = new CurationProgramView(c);
     return X;
 }

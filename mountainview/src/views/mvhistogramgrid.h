@@ -21,7 +21,7 @@ class MVHistogramGrid : public MVGridView {
     Q_OBJECT
 public:
     friend class MVHistogramGridPrivate;
-    MVHistogramGrid(MVContext* context);
+    MVHistogramGrid(MVAbstractContext* context);
     virtual ~MVHistogramGrid();
 
     void paintEvent(QPaintEvent* evt);

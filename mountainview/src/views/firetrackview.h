@@ -14,7 +14,7 @@ class FireTrackViewPrivate;
 class FireTrackView : public MVAbstractView {
 public:
     friend class FireTrackViewPrivate;
-    FireTrackView(MVContext* context);
+    FireTrackView(MVAbstractContext* context);
     virtual ~FireTrackView();
 
 protected:
@@ -33,7 +33,7 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
-    MVAbstractView* createView(MVContext* context) Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
 };
 
 #endif // FIRETRACKVIEW_H

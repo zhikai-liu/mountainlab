@@ -59,8 +59,10 @@ QString ClusterDetailFactory::title() const
     return tr("Detail");
 }
 
-MVAbstractView* ClusterDetailFactory::createView(MVContext* context)
+MVAbstractView* ClusterDetailFactory::createView(MVAbstractContext* context)
 {
-    ClusterDetailView* X = new ClusterDetailView(context);
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+    ClusterDetailView* X = new ClusterDetailView(c);
     return X;
 }

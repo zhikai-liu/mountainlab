@@ -34,17 +34,17 @@ QList<QAction*> MVClusterPairContextMenuHandler::actions(const QMimeData& md)
     QList<QAction*> actions;
 
     MVMainWindow* mw = this->mainWindow();
-    MVContext* context = mw->mvContext();
-    Q_UNUSED(mw)
+    MVContext* c = qobject_cast<MVContext*>(mw->mvContext());
+    Q_ASSERT(c);
 
     //TAGS
     {
         actions << addTagMenu(cluster_pairs);
         actions << removeTagMenu(cluster_pairs);
         QAction* action = new QAction("Clear tags", 0);
-        connect(action, &QAction::triggered, [cluster_pairs, context]() {
+        connect(action, &QAction::triggered, [cluster_pairs, c]() {
             foreach (ClusterPair cluster_pair, cluster_pairs) {
-                context->setClusterPairTags(cluster_pair, QSet<QString>());
+                c->setClusterPairTags(cluster_pair, QSet<QString>());
             }
         });
         actions << action;
@@ -63,11 +63,11 @@ QList<QAction*> MVClusterPairContextMenuHandler::actions(const QMimeData& md)
             QAction* action = new QAction("Merge", 0);
             action->setToolTip("Tag selected pairs as merged");
             action->setEnabled(cluster_pairs.count() >= 1);
-            connect(action, &QAction::triggered, [cluster_pairs, context]() {
+            connect(action, &QAction::triggered, [cluster_pairs, c]() {
                 foreach (ClusterPair cluster_pair,cluster_pairs) {
-                    QSet<QString> tags = context->clusterPairTags(cluster_pair);
+                    QSet<QString> tags = c->clusterPairTags(cluster_pair);
                     tags.insert("merged");
-                    context->setClusterPairTags(cluster_pair,tags);
+                    c->setClusterPairTags(cluster_pair,tags);
                 }
             });
             actions << action;
@@ -76,11 +76,11 @@ QList<QAction*> MVClusterPairContextMenuHandler::actions(const QMimeData& md)
             QAction* action = new QAction("Unmerge", 0);
             action->setToolTip("Remove merged tag from selected clusters");
             action->setEnabled(cluster_pairs.count() >= 1);
-            connect(action, &QAction::triggered, [cluster_pairs, context]() {
+            connect(action, &QAction::triggered, [cluster_pairs, c]() {
                 foreach (ClusterPair cluster_pair,cluster_pairs) {
-                    QSet<QString> tags = context->clusterPairTags(cluster_pair);
+                    QSet<QString> tags = c->clusterPairTags(cluster_pair);
                     tags.remove("merged");
-                    context->setClusterPairTags(cluster_pair,tags);
+                    c->setClusterPairTags(cluster_pair,tags);
                 }
             });
             actions << action;
@@ -117,7 +117,10 @@ QList<QAction*> MVClusterPairContextMenuHandler::actions(const QMimeData& md)
 
 QAction* MVClusterPairContextMenuHandler::addTagMenu(const QSet<ClusterPair>& cluster_pairs) const
 {
-    MVContext* context = this->mainWindow()->mvContext();
+    MVAbstractContext* context = this->mainWindow()->mvContext();
+
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
 
     QMenu* M = new QMenu;
     M->setTitle("Add tag");
@@ -131,11 +134,11 @@ QAction* MVClusterPairContextMenuHandler::addTagMenu(const QSet<ClusterPair>& cl
     }
     /// Witold, I am a bit nervous about passing the context pointer into the lambda function below
     connect(mapper, static_cast<void (QSignalMapper::*)(const QString&)>(&QSignalMapper::mapped),
-        [cluster_pairs, context](const QString& tag) {
+        [cluster_pairs, c](const QString& tag) {
         foreach(ClusterPair cluster_pair, cluster_pairs) {
-            QSet<QString> clTags = context->clusterPairTags(cluster_pair);
+            QSet<QString> clTags = c->clusterPairTags(cluster_pair);
             clTags.insert(tag);
-            context->setClusterPairTags(cluster_pair, clTags);
+            c->setClusterPairTags(cluster_pair, clTags);
         }
         });
 
@@ -144,11 +147,14 @@ QAction* MVClusterPairContextMenuHandler::addTagMenu(const QSet<ClusterPair>& cl
 
 QAction* MVClusterPairContextMenuHandler::removeTagMenu(const QSet<ClusterPair>& cluster_pairs) const
 {
-    MVContext* context = this->mainWindow()->mvContext();
+    MVAbstractContext* context = this->mainWindow()->mvContext();
+
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
 
     QSet<QString> tags_set;
     foreach (ClusterPair cluster_pair, cluster_pairs) {
-        QJsonObject attributes = context->clusterPairAttributes(cluster_pair);
+        QJsonObject attributes = c->clusterPairAttributes(cluster_pair);
         QJsonArray tags = attributes["tags"].toArray();
         for (int i = 0; i < tags.count(); i++) {
             tags_set.insert(tags[i].toString());
@@ -167,11 +173,11 @@ QAction* MVClusterPairContextMenuHandler::removeTagMenu(const QSet<ClusterPair>&
         connect(a, SIGNAL(triggered()), mapper, SLOT(map()));
     }
     connect(mapper, static_cast<void (QSignalMapper::*)(const QString&)>(&QSignalMapper::mapped),
-        [cluster_pairs, context](const QString& tag) {
+        [cluster_pairs, c](const QString& tag) {
         foreach(ClusterPair cluster_pair, cluster_pairs) {
-            QSet<QString> clTags = context->clusterPairTags(cluster_pair);
+            QSet<QString> clTags = c->clusterPairTags(cluster_pair);
             clTags.remove(tag);
-            context->setClusterPairTags(cluster_pair, clTags);
+            c->setClusterPairTags(cluster_pair, clTags);
         }
         });
     M->setEnabled(!tags_list.isEmpty());
@@ -180,7 +186,10 @@ QAction* MVClusterPairContextMenuHandler::removeTagMenu(const QSet<ClusterPair>&
 
 QStringList MVClusterPairContextMenuHandler::validTags() const
 {
-    QSet<QString> set = this->mainWindow()->mvContext()->allClusterPairTags();
+    MVContext* c = qobject_cast<MVContext*>(mainWindow()->mvContext());
+    Q_ASSERT(c);
+
+    QSet<QString> set = c->allClusterPairTags();
     /// TODO (LOW) these go in a configuration file
     set << "merge_candidate"
         << "merged";

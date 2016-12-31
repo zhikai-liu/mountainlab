@@ -78,10 +78,11 @@ struct ElectrodeGeometry {
     static ElectrodeGeometry loadFromGeomFile(const QString& path);
 };
 
+#include "mvabstractcontext.h"
 #include "mvmisc.h"
 
 class MVContextPrivate;
-class MVContext : public QObject {
+class MVContext : public MVAbstractContext {
     Q_OBJECT
 public:
     friend class MVContextPrivate;
@@ -89,12 +90,13 @@ public:
     virtual ~MVContext();
 
     void clear();
+
+    //old
     void setFromMVFileObject(QJsonObject obj);
-    void setFromMV2FileObject(QJsonObject obj);
     QJsonObject toMVFileObject() const;
-    QJsonObject toMV2FileObject() const;
-    void setMV2FileName(QString fname) const;
-    QString mv2FileName() const;
+
+    void setFromMV2FileObject(QJsonObject obj) Q_DECL_OVERRIDE;
+    QJsonObject toMV2FileObject() const Q_DECL_OVERRIDE;
 
     /////////////////////////////////////////////////
     ClusterMerge clusterMerge() const;
@@ -195,11 +197,6 @@ public:
     void setMLProxyUrl(QString url);
 
     /////////////////////////////////////////////////
-    QVariant option(QString name, QVariant default_val = QVariant()) const;
-    void setOption(QString name, QVariant value);
-    void onOptionChanged(QString name, const QObject* receiver, const char* member, Qt::ConnectionType type = Qt::DirectConnection);
-
-    /////////////////////////////////////////////////
     void copySettingsFrom(MVContext* other);
 
     /////////////////////////////////////////////////
@@ -217,7 +214,6 @@ signals:
     void selectedClustersChanged();
     void currentTimepointChanged();
     void currentTimeRangeChanged();
-    void optionChanged(QString name);
     void clusterVisibilityChanged();
     void selectedClusterPairsChanged();
     void clusterPairAttributesChanged(ClusterPair pair);
@@ -228,7 +224,6 @@ signals:
     void clusterColorsChanged(const QList<QColor>&);
 
 private slots:
-    void slot_option_changed(QString name);
     void slot_firings_subset_calculator_finished();
 
 private:

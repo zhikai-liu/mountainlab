@@ -22,7 +22,7 @@ public:
     void refresh_tree();
 };
 
-ClusterMetricsView::ClusterMetricsView(MVContext* mvcontext)
+ClusterMetricsView::ClusterMetricsView(MVAbstractContext* mvcontext)
     : MVAbstractView(mvcontext)
 {
     d = new ClusterMetricsViewPrivate;
@@ -36,16 +36,19 @@ ClusterMetricsView::ClusterMetricsView(MVContext* mvcontext)
     d->m_tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
     hlayout->addWidget(d->m_tree);
 
-    this->recalculateOn(mvContext(), SIGNAL(clusterAttributesChanged(int)), false);
-    this->recalculateOn(mvContext(), SIGNAL(clusterVisibilityChanged()), false);
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    this->recalculateOn(c, SIGNAL(clusterAttributesChanged(int)), false);
+    this->recalculateOn(c, SIGNAL(clusterVisibilityChanged()), false);
 
     d->refresh_tree();
     this->recalculate();
 
     QObject::connect(d->m_tree, SIGNAL(itemSelectionChanged()), this, SLOT(slot_item_selection_changed()));
     QObject::connect(d->m_tree, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)), this, SLOT(slot_current_item_changed()));
-    QObject::connect(mvContext(), SIGNAL(currentClusterChanged()), this, SLOT(slot_update_current_cluster()));
-    QObject::connect(mvContext(), SIGNAL(selectedClustersChanged()), this, SLOT(slot_update_selected_clusters()));
+    QObject::connect(c, SIGNAL(currentClusterChanged()), this, SLOT(slot_update_current_cluster()));
+    QObject::connect(c, SIGNAL(selectedClustersChanged()), this, SLOT(slot_update_selected_clusters()));
 }
 
 ClusterMetricsView::~ClusterMetricsView()
@@ -78,7 +81,11 @@ void ClusterMetricsView::prepareMimeData(QMimeData& mimeData, const QPoint& pos)
 {
     QByteArray ba;
     QDataStream ds(&ba, QIODevice::WriteOnly);
-    ds << mvContext()->selectedClusters();
+
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    ds << c->selectedClusters();
     mimeData.setData("application/x-msv-clusters", ba); // selected cluster data
 
     MVAbstractView::prepareMimeData(mimeData, pos); // call base class implementation
@@ -86,13 +93,16 @@ void ClusterMetricsView::prepareMimeData(QMimeData& mimeData, const QPoint& pos)
 
 void ClusterMetricsView::slot_current_item_changed()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     QTreeWidgetItem* it = d->m_tree->currentItem();
     if (it) {
         int k = it->data(0, Qt::UserRole).toInt();
-        mvContext()->setCurrentCluster(k);
+        c->setCurrentCluster(k);
     }
     else {
-        mvContext()->setCurrentCluster(-1);
+        c->setCurrentCluster(-1);
     }
 }
 
@@ -100,7 +110,10 @@ void ClusterMetricsView::slot_item_selection_changed()
 {
     //QList<QTreeWidgetItem*> items=d->m_tree->selectedItems();
 
-    QSet<int> selected = mvContext()->selectedClusters().toSet();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    QSet<int> selected = c->selectedClusters().toSet();
 
     for (int i = 0; i < d->m_tree->topLevelItemCount(); i++) {
         QTreeWidgetItem* it = d->m_tree->topLevelItem(i);
@@ -113,12 +126,15 @@ void ClusterMetricsView::slot_item_selection_changed()
         }
     }
 
-    mvContext()->setSelectedClusters(selected.toList());
+    c->setSelectedClusters(selected.toList());
 }
 
 void ClusterMetricsView::slot_update_current_cluster()
 {
-    int current = mvContext()->currentCluster();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    int current = c->currentCluster();
 
     for (int i = 0; i < d->m_tree->topLevelItemCount(); i++) {
         QTreeWidgetItem* it = d->m_tree->topLevelItem(i);
@@ -131,7 +147,10 @@ void ClusterMetricsView::slot_update_current_cluster()
 
 void ClusterMetricsView::slot_update_selected_clusters()
 {
-    QSet<int> selected = mvContext()->selectedClusters().toSet();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    QSet<int> selected = c->selectedClusters().toSet();
 
     for (int i = 0; i < d->m_tree->topLevelItemCount(); i++) {
         QTreeWidgetItem* it = d->m_tree->topLevelItem(i);
@@ -159,11 +178,14 @@ void ClusterMetricsViewPrivate::refresh_tree()
 {
     m_tree->clear();
 
-    QList<int> keys = q->mvContext()->clusterAttributesKeys();
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    QList<int> keys = c->clusterAttributesKeys();
 
     QSet<QString> metric_names_set;
     for (int ii = 0; ii < keys.count(); ii++) {
-        QJsonObject metrics = q->mvContext()->clusterAttributes(keys[ii])["metrics"].toObject();
+        QJsonObject metrics = c->clusterAttributes(keys[ii])["metrics"].toObject();
         QStringList nnn = metrics.keys();
         foreach (QString name, nnn) {
             metric_names_set.insert(name);
@@ -180,9 +202,9 @@ void ClusterMetricsViewPrivate::refresh_tree()
 
     for (int ii = 0; ii < keys.count(); ii++) {
         int k = keys[ii];
-        if (q->mvContext()->clusterIsVisible(k)) {
+        if (c->clusterIsVisible(k)) {
             NumericSortTreeWidgetItem* it = new NumericSortTreeWidgetItem(m_tree);
-            QJsonObject metrics = q->mvContext()->clusterAttributes(k)["metrics"].toObject();
+            QJsonObject metrics = c->clusterAttributes(k)["metrics"].toObject();
             it->setText(0, QString("%1").arg(k));
             it->setData(0, Qt::UserRole, k);
             for (int j = 0; j < metric_names.count(); j++) {

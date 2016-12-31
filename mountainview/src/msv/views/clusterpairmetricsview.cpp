@@ -22,7 +22,7 @@ public:
     void refresh_tree();
 };
 
-ClusterPairMetricsView::ClusterPairMetricsView(MVContext* mvcontext)
+ClusterPairMetricsView::ClusterPairMetricsView(MVAbstractContext* mvcontext)
     : MVAbstractView(mvcontext)
 {
     d = new ClusterPairMetricsViewPrivate;
@@ -42,10 +42,13 @@ ClusterPairMetricsView::ClusterPairMetricsView(MVContext* mvcontext)
     d->refresh_tree();
     this->recalculate();
 
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     QObject::connect(d->m_tree, SIGNAL(itemSelectionChanged()), this, SLOT(slot_item_selection_changed()));
     QObject::connect(d->m_tree, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)), this, SLOT(slot_current_item_changed()));
-    QObject::connect(mvContext(), SIGNAL(currentClusterPairChanged()), this, SLOT(slot_update_current_cluster_pair()));
-    QObject::connect(mvContext(), SIGNAL(selectedClusterPairsChanged()), this, SLOT(slot_update_selected_cluster_pairs()));
+    QObject::connect(c, SIGNAL(currentClusterPairChanged()), this, SLOT(slot_update_current_cluster_pair()));
+    QObject::connect(c, SIGNAL(selectedClusterPairsChanged()), this, SLOT(slot_update_selected_cluster_pairs()));
 }
 
 ClusterPairMetricsView::~ClusterPairMetricsView()
@@ -103,7 +106,10 @@ void ClusterPairMetricsView::slot_item_selection_changed()
 {
     //QList<QTreeWidgetItem*> items=d->m_tree->selectedItems();
 
-    QSet<ClusterPair> selected = mvContext()->selectedClusterPairs();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    QSet<ClusterPair> selected = c->selectedClusterPairs();
 
     for (int i = 0; i < d->m_tree->topLevelItemCount(); i++) {
         QTreeWidgetItem* it = d->m_tree->topLevelItem(i);
@@ -117,7 +123,7 @@ void ClusterPairMetricsView::slot_item_selection_changed()
         }
     }
 
-    mvContext()->setSelectedClusterPairs(selected);
+    c->setSelectedClusterPairs(selected);
 }
 
 void ClusterPairMetricsView::slot_update_current_cluster_pair()
@@ -137,7 +143,10 @@ void ClusterPairMetricsView::slot_update_current_cluster_pair()
 
 void ClusterPairMetricsView::slot_update_selected_cluster_pairs()
 {
-    QSet<ClusterPair> selected = mvContext()->selectedClusterPairs();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    QSet<ClusterPair> selected = c->selectedClusterPairs();
 
     for (int i = 0; i < d->m_tree->topLevelItemCount(); i++) {
         QTreeWidgetItem* it = d->m_tree->topLevelItem(i);
@@ -166,11 +175,14 @@ void ClusterPairMetricsViewPrivate::refresh_tree()
 {
     m_tree->clear();
 
-    QList<ClusterPair> keys = q->mvContext()->clusterPairAttributesKeys();
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    QList<ClusterPair> keys = c->clusterPairAttributesKeys();
 
     QSet<QString> metric_names_set;
     for (int ii = 0; ii < keys.count(); ii++) {
-        QJsonObject metrics = q->mvContext()->clusterPairAttributes(keys[ii])["metrics"].toObject();
+        QJsonObject metrics = c->clusterPairAttributes(keys[ii])["metrics"].toObject();
         QStringList nnn = metrics.keys();
         foreach (QString name, nnn) {
             metric_names_set.insert(name);
@@ -190,7 +202,7 @@ void ClusterPairMetricsViewPrivate::refresh_tree()
         ClusterPair pair = keys[ii];
         //if (q->mvContext()->clusterPairIsVisible(pair)) {
         NumericSortTreeWidgetItem* it = new NumericSortTreeWidgetItem(m_tree);
-        QJsonObject metrics = q->mvContext()->clusterPairAttributes(pair)["metrics"].toObject();
+        QJsonObject metrics = c->clusterPairAttributes(pair)["metrics"].toObject();
         it->setText(0, QString("%1").arg(pair.k1()));
         it->setText(1, QString("%2").arg(pair.k2()));
         it->setData(0, Qt::UserRole, pair.k1());

@@ -28,12 +28,15 @@ QList<QAction*> MVClusterContextMenuHandler::actions(const QMimeData& md)
     QList<QAction*> actions;
 
     MVMainWindow* mw = this->mainWindow();
-    MVContext* context = mw->mvContext();
+    MVAbstractContext* context = mw->mvContext();
+
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
 
     /// Witold, is there a reason that the clusterList is being added as data to some of the actions below? If not, let's remove this.
     QVariantList clusterList;
-    foreach (int c, clusters)
-        clusterList << c;
+    foreach (int cc, clusters)
+        clusterList << cc;
     int first_cluster = clusters.values().first();
 
     //TAGS
@@ -41,9 +44,9 @@ QList<QAction*> MVClusterContextMenuHandler::actions(const QMimeData& md)
         actions << addTagMenu(clusters);
         actions << removeTagMenu(clusters);
         QAction* action = new QAction("Clear tags", 0);
-        connect(action, &QAction::triggered, [clusters, context]() {
+        connect(action, &QAction::triggered, [clusters, c]() {
             foreach (int cluster_number, clusters) {
-                context->setClusterTags(cluster_number, QSet<QString>());
+                c->setClusterTags(cluster_number, QSet<QString>());
             }
         });
         actions << action;
@@ -62,18 +65,18 @@ QList<QAction*> MVClusterContextMenuHandler::actions(const QMimeData& md)
             QAction* A = new QAction(0);
             A->setEnabled(clusters.count() >= 2);
             A->setText("Merge selected");
-            QObject::connect(A, &QAction::triggered, [clusters, context]() {
+            QObject::connect(A, &QAction::triggered, [clusters, c]() {
                 QList<int> clusters_list=clusters.toList();
                 for (int i1=0; i1<clusters_list.count(); i1++) {
                     for (int i2=0; i2<clusters_list.count(); i2++) {
                         if (i1!=i2) {
                             ClusterPair pair(clusters_list[i1],clusters_list[i2]);
-                            QSet<QString> tags=context->clusterPairTags(pair);
+                            QSet<QString> tags=c->clusterPairTags(pair);
                             tags.insert("merged");
-                            context->setClusterPairTags(pair,tags);
+                            c->setClusterPairTags(pair,tags);
                             {
                                 //if we are merging then the user most likely wants to view as merged
-                                context->setViewMerged(true);
+                                c->setViewMerged(true);
                             }
                         }
                     }
@@ -83,18 +86,18 @@ QList<QAction*> MVClusterContextMenuHandler::actions(const QMimeData& md)
         }
         {
             QAction* A = new QAction(0);
-            A->setEnabled(can_unmerge_selected_clusters(context, clusters));
+            A->setEnabled(can_unmerge_selected_clusters(c, clusters));
             A->setText("Unmerge selected");
-            QObject::connect(A, &QAction::triggered, [clusters, context]() {
-                QList<ClusterPair> pairs=context->clusterPairAttributesKeys();
+            QObject::connect(A, &QAction::triggered, [clusters, c]() {
+                QList<ClusterPair> pairs=c->clusterPairAttributesKeys();
                 for (int i=0; i<pairs.count(); i++) {
-                    QSet<QString> tags=context->clusterPairTags(pairs[i]);
+                    QSet<QString> tags=c->clusterPairTags(pairs[i]);
                     if (tags.contains("merged")) {
                         if ((clusters.contains(pairs[i].k1()))||(clusters.contains(pairs[i].k2()))) {
                             tags.remove("merged");
                         }
                     }
-                    context->setClusterPairTags(pairs[i],tags);
+                    c->setClusterPairTags(pairs[i],tags);
                 }
             });
             actions << A;
@@ -220,6 +223,9 @@ QList<QAction*> MVClusterContextMenuHandler::actions(const QMimeData& md)
 
 void MVClusterContextMenuHandler::slot_extract_selected_clusters()
 {
+    MVContext* c = qobject_cast<MVContext*>(mainWindow()->mvContext());
+    Q_ASSERT(c);
+
     QString tmp_fname = CacheManager::globalInstance()->makeLocalFile() + ".mv";
     //QJsonObject obj = this->mainWindow()->mvContext()->toMVFileObject();
     QJsonObject obj = this->mainWindow()->mvContext()->toMV2FileObject();
@@ -227,7 +233,7 @@ void MVClusterContextMenuHandler::slot_extract_selected_clusters()
     TextFile::write(tmp_fname, json);
     QString exe = qApp->applicationFilePath();
     QStringList args;
-    QList<int> clusters = this->mainWindow()->mvContext()->selectedClusters();
+    QList<int> clusters = c->selectedClusters();
     QStringList clusters_str;
     foreach (int cluster, clusters) {
         clusters_str << QString("%1").arg(cluster);
@@ -252,7 +258,8 @@ bool MVClusterContextMenuHandler::can_unmerge_selected_clusters(MVContext* conte
 
 QAction* MVClusterContextMenuHandler::addTagMenu(const QSet<int>& clusters) const
 {
-    MVContext* context = this->mainWindow()->mvContext();
+    MVContext* c = qobject_cast<MVContext*>(mainWindow()->mvContext());
+    Q_ASSERT(c);
 
     QMenu* M = new QMenu;
     M->setTitle("Add tag");
@@ -266,11 +273,11 @@ QAction* MVClusterContextMenuHandler::addTagMenu(const QSet<int>& clusters) cons
     }
     /// Witold, I am a bit nervous about passing the context pointer into the lambda function below
     connect(mapper, static_cast<void (QSignalMapper::*)(const QString&)>(&QSignalMapper::mapped),
-        [clusters, context](const QString& tag) {
+        [clusters, c](const QString& tag) {
         foreach(int cluster, clusters) {
-            QSet<QString> clTags = context->clusterTags(cluster);
+            QSet<QString> clTags = c->clusterTags(cluster);
             clTags.insert(tag);
-            context->setClusterTags(cluster, clTags);
+            c->setClusterTags(cluster, clTags);
         }
         });
 
@@ -279,11 +286,12 @@ QAction* MVClusterContextMenuHandler::addTagMenu(const QSet<int>& clusters) cons
 
 QAction* MVClusterContextMenuHandler::removeTagMenu(const QSet<int>& clusters) const
 {
-    MVContext* context = this->mainWindow()->mvContext();
+    MVContext* c = qobject_cast<MVContext*>(mainWindow()->mvContext());
+    Q_ASSERT(c);
 
     QSet<QString> tags_set;
     foreach (int cluster_number, clusters) {
-        QJsonObject attributes = context->clusterAttributes(cluster_number);
+        QJsonObject attributes = c->clusterAttributes(cluster_number);
         QJsonArray tags = attributes["tags"].toArray();
         for (int i = 0; i < tags.count(); i++) {
             tags_set.insert(tags[i].toString());
@@ -302,11 +310,11 @@ QAction* MVClusterContextMenuHandler::removeTagMenu(const QSet<int>& clusters) c
         connect(a, SIGNAL(triggered()), mapper, SLOT(map()));
     }
     connect(mapper, static_cast<void (QSignalMapper::*)(const QString&)>(&QSignalMapper::mapped),
-        [clusters, context](const QString& tag) {
+        [clusters, c](const QString& tag) {
         foreach(int cluster, clusters) {
-            QSet<QString> clTags = context->clusterTags(cluster);
+            QSet<QString> clTags = c->clusterTags(cluster);
             clTags.remove(tag);
-            context->setClusterTags(cluster, clTags);
+            c->setClusterTags(cluster, clTags);
         }
         });
     M->setEnabled(!tags_list.isEmpty());
@@ -315,8 +323,11 @@ QAction* MVClusterContextMenuHandler::removeTagMenu(const QSet<int>& clusters) c
 
 QStringList MVClusterContextMenuHandler::validTags() const
 {
+    MVContext* c = qobject_cast<MVContext*>(mainWindow()->mvContext());
+    Q_ASSERT(c);
+
     /// TODO (LOW) these go in a configuration file
-    QSet<QString> set = this->mainWindow()->mvContext()->allClusterTags();
+    QSet<QString> set = c->allClusterTags();
     set << "accepted"
         << "rejected"
         << "noise"

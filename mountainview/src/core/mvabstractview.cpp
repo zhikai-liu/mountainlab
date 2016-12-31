@@ -22,7 +22,7 @@ public:
 class MVAbstractViewPrivate {
 public:
     MVAbstractView* q;
-    MVContext* m_context;
+    MVAbstractContext* m_context;
     QSet<QString> m_recalculate_on_option_names;
     QSet<QString> m_suggest_recalculate_on_option_names;
     bool m_calculation_scheduled;
@@ -39,7 +39,7 @@ public:
     void set_recalculate_suggested(bool val);
 };
 
-MVAbstractView::MVAbstractView(MVContext* context)
+MVAbstractView::MVAbstractView(MVAbstractContext* context)
 {
     d = new MVAbstractViewPrivate;
     d->q = this;
@@ -127,7 +127,7 @@ MVAbstractViewFactory* MVAbstractView::viewFactory() const
     return 0;
 }
 
-MVContext* MVAbstractView::mvContext()
+MVAbstractContext* MVAbstractView::mvContext()
 {
     return d->m_context;
 }

@@ -39,8 +39,8 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
-    MVAbstractView* createView(MVContext* context) Q_DECL_OVERRIDE;
-    bool isEnabled(MVContext* context) const Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
+    bool isEnabled(MVAbstractContext* context) const Q_DECL_OVERRIDE;
 };
 
 #endif // MVDISCRIMHISTVIEW_GUIDE_H

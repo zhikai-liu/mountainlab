@@ -15,7 +15,7 @@ class MVControlPanel2 : public QWidget {
     Q_OBJECT
 public:
     friend class MVControlPanel2Private;
-    MVControlPanel2(MVContext* context, MVMainWindow* mw);
+    MVControlPanel2(MVAbstractContext* context, MVMainWindow* mw);
     virtual ~MVControlPanel2();
     void addControl(MVAbstractControl* mvcontrol, bool start_open);
 

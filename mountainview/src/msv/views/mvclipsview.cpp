@@ -32,12 +32,15 @@ public:
     void auto_set_pct_space_per_clip();
 };
 
-MVClipsView::MVClipsView(MVContext* context)
+MVClipsView::MVClipsView(MVAbstractContext* context)
 {
     d = new MVClipsViewPrivate;
     d->q = this;
 
-    d->m_context = context;
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    d->m_context = c;
 }
 
 MVClipsView::~MVClipsView()

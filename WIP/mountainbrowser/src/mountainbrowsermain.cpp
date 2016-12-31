@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
     MyPage* page = new MyPage;
     page->setController(&controller);
     X->setPage(page);
-//    X->page()->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
+    //    X->page()->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
 
     /*
     QWebInspector* WI = new QWebInspector;
@@ -73,11 +73,13 @@ MyPage::MyPage()
 
 #include <QtDebug>
 
-void MyPage::setController(MBController *controller) {
-    m_controller=controller;
+void MyPage::setController(MBController* controller)
+{
+    m_controller = controller;
 #ifdef USE_WEBENGINE
-    if (webChannel()) delete webChannel();
-    QWebChannel *channel = new QWebChannel(this);
+    if (webChannel())
+        delete webChannel();
+    QWebChannel* channel = new QWebChannel(this);
     setWebChannel(channel);
     channel->registerObject("MB", m_controller);
     qDebug() << "Registering object";
@@ -97,14 +99,16 @@ void MyPage::slot_url_changed()
 #endif
 }
 #ifdef USE_WEBENGINE
-void MyPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID) {
+void MyPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID)
+{
     QString str = QString("JS [%1:%2]  %3").arg(sourceID).arg(lineNumber).arg(message);
     QWebEnginePage::javaScriptConsoleMessage(WarningMessageLevel, str, lineNumber, sourceID);
 }
 #else
-void MyPage::javaScriptConsoleMessage(const QString& message, int lineNumber, const QString& sourceID) {
+void MyPage::javaScriptConsoleMessage(const QString& message, int lineNumber, const QString& sourceID)
 {
-    QString str = QString("JS [%1:%2]  %3").arg(sourceID).arg(lineNumber).arg(message);
-    QWebPage::javaScriptConsoleMessage(message, lineNumber, sourceID);
-}
+    {
+        QString str = QString("JS [%1:%2]  %3").arg(sourceID).arg(lineNumber).arg(message);
+        QWebPage::javaScriptConsoleMessage(message, lineNumber, sourceID);
+    }
 #endif

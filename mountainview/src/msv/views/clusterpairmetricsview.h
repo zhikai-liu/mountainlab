@@ -17,7 +17,7 @@ class ClusterPairMetricsView : public MVAbstractView {
     Q_OBJECT
 public:
     friend class ClusterPairMetricsViewPrivate;
-    ClusterPairMetricsView(MVContext* mvcontext);
+    ClusterPairMetricsView(MVAbstractContext* mvcontext);
     virtual ~ClusterPairMetricsView();
 
     void prepareCalculation() Q_DECL_OVERRIDE;

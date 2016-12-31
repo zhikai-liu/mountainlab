@@ -26,7 +26,7 @@ public:
     void refresh_editor();
 };
 
-CurationProgramView::CurationProgramView(MVContext* mvcontext)
+CurationProgramView::CurationProgramView(MVAbstractContext* mvcontext)
     : MVAbstractView(mvcontext)
 {
     d = new CurationProgramViewPrivate;
@@ -93,10 +93,13 @@ QString display_error(QJSValue result)
     return ret;
 }
 
-QString CurationProgramView::applyCurationProgram(MVContext* mv_context)
+QString CurationProgramView::applyCurationProgram(MVAbstractContext* mv_context)
 {
+    MVContext* c = qobject_cast<MVContext*>(mv_context);
+    Q_ASSERT(c);
+
     QJSEngine engine;
-    CurationProgramController controller(mv_context);
+    CurationProgramController controller(c);
     QJSValue CP = engine.newQObject(&controller);
     engine.globalObject().setProperty("_CP", CP);
 

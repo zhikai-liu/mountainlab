@@ -80,13 +80,16 @@ void MVDiscrimHistViewGuide::setNumHistograms(int num)
 
 void MVDiscrimHistViewGuide::prepareCalculation()
 {
-    d->m_computer.mlproxy_url = mvContext()->mlProxyUrl();
-    d->m_computer.timeseries = mvContext()->currentTimeseries();
-    d->m_computer.firings = mvContext()->firings();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    d->m_computer.mlproxy_url = c->mlProxyUrl();
+    d->m_computer.timeseries = c->currentTimeseries();
+    d->m_computer.firings = c->firings();
     d->m_computer.num_histograms = d->m_num_histograms;
     d->m_computer.clusters_to_exclude = d->get_clusters_to_exclude();
-    d->m_computer.cluster_numbers = mvContext()->selectedClusters();
-    d->m_computer.method = mvContext()->option("discrim_hist_method").toString();
+    d->m_computer.cluster_numbers = c->selectedClusters();
+    d->m_computer.method = c->option("discrim_hist_method").toString();
 }
 
 void MVDiscrimHistViewGuide::runCalculation()
@@ -239,6 +242,9 @@ void MVDiscrimHistViewGuide::slot_pan_right(double units)
 
 void MVDiscrimHistViewGuidePrivate::set_views()
 {
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
     double bin_min = compute_min3(m_histograms);
     double bin_max = max3(m_histograms);
     double max00 = qMax(qAbs(bin_min), qAbs(bin_max));
@@ -249,14 +255,14 @@ void MVDiscrimHistViewGuidePrivate::set_views()
     for (int ii = 0; ii < m_histograms.count(); ii++) {
         int k1 = m_histograms[ii].k1;
         int k2 = m_histograms[ii].k2;
-        //if (q->mvContext()->clusterIsVisible(k1)) {
+        //if (q->c->clusterIsVisible(k1)) {
         {
             HistogramView* HV = new HistogramView;
             QVector<double> tmp = m_histograms[ii].data1;
             tmp.append(m_histograms[ii].data2);
             HV->setData(tmp);
             HV->setSecondData(m_histograms[ii].data2);
-            HV->setColors(q->mvContext()->colors());
+            HV->setColors(c->colors());
             //HV->autoSetBins(50);
             HV->setBinInfo(bin_min, bin_max, num_bins);
             QString title0 = QString("%1/%2").arg(k1).arg(k2);
@@ -277,10 +283,13 @@ void MVDiscrimHistViewGuidePrivate::set_views()
 
 QSet<int> MVDiscrimHistViewGuidePrivate::get_clusters_to_exclude()
 {
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
     QSet<int> ret;
-    QList<int> keys = q->mvContext()->clusterAttributesKeys();
+    QList<int> keys = c->clusterAttributesKeys();
     foreach (int key, keys) {
-        if (q->mvContext()->clusterTags(key).contains("rejected"))
+        if (c->clusterTags(key).contains("rejected"))
             ret.insert(key);
     }
     return ret;
@@ -306,7 +315,7 @@ QString MVDiscrimHistGuideFactory::title() const
     return tr("Discrim");
 }
 
-MVAbstractView* MVDiscrimHistGuideFactory::createView(MVContext* context)
+MVAbstractView* MVDiscrimHistGuideFactory::createView(MVAbstractContext* context)
 {
     MVDiscrimHistViewGuide* X = new MVDiscrimHistViewGuide(context);
     X->setPreferredHistogramWidth(200);

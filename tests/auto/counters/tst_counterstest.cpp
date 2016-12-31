@@ -170,7 +170,6 @@ void CountersTest::testJSCounter_expression()
     QVERIFY(exprCounter.value<int>() == 100);
     c2.add(200);
     QVERIFY(exprCounter.value<int>() == 200);
-
 }
 
 void CountersTest::testJSCounter_function()

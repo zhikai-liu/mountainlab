@@ -29,7 +29,7 @@ class MVClusterView : public QWidget {
     Q_OBJECT
 public:
     friend class MVClusterViewPrivate;
-    MVClusterView(MVContext* context, QWidget* parent = 0);
+    MVClusterView(MVAbstractContext* context, QWidget* parent = 0);
     virtual ~MVClusterView();
     void setData(const Mda& X);
     bool hasData();
