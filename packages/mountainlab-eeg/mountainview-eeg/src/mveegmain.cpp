@@ -32,6 +32,9 @@
 #include <QSettings>
 #include <objectregistry.h>
 #include <icounter.h>
+#include <openviewscontrol.h>
+#include <clustermetricsplugin.h>
+#include <timeseriesplugin.h>
 
 void setup_main_window(MVMainWindow* W);
 
@@ -178,20 +181,22 @@ int main(int argc, char* argv[])
 
         if (mv2_fname.isEmpty()) {
             MVEEGContext dc; //dummy context
-            //if (CLP.named_parameters.contains("samplerate")) {
-            //    dc.setSampleRate(CLP.named_parameters.value("samplerate", 0).toDouble());
-            //}
+            if (CLP.named_parameters.contains("samplerate")) {
+                dc.setSampleRate(CLP.named_parameters.value("samplerate", 0).toDouble());
+            }
             /*
             if (CLP.named_parameters.contains("firings")) {
                 QString firings_path = CLP.named_parameters["firings"].toString();
                 dc.setFirings(DiskReadMda(firings_path));
                 W->setWindowTitle(firings_path);
             }
+            */
             if (CLP.named_parameters.contains("raw")) {
                 QString raw_path = CLP.named_parameters["raw"].toString();
                 dc.addTimeseries("Raw Data", DiskReadMda(raw_path));
                 dc.setCurrentTimeseriesName("Raw Data");
             }
+            /*
             if (CLP.named_parameters.contains("filt")) {
                 QString filt_path = CLP.named_parameters["filt"].toString();
                 dc.addTimeseries("Filtered Data", DiskReadMda(filt_path));
@@ -292,7 +297,7 @@ int main(int argc, char* argv[])
         W->show();
 
         setup_main_window(W);
-        //W->addControl(new MVOpenViewsControl(context, W), true);
+        W->addControl(new OpenViewsControl(context, W), true);
         //W->addControl(new MVGeneralControl(context, W), false);
         //W->addControl(new MVExportControl(context, W), true);
         //W->addControl(new MVClusterVisibilityControl(context, W), false);
@@ -666,8 +671,10 @@ void set_nice_size(QWidget* W)
 
 void setup_main_window(MVMainWindow* W)
 {
+    W->loadPlugin(new ClusterMetricsPlugin);
+    W->loadPlugin(new TimeseriesPlugin);
+
     //W->loadPlugin(new ClusterDetailPlugin);
-    //W->loadPlugin(new ClusterMetricsPlugin);
     //W->loadPlugin(new IsolationMatrixPlugin);
     //W->loadPlugin(new ClipsViewPlugin);
     //W->loadPlugin(new ClusterContextMenuPlugin);

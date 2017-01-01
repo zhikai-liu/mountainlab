@@ -84,3 +84,20 @@ void MVAbstractContext::clearOptions()
 {
     d->m_options.clear();
 }
+
+bool MVRange::operator==(const MVRange& other) const
+{
+    return ((other.min == min) && (other.max == max));
+}
+
+MVRange MVRange::operator+(double offset)
+{
+    return MVRange(min + offset, max + offset);
+}
+
+MVRange MVRange::operator*(double scale)
+{
+    double center = (min + max) / 2;
+    double span = (max - min);
+    return MVRange(center - span / 2 * scale, center + span / 2 * scale);
+}

@@ -14,20 +14,36 @@ include(../../../../mlcommon/taskprogress.pri)
 QT += widgets
 QT+=concurrent
 
-DESTDIR = ../bin
+DESTDIR = ../../bin
 OBJECTS_DIR = ../build
 MOC_DIR=../build
 TARGET = mountainview-eeg
 TEMPLATE = app
 
-INCLUDEPATH += msv/plugins msv/views
-VPATH += msv/plugins msv/views
+INCLUDEPATH += plugins views
+VPATH += plugins views
+HEADERS += clustermetricsplugin.h clustermetricsview.h
+SOURCES += clustermetricsplugin.cpp clustermetricsview.cpp
+
+HEADERS += timeseriesplugin.h timeseriesview.h
+SOURCES += timeseriesplugin.cpp timeseriesview.cpp
+INCLUDEPATH += views/timeseriesview
+VPATH += views/timeseriesview
+HEADERS += mvtimeseriesrendermanager.h mvtimeseriesviewbase.h
+SOURCES += mvtimeseriesrendermanager.cpp mvtimeseriesviewbase.cpp
 
 INCLUDEPATH += msv/contextmenuhandlers
 VPATH += msv/contextmenuhandlers
 
-SOURCES += mveegmain.cpp \
-    mveegcontext.cpp
+SOURCES += mveegmain.cpp
+
+HEADERS += mveegcontext.h
+SOURCES += mveegcontext.cpp
+
+INCLUDEPATH += controlwidgets
+VPATH += controlwidgets
+HEADERS += openviewscontrol.h
+SOURCES += openviewscontrol.cpp
 
 INCLUDEPATH += ../../../../mountainview/src/core
 VPATH += ../../../../mountainview/src/core
@@ -36,20 +52,19 @@ HEADERS += \
     mountainprocessrunner.h mvabstractcontextmenuhandler.h \
     mvabstractcontrol.h mvabstractview.h mvabstractviewfactory.h \
     mvcontrolpanel2.h mvmainwindow.h mvstatusbar.h \
-    mvabstractcontext.h tabber.h tabberframe.h taskprogressview.h actionfactory.h mvabstractplugin.h \
-    mveegcontext.h
+    mvabstractcontext.h tabber.h tabberframe.h taskprogressview.h actionfactory.h mvabstractplugin.h
 
 SOURCES += \
     closemehandler.cpp flowlayout.cpp imagesavedialog.cpp \
     mountainprocessrunner.cpp mvabstractcontextmenuhandler.cpp \
     mvabstractcontrol.cpp mvabstractview.cpp mvabstractviewfactory.cpp \
     mvcontrolpanel2.cpp mvmainwindow.cpp mvstatusbar.cpp \
-    mvabstractcontext.cpp tabber.cpp tabberframe.cpp taskprogressview.cpp actionfactory.cpp
+    mvabstractcontext.cpp tabber.cpp tabberframe.cpp taskprogressview.cpp actionfactory.cpp mvabstractplugin.cpp
 
 INCLUDEPATH += ../../../../mountainview/src/misc
 VPATH += ../../../../mountainview/src/misc
-HEADERS += mvmisc.h mvutils.h paintlayer.h paintlayerstack.h renderablewidget.h
-SOURCES += mvmisc.cpp mvutils.cpp paintlayer.cpp paintlayerstack.cpp renderablewidget.cpp
+HEADERS += mvmisc.h mvutils.h paintlayer.h paintlayerstack.h renderablewidget.h multiscaletimeseries.h
+SOURCES += mvmisc.cpp mvutils.cpp paintlayer.cpp paintlayerstack.cpp renderablewidget.cpp multiscaletimeseries.cpp
 
 INCLUDEPATH += ../../../../mountainsort/src/utils
 VPATH += ../../../../mountainsort/src/utils

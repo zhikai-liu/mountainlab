@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QVariant>
+#include <QJsonObject>
 
 struct MVRange {
     MVRange(double min0 = 0, double max0 = 1)
