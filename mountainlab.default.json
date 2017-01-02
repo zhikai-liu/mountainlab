@@ -5,7 +5,7 @@
 	},
 	"mountainprocess":{
 		"max_num_simultaneous_processes":2,
-		"processor_paths":["mountainprocess/processors","user/processors"]
+		"processor_paths":["mountainprocess/processors","user/processors","packages"]
 	},
 	"prv":{
 		"local_search_paths":["examples"],

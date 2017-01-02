@@ -35,6 +35,8 @@
 #include <openviewscontrol.h>
 #include <clustermetricsplugin.h>
 #include <timeseriesplugin.h>
+#include <spectrogramplugin.h>
+#include <eegprefscontrol.h>
 
 void setup_main_window(MVMainWindow* W);
 
@@ -298,6 +300,7 @@ int main(int argc, char* argv[])
 
         setup_main_window(W);
         W->addControl(new OpenViewsControl(context, W), true);
+        W->addControl(new EEGPrefsControl(context, W), true);
         //W->addControl(new MVGeneralControl(context, W), false);
         //W->addControl(new MVExportControl(context, W), true);
         //W->addControl(new MVClusterVisibilityControl(context, W), false);
@@ -673,6 +676,7 @@ void setup_main_window(MVMainWindow* W)
 {
     W->loadPlugin(new ClusterMetricsPlugin);
     W->loadPlugin(new TimeseriesPlugin);
+    W->loadPlugin(new SpectrogramPlugin);
 
     //W->loadPlugin(new ClusterDetailPlugin);
     //W->loadPlugin(new IsolationMatrixPlugin);

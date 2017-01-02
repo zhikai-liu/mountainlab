@@ -32,6 +32,9 @@ VPATH += views/timeseriesview
 HEADERS += mvtimeseriesrendermanager.h mvtimeseriesviewbase.h
 SOURCES += mvtimeseriesrendermanager.cpp mvtimeseriesviewbase.cpp
 
+HEADERS += spectrogramplugin.h spectrogramview.h
+SOURCES += spectrogramplugin.cpp spectrogramview.cpp
+
 INCLUDEPATH += msv/contextmenuhandlers
 VPATH += msv/contextmenuhandlers
 
@@ -42,8 +45,8 @@ SOURCES += mveegcontext.cpp
 
 INCLUDEPATH += controlwidgets
 VPATH += controlwidgets
-HEADERS += openviewscontrol.h
-SOURCES += openviewscontrol.cpp
+HEADERS += openviewscontrol.h eegprefscontrol.h
+SOURCES += openviewscontrol.cpp eegprefscontrol.cpp
 
 INCLUDEPATH += ../../../../mountainview/src/core
 VPATH += ../../../../mountainview/src/core
