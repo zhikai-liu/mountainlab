@@ -30,6 +30,14 @@ EEGPrefsControl::EEGPrefsControl(MVAbstractContext* context, MVMainWindow* mw)
         glayout->addWidget(X, row, 1);
         row++;
     }
+    {
+        QWidget* X = this->createStringControl("spectrogram_freq_range");
+        X->setToolTip("Spectrogram frequency range");
+        context->onOptionChanged("spectrogram_freq_range", this, SLOT(updateControls()));
+        glayout->addWidget(new QLabel("Spect freq range (Hz):"), row, 0);
+        glayout->addWidget(X, row, 1);
+        row++;
+    }
     /*
     {
         QWidget* X = this->createChoicesControl("discrim_hist_method");
@@ -64,6 +72,7 @@ void EEGPrefsControl::updateContext()
     Q_ASSERT(c);
 
     c->setOption("spectrogram_time_resolution", this->controlValue("spectrogram_time_resolution").toDouble());
+    c->setOption("spectrogram_freq_range", this->controlValue("spectrogram_freq_range").toString());
 }
 
 void EEGPrefsControl::updateControls()
@@ -71,5 +80,6 @@ void EEGPrefsControl::updateControls()
     MVEEGContext* c = qobject_cast<MVEEGContext*>(mvContext());
     Q_ASSERT(c);
 
-    this->setControlValue("spectrogram_time_resolutionc", c->option("spectrogram_time_resolution").toDouble());
+    this->setControlValue("spectrogram_time_resolution", c->option("spectrogram_time_resolution").toDouble());
+    this->setControlValue("spectrogram_freq_range", c->option("spectrogram_freq_range").toString());
 }

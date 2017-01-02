@@ -37,6 +37,7 @@ public:
 
 private slots:
     void slot_brightness_slider_changed(int val);
+    void slot_export_csv();
 
 private:
     SpectrogramViewPrivate* d;

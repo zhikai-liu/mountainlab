@@ -10,6 +10,7 @@
 #include <QAction>
 #include <QIcon>
 #include <QImageWriter>
+#include <QMessageBox>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QSlider>
@@ -17,12 +18,13 @@
 #include <mveegcontext.h>
 #include <qlabel.h>
 #include <taskprogress.h>
+#include <QFileDialog>
 
 class SpectrogramViewCalculator {
 public:
     //input
     DiskReadMda timeseries;
-    //QString mlproxy_url;
+    int time_resolution = 32;
 
     //output
     DiskReadMda spectrogram;
@@ -34,12 +36,16 @@ class SpectrogramViewPrivate {
 public:
     SpectrogramView* q;
     DiskReadMda m_spectrogram;
-    double m_window_min = 0, m_window_max = 2;
+    int m_time_resolution = 0; //corresponding to this spectrogram
+    double m_window_min = 0, m_window_max = 4;
     double m_brightness_level = 0;
 
     SpectrogramViewCalculator m_calculator;
 
     QColor get_pixel_color(double val);
+    Mda get_spectrogram_data(long t1, long t2);
+
+    static void parse_freq_range(int& ret_min, int& ret_max, QString str);
 };
 
 SpectrogramView::SpectrogramView(MVAbstractContext* context)
@@ -62,6 +68,12 @@ SpectrogramView::SpectrogramView(MVAbstractContext* context)
         QObject::connect(S, SIGNAL(valueChanged(int)), this, SLOT(slot_brightness_slider_changed(int)));
     }
 
+    {
+        QAction* a = new QAction(QIcon(":/image/gear.png"), "Export .csv", this);
+        this->addAction(a);
+        connect(a, SIGNAL(triggered(bool)), this, SLOT(slot_export_csv()));
+    }
+
     /*
     {
         QAction* a = new QAction(QIcon(":/images/vertical-zoom-in.png"), "Vertical Zoom In", this);
@@ -79,6 +91,8 @@ SpectrogramView::SpectrogramView(MVAbstractContext* context)
     }
     */
 
+    this->recalculateOnOptionChanged("spectrogram_time_resolution");
+    this->recalculateOnOptionChanged("spectrogram_freq_range");
     this->recalculateOn(context, SIGNAL(currentTimeseriesChanged()));
 
     this->recalculate();
@@ -97,6 +111,7 @@ void SpectrogramView::prepareCalculation()
 
     //d->m_layout_needed = true;
     d->m_calculator.timeseries = c->currentTimeseries();
+    d->m_calculator.time_resolution = c->option("spectrogram_time_resolution").toInt();
 
     MVTimeSeriesViewBase::prepareCalculation();
 }
@@ -114,6 +129,7 @@ void SpectrogramView::onCalculationFinished()
     Q_ASSERT(c);
 
     d->m_spectrogram = d->m_calculator.spectrogram;
+    d->m_time_resolution = d->m_calculator.time_resolution;
 
     MVTimeSeriesViewBase::onCalculationFinished();
 }
@@ -129,7 +145,9 @@ void SpectrogramView::paintContent(QPainter* painter)
     MVEEGContext* c = qobject_cast<MVEEGContext*>(mvContext());
     Q_ASSERT(c);
 
-    int time_resolution = 32;
+    int time_resolution = d->m_time_resolution; //corresponding to the output spectrogram
+    if (!time_resolution)
+        return;
 
     MVRange timerange = c->currentTimeRange();
     long t1 = ceil(timerange.min / time_resolution);
@@ -138,14 +156,12 @@ void SpectrogramView::paintContent(QPainter* painter)
     if (t2 <= t1 + 2)
         return;
 
-    int M = d->m_spectrogram.N1();
-    int N2 = t2 - t1 + 1;
-    int K = d->m_spectrogram.N3();
+    Mda data = d->get_spectrogram_data(t1, t2);
 
-    QImage img = QImage(N2, M, QImage::Format_RGB32);
-    for (int n = 0; n < N2; n++) {
-        for (int m = 0; m < M; m++) {
-            double val = d->m_spectrogram.value(m, t1 + n, 10);
+    QImage img = QImage(data.N2(), data.N1(), QImage::Format_RGB32);
+    for (int n = 0; n < data.N2(); n++) {
+        for (int m = 0; m < data.N1(); m++) {
+            double val = data.value(m, n);
             QColor col = d->get_pixel_color(val);
             img.setPixel(n, m, col.rgb());
         }
@@ -203,6 +219,49 @@ void SpectrogramView::slot_brightness_slider_changed(int val)
     this->update();
 }
 
+void SpectrogramView::slot_export_csv()
+{
+
+    int time_resolution = d->m_time_resolution; //corresponding to the output spectrogram
+    if (!time_resolution) {
+        QMessageBox::warning(0, "Problem exporting", "Problem exporting. time_resolution = 0");
+        return;
+    }
+
+    long t1 = 0;
+    long t2 = d->m_spectrogram.N2() - 1;
+
+    if (t2 <= t1 + 2) {
+        QMessageBox::warning(0, "Problem exporting", "Problem exporting. t2 <= t1+2");
+        return;
+    }
+
+    Mda data = d->get_spectrogram_data(t1, t2);
+
+    QString txt;
+    txt += "timepoint";
+    for (int m = 0; m < data.N1(); m++) {
+        txt += QString(",Ch%1").arg(m + 1);
+    }
+    txt += "\n";
+    for (int n = 0; n < data.N2(); n++) {
+        txt += QString("%1").arg(n * time_resolution);
+        for (int m = 0; m < data.N1(); m++) {
+            double val = data.value(m, n);
+            txt += QString(",%1").arg(val);
+        }
+        txt += "\n";
+    }
+
+    QString fname = QFileDialog::getSaveFileName(this, "Save spectrogram data", "", "*.csv");
+    if (fname.isEmpty())
+        return;
+    if ((!fname.endsWith(".csv")) && (!fname.endsWith(".txt")))
+        fname += ".csv";
+
+    TextFile::write(fname, txt);
+}
+
 void SpectrogramViewCalculator::compute()
 {
 
@@ -213,6 +272,7 @@ void SpectrogramViewCalculator::compute()
 
     QMap<QString, QVariant> params;
     params["timeseries"] = timeseries.makePath();
+    params["time_resolution"] = time_resolution;
     X.setInputParameters(params);
 
     QString spectrogram_fname = X.makeOutputFilePath("spectrogram_out");
@@ -260,4 +320,51 @@ QColor SpectrogramViewPrivate::get_pixel_color(double val)
     pct = qMin(1.0, qMax(0.0, pct));
     QColor gray = QColor(pct * 255, pct * 255, pct * 255);
     return gray;
+}
+
+Mda SpectrogramViewPrivate::get_spectrogram_data(long t1, long t2)
+{
+    MVEEGContext* c = qobject_cast<MVEEGContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    int M = m_spectrogram.N1();
+    int N2 = t2 - t1 + 1;
+    int K = m_spectrogram.N3();
+
+    int ifreq_min, ifreq_max;
+    SpectrogramViewPrivate::parse_freq_range(ifreq_min, ifreq_max, c->option("spectrogram_freq_range").toString());
+
+    Mda X;
+    m_spectrogram.readChunk(X, 0, 0, ifreq_min, m_spectrogram.N1(), m_spectrogram.N2(), ifreq_max - ifreq_min + 1);
+
+    Mda ret(M, N2);
+    for (int n = 0; n < N2; n++) {
+        for (int m = 0; m < M; m++) {
+            double val = 0;
+            for (int ii = ifreq_min; ii <= ifreq_max; ii++) {
+                double val2 = X.value(m, t1 + n, ii - ifreq_min);
+                if (val2 > val)
+                    val = val2;
+            }
+            ret.setValue(val, m, n);
+        }
+    }
+
+    return ret;
+}
+
+void SpectrogramViewPrivate::parse_freq_range(int& ret_min, int& ret_max, QString str)
+{
+    QStringList vals = str.split("-");
+    if (vals.count() == 1) {
+        ret_min = ret_max = (int)str.trimmed().toDouble();
+    }
+    else if (vals.count() == 2) {
+        ret_min = (int)vals[0].trimmed().toDouble();
+        ret_max = (int)vals[1].trimmed().toDouble();
+    }
+    else {
+        qWarning() << "Error parsing freq range" << str;
+        ret_min = ret_max = 0;
+    }
 }
