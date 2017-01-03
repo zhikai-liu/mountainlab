@@ -38,6 +38,15 @@ EEGPrefsControl::EEGPrefsControl(MVAbstractContext* context, MVMainWindow* mw)
         glayout->addWidget(X, row, 1);
         row++;
     }
+    {
+        QWidget* X = this->createStringControl("timeseries_freq_range");
+        X->setToolTip("Spectrogram frequency range");
+        context->onOptionChanged("timeseries_freq_range", this, SLOT(updateControls()));
+        glayout->addWidget(new QLabel("Timeseries freq range (Hz):"), row, 0);
+        glayout->addWidget(X, row, 1);
+        row++;
+    }
+
     /*
     {
         QWidget* X = this->createChoicesControl("discrim_hist_method");
@@ -73,6 +82,7 @@ void EEGPrefsControl::updateContext()
 
     c->setOption("spectrogram_time_resolution", this->controlValue("spectrogram_time_resolution").toDouble());
     c->setOption("spectrogram_freq_range", this->controlValue("spectrogram_freq_range").toString());
+    c->setOption("timeseries_freq_range", this->controlValue("timeseries_freq_range").toString());
 }
 
 void EEGPrefsControl::updateControls()
@@ -82,4 +92,5 @@ void EEGPrefsControl::updateControls()
 
     this->setControlValue("spectrogram_time_resolution", c->option("spectrogram_time_resolution").toDouble());
     this->setControlValue("spectrogram_freq_range", c->option("spectrogram_freq_range").toString());
+    this->setControlValue("timeseries_freq_range", c->option("timeseries_freq_range").toString());
 }

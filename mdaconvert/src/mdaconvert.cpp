@@ -10,7 +10,10 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QTime>
+#include <mda.h>
 #include <stdio.h>
+
+#include "mlcommon.h"
 
 int get_mda_dtype(QString format);
 
@@ -39,15 +42,21 @@ bool mdaconvert(const mdaconvert_opts& opts)
 {
     QList<long> opts_dims = opts.dims;
 
-    //default inputs in case input format is mda or not
+    //default inputs in case input format is mda, csv, or dat
     if (opts.input_format == "mda") {
         if (!opts.input_dtype.isEmpty()) {
             qWarning() << "input-dtype should not be specified for input type mda";
-            return -1;
+            return false;
         }
         if (!opts.dims.isEmpty()) {
             qWarning() << "dims should not be specified for input type mda";
-            return -1;
+            return false;
+        }
+    }
+    else if (opts.input_format == "csv") {
+        if (!opts.dims.isEmpty()) {
+            qWarning() << "dims should not be specified for input type csv";
+            return false;
         }
     }
     else {
@@ -71,6 +80,35 @@ bool mdaconvert(const mdaconvert_opts& opts)
             qWarning() << "Unable to remove output file: " + opts.output_path;
             return false;
         }
+    }
+
+    if (opts.input_format == "csv") {
+        if (opts.output_format != "mda") {
+            qWarning() << "Invalid output type for input type csv";
+            return false;
+        }
+        QString txt = TextFile::read(opts.input_path);
+        QStringList lines = txt.split("\n");
+        lines = lines.mid(opts.input_num_header_rows);
+        QString line0 = lines.value(0);
+        int num_cols = line0.split(",").mid(opts.input_num_header_cols).count();
+        if (lines.value(lines.count() - 1).trimmed().isEmpty())
+            lines = lines.mid(0, lines.count() - 1);
+        int num_rows = lines.count();
+        Mda out(num_cols, num_rows);
+        for (int r = 0; r < lines.count(); r++) {
+            QString line = lines[r];
+            QStringList vals = line.split(",").mid(opts.input_num_header_cols);
+            QList<double> vals2;
+            for (int j = 0; j < vals.count(); j++) {
+                vals2 << vals[j].trimmed().toDouble();
+            }
+            for (int c = 0; c < num_cols; c++) {
+                out.setValue(vals2.value(c), c, r);
+            }
+        }
+        out.write32(opts.output_path);
+        return true;
     }
 
     // initialize working data

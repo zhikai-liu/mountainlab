@@ -29,6 +29,7 @@ MVEEGContext::MVEEGContext()
 
     this->setOption("spectrogram_time_resolution", 32);
     this->setOption("spectrogram_freq_range", "8-12");
+    this->setOption("timeseries_freq_range", "*");
 }
 
 MVEEGContext::~MVEEGContext()

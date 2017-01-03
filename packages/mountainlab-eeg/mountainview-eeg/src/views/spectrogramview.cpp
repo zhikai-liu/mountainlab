@@ -25,6 +25,7 @@ public:
     //input
     DiskReadMda timeseries;
     int time_resolution = 32;
+    QString spectrogram_freq_range = "";
 
     //output
     DiskReadMda spectrogram;
@@ -39,6 +40,7 @@ public:
     int m_time_resolution = 0; //corresponding to this spectrogram
     double m_window_min = 0, m_window_max = 4;
     double m_brightness_level = 0;
+    QString m_spectrogram_freq_range = "";
 
     SpectrogramViewCalculator m_calculator;
 
@@ -112,6 +114,7 @@ void SpectrogramView::prepareCalculation()
     //d->m_layout_needed = true;
     d->m_calculator.timeseries = c->currentTimeseries();
     d->m_calculator.time_resolution = c->option("spectrogram_time_resolution").toInt();
+    d->m_calculator.spectrogram_freq_range = c->option("spectrogram_freq_range").toString();
 
     MVTimeSeriesViewBase::prepareCalculation();
 }
@@ -130,6 +133,7 @@ void SpectrogramView::onCalculationFinished()
 
     d->m_spectrogram = d->m_calculator.spectrogram;
     d->m_time_resolution = d->m_calculator.time_resolution;
+    d->m_spectrogram_freq_range = d->m_calculator.spectrogram_freq_range;
 
     MVTimeSeriesViewBase::onCalculationFinished();
 }
@@ -332,7 +336,7 @@ Mda SpectrogramViewPrivate::get_spectrogram_data(long t1, long t2)
     int K = m_spectrogram.N3();
 
     int ifreq_min, ifreq_max;
-    SpectrogramViewPrivate::parse_freq_range(ifreq_min, ifreq_max, c->option("spectrogram_freq_range").toString());
+    SpectrogramViewPrivate::parse_freq_range(ifreq_min, ifreq_max, m_spectrogram_freq_range);
 
     Mda X;
     m_spectrogram.readChunk(X, 0, 0, ifreq_min, m_spectrogram.N1(), m_spectrogram.N2(), ifreq_max - ifreq_min + 1);

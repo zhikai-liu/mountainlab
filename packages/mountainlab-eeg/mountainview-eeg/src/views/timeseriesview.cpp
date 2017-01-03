@@ -26,6 +26,7 @@ class TimeseriesViewCalculator {
 public:
     //input
     DiskReadMda timeseries;
+    QString timeseries_freq_range;
     //QString mlproxy_url;
 
     //output
@@ -106,6 +107,7 @@ void TimeseriesView::prepareCalculation()
 
     d->m_layout_needed = true;
     d->m_calculator.timeseries = c->currentTimeseries();
+    d->m_calculator.timeseries_freq_range = c->option("timeseries_freq_range").toString();
     //d->m_calculator.mlproxy_url = c->mlProxyUrl();
 
     MVTimeSeriesViewBase::prepareCalculation();
@@ -283,9 +285,17 @@ double TimeseriesViewPrivate::ypix2val(int m, double ypix)
         return 0;
 }
 
+DiskReadMda apply_filter(DiskReadMda X, QString freq_range)
+{
+    DiskReadMda ret = X;
+    //apply filter here
+    return ret;
+}
+
 void TimeseriesViewCalculator::compute()
 {
-    msts.setData(timeseries);
+    DiskReadMda timeseries2 = apply_filter(timeseries, this->timeseries_freq_range);
+    msts.setData(timeseries2);
     //msts.setMLProxyUrl(mlproxy_url);
     msts.initialize();
     minval = msts.minimum();
