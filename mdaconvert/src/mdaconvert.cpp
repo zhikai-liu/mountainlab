@@ -162,6 +162,7 @@ bool mdaconvert(const mdaconvert_opts& opts)
         long actual_input_file_size = QFileInfo(opts.input_path).size();
         if (actual_input_file_size != expected_input_file_size) {
             qWarning() << QString("Unexpected input file size: Expected/Actual=%1/%2 bytes").arg(expected_input_file_size).arg(actual_input_file_size);
+            qWarning() << "Try using --allow-subset";
             return false;
         }
     }

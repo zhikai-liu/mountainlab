@@ -36,6 +36,9 @@ int main(int argc, char* argv[])
     opts.output_dtype = params.named_parameters.value("output-dtype").toString();
     opts.output_format = params.named_parameters.value("output-format").toString();
 
+    if (params.named_parameters.contains("allow-subset"))
+        opts.check_input_file_size=false;
+
     if (opts.output_path.isEmpty()) {
         //if (opts.input_path.endsWith(".mda")) {
         DiskReadMda X(opts.input_path);

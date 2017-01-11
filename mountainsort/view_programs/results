@@ -17,6 +17,9 @@ var firings_path=outfolder+'/firings.mda';
 if ('ground_truth' in CLP.namedParameters) {
 	firings_path=dsfolder+'/firings_true.mda';
 }
+if ('firings' in CLP.namedParameters) {
+	firings_path=CLP.namedParameters['firings'];
+}
 
 var args='';
 if (file_exists(dsfolder+session_str+'/raw.mda')) {
