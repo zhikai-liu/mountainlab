@@ -21,7 +21,9 @@ SOURCES += prv-guimain.cpp \
     prvguidownloaddialog.cpp \
     prvguiitemdetailwidget.cpp \
     locatemanager.cpp \
-    locatemanagerworker.cpp
+    locatemanagerworker.cpp \
+    jsoneditorwindow.cpp \
+    jsonmerger.cpp
 
 include(../../mlcommon/mlcommon.pri)
 include(../../mlcommon/mlnetwork.pri)
@@ -41,7 +43,9 @@ HEADERS += \
     prvguidownloaddialog.h \
     prvguiitemdetailwidget.h \
     locatemanager.h \
-    locatemanagerworker.h
+    locatemanagerworker.h \
+    jsoneditorwindow.h \
+    jsonmerger.h
 
 INCLUDEPATH += ../../mountainview/src/core
 HEADERS += ../../mountainview/src/core/mountainprocessrunner.h
@@ -55,4 +59,5 @@ SOURCES += src/qaccordion.cpp src/contentpane.cpp src/clickableframe.cpp
 RESOURCES += icons/qaccordionicons.qrc
 
 FORMS += \
-    prvguiuploaddialog.ui prvguidownloaddialog.ui
+    prvguiuploaddialog.ui prvguidownloaddialog.ui \
+    jsoneditorwindow.ui
