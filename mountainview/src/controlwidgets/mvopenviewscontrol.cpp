@@ -29,7 +29,7 @@ public:
     QAbstractButton* m_close_all_button;
 };
 
-MVOpenViewsControl::MVOpenViewsControl(MVContext* context, MVMainWindow* mw)
+MVOpenViewsControl::MVOpenViewsControl(MVAbstractContext* context, MVMainWindow* mw)
     : MVAbstractControl(context, mw)
 {
     d = new MVOpenViewsControlPrivate;

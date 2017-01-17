@@ -20,11 +20,6 @@ struct TimeseriesStruct {
     DiskReadMda data;
 };
 
-struct OptionChangedAction {
-    QString option_name;
-    QAction* action;
-};
-
 class MVContextPrivate {
 public:
     MVContext* q;
@@ -45,11 +40,9 @@ public:
     DiskReadMda m_firings;
     DiskReadMda m_firings_subset;
     double m_sample_rate = 0;
-    QMap<QString, QVariant> m_options;
     QString m_mlproxy_url; //this is to disappear
     QMap<QString, QColor> m_colors;
     ClusterVisibilityRule m_visibility_rule;
-    QList<OptionChangedAction> m_option_changed_actions;
     QJsonObject m_original_object;
     QSet<ClusterPair> m_selected_cluster_pairs;
     ElectrodeGeometry m_electrode_geometry;
@@ -58,7 +51,6 @@ public:
     QSet<int> m_visible_channels;
     QList<double> m_cluster_order_scores;
     QString m_cluster_order_scores_name;
-    QString m_mv2_file_name;
 
     void update_current_and_selected_clusters_according_to_merged();
 };
@@ -77,13 +69,13 @@ MVContext::MVContext()
     d->m_current_cluster = 0;
     d->m_current_timepoint = 0;
 
-    d->m_options["clip_size"] = 100;
-    d->m_options["cc_max_dt_msec"] = 100;
-    d->m_options["cc_log_time_constant_msec"] = 1;
-    d->m_options["cc_bin_size_msec"] = 0.5;
-    d->m_options["cc_max_est_data_size"] = "1e4";
-    d->m_options["amp_thresh_display"] = 3;
-    d->m_options["discrim_hist_method"] = "centroid";
+    this->setOption("clip_size", 100);
+    this->setOption("cc_max_dt_msec", 100);
+    this->setOption("cc_log_time_constant_msec", 1);
+    this->setOption("cc_bin_size_msec", 0.5);
+    this->setOption("cc_max_est_data_size", "1e4");
+    this->setOption("amp_thresh_display", 3);
+    this->setOption("discrim_hist_method", "centroid");
 
     // default colors
     d->m_colors["background"] = QColor(240, 240, 240);
@@ -99,8 +91,6 @@ MVContext::MVContext()
     d->m_colors["calculation-in-progress"] = QColor(130, 130, 140, 50);
     d->m_colors["cluster_label"] = Qt::darkGray;
     d->m_colors["firing_rate_disk"] = Qt::lightGray;
-
-    QObject::connect(this, SIGNAL(optionChanged(QString)), this, SLOT(slot_option_changed(QString)));
 }
 
 MVContext::~MVContext()
@@ -114,7 +104,7 @@ void MVContext::clear()
     d->m_cluster_pair_attributes.clear();
     d->m_timeseries.clear();
     d->m_firings = DiskReadMda();
-    d->m_options.clear();
+    clearOptions();
 }
 
 QJsonObject cluster_attributes_to_object(const QMap<int, QJsonObject>& map)
@@ -217,6 +207,7 @@ QMap<QString, TimeseriesStruct> object_to_timeseries_map_for_mv2(QJsonObject X)
 
 QJsonObject MVContext::toMVFileObject() const
 {
+    // old
     QJsonObject X = d->m_original_object;
     X["cluster_attributes"] = cluster_attributes_to_object(d->m_cluster_attributes);
     X["cluster_pair_attributes"] = cluster_pair_attributes_to_object(d->m_cluster_pair_attributes);
@@ -224,7 +215,7 @@ QJsonObject MVContext::toMVFileObject() const
     X["current_timeseries_name"] = d->m_current_timeseries_name;
     X["firings"] = d->m_firings.makePath();
     X["samplerate"] = d->m_sample_rate;
-    X["options"] = QJsonObject::fromVariantMap(d->m_options);
+    //X["options"] = QJsonObject::fromVariantMap(d->m_options);
     X["mlproxy_url"] = d->m_mlproxy_url;
     X["visibility_rule"] = d->m_visibility_rule.toJsonObject();
     X["electrode_geometry"] = d->m_electrode_geometry.toJsonObject();
@@ -243,7 +234,7 @@ QJsonObject MVContext::toMV2FileObject() const
     X["current_timeseries_name"] = d->m_current_timeseries_name;
     X["firings"] = d->m_firings.toPrvObject();
     X["samplerate"] = d->m_sample_rate;
-    X["options"] = QJsonObject::fromVariantMap(d->m_options);
+    X["options"] = QJsonObject::fromVariantMap(this->options());
     X["mlproxy_url"] = d->m_mlproxy_url;
     X["visibility_rule"] = d->m_visibility_rule.toJsonObject();
     X["electrode_geometry"] = d->m_electrode_geometry.toJsonObject();
@@ -255,18 +246,9 @@ QJsonObject MVContext::toMV2FileObject() const
     return X;
 }
 
-void MVContext::setMV2FileName(QString fname) const
-{
-    d->m_mv2_file_name = fname;
-}
-
-QString MVContext::mv2FileName() const
-{
-    return d->m_mv2_file_name;
-}
-
 void MVContext::setFromMVFileObject(QJsonObject X)
 {
+    // old
     this->clear();
     d->m_original_object = X; // to preserve unused fields
     d->m_cluster_attributes = object_to_cluster_attributes(X["cluster_attributes"].toObject());
@@ -275,9 +257,11 @@ void MVContext::setFromMVFileObject(QJsonObject X)
     this->setCurrentTimeseriesName(X["current_timeseries_name"].toString());
     this->setFirings(DiskReadMda(X["firings"].toString()));
     d->m_sample_rate = X["samplerate"].toDouble();
+    /*
     if (X.contains("options")) {
         d->m_options = X["options"].toObject().toVariantMap();
     }
+    */
     d->m_mlproxy_url = X["mlproxy_url"].toString();
     if (X.contains("visibility_rule")) {
         this->setClusterVisibilityRule(ClusterVisibilityRule::fromJsonObject(X["visibility_rule"].toObject()));
@@ -319,7 +303,7 @@ void MVContext::setFromMV2FileObject(QJsonObject X)
     this->setFirings(DiskReadMda(X["firings"].toObject()));
     d->m_sample_rate = X["samplerate"].toDouble();
     if (X.contains("options")) {
-        d->m_options = X["options"].toObject().toVariantMap();
+        this->setOptions(X["options"].toObject().toVariantMap());
     }
     d->m_mlproxy_url = X["mlproxy_url"].toString();
     if (X.contains("visibility_rule")) {
@@ -476,11 +460,6 @@ double MVContext::sampleRate() const
     return d->m_sample_rate;
 }
 
-QVariant MVContext::option(QString name, QVariant default_val) const
-{
-    return d->m_options.value(name, default_val);
-}
-
 void MVContext::setCurrentTimeseriesName(QString name)
 {
     if (d->m_current_timeseries_name == name)
@@ -497,12 +476,14 @@ void MVContext::setFirings(const DiskReadMda& F)
 
 void MVContext::setSampleRate(double sample_rate)
 {
+    /*
     if (!d->m_sample_rate) {
         if (sample_rate<1000) { //assume eeg
             d->m_options["cc_max_dt_msec"]=10000;
             d->m_options["cc_bin_size_msec"]=50;
         }
     }
+    */
     d->m_sample_rate = sample_rate;
 }
 
@@ -953,24 +934,6 @@ void MVContext::setColors(const QMap<QString, QColor>& colors)
     d->m_colors = colors;
 }
 
-void MVContext::setOption(QString name, QVariant value)
-{
-    if (d->m_options[name] == value)
-        return;
-    d->m_options[name] = value;
-    emit optionChanged(name);
-}
-
-void MVContext::onOptionChanged(QString name, const QObject* receiver, const char* member, Qt::ConnectionType type)
-{
-    QAction* action = new QAction(this);
-    connect(action, SIGNAL(triggered(bool)), receiver, member, type);
-    OptionChangedAction X;
-    X.action = action;
-    X.option_name = name;
-    d->m_option_changed_actions << X;
-}
-
 void MVContext::copySettingsFrom(MVContext* other)
 {
     this->setChannelColors(other->channelColors());
@@ -978,7 +941,7 @@ void MVContext::copySettingsFrom(MVContext* other)
     this->setColors(other->colors());
     this->setMLProxyUrl(other->mlProxyUrl());
     this->setSampleRate(other->sampleRate());
-    this->d->m_options = other->d->m_options;
+    this->setOptions(other->options());
 }
 
 QMap<QString, QJsonObject> MVContext::allPrvObjects()
@@ -992,15 +955,6 @@ QMap<QString, QJsonObject> MVContext::allPrvObjects()
     }
 
     return ret;
-}
-
-void MVContext::slot_option_changed(QString name)
-{
-    for (int i = 0; i < d->m_option_changed_actions.count(); i++) {
-        if (d->m_option_changed_actions[i].option_name == name) {
-            d->m_option_changed_actions[i].action->trigger();
-        }
-    }
 }
 
 void MVContext::slot_firings_subset_calculator_finished()
@@ -1074,23 +1028,6 @@ void MVContext::clickClusterPair(const ClusterPair& pair, Qt::KeyboardModifiers 
         this->setSelectedClusters(list0);
         this->setCurrentCluster(-1);
     }
-}
-
-bool MVRange::operator==(const MVRange& other) const
-{
-    return ((other.min == min) && (other.max == max));
-}
-
-MVRange MVRange::operator+(double offset)
-{
-    return MVRange(min + offset, max + offset);
-}
-
-MVRange MVRange::operator*(double scale)
-{
-    double center = (min + max) / 2;
-    double span = (max - min);
-    return MVRange(center - span / 2 * scale, center + span / 2 * scale);
 }
 
 ClusterVisibilityRule::ClusterVisibilityRule()

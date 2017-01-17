@@ -10,7 +10,7 @@ class MVAmpHistView3 : public MVAbstractView {
     Q_OBJECT
 public:
     friend class MVAmpHistView3Private;
-    MVAmpHistView3(MVContext* context);
+    MVAmpHistView3(MVAbstractContext* context);
     virtual ~MVAmpHistView3();
 
     void prepareCalculation() Q_DECL_OVERRIDE;
@@ -48,7 +48,7 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
-    MVAbstractView* createView(MVContext* context) Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
 private slots:
 };
 

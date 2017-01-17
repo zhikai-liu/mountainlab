@@ -10,6 +10,7 @@
 #include <QVBoxLayout>
 #include <diskreadmda32.h>
 #include <mountainprocessrunner.h>
+#include <mvcontext.h>
 #include <taskprogress.h>
 
 struct AmpHistogram3 {
@@ -46,7 +47,7 @@ public:
     void set_views();
 };
 
-MVAmpHistView3::MVAmpHistView3(MVContext* context)
+MVAmpHistView3::MVAmpHistView3(MVAbstractContext* context)
     : MVAbstractView(context)
 {
     d = new MVAmpHistView3Private;
@@ -76,6 +77,9 @@ MVAmpHistView3::MVAmpHistView3(MVContext* context)
     ActionFactory::addToToolbar(ActionFactory::ActionType::PanLeft, this, SLOT(slot_pan_left()));
     ActionFactory::addToToolbar(ActionFactory::ActionType::PanRight, this, SLOT(slot_pan_right()));
 
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
     {
         d->m_num_bins_control = new QSpinBox();
         d->m_num_bins_control->setRange(1, 20000);
@@ -86,15 +90,15 @@ MVAmpHistView3::MVAmpHistView3(MVContext* context)
         QObject::connect(d->m_num_bins_control, SIGNAL(valueChanged(int)), this, SLOT(slot_update_bins()));
     }
 
-    QObject::connect(context, SIGNAL(currentClusterChanged()), this, SLOT(slot_update_highlighting_and_captions()));
-    QObject::connect(context, SIGNAL(selectedClustersChanged()), this, SLOT(slot_update_highlighting_and_captions()));
-    QObject::connect(context, SIGNAL(currentClusterChanged()), this, SLOT(slot_current_cluster_changed()));
+    QObject::connect(c, SIGNAL(currentClusterChanged()), this, SLOT(slot_update_highlighting_and_captions()));
+    QObject::connect(c, SIGNAL(selectedClustersChanged()), this, SLOT(slot_update_highlighting_and_captions()));
+    QObject::connect(c, SIGNAL(currentClusterChanged()), this, SLOT(slot_current_cluster_changed()));
 
-    this->recalculateOn(context, SIGNAL(firingsChanged()), false);
-    //this->recalculateOn(context, SIGNAL(clusterMergeChanged()), false);
-    this->recalculateOn(context, SIGNAL(clusterVisibilityChanged()), false);
-    //this->recalculateOn(context, SIGNAL(viewMergedChanged()), false);
-    this->recalculateOn(context, SIGNAL(currentTimeseriesChanged()), true);
+    this->recalculateOn(c, SIGNAL(firingsChanged()), false);
+    //this->recalculateOn(c, SIGNAL(clusterMergeChanged()), false);
+    this->recalculateOn(c, SIGNAL(clusterVisibilityChanged()), false);
+    //this->recalculateOn(c, SIGNAL(viewMergedChanged()), false);
+    this->recalculateOn(c, SIGNAL(currentTimeseriesChanged()), true);
     this->recalculateOnOptionChanged("amp_thresh_display", false);
 
     connect(d->m_panel_widget, SIGNAL(signalPanelClicked(int, Qt::KeyboardModifiers)), this, SLOT(slot_panel_clicked(int, Qt::KeyboardModifiers)));
@@ -110,9 +114,12 @@ MVAmpHistView3::~MVAmpHistView3()
 
 void MVAmpHistView3::prepareCalculation()
 {
-    d->m_computer.mlproxy_url = mvContext()->mlProxyUrl();
-    d->m_computer.firings = mvContext()->firings().makePath();
-    d->m_computer.timeseries = mvContext()->currentTimeseries().makePath();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    d->m_computer.mlproxy_url = c->mlProxyUrl();
+    d->m_computer.firings = c->firings().makePath();
+    d->m_computer.timeseries = c->currentTimeseries().makePath();
     d->m_computer.amplitude_mode = d->m_amplitude_mode;
 }
 
@@ -170,6 +177,9 @@ void MVAmpHistView3::slot_pan_right(double units)
 
 void MVAmpHistView3::slot_panel_clicked(int index, Qt::KeyboardModifiers modifiers)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     /// TODO this is redundant logic with mvtemplatesview2
     if (modifiers & Qt::ShiftModifier) {
         int i1 = d->m_panel_widget->currentPanelIndex();
@@ -177,7 +187,7 @@ void MVAmpHistView3::slot_panel_clicked(int index, Qt::KeyboardModifiers modifie
         int j1 = qMin(i1, i2);
         int j2 = qMax(i1, i2);
         if ((j1 >= 0) && (j2 >= 0)) {
-            QSet<int> set = mvContext()->selectedClusters().toSet();
+            QSet<int> set = c->selectedClusters().toSet();
             for (int j = j1; j <= j2; j++) {
                 if (d->m_views.value(j)) {
                     int k = d->m_views.value(j)->property("k").toInt();
@@ -185,14 +195,14 @@ void MVAmpHistView3::slot_panel_clicked(int index, Qt::KeyboardModifiers modifie
                         set.insert(k);
                 }
             }
-            mvContext()->setSelectedClusters(set.toList());
+            c->setSelectedClusters(set.toList());
         }
     }
     else {
         if (d->m_views.value(index)) {
             int k = d->m_views.value(index)->property("k").toInt();
             if (k > 0) {
-                mvContext()->clickCluster(k, modifiers);
+                c->clickCluster(k, modifiers);
             }
         }
     }
@@ -200,14 +210,17 @@ void MVAmpHistView3::slot_panel_clicked(int index, Qt::KeyboardModifiers modifie
 
 void MVAmpHistView3::slot_update_highlighting_and_captions()
 {
-    QList<int> selected_clusters = this->mvContext()->selectedClusters();
-    QSet<ClusterPair> selected_cluster_pairs = this->mvContext()->selectedClusterPairs();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    QList<int> selected_clusters = c->selectedClusters();
+    QSet<ClusterPair> selected_cluster_pairs = c->selectedClusterPairs();
     for (int i = 0; i < d->m_views.count(); i++) {
         HistogramLayer* HV = d->m_views[i];
         QString title0, caption0;
 
         int k = HV->property("k").toInt();
-        if (k == this->mvContext()->currentCluster()) {
+        if (k == c->currentCluster()) {
             HV->setCurrent(true);
         }
         else {
@@ -220,7 +233,7 @@ void MVAmpHistView3::slot_update_highlighting_and_captions()
             HV->setSelected(false);
         }
         title0 = QString("%1").arg(k);
-        caption0 = this->mvContext()->clusterTagsList(k).join(", ");
+        caption0 = c->clusterTagsList(k).join(", ");
 
         HV->setTitle(title0);
         HV->setCaption(caption0);
@@ -229,7 +242,10 @@ void MVAmpHistView3::slot_update_highlighting_and_captions()
 
 void MVAmpHistView3::slot_current_cluster_changed()
 {
-    int k = mvContext()->currentCluster();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    int k = c->currentCluster();
     for (int i = 0; i < d->m_views.count(); i++) {
         HistogramLayer* HV = d->m_views[i];
         if (HV->property("k").toInt() == k) {
@@ -362,15 +378,18 @@ void MVAmpHistView3Private::set_views()
     m_panel_widget->clearPanels(true);
     m_views.clear();
 
-    double amp_thresh = q->mvContext()->option("amp_thresh_display", 0).toDouble();
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    double amp_thresh = c->option("amp_thresh_display", 0).toDouble();
 
     QList<HistogramLayer*> views;
     for (int ii = 0; ii < m_histograms.count(); ii++) {
         int k0 = m_histograms[ii].k;
-        if (q->mvContext()->clusterIsVisible(k0)) {
+        if (c->clusterIsVisible(k0)) {
             HistogramLayer* HV = new HistogramLayer;
             HV->setData(m_histograms[ii].data);
-            HV->setColors(q->mvContext()->colors());
+            HV->setColors(c->colors());
             //HV->autoSetBins(50);
             HV->setDrawVerticalAxisAtZero(true);
             if (amp_thresh) {
@@ -398,21 +417,27 @@ void MVAmpHistView3Private::set_views()
 
 void MVAmpHistView3::prepareMimeData(QMimeData& mimeData, const QPoint& pos)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     QByteArray ba;
     QDataStream ds(&ba, QIODevice::WriteOnly);
-    ds << mvContext()->selectedClusters();
+    ds << c->selectedClusters();
     mimeData.setData("application/x-msv-clusters", ba); // selected cluster data
     MVAbstractView::prepareMimeData(mimeData, pos);
 }
 
 void MVAmpHistView3::keyPressEvent(QKeyEvent* evt)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     if (evt->matches(QKeySequence::SelectAll)) {
         QList<int> all_ks;
         for (int i = 0; i < d->m_views.count(); i++) {
             all_ks << d->m_views[i]->property("k").toInt();
         }
-        mvContext()->setSelectedClusters(all_ks);
+        c->setSelectedClusters(all_ks);
     }
 }
 
@@ -436,7 +461,7 @@ QString MVAmplitudeHistograms3Factory::title() const
     return tr("Amplitudes");
 }
 
-MVAbstractView* MVAmplitudeHistograms3Factory::createView(MVContext* context)
+MVAbstractView* MVAmplitudeHistograms3Factory::createView(MVAbstractContext* context)
 {
     MVAmpHistView3* X = new MVAmpHistView3(context);
     return X;

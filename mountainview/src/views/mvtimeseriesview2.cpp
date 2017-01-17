@@ -14,6 +14,7 @@
 #include <QImageWriter>
 #include <QMouseEvent>
 #include <QPainter>
+#include <mvcontext.h>
 
 struct mvtsv_channel {
     long channel;
@@ -56,11 +57,14 @@ public:
     double ypix2val(int m, double ypix);
 };
 
-MVTimeSeriesView2::MVTimeSeriesView2(MVContext* context)
+MVTimeSeriesView2::MVTimeSeriesView2(MVAbstractContext* context)
     : MVTimeSeriesViewBase(context)
 {
     d = new MVTimeSeriesView2Private;
     d->q = this;
+
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
 
     d->m_amplitude_factor = 1.0;
     d->m_layout_needed = true;
@@ -82,7 +86,7 @@ MVTimeSeriesView2::MVTimeSeriesView2(MVContext* context)
     }
 
     QObject::connect(&d->m_render_manager, SIGNAL(updated()), this, SLOT(update()));
-    this->recalculateOn(mvContext(), SIGNAL(currentTimeseriesChanged()));
+    this->recalculateOn(context, SIGNAL(currentTimeseriesChanged()));
 
     this->recalculate();
 }
@@ -95,9 +99,12 @@ MVTimeSeriesView2::~MVTimeSeriesView2()
 
 void MVTimeSeriesView2::prepareCalculation()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     d->m_layout_needed = true;
-    d->m_calculator.timeseries = mvContext()->currentTimeseries();
-    d->m_calculator.mlproxy_url = mvContext()->mlProxyUrl();
+    d->m_calculator.timeseries = c->currentTimeseries();
+    d->m_calculator.mlproxy_url = c->mlProxyUrl();
 
     MVTimeSeriesViewBase::prepareCalculation();
 }
@@ -111,8 +118,11 @@ void MVTimeSeriesView2::runCalculation()
 
 void MVTimeSeriesView2::onCalculationFinished()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     d->m_msts = d->m_calculator.msts;
-    d->m_render_manager.setChannelColors(mvContext()->channelColors());
+    d->m_render_manager.setChannelColors(c->channelColors());
     d->m_render_manager.setMultiScaleTimeSeries(d->m_msts);
     d->m_num_channels = d->m_calculator.num_channels;
 
@@ -154,6 +164,9 @@ void MVTimeSeriesView2::autoSetAmplitudeFactorWithinTimeRange()
 
 void MVTimeSeriesView2::paintContent(QPainter* painter)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     // Geometry of channels
     if (d->m_layout_needed) {
         int M = d->m_num_channels;
@@ -169,7 +182,7 @@ void MVTimeSeriesView2::paintContent(QPainter* painter)
     double WW = this->contentGeometry().width();
     double HH = this->contentGeometry().height();
     QImage img;
-    img = d->m_render_manager.getImage(mvContext()->currentTimeRange().min, mvContext()->currentTimeRange().max, d->m_amplitude_factor, WW, HH);
+    img = d->m_render_manager.getImage(c->currentTimeRange().min, c->currentTimeRange().max, d->m_amplitude_factor, WW, HH);
     painter->drawImage(this->contentGeometry().left(), this->contentGeometry().top(), img);
 
     // Channel labels
@@ -298,10 +311,13 @@ QString MVTimeSeriesDataFactory::title() const
     return tr("Timeseries");
 }
 
-MVAbstractView* MVTimeSeriesDataFactory::createView(MVContext* context)
+MVAbstractView* MVTimeSeriesDataFactory::createView(MVAbstractContext* context)
 {
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
     MVTimeSeriesView2* X = new MVTimeSeriesView2(context);
-    QList<int> ks = context->selectedClusters();
+    QList<int> ks = c->selectedClusters();
     X->setLabelsToView(ks.toSet());
     return X;
 }

@@ -29,12 +29,12 @@ int main(int argc, char* argv[])
     mdaconvert_opts opts;
 
     opts.input_path = params.unnamed_parameters.value(0);
-    opts.input_dtype = params.named_parameters.value("input-dtype").toString();
-    opts.input_format = params.named_parameters.value("input-format").toString();
+    opts.input_dtype = params.named_parameters.value("input_dtype").toString();
+    opts.input_format = params.named_parameters.value("input_format").toString();
 
     opts.output_path = params.unnamed_parameters.value(1);
-    opts.output_dtype = params.named_parameters.value("output-dtype").toString();
-    opts.output_format = params.named_parameters.value("output-format").toString();
+    opts.output_dtype = params.named_parameters.value("output_dtype").toString();
+    opts.output_format = params.named_parameters.value("output_format").toString();
 
     if (params.named_parameters.contains("allow-subset"))
         opts.check_input_file_size=false;
@@ -55,6 +55,13 @@ int main(int argc, char* argv[])
     if (params.named_parameters.contains("dtype")) {
         opts.input_dtype = params.named_parameters.value("dtype").toString();
         opts.output_dtype = params.named_parameters.value("dtype").toString();
+    }
+
+    if (params.named_parameters.contains("input_num_header_rows")) {
+        opts.input_num_header_rows = params.named_parameters["input_num_header_rows"].toInt();
+    }
+    if (params.named_parameters.contains("input_num_header_cols")) {
+        opts.input_num_header_cols = params.named_parameters["input_num_header_cols"].toInt();
     }
 
     if (opts.input_format.isEmpty()) {
@@ -93,6 +100,8 @@ QString get_default_format(QString path)
     QString suf = get_suffix(path);
     if (suf == "mda")
         return "mda";
+    else if (suf == "csv")
+        return "csv";
     else
         return "raw";
 }
@@ -103,7 +112,8 @@ void print_usage()
     printf("mdaconvert input.mda\n");
     printf("mdaconvert input.dat output.mda --dtype=uint16 --dims=32x100x44\n");
     printf("mdaconvert input.mda output.dat\n");
-    printf("mdaconvert input.file output.file --input-format=dat --input-dtype=float64 --output-format=mda --output-dtype=float32\n");
+    printf("mdaconvert input.file output.file --input_format=dat --input_dtype=float64 --output_format=mda --output_dtype=float32\n");
+    printf("mdaconvert input.csv output.mda --input_num_header_rows=1 --input_num_header_cols=0\n");
 }
 
 #define MDAIO_MAX_DIMS 50

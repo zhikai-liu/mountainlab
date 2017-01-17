@@ -40,7 +40,7 @@ QString ClusterMetricsPlugin::description()
     return "";
 }
 
-void compute_basic_metrics(MVContext* mv_context);
+void compute_basic_metrics(MVAbstractContext* mv_context);
 void ClusterMetricsPlugin::initialize(MVMainWindow* mw)
 {
     mw->registerViewFactory(new ClusterMetricsFactory(mw));
@@ -68,7 +68,7 @@ QString ClusterMetricsFactory::title() const
     return tr("Cluster Metrics");
 }
 
-MVAbstractView* ClusterMetricsFactory::createView(MVContext* context)
+MVAbstractView* ClusterMetricsFactory::createView(MVAbstractContext* context)
 {
     ClusterMetricsView* X = new ClusterMetricsView(context);
     return X;
@@ -94,19 +94,21 @@ QString ClusterPairMetricsFactory::title() const
     return tr("Cluster Metrics");
 }
 
-MVAbstractView* ClusterPairMetricsFactory::createView(MVContext* context)
+MVAbstractView* ClusterPairMetricsFactory::createView(MVAbstractContext* context)
 {
     ClusterPairMetricsView* X = new ClusterPairMetricsView(context);
     return X;
 }
 
-void compute_basic_metrics(MVContext* mv_context)
+void compute_basic_metrics(MVAbstractContext* mv_context)
 {
+    MVContext* c = qobject_cast<MVContext*>(mv_context);
+    Q_ASSERT(c);
     basic_metrics_calculator* thread = new basic_metrics_calculator;
-    thread->timeseries = mv_context->currentTimeseries().makePath();
-    thread->firings = mv_context->firings().makePath();
-    thread->samplerate = mv_context->sampleRate();
-    thread->mv_context = mv_context;
+    thread->timeseries = c->currentTimeseries().makePath();
+    thread->firings = c->firings().makePath();
+    thread->samplerate = c->sampleRate();
+    thread->mv_context = c;
     QObject::connect(thread, SIGNAL(finished()), thread, SLOT(slot_on_finished()));
     thread->start();
 }

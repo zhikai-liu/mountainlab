@@ -24,7 +24,7 @@ class ClusterDetailView : public MVAbstractView {
 public:
     friend class ClusterDetailViewPrivate;
     friend class ClusterView;
-    ClusterDetailView(MVContext* context);
+    ClusterDetailView(MVAbstractContext* context);
     virtual ~ClusterDetailView();
 
     void prepareCalculation() Q_DECL_OVERRIDE;

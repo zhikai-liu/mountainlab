@@ -17,14 +17,14 @@ class CurationProgramView : public MVAbstractView {
     Q_OBJECT
 public:
     friend class CurationProgramViewPrivate;
-    CurationProgramView(MVContext* mvcontext);
+    CurationProgramView(MVAbstractContext* mvcontext);
     virtual ~CurationProgramView();
 
     void prepareCalculation() Q_DECL_OVERRIDE;
     void runCalculation() Q_DECL_OVERRIDE;
     void onCalculationFinished() Q_DECL_OVERRIDE;
 
-    static QString applyCurationProgram(MVContext* mv_context);
+    static QString applyCurationProgram(MVAbstractContext* mv_context);
 
 protected:
 private slots:

@@ -67,7 +67,7 @@ public:
     static double get_disksize_for_firing_rate(double firing_rate);
 };
 
-MVTemplatesView2::MVTemplatesView2(MVContext* mvcontext)
+MVTemplatesView2::MVTemplatesView2(MVAbstractContext* mvcontext)
     : MVAbstractView(mvcontext)
 {
     d = new MVTemplatesView2Private;
@@ -88,15 +88,18 @@ MVTemplatesView2::MVTemplatesView2(MVContext* mvcontext)
     ActionFactory::addToToolbar(ActionFactory::ActionType::ZoomInVertical, this, SLOT(slot_vertical_zoom_in()));
     ActionFactory::addToToolbar(ActionFactory::ActionType::ZoomOutVertical, this, SLOT(slot_vertical_zoom_out()));
 
-    this->recalculateOn(mvcontext, SIGNAL(firingsChanged()), false);
-    this->recalculateOn(mvcontext, SIGNAL(currentTimeseriesChanged()));
+    MVContext* c = qobject_cast<MVContext*>(mvcontext);
+    Q_ASSERT(c);
+
+    this->recalculateOn(c, SIGNAL(firingsChanged()), false);
+    this->recalculateOn(c, SIGNAL(currentTimeseriesChanged()));
     this->recalculateOnOptionChanged("clip_size");
 
-    QObject::connect(mvcontext, SIGNAL(clusterMergeChanged()), this, SLOT(slot_update_highlighting()));
-    QObject::connect(mvcontext, SIGNAL(currentClusterChanged()), this, SLOT(slot_update_highlighting()));
-    QObject::connect(mvcontext, SIGNAL(selectedClustersChanged()), this, SLOT(slot_update_highlighting()));
-    connect(mvcontext, SIGNAL(clusterVisibilityChanged()), this, SLOT(slot_update_panels()));
-    connect(mvcontext, SIGNAL(viewMergedChanged()), this, SLOT(slot_update_panels()));
+    QObject::connect(c, SIGNAL(clusterMergeChanged()), this, SLOT(slot_update_highlighting()));
+    QObject::connect(c, SIGNAL(currentClusterChanged()), this, SLOT(slot_update_highlighting()));
+    QObject::connect(c, SIGNAL(selectedClustersChanged()), this, SLOT(slot_update_highlighting()));
+    connect(c, SIGNAL(clusterVisibilityChanged()), this, SLOT(slot_update_panels()));
+    connect(c, SIGNAL(viewMergedChanged()), this, SLOT(slot_update_panels()));
 
     connect(d->m_panel_widget, SIGNAL(signalPanelClicked(int, Qt::KeyboardModifiers)), this, SLOT(slot_panel_clicked(int, Qt::KeyboardModifiers)));
 
@@ -123,10 +126,14 @@ void MVTemplatesView2::prepareCalculation()
     if (!d->m_calculator.loaded_from_static_output) {
         d->compute_total_time();
     }
-    d->m_calculator.mlproxy_url = mvContext()->mlProxyUrl();
-    d->m_calculator.timeseries = mvContext()->currentTimeseries();
-    d->m_calculator.firings = mvContext()->firings();
-    d->m_calculator.clip_size = mvContext()->option("clip_size", 100).toInt();
+
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    d->m_calculator.mlproxy_url = c->mlProxyUrl();
+    d->m_calculator.timeseries = c->currentTimeseries();
+    d->m_calculator.firings = c->firings();
+    d->m_calculator.clip_size = c->option("clip_size", 100).toInt();
     update();
 }
 
@@ -162,6 +169,9 @@ void MVTemplatesView2::keyPressEvent(QKeyEvent* evt)
 
 void MVTemplatesView2::prepareMimeData(QMimeData& mimeData, const QPoint& pos)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     /*
     int view_index = d->find_view_index_at(pos);
     if (view_index >= 0) {
@@ -174,7 +184,7 @@ void MVTemplatesView2::prepareMimeData(QMimeData& mimeData, const QPoint& pos)
 
     QByteArray ba;
     QDataStream ds(&ba, QIODevice::WriteOnly);
-    ds << mvContext()->selectedClusters();
+    ds << c->selectedClusters();
     mimeData.setData("application/x-msv-clusters", ba); // selected cluster data
 
     MVAbstractView::prepareMimeData(mimeData, pos); // call base class implementation
@@ -187,8 +197,11 @@ void MVTemplatesView2::slot_update_panels()
 
 void MVTemplatesView2::slot_update_highlighting()
 {
-    int current_k = mvContext()->currentCluster();
-    QSet<int> selected_ks = mvContext()->selectedClusters().toSet();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    int current_k = c->currentCluster();
+    QSet<int> selected_ks = c->selectedClusters().toSet();
     for (int i = 0; i < d->m_panels.count(); i++) {
         int indx = d->m_panels[i]->property("cluster_data_index").toInt();
         int k0 = d->m_cluster_data.value(indx).k;
@@ -203,13 +216,16 @@ void MVTemplatesView2::slot_update_highlighting()
 
 void MVTemplatesView2::slot_panel_clicked(int index, Qt::KeyboardModifiers modifiers)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     if (modifiers & Qt::ShiftModifier) {
         int i1 = d->m_panel_widget->currentPanelIndex();
         int i2 = index;
         int j1 = qMin(i1, i2);
         int j2 = qMax(i1, i2);
         if ((j1 >= 0) && (j2 >= 0)) {
-            QSet<int> set = mvContext()->selectedClusters().toSet();
+            QSet<int> set = c->selectedClusters().toSet();
             for (int j = j1; j <= j2; j++) {
                 MVTemplatesView2Panel* panel = d->m_panels.value(j);
                 if (panel) {
@@ -219,7 +235,7 @@ void MVTemplatesView2::slot_panel_clicked(int index, Qt::KeyboardModifiers modif
                         set.insert(k);
                 }
             }
-            mvContext()->setSelectedClusters(set.toList());
+            c->setSelectedClusters(set.toList());
         }
     }
     else {
@@ -227,7 +243,7 @@ void MVTemplatesView2::slot_panel_clicked(int index, Qt::KeyboardModifiers modif
         int indx = panel->property("cluster_data_index").toInt();
         ClusterData2 CD = d->m_cluster_data.value(indx);
         if (CD.k > 0) {
-            mvContext()->clickCluster(CD.k, modifiers);
+            c->clickCluster(CD.k, modifiers);
         }
     }
 }
@@ -357,7 +373,9 @@ void MVTemplatesView2Calculator::compute()
 
 void MVTemplatesView2Private::compute_total_time()
 {
-    m_total_time_sec = q->mvContext()->currentTimeseries().N2() / q->mvContext()->sampleRate();
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+    m_total_time_sec = c->currentTimeseries().N2() / c->sampleRate();
 }
 
 double MVTemplatesView2Private::get_disksize_for_firing_rate(double firing_rate)
@@ -367,13 +385,16 @@ double MVTemplatesView2Private::get_disksize_for_firing_rate(double firing_rate)
 
 void MVTemplatesView2Private::update_panels()
 {
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
     m_panel_widget->clearPanels(true);
     m_panels.clear();
     QList<QColor> channel_colors;
     {
         int M = m_cluster_data.value(0).template0.N1();
         for (int m = 0; m < M; m++) {
-            channel_colors << q->mvContext()->channelColor(m);
+            channel_colors << c->channelColor(m);
         }
     }
     m_max_absval = 0;
@@ -383,16 +404,16 @@ void MVTemplatesView2Private::update_panels()
 
     for (int i = 0; i < m_cluster_data.count(); i++) {
         ClusterData2 CD = m_cluster_data[i];
-        if (q->mvContext()->clusterIsVisible(CD.k)) {
+        if (c->clusterIsVisible(CD.k)) {
             MVTemplatesView2Panel* panel = new MVTemplatesView2Panel;
-            panel->setElectrodeGeometry(q->mvContext()->electrodeGeometry());
+            panel->setElectrodeGeometry(c->electrodeGeometry());
             panel->setTemplate(CD.template0);
             panel->setChannelColors(channel_colors);
-            panel->setColors(q->mvContext()->colors());
+            panel->setColors(c->colors());
             panel->setTitle(QString::number(CD.k));
             panel->setProperty("cluster_data_index", i);
-            if (q->mvContext()->sampleRate()) {
-                double total_time_sec = q->mvContext()->currentTimeseries().N2() / q->mvContext()->sampleRate();
+            if (c->sampleRate()) {
+                double total_time_sec = c->currentTimeseries().N2() / c->sampleRate();
                 if (total_time_sec) {
                     double firing_rate = CD.num_events / total_time_sec;
                     panel->setFiringRateDiskDiameter(get_disksize_for_firing_rate(firing_rate));
@@ -441,7 +462,7 @@ QString MVTemplatesView2Factory::title() const
     return tr("Templates");
 }
 
-MVAbstractView* MVTemplatesView2Factory::createView(MVContext* context)
+MVAbstractView* MVTemplatesView2Factory::createView(MVAbstractContext* context)
 {
     MVTemplatesView2* X = new MVTemplatesView2(context);
     return X;

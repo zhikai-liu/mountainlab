@@ -12,7 +12,7 @@
 #include <QTabWidget>
 #include "clustermerge.h"
 #include "mvutils.h"
-#include "mvcontext.h"
+#include "mvabstractcontext.h"
 #include "mvabstractcontrol.h"
 #include "mvabstractview.h"
 #include "mvabstractplugin.h"
@@ -34,11 +34,11 @@ public:
     };
 
     friend class MVMainWindowPrivate;
-    MVMainWindow(MVContext* context, QWidget* parent = 0);
+    MVMainWindow(MVAbstractContext* context, QWidget* parent = 0);
     virtual ~MVMainWindow();
 
     //The context
-    MVContext* mvContext() const;
+    MVAbstractContext* mvContext() const;
 
     //Plugins
     void loadPlugin(MVAbstractPlugin* P);

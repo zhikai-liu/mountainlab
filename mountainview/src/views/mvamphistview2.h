@@ -9,7 +9,7 @@ class MVAmpHistView2 : public MVHistogramGrid {
     Q_OBJECT
 public:
     friend class MVAmpHistView2Private;
-    MVAmpHistView2(MVContext* context);
+    MVAmpHistView2(MVAbstractContext* context);
     virtual ~MVAmpHistView2();
 
     void prepareCalculation() Q_DECL_OVERRIDE;
@@ -37,7 +37,7 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
-    MVAbstractView* createView(MVContext* context) Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
 private slots:
     void slot_amplitude_histogram_activated();
 };

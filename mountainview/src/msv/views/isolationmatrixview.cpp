@@ -179,11 +179,15 @@ void IsolationMatrixView::prepareCalculation()
 {
     if (!mvContext())
         return;
+
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     d->m_calculator.clip_size = 50;
     d->m_calculator.add_noise_level = 0.25;
-    d->m_calculator.timeseries = mvContext()->currentTimeseries();
-    d->m_calculator.firings = mvContext()->firings();
-    d->m_calculator.cluster_numbers = mvContext()->selectedClusters();
+    d->m_calculator.timeseries = c->currentTimeseries();
+    d->m_calculator.firings = c->firings();
+    d->m_calculator.cluster_numbers = c->selectedClusters();
 }
 
 void IsolationMatrixView::runCalculation()
@@ -265,18 +269,25 @@ void IsolationMatrixView::slot_matrix_view_current_element_changed()
     MatrixView* MV = qobject_cast<MatrixView*>(sender());
     if (!MV)
         return;
+
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     QPoint a = MV->currentElement();
     if ((a.x() >= 0) && (a.y() >= 0)) {
-        mvContext()->clickCluster(a.x() + 1, Qt::NoModifier);
+        c->clickCluster(a.x() + 1, Qt::NoModifier);
     }
     else {
-        mvContext()->setCurrentCluster(-1);
+        c->setCurrentCluster(-1);
     }
 }
 
 void IsolationMatrixView::slot_update_current_elements_based_on_context()
 {
-    int k1 = mvContext()->currentCluster();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    int k1 = c->currentCluster();
     if (k1 <= 0) {
         foreach (MatrixView* MV, d->m_all_matrix_views) {
             MV->setCurrentElement(QPoint(-1, -1));

@@ -18,7 +18,7 @@ class MVTemplatesView3 : public MVGridView {
     Q_OBJECT
 public:
     friend class MVTemplatesView3Private;
-    MVTemplatesView3(MVContext* mvcontext);
+    MVTemplatesView3(MVAbstractContext* mvcontext);
     virtual ~MVTemplatesView3();
 
     void prepareCalculation() Q_DECL_OVERRIDE;
@@ -49,7 +49,7 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
-    MVAbstractView* createView(MVContext* context) Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
 private slots:
     //void openClipsForTemplate();
 };

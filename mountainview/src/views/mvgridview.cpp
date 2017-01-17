@@ -6,6 +6,7 @@
 
 #include "mvgridview.h"
 #include "mvgridviewpropertiesdialog.h"
+#include "mvutils.h"
 
 #include <QHBoxLayout>
 #include <QScrollArea>
@@ -55,7 +56,7 @@ public:
     void get_num_rows_cols_and_height_for_preferred_width(int& num_rows, int& num_cols, int& height, double preferred_width);
 };
 
-MVGridView::MVGridView(MVContext* context)
+MVGridView::MVGridView(MVAbstractContext* context)
     : MVAbstractView(context)
 {
     d = new MVGridViewPrivate;

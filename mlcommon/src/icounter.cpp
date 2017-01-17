@@ -163,8 +163,9 @@ QStringList CounterManager::availableGroups() const
  * \param name
  * \param parent
  */
-ICounterBase::ICounterBase(const QString& name, QObject *parent)
-    : QObject(parent), m_name(name)
+ICounterBase::ICounterBase(const QString& name, QObject* parent)
+    : QObject(parent)
+    , m_name(name)
 {
 }
 
@@ -182,8 +183,10 @@ QString ICounterBase::name() const
  * \param name
  * \param parent
  */
-CounterProxy::CounterProxy(const QString &name, QObject *parent)
-    : ICounterBase(name, parent) {}
+CounterProxy::CounterProxy(const QString& name, QObject* parent)
+    : ICounterBase(name, parent)
+{
+}
 
 /*!
  * \brief CounterProxy::CounterProxy
@@ -191,8 +194,9 @@ CounterProxy::CounterProxy(const QString &name, QObject *parent)
  * \param c
  * \param parent
  */
-CounterProxy::CounterProxy(const QString &name, ICounterBase *c, QObject *parent)
-    : ICounterBase(name, parent) {
+CounterProxy::CounterProxy(const QString& name, ICounterBase* c, QObject* parent)
+    : ICounterBase(name, parent)
+{
     setBaseCounter(c);
 }
 
@@ -200,7 +204,8 @@ CounterProxy::CounterProxy(const QString &name, ICounterBase *c, QObject *parent
  * \brief CounterProxy::setBaseCounter
  * \param c
  */
-void CounterProxy::setBaseCounter(ICounterBase *c) {
+void CounterProxy::setBaseCounter(ICounterBase* c)
+{
     if (m_base) {
         disconnect(c, SIGNAL(valueChanged()), this, SLOT(updateValue()));
     }
@@ -214,13 +219,14 @@ void CounterProxy::setBaseCounter(ICounterBase *c) {
  * \brief CounterProxy::baseCounter
  * \return
  */
-ICounterBase *CounterProxy::baseCounter() const { return m_base; }
+ICounterBase* CounterProxy::baseCounter() const { return m_base; }
 
 /*!
  * \brief CounterProxy::type
  * \return
  */
-ICounterBase::Type CounterProxy::type() const {
+ICounterBase::Type CounterProxy::type() const
+{
     return baseCounter() ? baseCounter()->type() : Unknown;
 }
 
@@ -228,7 +234,8 @@ ICounterBase::Type CounterProxy::type() const {
  * \brief CounterProxy::label
  * \return
  */
-QString CounterProxy::label() const {
+QString CounterProxy::label() const
+{
     return baseCounter() ? baseCounter()->label() : QString();
 }
 
@@ -236,7 +243,8 @@ QString CounterProxy::label() const {
  * \brief CounterProxy::genericValue
  * \return
  */
-QVariant CounterProxy::genericValue() const {
+QVariant CounterProxy::genericValue() const
+{
     return baseCounter() ? baseCounter()->genericValue() : QVariant();
 }
 
@@ -245,7 +253,8 @@ QVariant CounterProxy::genericValue() const {
  * \param v
  * \return
  */
-QVariant CounterProxy::add(const QVariant &v) {
+QVariant CounterProxy::add(const QVariant& v)
+{
     if (!baseCounter())
         return 0;
     return baseCounter()->add(v);
@@ -254,6 +263,7 @@ QVariant CounterProxy::add(const QVariant &v) {
 /*!
  * \brief CounterProxy::updateValue
  */
-void CounterProxy::updateValue() {
+void CounterProxy::updateValue()
+{
     emit valueChanged();
 }

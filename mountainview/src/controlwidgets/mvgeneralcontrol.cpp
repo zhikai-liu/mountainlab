@@ -11,13 +11,14 @@
 #include <QLineEdit>
 #include <QMap>
 #include <QTimer>
+#include <mvcontext.h>
 
 class MVGeneralControlPrivate {
 public:
     MVGeneralControl* q;
 };
 
-MVGeneralControl::MVGeneralControl(MVContext* context, MVMainWindow* mw)
+MVGeneralControl::MVGeneralControl(MVAbstractContext* context, MVMainWindow* mw)
     : MVAbstractControl(context, mw)
 {
     d = new MVGeneralControlPrivate;
@@ -51,11 +52,17 @@ QString MVGeneralControl::title() const
 
 void MVGeneralControl::updateContext()
 {
-    mvContext()->setCurrentTimeseriesName(this->controlValue("timeseries").toString());
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    c->setCurrentTimeseriesName(this->controlValue("timeseries").toString());
 }
 
 void MVGeneralControl::updateControls()
 {
-    this->setChoices("timeseries", mvContext()->timeseriesNames());
-    this->setControlValue("timeseries", mvContext()->currentTimeseriesName());
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    this->setChoices("timeseries", c->timeseriesNames());
+    this->setControlValue("timeseries", c->currentTimeseriesName());
 }

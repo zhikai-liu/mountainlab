@@ -8,7 +8,7 @@
 #define SPIKESPYWIDGET_H
 
 #include "diskreadmda.h"
-#include "mvcontext.h"
+#include "mvabstractcontext.h"
 
 #include <QWidget>
 
@@ -22,7 +22,7 @@ class SpikeSpyWidget : public QWidget {
     Q_OBJECT
 public:
     friend class SpikeSpyWidgetPrivate;
-    SpikeSpyWidget(MVContext* context);
+    SpikeSpyWidget(MVAbstractContext* context);
     virtual ~SpikeSpyWidget();
     void addView(const SpikeSpyViewData& data);
 

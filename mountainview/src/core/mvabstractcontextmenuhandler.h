@@ -17,7 +17,7 @@
  * functionality.
  */
 
-#include "mvcontext.h"
+#include "mvabstractcontext.h"
 #include "mvmainwindow.h"
 
 class QAction;

@@ -14,7 +14,7 @@ class MVMergeControl : public MVAbstractControl {
     Q_OBJECT
 public:
     friend class MVMergeControlPrivate;
-    MVMergeControl(MVContext* context, MVMainWindow* mw);
+    MVMergeControl(MVAbstractContext* context, MVMainWindow* mw);
     virtual ~MVMergeControl();
 
     QString title() const Q_DECL_OVERRIDE;

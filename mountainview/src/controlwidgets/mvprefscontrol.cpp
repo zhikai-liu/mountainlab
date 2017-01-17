@@ -5,6 +5,7 @@
 #include <QLineEdit>
 #include <QMap>
 #include <QTimer>
+#include <mvcontext.h>
 #include "mlcommon.h"
 
 class MVPrefsControlPrivate {
@@ -12,7 +13,7 @@ public:
     MVPrefsControl* q;
 };
 
-MVPrefsControl::MVPrefsControl(MVContext* context, MVMainWindow* mw)
+MVPrefsControl::MVPrefsControl(MVAbstractContext* context, MVMainWindow* mw)
     : MVAbstractControl(context, mw)
 {
     d = new MVPrefsControlPrivate;
@@ -108,31 +109,37 @@ QString MVPrefsControl::title() const
 
 void MVPrefsControl::updateContext()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     QString ts4ss = this->controlValue("timeseries_for_spikespray").toString();
     if (ts4ss == "Default timeseries")
         ts4ss = "";
-    mvContext()->setVisibleChannels(MLUtil::stringListToIntList(this->controlValue("visible_channels").toString().split(",", QString::SkipEmptyParts)));
-    mvContext()->setOption("timeseries_for_spikespray", ts4ss);
-    mvContext()->setOption("clip_size", this->controlValue("clip_size").toInt());
-    mvContext()->setOption("cc_max_dt_msec", this->controlValue("cc_max_dt_msec").toDouble());
-    mvContext()->setOption("cc_log_time_constant_msec", this->controlValue("cc_log_time_constant_msec").toDouble());
-    mvContext()->setOption("cc_bin_size_msec", this->controlValue("cc_bin_size_msec").toDouble());
-    mvContext()->setOption("cc_max_est_data_size", this->controlValue("cc_max_est_data_size").toDouble());
-    mvContext()->setOption("amp_thresh_display", this->controlValue("amp_thresh_display").toDouble());
-    mvContext()->setOption("discrim_hist_method", this->controlValue("discrim_hist_method").toString());
+    c->setVisibleChannels(MLUtil::stringListToIntList(this->controlValue("visible_channels").toString().split(",", QString::SkipEmptyParts)));
+    c->setOption("timeseries_for_spikespray", ts4ss);
+    c->setOption("clip_size", this->controlValue("clip_size").toInt());
+    c->setOption("cc_max_dt_msec", this->controlValue("cc_max_dt_msec").toDouble());
+    c->setOption("cc_log_time_constant_msec", this->controlValue("cc_log_time_constant_msec").toDouble());
+    c->setOption("cc_bin_size_msec", this->controlValue("cc_bin_size_msec").toDouble());
+    c->setOption("cc_max_est_data_size", this->controlValue("cc_max_est_data_size").toDouble());
+    c->setOption("amp_thresh_display", this->controlValue("amp_thresh_display").toDouble());
+    c->setOption("discrim_hist_method", this->controlValue("discrim_hist_method").toString());
 }
 
 void MVPrefsControl::updateControls()
 {
-    QStringList choices = mvContext()->timeseriesNames();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    QStringList choices = c->timeseriesNames();
     choices.insert(0, "Default timeseries");
-    this->setControlValue("visible_channels", MLUtil::intListToStringList(mvContext()->visibleChannels()).join(","));
+    this->setControlValue("visible_channels", MLUtil::intListToStringList(c->visibleChannels()).join(","));
     this->setChoices("timeseries_for_spikespray", choices);
-    this->setControlValue("clip_size", mvContext()->option("clip_size").toInt());
-    this->setControlValue("cc_max_dt_msec", mvContext()->option("cc_max_dt_msec").toDouble());
-    this->setControlValue("cc_log_time_constant_msec", mvContext()->option("cc_log_time_constant_msec").toDouble());
-    this->setControlValue("cc_bin_size_msec", mvContext()->option("cc_bin_size_msec").toDouble());
-    this->setControlValue("cc_max_est_data_size", mvContext()->option("cc_max_est_data_size").toDouble());
-    this->setControlValue("amp_thresh_display", mvContext()->option("amp_thresh_display").toDouble());
-    this->setControlValue("discrim_hist_method", mvContext()->option("discrim_hist_method"));
+    this->setControlValue("clip_size", c->option("clip_size").toInt());
+    this->setControlValue("cc_max_dt_msec", c->option("cc_max_dt_msec").toDouble());
+    this->setControlValue("cc_log_time_constant_msec", c->option("cc_log_time_constant_msec").toDouble());
+    this->setControlValue("cc_bin_size_msec", c->option("cc_bin_size_msec").toDouble());
+    this->setControlValue("cc_max_est_data_size", c->option("cc_max_est_data_size").toDouble());
+    this->setControlValue("amp_thresh_display", c->option("amp_thresh_display").toDouble());
+    this->setControlValue("discrim_hist_method", c->option("discrim_hist_method"));
 }

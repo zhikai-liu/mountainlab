@@ -49,13 +49,13 @@ MVStatusBar::MVStatusBar()
     connect(d->m_tp_agent->model(), SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(slot_update_tasks()));
     connect(d->m_tp_agent->model(), SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(slot_update_tasks()));
     ICounterManager* manager = ObjectRegistry::getObject<ICounterManager>();
-    SimpleAggregateCounter *meminuse = new SimpleAggregateCounter("bytes_in_use", SimpleAggregateCounter::Subtract, manager->counter("allocated_bytes"), manager->counter("freed_bytes"));
+    SimpleAggregateCounter* meminuse = new SimpleAggregateCounter("bytes_in_use", SimpleAggregateCounter::Subtract, manager->counter("allocated_bytes"), manager->counter("freed_bytes"));
     meminuse->setParent(this);
     ObjectRegistry::addObject(meminuse);
     if (manager) {
-        QStringList counters = { "bytes_downloaded", "bytes_read", "bytes_in_use"};
-        foreach(const QString& cntr, counters) {
-            ICounterBase *counter = manager->counter(cntr);
+        QStringList counters = { "bytes_downloaded", "bytes_read", "bytes_in_use" };
+        foreach (const QString& cntr, counters) {
+            ICounterBase* counter = manager->counter(cntr);
             if (counter)
                 connect(counter, SIGNAL(valueChanged()), this, SLOT(slot_update_quantities()));
             else

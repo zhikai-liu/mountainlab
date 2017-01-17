@@ -14,7 +14,7 @@ class MVGeneralControl : public MVAbstractControl {
     Q_OBJECT
 public:
     friend class MVGeneralControlPrivate;
-    MVGeneralControl(MVContext* context, MVMainWindow* mw);
+    MVGeneralControl(MVAbstractContext* context, MVMainWindow* mw);
     virtual ~MVGeneralControl();
 
     QString title() const Q_DECL_OVERRIDE;

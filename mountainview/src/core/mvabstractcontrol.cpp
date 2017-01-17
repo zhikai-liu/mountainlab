@@ -14,7 +14,7 @@
 class MVAbstractControlPrivate {
 public:
     MVAbstractControl* q;
-    MVContext* m_context;
+    MVAbstractContext* m_context;
     MVMainWindow* m_main_window;
 
     QMap<QString, QLineEdit*> m_string_controls;
@@ -27,7 +27,7 @@ public:
     QMap<QString, QWidget*> all_control_widgets();
 };
 
-MVAbstractControl::MVAbstractControl(MVContext* context, MVMainWindow* mw)
+MVAbstractControl::MVAbstractControl(MVAbstractContext* context, MVMainWindow* mw)
 {
     d = new MVAbstractControlPrivate;
     d->q = this;
@@ -40,7 +40,7 @@ MVAbstractControl::~MVAbstractControl()
     delete d;
 }
 
-MVContext* MVAbstractControl::mvContext()
+MVAbstractContext* MVAbstractControl::mvContext()
 {
     return d->m_context;
 }

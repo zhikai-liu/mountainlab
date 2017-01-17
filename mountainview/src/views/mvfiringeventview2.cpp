@@ -16,6 +16,7 @@
 #include "mvclusterlegend.h"
 #include "paintlayerstack.h"
 #include "mvamphistview3.h" //for compute_amplitudes()
+#include "mvcontext.h"
 
 /// TODO: (MEDIUM) control brightness in firing event view
 
@@ -91,16 +92,19 @@ public:
     double ypix2val(double ypix);
 };
 
-MVFiringEventView2::MVFiringEventView2(MVContext* context)
+MVFiringEventView2::MVFiringEventView2(MVAbstractContext* context)
     : MVTimeSeriesViewBase(context)
 {
     d = new MVFiringEventView2Private;
     d->q = this;
 
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
     this->setMouseTracking(true);
 
     d->m_legend = new MVClusterLegend;
-    d->m_legend->setClusterColors(context->clusterColors());
+    d->m_legend->setClusterColors(c->clusterColors());
 
     d->m_content_layer = new FiringEventContentLayer;
 
@@ -122,10 +126,10 @@ MVFiringEventView2::MVFiringEventView2(MVContext* context)
     p.colors.background_color = Qt::black;
     this->setPrefs(p);
 
-    connect(context, SIGNAL(currentTimeRangeChanged()), SLOT(slot_update_image()));
+    connect(c, SIGNAL(currentTimeRangeChanged()), SLOT(slot_update_image()));
 
-    this->recalculateOn(context, SIGNAL(clusterMergeChanged()));
-    this->recalculateOn(context, SIGNAL(firingsChanged()), false);
+    this->recalculateOn(c, SIGNAL(clusterMergeChanged()));
+    this->recalculateOn(c, SIGNAL(firingsChanged()), false);
     this->recalculate();
 }
 
@@ -137,10 +141,13 @@ MVFiringEventView2::~MVFiringEventView2()
 
 void MVFiringEventView2::prepareCalculation()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     d->m_calculator.labels_to_use = d->m_labels_to_use;
-    d->m_calculator.mlproxy_url = mvContext()->mlProxyUrl();
-    d->m_calculator.timeseries = mvContext()->currentTimeseries().makePath();
-    d->m_calculator.firings = mvContext()->firings().makePath();
+    d->m_calculator.mlproxy_url = c->mlProxyUrl();
+    d->m_calculator.timeseries = c->currentTimeseries().makePath();
+    d->m_calculator.firings = c->firings().makePath();
 }
 
 void MVFiringEventView2::runCalculation()
@@ -154,14 +161,17 @@ void MVFiringEventView2::onCalculationFinished()
     d->m_times0 = d->m_calculator.times;
     d->m_amplitudes0 = d->m_calculator.amplitudes;
 
-    if (mvContext()->viewMerged()) {
-        d->m_labels0 = this->mvContext()->clusterMerge().mapLabels(d->m_labels0);
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    if (c->viewMerged()) {
+        d->m_labels0 = c->clusterMerge().mapLabels(d->m_labels0);
     }
 
     {
         QSet<int> X;
         foreach (int k, d->m_labels_to_use) {
-            X.insert(this->mvContext()->clusterMerge().representativeLabel(k));
+            X.insert(c->clusterMerge().representativeLabel(k));
         }
         QList<int> list = X.toList();
         qSort(list);
@@ -241,15 +251,18 @@ void MVFiringEventView2::resizeEvent(QResizeEvent* evt)
 
 void MVFiringEventView2::slot_update_image()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     d->m_content_layer->calculator->requestInterruption();
     d->m_content_layer->calculator->wait();
-    d->m_content_layer->calculator->cluster_colors = this->mvContext()->clusterColors();
+    d->m_content_layer->calculator->cluster_colors = c->clusterColors();
     d->m_content_layer->calculator->times = d->m_times0;
     d->m_content_layer->calculator->labels = d->m_labels0;
     d->m_content_layer->calculator->amplitudes = d->m_amplitudes0;
     d->m_content_layer->calculator->content_geometry = this->contentGeometry();
     d->m_content_layer->calculator->window_size = this->size();
-    d->m_content_layer->calculator->time_range = this->mvContext()->currentTimeRange();
+    d->m_content_layer->calculator->time_range = c->currentTimeRange();
     d->m_content_layer->calculator->amplitude_range = this->d->m_amplitude_range;
     d->m_content_layer->calculator->start();
 }
@@ -352,18 +365,21 @@ QString MVFiringEventsFactory::title() const
     return tr("Firing Events");
 }
 
-MVAbstractView* MVFiringEventsFactory::createView(MVContext* context)
+MVAbstractView* MVFiringEventsFactory::createView(MVAbstractContext* context)
 {
-    QList<int> ks = context->selectedClusters();
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    QList<int> ks = c->selectedClusters();
     if (ks.isEmpty())
-        ks = context->clusterVisibilityRule().subset.toList();
+        ks = c->clusterVisibilityRule().subset.toList();
     if (ks.isEmpty()) {
         QMessageBox::warning(0, "Unable to open firing events", "You must select at least one cluster.");
         return Q_NULLPTR;
     }
-    MVFiringEventView2* X = new MVFiringEventView2(context);
+    MVFiringEventView2* X = new MVFiringEventView2(c);
     X->setLabelsToUse(ks.toSet());
-    X->setNumTimepoints(context->currentTimeseries().N2());
+    X->setNumTimepoints(c->currentTimeseries().N2());
     return X;
 }
 

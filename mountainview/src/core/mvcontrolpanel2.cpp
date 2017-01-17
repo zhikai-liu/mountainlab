@@ -16,14 +16,15 @@ public:
     MVControlPanel2* q;
     QAccordion* m_accordion;
     QList<MVAbstractControl*> m_controls;
-    MVContext* m_context;
+    MVAbstractContext* m_context;
     MVMainWindow* m_main_window;
 };
 
-MVControlPanel2::MVControlPanel2(MVContext* context, MVMainWindow* mw)
+MVControlPanel2::MVControlPanel2(MVAbstractContext* context, MVMainWindow* mw)
 {
     d = new MVControlPanel2Private;
     d->q = this;
+
     d->m_context = context;
     d->m_main_window = mw;
 

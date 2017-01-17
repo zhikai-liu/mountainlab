@@ -24,7 +24,7 @@ class MVClusterWidget : public MVAbstractView {
     Q_OBJECT
 public:
     friend class MVClusterWidgetPrivate;
-    MVClusterWidget(MVContext* context);
+    MVClusterWidget(MVAbstractContext* context);
     virtual ~MVClusterWidget();
 
     void prepareCalculation() Q_DECL_OVERRIDE;
@@ -66,8 +66,8 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
-    MVAbstractView* createView(MVContext* context) Q_DECL_OVERRIDE;
-    bool isEnabled(MVContext* context) const Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
+    bool isEnabled(MVAbstractContext* context) const Q_DECL_OVERRIDE;
 };
 
 class MVChannelFeaturesFactory : public MVAbstractViewFactory {
@@ -77,8 +77,8 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
-    MVAbstractView* createView(MVContext* context) Q_DECL_OVERRIDE;
-    bool isEnabled(MVContext* context) const Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
+    bool isEnabled(MVAbstractContext* context) const Q_DECL_OVERRIDE;
 };
 
 #endif // MVCLUSTERWIDGET_H

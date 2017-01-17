@@ -7,9 +7,9 @@
 #define MVCLIPSVIEW_H
 
 #include "mvutils.h"
-#include "mvcontext.h"
 
 #include <QWidget>
+#include <mvabstractcontext.h>
 
 /** \class MVClipsView
  *  \brief View a set of clips. Usually each clip contains a single spike.
@@ -20,7 +20,7 @@ class MVClipsView : public QWidget {
     Q_OBJECT
 public:
     friend class MVClipsViewPrivate;
-    MVClipsView(MVContext* context);
+    MVClipsView(MVAbstractContext* context);
     virtual ~MVClipsView();
 
     void setClips(const DiskReadMda& clips);

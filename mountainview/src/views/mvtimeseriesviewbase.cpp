@@ -13,6 +13,7 @@
 #include <QImageWriter>
 #include <QMouseEvent>
 #include <QPainter>
+#include <mvcontext.h>
 
 struct TickStruct {
     TickStruct(QString str0, long min_pixel_spacing_between_ticks0, double tick_height0, double timepoint_interval0)
@@ -163,7 +164,7 @@ public:
     void update_cursor();
 };
 
-MVTimeSeriesViewBase::MVTimeSeriesViewBase(MVContext* context)
+MVTimeSeriesViewBase::MVTimeSeriesViewBase(MVAbstractContext* context)
     : MVAbstractView(context)
 {
     d = new MVTimeSeriesViewBasePrivate;
@@ -199,7 +200,10 @@ MVTimeSeriesViewBase::~MVTimeSeriesViewBase()
 
 void MVTimeSeriesViewBase::prepareCalculation()
 {
-    d->m_calculator.firings = mvContext()->firings();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    d->m_calculator.firings = c->firings();
     d->m_calculator.labels_to_use = d->m_labels_to_view;
 }
 
@@ -267,12 +271,18 @@ void MVTimeSeriesViewBase::resizeEvent(QResizeEvent* evt)
 
 void MVTimeSeriesViewBase::setTimeRange(MVRange range)
 {
-    mvContext()->setCurrentTimeRange(range);
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    c->setCurrentTimeRange(range);
 }
 
 MVRange MVTimeSeriesViewBase::timeRange()
 {
-    return mvContext()->currentTimeRange();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    return c->currentTimeRange();
 }
 
 void MVTimeSeriesViewBase::setSelectedTimeRange(MVRange range)
@@ -343,11 +353,14 @@ void MVTimeSeriesViewBase::mousePressEvent(QMouseEvent* evt)
 
 void MVTimeSeriesViewBase::mouseReleaseEvent(QMouseEvent* evt)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     d->m_left_click_anchor_pix = QPointF(-1, -1);
     if (evt->button() == Qt::LeftButton) {
         if (!d->m_left_click_dragging) {
             double t0 = d->xpix2time(evt->pos().x());
-            mvContext()->setCurrentTimepoint(t0);
+            c->setCurrentTimepoint(t0);
         }
         d->m_left_click_dragging = false;
     }
@@ -377,13 +390,16 @@ void MVTimeSeriesViewBase::mouseMoveEvent(QMouseEvent* evt)
 
 void MVTimeSeriesViewBase::wheelEvent(QWheelEvent* evt)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     int delta = evt->delta();
     if (!(evt->modifiers() & Qt::ControlModifier)) {
         if (delta < 0) {
-            d->zoom_out(mvContext()->currentTimepoint());
+            d->zoom_out(c->currentTimepoint());
         }
         else if (delta > 0) {
-            d->zoom_in(mvContext()->currentTimepoint());
+            d->zoom_in(c->currentTimepoint());
         }
     }
     else {
@@ -402,31 +418,34 @@ void MVTimeSeriesViewBase::wheelEvent(QWheelEvent* evt)
 
 void MVTimeSeriesViewBase::keyPressEvent(QKeyEvent* evt)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     if (evt->key() == Qt::Key_Left) {
         MVRange trange = this->timeRange();
         double range = trange.max - trange.min;
-        mvContext()->setCurrentTimepoint(mvContext()->currentTimepoint() - range / 10);
+        c->setCurrentTimepoint(c->currentTimepoint() - range / 10);
         d->scroll_to_current_timepoint();
     }
     else if (evt->key() == Qt::Key_Right) {
         MVRange trange = this->timeRange();
         double range = trange.max - trange.min;
-        mvContext()->setCurrentTimepoint(mvContext()->currentTimepoint() + range / 10);
+        c->setCurrentTimepoint(c->currentTimepoint() + range / 10);
         d->scroll_to_current_timepoint();
     }
     else if (evt->key() == Qt::Key_Home) {
-        mvContext()->setCurrentTimepoint(0);
+        c->setCurrentTimepoint(0);
         d->scroll_to_current_timepoint();
     }
     else if (evt->key() == Qt::Key_End) {
-        mvContext()->setCurrentTimepoint(d->m_num_timepoints - 1);
+        c->setCurrentTimepoint(d->m_num_timepoints - 1);
         d->scroll_to_current_timepoint();
     }
     else if (evt->key() == Qt::Key_Equal) {
-        d->zoom_in(mvContext()->currentTimepoint());
+        d->zoom_in(c->currentTimepoint());
     }
     else if (evt->key() == Qt::Key_Minus) {
-        d->zoom_out(mvContext()->currentTimepoint());
+        d->zoom_out(c->currentTimepoint());
     }
     else {
         QWidget::keyPressEvent(evt);
@@ -440,12 +459,18 @@ void MVTimeSeriesViewBase::slot_scroll_to_current_timepoint()
 
 void MVTimeSeriesViewBase::slot_zoom_in()
 {
-    d->zoom_in(mvContext()->currentTimepoint());
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    d->zoom_in(c->currentTimepoint());
 }
 
 void MVTimeSeriesViewBase::slot_zoom_out()
 {
-    d->zoom_out(mvContext()->currentTimepoint());
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    d->zoom_out(c->currentTimepoint());
 }
 
 struct MarkerRecord {
@@ -478,14 +503,17 @@ void TimeAxisLayer::paint(QPainter* painter)
 
 void TimeAxisLayer::paint_time_axis(QPainter* painter, double W, double H)
 {
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
     if (!d->m_prefs.show_time_axis)
         return;
 
-    double samplerate = q->mvContext()->sampleRate();
+    double samplerate = c->sampleRate();
     long min_pixel_spacing_between_ticks = 30;
 
-    double view_t1 = q->mvContext()->currentTimeRange().min;
-    double view_t2 = q->mvContext()->currentTimeRange().max;
+    double view_t1 = c->currentTimeRange().min;
+    double view_t2 = c->currentTimeRange().max;
 
     QColor axis_color = d->m_prefs.colors.axis_color;
 
@@ -531,8 +559,11 @@ void TimeAxisLayer::paint_time_axis_unit(QPainter* painter, double W, double H, 
 {
     Q_UNUSED(W)
 
-    double view_t1 = q->mvContext()->currentTimeRange().min;
-    double view_t2 = q->mvContext()->currentTimeRange().max;
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    double view_t1 = c->currentTimeRange().min;
+    double view_t2 = c->currentTimeRange().max;
 
     double pixel_interval = W / (view_t2 - view_t1) * TS.timepoint_interval;
 
@@ -589,8 +620,11 @@ void StatusLayer::paint_status_string(QPainter* painter, double W, double H, QSt
 
 double MVTimeSeriesViewBasePrivate::time2xpix(double t)
 {
-    double view_t1 = q->mvContext()->currentTimeRange().min;
-    double view_t2 = q->mvContext()->currentTimeRange().max;
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    double view_t1 = c->currentTimeRange().min;
+    double view_t2 = c->currentTimeRange().max;
 
     if (view_t2 <= view_t1)
         return 0;
@@ -602,8 +636,11 @@ double MVTimeSeriesViewBasePrivate::time2xpix(double t)
 
 double MVTimeSeriesViewBasePrivate::xpix2time(double xpix)
 {
-    double view_t1 = q->mvContext()->currentTimeRange().min;
-    double view_t2 = q->mvContext()->currentTimeRange().max;
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    double view_t1 = c->currentTimeRange().min;
+    double view_t2 = c->currentTimeRange().max;
 
     double xpct = 0;
     if (content_geometry().width()) {
@@ -638,7 +675,10 @@ void MVTimeSeriesViewBasePrivate::zoom_in(double about_time, double frac)
 
 void MVTimeSeriesViewBasePrivate::scroll_to_current_timepoint()
 {
-    double t = q->mvContext()->currentTimepoint();
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    double t = c->currentTimepoint();
     MVRange trange = q->timeRange();
     if ((trange.min < t) && (t < trange.max))
         return;
@@ -653,7 +693,10 @@ void MVTimeSeriesViewBasePrivate::scroll_to_current_timepoint()
 
 QString MVTimeSeriesViewBasePrivate::format_time(double tp)
 {
-    double samplerate = q->mvContext()->sampleRate();
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    double samplerate = c->sampleRate();
     double sec = tp / samplerate;
     long day = (long)floor(sec / (24 * 60 * 60));
     sec -= day * 24 * 60 * 60;
@@ -704,11 +747,15 @@ void mvtsvb_calculator::compute()
 
 void EventMarkerLayer::paint(QPainter* painter)
 {
+
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
     double W0 = windowSize().width();
     double H0 = windowSize().height();
 
-    double view_t1 = q->mvContext()->currentTimeRange().min;
-    double view_t2 = q->mvContext()->currentTimeRange().max;
+    double view_t1 = c->currentTimeRange().min;
+    double view_t2 = c->currentTimeRange().max;
 
     if (d->m_prefs.markers_visible) {
         QVector<double> times0;
@@ -842,11 +889,14 @@ void CursorLayer::paint_cursor(QPainter* painter, int W, int H)
     Q_UNUSED(W)
     Q_UNUSED(H)
 
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
     double mtop = d->m_prefs.mtop;
     double mbottom = d->m_prefs.mbottom;
 
     if (d->m_selected_t_range.min < 0) {
-        double x0 = d->time2xpix(q->mvContext()->currentTimepoint());
+        double x0 = d->time2xpix(c->currentTimepoint());
         QPointF p0(x0, mtop);
         QPointF p1(x0, H - mbottom);
 
@@ -897,14 +947,17 @@ void CursorLayer::paint_cursor(QPainter* painter, int W, int H)
 
 void StatusLayer::paint(QPainter* painter)
 {
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
     QString str;
     if (d->m_prefs.show_current_timepoint) {
-        double samplerate = q->mvContext()->sampleRate();
+        double samplerate = c->sampleRate();
         if (samplerate) {
-            str = QString("%1 (tp: %2)").arg(d->format_time(q->mvContext()->currentTimepoint())).arg((long)q->mvContext()->currentTimepoint());
+            str = QString("%1 (tp: %2)").arg(d->format_time(c->currentTimepoint())).arg((long)c->currentTimepoint());
         }
         else {
-            str = QString("Sample rate is null (tp: %2)").arg((long)q->mvContext()->currentTimepoint());
+            str = QString("Sample rate is null (tp: %2)").arg((long)c->currentTimepoint());
         }
     }
     paint_status_string(painter, windowSize().width(), windowSize().height(), str);

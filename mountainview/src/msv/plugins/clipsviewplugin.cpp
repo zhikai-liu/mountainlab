@@ -8,6 +8,7 @@
 
 #include <QAction>
 #include <mvclipswidget.h>
+#include <mvcontext.h>
 
 class ClipsViewPluginPrivate {
 public:
@@ -75,9 +76,11 @@ QString ClipsViewFactory::title() const
     return tr("Clips");
 }
 
-MVAbstractView* ClipsViewFactory::createView(MVContext* context)
+MVAbstractView* ClipsViewFactory::createView(MVAbstractContext* context)
 {
-    MVClipsWidget* X = new MVClipsWidget(context);
-    X->setLabelsToUse(context->selectedClusters());
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+    MVClipsWidget* X = new MVClipsWidget(c);
+    X->setLabelsToUse(c->selectedClusters());
     return X;
 }

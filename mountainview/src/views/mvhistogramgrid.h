@@ -11,6 +11,8 @@
 #include "histogramview.h"
 #include "mvgridview.h"
 
+#include <mvcontext.h>
+
 struct HorizontalScaleAxisData {
     bool use_it = false;
     QString label;
@@ -21,7 +23,7 @@ class MVHistogramGrid : public MVGridView {
     Q_OBJECT
 public:
     friend class MVHistogramGridPrivate;
-    MVHistogramGrid(MVContext* context);
+    MVHistogramGrid(MVAbstractContext* context);
     virtual ~MVHistogramGrid();
 
     void paintEvent(QPaintEvent* evt);

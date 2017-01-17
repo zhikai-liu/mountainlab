@@ -6,10 +6,10 @@
 #ifndef HISTOGRAMVIEW_H
 #define HISTOGRAMVIEW_H
 
-#include "mvcontext.h"
 #include "renderablewidget.h"
 
 #include <QWidget>
+#include <mvmisc.h>
 
 /** \class HistogramView
  *  \brief View of a histogram from an arbitrary data array

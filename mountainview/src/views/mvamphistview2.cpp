@@ -38,7 +38,7 @@ public:
     void set_views();
 };
 
-MVAmpHistView2::MVAmpHistView2(MVContext* context)
+MVAmpHistView2::MVAmpHistView2(MVAbstractContext* context)
     : MVHistogramGrid(context)
 {
     d = new MVAmpHistView2Private;
@@ -51,10 +51,13 @@ MVAmpHistView2::MVAmpHistView2(MVContext* context)
     ActionFactory::addToToolbar(ActionFactory::ActionType::PanLeft, this, SLOT(slot_pan_left()));
     ActionFactory::addToToolbar(ActionFactory::ActionType::PanRight, this, SLOT(slot_pan_right()));
 
-    this->recalculateOn(context, SIGNAL(firingsChanged()), false);
-    this->recalculateOn(context, SIGNAL(clusterMergeChanged()), false);
-    this->recalculateOn(context, SIGNAL(clusterVisibilityChanged()), false);
-    this->recalculateOn(context, SIGNAL(viewMergedChanged()), false);
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    this->recalculateOn(c, SIGNAL(firingsChanged()), false);
+    this->recalculateOn(c, SIGNAL(clusterMergeChanged()), false);
+    this->recalculateOn(c, SIGNAL(clusterVisibilityChanged()), false);
+    this->recalculateOn(c, SIGNAL(viewMergedChanged()), false);
     this->recalculateOnOptionChanged("amp_thresh_display", false);
 
     this->recalculate();
@@ -68,8 +71,11 @@ MVAmpHistView2::~MVAmpHistView2()
 
 void MVAmpHistView2::prepareCalculation()
 {
-    d->m_computer.mlproxy_url = mvContext()->mlProxyUrl();
-    d->m_computer.firings = mvContext()->firings();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    d->m_computer.mlproxy_url = c->mlProxyUrl();
+    d->m_computer.firings = c->firings();
 }
 
 void MVAmpHistView2::runCalculation()
@@ -219,15 +225,18 @@ void MVAmpHistView2Private::set_views()
 
     int num_bins = 200; //how to choose this?
 
-    double amp_thresh = q->mvContext()->option("amp_thresh_display", 0).toDouble();
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    double amp_thresh = c->option("amp_thresh_display", 0).toDouble();
 
     QList<HistogramView*> views;
     for (int ii = 0; ii < m_histograms.count(); ii++) {
         int k0 = m_histograms[ii].k;
-        if (q->mvContext()->clusterIsVisible(k0)) {
+        if (c->clusterIsVisible(k0)) {
             HistogramView* HV = new HistogramView;
             HV->setData(m_histograms[ii].data);
-            HV->setColors(q->mvContext()->colors());
+            HV->setColors(c->colors());
             //HV->autoSetBins(50);
             HV->setBinInfo(bin_min, bin_max, num_bins);
             HV->setDrawVerticalAxisAtZero(true);
@@ -266,7 +275,7 @@ QString MVAmplitudeHistogramsFactory::title() const
     return tr("Amplitudes");
 }
 
-MVAbstractView* MVAmplitudeHistogramsFactory::createView(MVContext* context)
+MVAbstractView* MVAmplitudeHistogramsFactory::createView(MVAbstractContext* context)
 {
     MVAmpHistView2* X = new MVAmpHistView2(context);
     return X;

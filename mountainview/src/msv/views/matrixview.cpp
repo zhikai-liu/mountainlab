@@ -1,6 +1,7 @@
 #include "matrixview.h"
 
 #include <QMouseEvent>
+#include <QPainter>
 #include <mvmisc.h>
 #include "mlcommon.h"
 

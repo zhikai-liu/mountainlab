@@ -12,7 +12,7 @@ QString MVAbstractViewFactory::toolTip() const { return QString(); }
 
 QString MVAbstractViewFactory::title() const { return name(); }
 
-bool MVAbstractViewFactory::isEnabled(MVContext* context) const
+bool MVAbstractViewFactory::isEnabled(MVAbstractContext* context) const
 {
     Q_UNUSED(context)
     return true;

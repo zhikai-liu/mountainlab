@@ -8,7 +8,7 @@ class MVPrefsControl : public MVAbstractControl {
     Q_OBJECT
 public:
     friend class MVPrefsControlPrivate;
-    MVPrefsControl(MVContext* context, MVMainWindow* mw);
+    MVPrefsControl(MVAbstractContext* context, MVMainWindow* mw);
     virtual ~MVPrefsControl();
 
     QString title() const Q_DECL_OVERRIDE;

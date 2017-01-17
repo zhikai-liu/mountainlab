@@ -25,7 +25,7 @@ public:
     QLineEdit* m_subset_line_edit;
 };
 
-MVClusterVisibilityControl::MVClusterVisibilityControl(MVContext* context, MVMainWindow* mw)
+MVClusterVisibilityControl::MVClusterVisibilityControl(MVAbstractContext* context, MVMainWindow* mw)
     : MVAbstractControl(context, mw)
 {
     d = new MVClusterVisibilityControlPrivate;
@@ -83,14 +83,17 @@ QSet<int> subset_str_to_set(const QString& txt)
 
 void MVClusterVisibilityControl::updateContext()
 {
-    ClusterVisibilityRule rule = mvContext()->clusterVisibilityRule();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    ClusterVisibilityRule rule = c->clusterVisibilityRule();
 
     rule.view_all_tagged = this->controlValue("all_tagged").toBool();
     rule.view_all_untagged = this->controlValue("all_untagged").toBool();
     rule.hide_rejected = this->controlValue("hide_rejected").toBool();
 
     rule.view_tags.clear();
-    QStringList tags = mvContext()->allClusterTags().toList();
+    QStringList tags = c->allClusterTags().toList();
     foreach (QString tag, tags) {
         if (this->controlValue("tag-" + tag).toBool()) {
             rule.view_tags << tag;
@@ -102,14 +105,17 @@ void MVClusterVisibilityControl::updateContext()
         rule.subset = subset_str_to_set(d->m_subset_line_edit->text());
     }
 
-    mvContext()->setClusterVisibilityRule(rule);
+    c->setClusterVisibilityRule(rule);
 }
 
 void MVClusterVisibilityControl::updateControls()
 {
-    ClusterVisibilityRule rule = mvContext()->clusterVisibilityRule();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
 
-    QStringList tags = mvContext()->allClusterTags().toList();
+    ClusterVisibilityRule rule = c->clusterVisibilityRule();
+
+    QStringList tags = c->allClusterTags().toList();
     qSort(tags);
 
     qDeleteAll(d->m_all_widgets);

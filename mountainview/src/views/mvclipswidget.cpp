@@ -14,6 +14,7 @@
 #include "mvtimeseriesview2.h"
 #include "mvmainwindow.h"
 #include <QMessageBox>
+#include <mvcontext.h>
 #include "actionfactory.h"
 
 /// TODO: (HIGH) merge should apply to all widgets
@@ -87,11 +88,14 @@ MVClipsWidget::~MVClipsWidget()
 
 void MVClipsWidget::prepareCalculation()
 {
-    d->m_computer.mlproxy_url = mvContext()->mlProxyUrl();
-    d->m_computer.firings = mvContext()->firings();
-    d->m_computer.timeseries = mvContext()->currentTimeseries();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    d->m_computer.mlproxy_url = c->mlProxyUrl();
+    d->m_computer.firings = c->firings();
+    d->m_computer.timeseries = c->currentTimeseries();
     d->m_computer.labels_to_use = d->m_labels_to_use;
-    d->m_computer.clip_size = mvContext()->option("clip_size").toInt();
+    d->m_computer.clip_size = c->option("clip_size").toInt();
 }
 
 void MVClipsWidget::runCalculation()
@@ -101,10 +105,13 @@ void MVClipsWidget::runCalculation()
 
 void MVClipsWidget::onCalculationFinished()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     TaskProgress task("MVClipsWidget::onCalculationFinished");
     task.log(QString("%1x%2x%3").arg(d->m_computer.clips.N1()).arg(d->m_computer.clips.N2()).arg(d->m_computer.clips.N3()));
     DiskReadMda clips = d->m_computer.clips.reshaped(d->m_computer.clips.N1(), d->m_computer.clips.N2() * d->m_computer.clips.N3());
-    d->m_view_context.copySettingsFrom(mvContext());
+    d->m_view_context.copySettingsFrom(c);
     d->m_view_context.addTimeseries("clips", clips);
     d->m_view_context.setCurrentTimeseriesName("clips");
     d->m_view_context.setCurrentTimeRange(MVRange(0, clips.N2() - 1));
@@ -120,10 +127,13 @@ void MVClipsWidget::setLabelsToUse(const QList<int>& labels)
 
 void MVClipsWidget::paintEvent(QPaintEvent* evt)
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     QPainter painter(this);
     if (isCalculating()) {
         //show that something is computing
-        painter.fillRect(QRectF(0, 0, width(), height()), mvContext()->color("calculation-in-progress"));
+        painter.fillRect(QRectF(0, 0, width(), height()), c->color("calculation-in-progress"));
     }
 
     QWidget::paintEvent(evt);

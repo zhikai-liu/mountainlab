@@ -4,7 +4,7 @@
 #include "taskprogressview.h"
 #include "mvcontrolpanel2.h"
 #include "taskprogress.h"
-#include "mvcontext.h"
+#include "mvabstractcontext.h"
 #include "mvstatusbar.h"
 #include "mlcommon.h"
 #include "mvabstractviewfactory.h"
@@ -55,7 +55,7 @@
 class MVMainWindowPrivate {
 public:
     MVMainWindow* q;
-    MVContext* m_context; //gets passed to all the views and the control panel
+    MVAbstractContext* m_context; //gets passed to all the views and the control panel
 
     QMap<QString, MVAbstractPlugin*> m_loaded_plugins;
 
@@ -88,7 +88,7 @@ public:
     TabberTabWidget* tab_widget_of(QWidget* W);
 };
 
-MVMainWindow::MVMainWindow(MVContext* context, QWidget* parent)
+MVMainWindow::MVMainWindow(MVAbstractContext* context, QWidget* parent)
     : QWidget(parent)
 {
     d = new MVMainWindowPrivate;
@@ -334,7 +334,7 @@ QJsonObject MVMainWindow::exportStaticViews() const
     QList<MVAbstractView*> views = d->m_tabber->allWidgets();
     QJsonObject ret;
     ret["export-static-views-version"] = "0.1";
-    ret["mvcontext"] = d->m_context->toMVFileObject();
+    ret["mvcontext"] = d->m_context->toMV2FileObject();
     QJsonArray SV;
     foreach (MVAbstractView* V, views) {
         QJsonObject obj = V->exportStaticView();
@@ -396,7 +396,7 @@ void MVMainWindow::recalculateViews(RecalculateViewsMode mode)
     }
 }
 
-MVContext* MVMainWindow::mvContext() const
+MVAbstractContext* MVMainWindow::mvContext() const
 {
     return d->m_context;
 }

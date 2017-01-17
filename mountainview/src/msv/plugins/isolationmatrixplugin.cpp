@@ -59,8 +59,10 @@ QString IsolationMatrixFactory::title() const
     return tr("Isolation Matrix");
 }
 
-MVAbstractView* IsolationMatrixFactory::createView(MVContext* context)
+MVAbstractView* IsolationMatrixFactory::createView(MVAbstractContext* context)
 {
-    IsolationMatrixView* X = new IsolationMatrixView(context);
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+    IsolationMatrixView* X = new IsolationMatrixView(c);
     return X;
 }

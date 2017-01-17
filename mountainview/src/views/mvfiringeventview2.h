@@ -18,7 +18,7 @@ class MVFiringEventView2 : public MVTimeSeriesViewBase {
     Q_OBJECT
 public:
     friend class MVFiringEventView2Private;
-    MVFiringEventView2(MVContext* context);
+    MVFiringEventView2(MVAbstractContext* context);
     virtual ~MVFiringEventView2();
 
     void prepareCalculation() Q_DECL_OVERRIDE;
@@ -51,7 +51,7 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
-    MVAbstractView* createView(MVContext* context) Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
 private slots:
 };
 

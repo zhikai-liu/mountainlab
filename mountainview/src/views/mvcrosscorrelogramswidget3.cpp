@@ -66,16 +66,19 @@ public:
     void update_scale_stuff();
 };
 
-MVCrossCorrelogramsWidget3::MVCrossCorrelogramsWidget3(MVContext* context)
+MVCrossCorrelogramsWidget3::MVCrossCorrelogramsWidget3(MVAbstractContext* context)
     : MVHistogramGrid(context)
 {
     d = new MVCrossCorrelogramsWidget3Private;
     d->q = this;
 
-    this->recalculateOn(context, SIGNAL(firingsChanged()), false);
-    this->recalculateOn(context, SIGNAL(clusterMergeChanged()), false);
-    this->recalculateOn(context, SIGNAL(clusterVisibilityChanged()), false);
-    this->recalculateOn(context, SIGNAL(viewMergedChanged()), false);
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    this->recalculateOn(c, SIGNAL(firingsChanged()), false);
+    this->recalculateOn(c, SIGNAL(clusterMergeChanged()), false);
+    this->recalculateOn(c, SIGNAL(clusterVisibilityChanged()), false);
+    this->recalculateOn(c, SIGNAL(viewMergedChanged()), false);
     this->recalculateOnOptionChanged("cc_max_dt_msec");
     this->recalculateOnOptionChanged("cc_log_time_constant_msec");
     this->recalculateOnOptionChanged("cc_bin_size_msec");
@@ -115,16 +118,19 @@ MVCrossCorrelogramsWidget3::~MVCrossCorrelogramsWidget3()
 
 void MVCrossCorrelogramsWidget3::prepareCalculation()
 {
-    d->m_computer.mlproxy_url = mvContext()->mlProxyUrl();
-    d->m_computer.firings = mvContext()->firings();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    d->m_computer.mlproxy_url = c->mlProxyUrl();
+    d->m_computer.firings = c->firings();
     d->m_computer.options = d->m_options;
-    d->m_computer.max_dt = mvContext()->option("cc_max_dt_msec", 100).toDouble() / 1000 * mvContext()->sampleRate();
+    d->m_computer.max_dt = c->option("cc_max_dt_msec", 100).toDouble() / 1000 * c->sampleRate();
     d->m_computer.cluster_merge.clear();
-    if (mvContext()->viewMerged()) {
-        d->m_computer.cluster_merge = mvContext()->clusterMerge();
+    if (c->viewMerged()) {
+        d->m_computer.cluster_merge = c->clusterMerge();
     }
     d->m_computer.pair_mode = this->pairMode();
-    d->m_computer.max_est_data_size = mvContext()->option("cc_max_est_data_size", 10000).toDouble();
+    d->m_computer.max_est_data_size = c->option("cc_max_est_data_size", 10000).toDouble();
 }
 
 void MVCrossCorrelogramsWidget3::runCalculation()
@@ -147,13 +153,16 @@ double max2(const QList<Correlogram3>& data0)
 
 void MVCrossCorrelogramsWidget3::onCalculationFinished()
 {
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
     d->m_correlograms = d->m_computer.correlograms;
 
     double bin_max = max2(d->m_correlograms);
     double bin_min = -bin_max;
     //int num_bins=100;
-    double sample_freq = mvContext()->sampleRate();
-    int bin_size = mvContext()->option("cc_bin_size_msec").toDouble() / 1000 * sample_freq;
+    double sample_freq = c->sampleRate();
+    int bin_size = c->option("cc_bin_size_msec").toDouble() / 1000 * sample_freq;
     int num_bins = (bin_max - bin_min) / bin_size;
     //if (num_bins < 100)
     //    num_bins = 100;
@@ -170,10 +179,10 @@ void MVCrossCorrelogramsWidget3::onCalculationFinished()
     for (int ii = 0; ii < d->m_correlograms.count(); ii++) {
         int k1 = d->m_correlograms[ii].k1;
         int k2 = d->m_correlograms[ii].k2;
-        if ((mvContext()->clusterIsVisible(k1)) && (mvContext()->clusterIsVisible(k2))) {
+        if ((c->clusterIsVisible(k1)) && (c->clusterIsVisible(k2))) {
             HistogramView* HV = new HistogramView;
             HV->setData(d->m_correlograms[ii].data);
-            HV->setColors(mvContext()->colors());
+            HV->setColors(c->colors());
             HV->setBinInfo(bin_min, bin_max, num_bins);
             QString title0;
             QString caption0;
@@ -521,7 +530,7 @@ QString MVAutoCorrelogramsFactory::title() const
     return tr("All auto-Correlograms");
 }
 
-MVAbstractView* MVAutoCorrelogramsFactory::createView(MVContext* context)
+MVAbstractView* MVAutoCorrelogramsFactory::createView(MVAbstractContext* context)
 {
     MVCrossCorrelogramsWidget3* X = new MVCrossCorrelogramsWidget3(context);
     CrossCorrelogramOptions3 opts;
@@ -530,7 +539,7 @@ MVAbstractView* MVAutoCorrelogramsFactory::createView(MVContext* context)
     return X;
 }
 
-bool MVAutoCorrelogramsFactory::isEnabled(MVContext* context) const
+bool MVAutoCorrelogramsFactory::isEnabled(MVAbstractContext* context) const
 {
     Q_UNUSED(context)
     return true;
@@ -572,12 +581,15 @@ QString MVSelectedAutoCorrelogramsFactory::title() const
     return tr("Selected auto-correlograms");
 }
 
-MVAbstractView* MVSelectedAutoCorrelogramsFactory::createView(MVContext* context)
+MVAbstractView* MVSelectedAutoCorrelogramsFactory::createView(MVAbstractContext* context)
 {
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
     MVCrossCorrelogramsWidget3* X = new MVCrossCorrelogramsWidget3(context);
-    QList<int> ks = context->selectedClusters();
+    QList<int> ks = c->selectedClusters();
     if (ks.isEmpty())
-        ks = context->clusterVisibilityRule().subset.toList();
+        ks = c->clusterVisibilityRule().subset.toList();
     qSort(ks);
     if (ks.isEmpty())
         return X;
@@ -588,9 +600,12 @@ MVAbstractView* MVSelectedAutoCorrelogramsFactory::createView(MVContext* context
     return X;
 }
 
-bool MVSelectedAutoCorrelogramsFactory::isEnabled(MVContext* context) const
+bool MVSelectedAutoCorrelogramsFactory::isEnabled(MVAbstractContext* context) const
 {
-    return (context->selectedClusters().count() >= 1);
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    return (c->selectedClusters().count() >= 1);
 }
 
 /*
@@ -632,10 +647,13 @@ QString MVCrossCorrelogramsFactory::title() const
     return tr("Cross-Correlograms");
 }
 
-MVAbstractView* MVCrossCorrelogramsFactory::createView(MVContext* context)
+MVAbstractView* MVCrossCorrelogramsFactory::createView(MVAbstractContext* context)
 {
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
     MVCrossCorrelogramsWidget3* X = new MVCrossCorrelogramsWidget3(context);
-    QList<int> ks = context->selectedClusters();
+    QList<int> ks = c->selectedClusters();
     if (ks.count() != 1)
         return X;
 
@@ -647,9 +665,12 @@ MVAbstractView* MVCrossCorrelogramsFactory::createView(MVContext* context)
     return X;
 }
 
-bool MVCrossCorrelogramsFactory::isEnabled(MVContext* context) const
+bool MVCrossCorrelogramsFactory::isEnabled(MVAbstractContext* context) const
 {
-    return (context->selectedClusters().count() == 1);
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    return (c->selectedClusters().count() == 1);
 }
 
 /*
@@ -693,12 +714,15 @@ QString MVMatrixOfCrossCorrelogramsFactory::title() const
     return tr("CC Matrix");
 }
 
-MVAbstractView* MVMatrixOfCrossCorrelogramsFactory::createView(MVContext* context)
+MVAbstractView* MVMatrixOfCrossCorrelogramsFactory::createView(MVAbstractContext* context)
 {
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
     MVCrossCorrelogramsWidget3* X = new MVCrossCorrelogramsWidget3(context);
-    QList<int> ks = context->selectedClusters();
+    QList<int> ks = c->selectedClusters();
     if (ks.isEmpty())
-        ks = context->clusterVisibilityRule().subset.toList();
+        ks = c->clusterVisibilityRule().subset.toList();
     qSort(ks);
     if (ks.isEmpty())
         return X;
@@ -709,9 +733,12 @@ MVAbstractView* MVMatrixOfCrossCorrelogramsFactory::createView(MVContext* contex
     return X;
 }
 
-bool MVMatrixOfCrossCorrelogramsFactory::isEnabled(MVContext* context) const
+bool MVMatrixOfCrossCorrelogramsFactory::isEnabled(MVAbstractContext* context) const
 {
-    return (!context->selectedClusters().isEmpty());
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    return (!c->selectedClusters().isEmpty());
 }
 
 /*
@@ -753,10 +780,13 @@ QString MVSelectedCrossCorrelogramsFactory::title() const
     return tr("CC");
 }
 
-MVAbstractView* MVSelectedCrossCorrelogramsFactory::createView(MVContext* context)
+MVAbstractView* MVSelectedCrossCorrelogramsFactory::createView(MVAbstractContext* context)
 {
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
     MVCrossCorrelogramsWidget3* X = new MVCrossCorrelogramsWidget3(context);
-    QList<ClusterPair> pairs = context->selectedClusterPairs().toList();
+    QList<ClusterPair> pairs = c->selectedClusterPairs().toList();
     qSort(pairs);
     if (pairs.isEmpty())
         return X;
@@ -767,9 +797,12 @@ MVAbstractView* MVSelectedCrossCorrelogramsFactory::createView(MVContext* contex
     return X;
 }
 
-bool MVSelectedCrossCorrelogramsFactory::isEnabled(MVContext* context) const
+bool MVSelectedCrossCorrelogramsFactory::isEnabled(MVAbstractContext* context) const
 {
-    return (!context->selectedClusterPairs().isEmpty());
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    return (!c->selectedClusterPairs().isEmpty());
 }
 
 /*
@@ -783,11 +816,14 @@ QList<QAction*> MVSelectedCrossCorrelogramsFactory::actions(const QMimeData& md)
 
 void MVCrossCorrelogramsWidget3Private::update_scale_stuff()
 {
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
     QList<HistogramView*> views = q->histogramViews();
     foreach (HistogramView* HV, views) {
         HV->setTimeScaleMode(m_time_scale_mode);
-        double time_constant_sec = q->mvContext()->option("cc_log_time_constant_msec", 1).toDouble() / 1000;
-        HV->setTimeConstant(q->mvContext()->sampleRate() * time_constant_sec);
+        double time_constant_sec = c->option("cc_log_time_constant_msec", 1).toDouble() / 1000;
+        HV->setTimeConstant(c->sampleRate() * time_constant_sec);
         QList<double> tickvals;
         if (m_time_scale_mode == HistogramView::Uniform) {
         }

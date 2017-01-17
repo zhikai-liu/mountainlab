@@ -24,9 +24,12 @@ QString ClusterDetail2Factory::title() const
     return tr("Details 2");
 }
 
-MVAbstractView* ClusterDetail2Factory::createView(MVContext* context)
+MVAbstractView* ClusterDetail2Factory::createView(MVAbstractContext* context)
 {
-    MCContext* mc_context = qobject_cast<MCContext*>(context);
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    MCContext* mc_context = qobject_cast<MCContext*>(c);
     if (!mc_context)
         return 0;
 
@@ -85,7 +88,7 @@ QString CompareClustersFactory::title() const
     return tr("Compare Clusters");
 }
 
-MVAbstractView* CompareClustersFactory::createView(MVContext* context)
+MVAbstractView* CompareClustersFactory::createView(MVAbstractContext* context)
 {
     MCContext* mc_context = qobject_cast<MCContext*>(context);
     if (!mc_context)

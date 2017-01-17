@@ -14,7 +14,7 @@ class MVClusterVisibilityControl : public MVAbstractControl {
     Q_OBJECT
 public:
     friend class MVClusterVisibilityControlPrivate;
-    MVClusterVisibilityControl(MVContext* context, MVMainWindow* mw);
+    MVClusterVisibilityControl(MVAbstractContext* context, MVMainWindow* mw);
     virtual ~MVClusterVisibilityControl();
 
     QString title() const Q_DECL_OVERRIDE;

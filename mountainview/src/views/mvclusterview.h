@@ -7,10 +7,10 @@
 #define MVCLUSTERVIEW_H
 
 #include <QWidget>
+#include <mvabstractcontext.h>
 #include "mda.h"
 #include "mvutils.h"
 #include "affinetransformation.h"
-#include "mvcontext.h"
 #include "paintlayer.h"
 
 #define MVCV_MODE_HEAT_DENSITY 1
@@ -29,7 +29,7 @@ class MVClusterView : public QWidget {
     Q_OBJECT
 public:
     friend class MVClusterViewPrivate;
-    MVClusterView(MVContext* context, QWidget* parent = 0);
+    MVClusterView(MVAbstractContext* context, QWidget* parent = 0);
     virtual ~MVClusterView();
     void setData(const Mda& X);
     bool hasData();

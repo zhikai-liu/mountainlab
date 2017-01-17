@@ -7,7 +7,7 @@
 #ifndef MVABSTRACTVIEW_H
 #define MVABSTRACTVIEW_H
 
-#include "mvcontext.h"
+#include "mvabstractcontext.h"
 #include "mlcommon.h"
 #include <QMimeData>
 #include <QWidget>
@@ -26,7 +26,7 @@ public:
 
     friend class MVAbstractViewPrivate;
     friend class CalculationThread;
-    MVAbstractView(MVContext* context);
+    MVAbstractView(MVAbstractContext* context);
     virtual ~MVAbstractView();
 
     bool isCalculating() const;
@@ -49,7 +49,7 @@ public slots:
     void neverSuggestRecalculate();
 
     virtual MVAbstractViewFactory* viewFactory() const;
-    MVContext* mvContext();
+    MVAbstractContext* mvContext();
 
     virtual ViewFeatures viewFeatures() const;
     virtual void renderView(QPainter* painter); // add render opts

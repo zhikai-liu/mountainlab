@@ -11,14 +11,14 @@
 #include <QComboBox>
 #include <QToolButton>
 
-#include "mvcontext.h"
+#include "mvabstractcontext.h"
 
 class MVMainWindow;
 class MVAbstractControlPrivate;
 class MVAbstractControl : public QWidget {
 public:
     friend class MVAbstractControlPrivate;
-    MVAbstractControl(MVContext* context, MVMainWindow* mw);
+    MVAbstractControl(MVAbstractContext* context, MVMainWindow* mw);
     virtual ~MVAbstractControl();
 
     virtual QString title() const = 0;
@@ -27,7 +27,7 @@ public slots:
     virtual void updateControls() = 0;
 
 protected:
-    MVContext* mvContext();
+    MVAbstractContext* mvContext();
     MVMainWindow* mainWindow();
 
     QVariant controlValue(QString name) const;

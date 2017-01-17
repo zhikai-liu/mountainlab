@@ -8,6 +8,7 @@
 #include "ftelectrodearrayview.h"
 
 #include <QHBoxLayout>
+#include <mvcontext.h>
 
 /// TODO show current cluster waveform in firetrackview
 
@@ -18,7 +19,7 @@ public:
     FTElectrodeArrayView* m_electrode_array_view;
 };
 
-FireTrackView::FireTrackView(MVContext* context)
+FireTrackView::FireTrackView(MVAbstractContext* context)
     : MVAbstractView(context)
 {
     d = new FireTrackViewPrivate;
@@ -32,7 +33,10 @@ FireTrackView::FireTrackView(MVContext* context)
 
     this->setLayout(layout);
 
-    this->recalculateOn(context, SIGNAL(electrodeGeometryChanged()));
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    this->recalculateOn(c, SIGNAL(electrodeGeometryChanged()));
 
     recalculate();
 }
@@ -52,7 +56,10 @@ void FireTrackView::runCalculation()
 
 void FireTrackView::onCalculationFinished()
 {
-    ElectrodeGeometry geom = mvContext()->electrodeGeometry();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    ElectrodeGeometry geom = c->electrodeGeometry();
     Mda locations;
     for (int i = 0; i < geom.coordinates.count(); i++) {
         if (i == 0) {
@@ -85,7 +92,7 @@ QString MVFireTrackFactory::title() const
     return tr("FireTrack");
 }
 
-MVAbstractView* MVFireTrackFactory::createView(MVContext* context)
+MVAbstractView* MVFireTrackFactory::createView(MVAbstractContext* context)
 {
     FireTrackView* X = new FireTrackView(context);
     return X;

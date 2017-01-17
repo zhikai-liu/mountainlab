@@ -43,7 +43,7 @@ public:
     void set_views();
 };
 
-MVDiscrimHistView::MVDiscrimHistView(MVContext* context)
+MVDiscrimHistView::MVDiscrimHistView(MVAbstractContext* context)
     : MVHistogramGrid(context)
 {
     d = new MVDiscrimHistViewPrivate;
@@ -79,11 +79,14 @@ void MVDiscrimHistView::setClusterNumbers(const QList<int>& cluster_numbers)
 
 void MVDiscrimHistView::prepareCalculation()
 {
-    d->m_computer.mlproxy_url = mvContext()->mlProxyUrl();
-    d->m_computer.timeseries = mvContext()->currentTimeseries();
-    d->m_computer.firings = mvContext()->firings();
+    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    Q_ASSERT(c);
+
+    d->m_computer.mlproxy_url = c->mlProxyUrl();
+    d->m_computer.timeseries = c->currentTimeseries();
+    d->m_computer.firings = c->firings();
     d->m_computer.cluster_numbers = d->m_cluster_numbers;
-    d->m_computer.method = mvContext()->option("discrim_hist_method").toString();
+    d->m_computer.method = c->option("discrim_hist_method").toString();
 }
 
 void MVDiscrimHistView::runCalculation()
@@ -252,6 +255,9 @@ void MVDiscrimHistView::slot_pan_right(double units)
 
 void MVDiscrimHistViewPrivate::set_views()
 {
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
     double bin_min = compute_min2(m_histograms);
     double bin_max = max2(m_histograms);
     double max00 = qMax(qAbs(bin_min), qAbs(bin_max));
@@ -262,7 +268,7 @@ void MVDiscrimHistViewPrivate::set_views()
     for (int ii = 0; ii < m_histograms.count(); ii++) {
         int k1 = m_histograms[ii].k1;
         int k2 = m_histograms[ii].k2;
-        //if (q->mvContext()->clusterIsVisible(k1)) {
+        //if (c->clusterIsVisible(k1)) {
         {
             HistogramView* HV = new HistogramView;
             //QVector<double> tmp = m_histograms[ii].data1;
@@ -270,7 +276,7 @@ void MVDiscrimHistViewPrivate::set_views()
             //HV->setData(tmp);
             HV->setData(m_histograms[ii].data1);
             HV->setSecondData(m_histograms[ii].data2);
-            HV->setColors(q->mvContext()->colors());
+            HV->setColors(c->colors());
             //HV->autoSetBins(50);
             HV->setBinInfo(bin_min, bin_max, num_bins);
             //HV->setDrawVerticalAxisAtZero(true);
@@ -307,18 +313,24 @@ QString MVDiscrimHistFactory::title() const
     return tr("Discrim");
 }
 
-MVAbstractView* MVDiscrimHistFactory::createView(MVContext* context)
+MVAbstractView* MVDiscrimHistFactory::createView(MVAbstractContext* context)
 {
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
     MVDiscrimHistView* X = new MVDiscrimHistView(context);
-    QList<int> ks = context->selectedClusters();
+    QList<int> ks = c->selectedClusters();
     if (ks.isEmpty())
-        ks = context->clusterVisibilityRule().subset.toList();
+        ks = c->clusterVisibilityRule().subset.toList();
     qSort(ks);
     X->setClusterNumbers(ks);
     return X;
 }
 
-bool MVDiscrimHistFactory::isEnabled(MVContext* context) const
+bool MVDiscrimHistFactory::isEnabled(MVAbstractContext* context) const
 {
-    return (context->selectedClusters().count() >= 2);
+    MVContext* c = qobject_cast<MVContext*>(context);
+    Q_ASSERT(c);
+
+    return (c->selectedClusters().count() >= 2);
 }
