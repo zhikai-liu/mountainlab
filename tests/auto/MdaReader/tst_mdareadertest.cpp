@@ -4,8 +4,7 @@
 #include "mda/mdareader.h"
 #include <QTemporaryDir>
 
-class MdaReaderTest : public QObject
-{
+class MdaReaderTest : public QObject {
     Q_OBJECT
 
 public:
@@ -16,11 +15,13 @@ private Q_SLOTS:
     void cleanupTestCase();
     void mda64();
     void mda32();
+
 private:
-    QTemporaryDir *m_dir;
+    QTemporaryDir* m_dir;
 };
 
-MdaReaderTest::MdaReaderTest() : m_dir(0)
+MdaReaderTest::MdaReaderTest()
+    : m_dir(0)
 {
 }
 
@@ -53,32 +54,32 @@ void MdaReaderTest::mda64()
         98.4,
         -127.92
     };
-    for(int i = 0; i < dat.size(); ++i)
+    for (int i = 0; i < dat.size(); ++i)
         mda.set(dat.at(i), i);
-    mda.write64(m_dir->path()+"/abc.mda");
+    mda.write64(m_dir->path() + "/abc.mda");
 
-    MdaReader reader(m_dir->path()+"/abc.mda");
+    MdaReader reader(m_dir->path() + "/abc.mda");
     Mda mda2 = reader.read();
     QCOMPARE(mda.ndims(), mda2.ndims());
 
-    for(int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 6; ++i) {
         QCOMPARE(mda.size(i), mda2.size(i));
     }
-    for(int i = 0; i < dat.size(); ++i) {
+    for (int i = 0; i < dat.size(); ++i) {
         QCOMPARE(mda.get(i), mda2.get(i));
     }
 
-    MdaWriter writer(m_dir->path()+"/abc2.mda", "mda");
+    MdaWriter writer(m_dir->path() + "/abc2.mda", "mda");
     QVERIFY(writer.write(mda2));
-    mda.read(m_dir->path()+"/abc2.mda");
+    mda.read(m_dir->path() + "/abc2.mda");
     QCOMPARE(mda.ndims(), mda2.ndims());
-    for(int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 6; ++i) {
         QCOMPARE(mda.size(i), mda2.size(i));
     }
-    for(int i = 0; i < dat.size(); ++i) {
+    for (int i = 0; i < dat.size(); ++i) {
         QCOMPARE(mda.get(i), mda2.get(i));
     }
-    MdaWriter csvWriter(m_dir->path()+"/abc2.csv", "csv");
+    MdaWriter csvWriter(m_dir->path() + "/abc2.csv", "csv");
     QVERIFY(csvWriter.write(mda2));
 }
 
@@ -96,29 +97,29 @@ void MdaReaderTest::mda32()
         98.4,
         -127.92
     };
-    for(int i = 0; i < dat.size(); ++i)
+    for (int i = 0; i < dat.size(); ++i)
         mda.set(dat.at(i), i);
-    mda.write32(m_dir->path()+"/32abc.mda");
+    mda.write32(m_dir->path() + "/32abc.mda");
 
-    MdaReader reader(m_dir->path()+"/32abc.mda");
+    MdaReader reader(m_dir->path() + "/32abc.mda");
     Mda32 mda2 = reader.read32();
     QCOMPARE(mda.ndims(), mda2.ndims());
 
-    for(int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 6; ++i) {
         QCOMPARE(mda.size(i), mda2.size(i));
     }
-    for(int i = 0; i < dat.size(); ++i) {
+    for (int i = 0; i < dat.size(); ++i) {
         QCOMPARE(mda.get(i), mda2.get(i));
     }
 
-    MdaWriter writer(m_dir->path()+"/32abc2.mda", "mda.float");
+    MdaWriter writer(m_dir->path() + "/32abc2.mda", "mda.float");
     QVERIFY(writer.write(mda2));
-    mda.read(m_dir->path()+"/32abc2.mda");
+    mda.read(m_dir->path() + "/32abc2.mda");
     QCOMPARE(mda.ndims(), mda2.ndims());
-    for(int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 6; ++i) {
         QCOMPARE(mda.size(i), mda2.size(i));
     }
-    for(int i = 0; i < dat.size(); ++i) {
+    for (int i = 0; i < dat.size(); ++i) {
         QCOMPARE(mda.get(i), mda2.get(i));
     }
 }

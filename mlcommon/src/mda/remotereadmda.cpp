@@ -207,11 +207,11 @@ bool RemoteReadMda::readChunk(Mda& X, long i, long size) const
                 A.readChunk(tmp, ii1 - jj1 * d->m_download_chunk_size, size0); //again we start reading at the offset of ii1 relative to the start index of the chunk
                 double* tmp_ptr = tmp.dataPtr(); //copy the data directly from tmp_ptr to Xptr
                 const long b = 0;
-                std::copy(tmp_ptr, tmp_ptr+size0, Xptr+b);
-//                for (long a = 0; a < size0; a++) {
-//                    Xptr[b] = tmp_ptr[a];
-//                    b++;
-//                }
+                std::copy(tmp_ptr, tmp_ptr + size0, Xptr + b);
+                //                for (long a = 0; a < size0; a++) {
+                //                    Xptr[b] = tmp_ptr[a];
+                //                    b++;
+                //                }
             }
             else if (jj == jj2) { //case 2/3, this is the last chunk
                 Mda tmp;
@@ -220,11 +220,11 @@ bool RemoteReadMda::readChunk(Mda& X, long i, long size) const
                 double* tmp_ptr = tmp.dataPtr();
                 //copy the data to the last part of X
                 const long b = size - size0;
-                std::copy(tmp_ptr, tmp_ptr+size0, Xptr+b);
-//                for (long a = 0; a < size0; a++) {
-//                    Xptr[b] = tmp_ptr[a];
-//                    b++;
-//                }
+                std::copy(tmp_ptr, tmp_ptr + size0, Xptr + b);
+                //                for (long a = 0; a < size0; a++) {
+                //                    Xptr[b] = tmp_ptr[a];
+                //                    b++;
+                //                }
             }
 
             /*
@@ -246,11 +246,11 @@ bool RemoteReadMda::readChunk(Mda& X, long i, long size) const
                 A.readChunk(tmp, 0, d->m_download_chunk_size); //read the entire chunk, because we'll use it all
                 double* tmp_ptr = tmp.dataPtr();
                 long b = jj * d->m_download_chunk_size - ii1; //we start writing at the offset between the start index of the chunk and the start index
-                std::copy(tmp_ptr, tmp_ptr+d->m_download_chunk_size, Xptr+b);
-//                for (long a = 0; a < d->m_download_chunk_size; a++) {
-//                    Xptr[b] = tmp_ptr[a];
-//                    b++;
-//                }
+                std::copy(tmp_ptr, tmp_ptr + d->m_download_chunk_size, Xptr + b);
+                //                for (long a = 0; a < d->m_download_chunk_size; a++) {
+                //                    Xptr[b] = tmp_ptr[a];
+                //                    b++;
+                //                }
             }
         }
         return true;
@@ -316,12 +316,12 @@ bool RemoteReadMda::readChunk32(Mda32& X, long i, long size) const
                 long size0 = (jj1 + 1) * d->m_download_chunk_size - ii1; //the size is going to be the difference between ii1 and the start index of the next chunk
                 A.readChunk(tmp, ii1 - jj1 * d->m_download_chunk_size, size0); //again we start reading at the offset of ii1 relative to the start index of the chunk
                 dtype32* tmp_ptr = tmp.dataPtr(); //copy the data directly from tmp_ptr to Xptr
-                std::copy(tmp_ptr, tmp_ptr+size0, Xptr);
-//                long b = 0;
-//                for (long a = 0; a < size0; a++) {
-//                    Xptr[b] = tmp_ptr[a];
-//                    b++;
-//                }
+                std::copy(tmp_ptr, tmp_ptr + size0, Xptr);
+                //                long b = 0;
+                //                for (long a = 0; a < size0; a++) {
+                //                    Xptr[b] = tmp_ptr[a];
+                //                    b++;
+                //                }
             }
             else if (jj == jj2) { //case 2/3, this is the last chunk
                 Mda32 tmp;
@@ -330,11 +330,11 @@ bool RemoteReadMda::readChunk32(Mda32& X, long i, long size) const
                 dtype32* tmp_ptr = tmp.dataPtr();
                 //copy the data to the last part of X
                 long b = size - size0;
-                std::copy(tmp_ptr, tmp_ptr+size0, Xptr+b);
-//                for (long a = 0; a < size0; a++) {
-//                    Xptr[b] = tmp_ptr[a];
-//                    b++;
-//                }
+                std::copy(tmp_ptr, tmp_ptr + size0, Xptr + b);
+                //                for (long a = 0; a < size0; a++) {
+                //                    Xptr[b] = tmp_ptr[a];
+                //                    b++;
+                //                }
             }
 
             /*
@@ -356,11 +356,11 @@ bool RemoteReadMda::readChunk32(Mda32& X, long i, long size) const
                 A.readChunk(tmp, 0, d->m_download_chunk_size); //read the entire chunk, because we'll use it all
                 dtype32* tmp_ptr = tmp.dataPtr();
                 const long b = jj * d->m_download_chunk_size - ii1; //we start writing at the offset between the start index of the chunk and the start index
-                std::copy(tmp_ptr, tmp_ptr+d->m_download_chunk_size, Xptr);
-//                for (long a = 0; a < d->m_download_chunk_size; a++) {
-//                    Xptr[b] = tmp_ptr[a];
-//                    b++;
-//                }
+                std::copy(tmp_ptr, tmp_ptr + d->m_download_chunk_size, Xptr);
+                //                for (long a = 0; a < d->m_download_chunk_size; a++) {
+                //                    Xptr[b] = tmp_ptr[a];
+                //                    b++;
+                //                }
             }
         }
         return true;

@@ -153,9 +153,32 @@ QString find_ancestor_path_with_name(QString path, QString name)
     return path; //the directory name must equal the name argument
 }
 
+QString find_ancestor_path_with_file(QString path, QString file_name)
+{
+    if (file_name.isEmpty())
+        return "";
+    int safety_ct = 0;
+    while (!QFile::exists(path + "/" + file_name)) {
+        if (!path.contains("/"))
+            return "";
+        path = QFileInfo(path).path();
+        safety_ct++;
+        if (safety_ct > 20) {
+            qWarning() << "Tell jeremy this warning is happening. safety_ct>20.";
+            return "";
+        }
+    }
+    return "";
+}
+
 QString MLUtil::mountainlabBasePath()
 {
-    return find_ancestor_path_with_name(qApp->applicationDirPath(), "mountainlab");
+    /// Witold, there should be a better way to find the mountainlab base path. hmmm
+    QString ret = find_ancestor_path_with_name(qApp->applicationDirPath(), "mountainlab");
+    if (ret.isEmpty()) {
+        ret = find_ancestor_path_with_file(qApp->applicationDirPath(), "mountainlab.default.json");
+    }
+    return ret;
 }
 
 void mkdir_if_doesnt_exist(const QString& path)
@@ -773,15 +796,15 @@ QStringList MLUtil::configResolvedPathList(const QString& group, const QString& 
 
 QJsonValue MLUtil::configValue(const QString& group, const QString& key)
 {
-    QString json1_fname=MLUtil::mountainlabBasePath() + "/mountainlab.default.json";
+    QString json1_fname = MLUtil::mountainlabBasePath() + "/mountainlab.default.json";
     if (!QFile::exists(json1_fname)) {
-        qWarning() << "Unexpected problem. Configuration file does not exist: "+json1_fname;
+        qWarning() << "Unexpected problem. Configuration file does not exist: " + json1_fname;
         abort();
         return QJsonValue();
     }
     QString json1 = TextFile::read(json1_fname);
     if (json1.isEmpty()) {
-        qWarning() << "Unexpected problem. Text file appears to be empty: "+json1_fname;
+        qWarning() << "Unexpected problem. Text file appears to be empty: " + json1_fname;
         abort();
         return QJsonValue();
     }

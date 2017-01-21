@@ -22,6 +22,7 @@ public:
     void setDevice(QIODevice* d);
     QByteArray format() const;
     void setFormat(const QByteArray& ba);
+
 private:
     QIODevice* dev;
     QByteArray fmt;
@@ -30,7 +31,7 @@ private:
 class MdaIOHandlerFactory {
 public:
     virtual ~MdaIOHandlerFactory() {}
-    virtual MdaIOHandler* create(QIODevice *device, const QByteArray &format = QByteArray()) const = 0;
+    virtual MdaIOHandler* create(QIODevice* device, const QByteArray& format = QByteArray()) const = 0;
 };
 
 class MdaIOHandlerMDA : public MdaIOHandler {
@@ -51,7 +52,7 @@ public:
     bool canRead() const;
     bool canWrite() const;
     bool read(Mda* mda);
-    bool read(Mda32 *mda);
+    bool read(Mda32* mda);
     bool write(const Mda& mda);
     bool write(const Mda32& mda);
 
@@ -103,25 +104,24 @@ public:
 class MdaIOHandlerMDAFactory : public MdaIOHandlerFactory {
 public:
     MdaIOHandlerMDAFactory() {}
-    MdaIOHandler *create(QIODevice *device, const QByteArray &format) const;
+    MdaIOHandler* create(QIODevice* device, const QByteArray& format) const;
 };
 
 class MdaIOHandlerCSV : public MdaIOHandler {
 public:
-    MdaIOHandlerCSV(QIODevice *device, const QByteArray &format);
+    MdaIOHandlerCSV(QIODevice* device, const QByteArray& format);
     bool canRead() const;
     bool canWrite() const;
-    bool read(Mda *mda);
-    bool read(Mda32 *mda);
-    bool write(const Mda &mda);
-    bool write(const Mda32 &mda);
+    bool read(Mda* mda);
+    bool read(Mda32* mda);
+    bool write(const Mda& mda);
+    bool write(const Mda32& mda);
 };
 
 class MdaIOHandlerCSVFactory : public MdaIOHandlerFactory {
 public:
     MdaIOHandlerCSVFactory() {}
-    MdaIOHandler *create(QIODevice *device, const QByteArray &format) const;
+    MdaIOHandler* create(QIODevice* device, const QByteArray& format) const;
 };
-
 
 #endif // MDAREADER_P_H

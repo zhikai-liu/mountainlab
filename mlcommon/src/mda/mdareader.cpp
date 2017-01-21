@@ -14,7 +14,7 @@ public:
         , device(dev)
         , ownsDevice(false)
     {
-        if (_mdaReaderFactories->isEmpty()){
+        if (_mdaReaderFactories->isEmpty()) {
             _mdaReaderFactories->append(QSharedPointer<MdaIOHandlerFactory>(new MdaIOHandlerMDAFactory));
             _mdaReaderFactories->append(QSharedPointer<MdaIOHandlerFactory>(new MdaIOHandlerCSVFactory));
         }
@@ -105,7 +105,7 @@ bool MdaReader::read(Mda* mda)
 {
     if (!device()->isOpen() && !device()->open(QIODevice::ReadOnly))
         return false;
-    for(int i = 0; i < _mdaReaderFactories->size(); ++i) {
+    for (int i = 0; i < _mdaReaderFactories->size(); ++i) {
         MdaIOHandler* handler = _mdaReaderFactories->at(i)->create(device(), format());
         if (handler->canRead()) {
             bool result = handler->read(mda);
@@ -117,12 +117,13 @@ bool MdaReader::read(Mda* mda)
     return false;
 }
 
-bool MdaReader::read(Mda32 *mda)
+bool MdaReader::read(Mda32* mda)
 {
     if (!device()->isOpen() && !device()->open(QIODevice::ReadOnly))
         return false;
     MdaIOHandlerMDA h(device(), format());
-    if (!h.canRead()) return false;
+    if (!h.canRead())
+        return false;
     return h.read(mda);
 }
 
@@ -238,12 +239,12 @@ bool MdaWriter::write(const Mda& mda)
     bool closeAfterWrite = !device()->isOpen();
     if (!device()->isOpen() && !device()->open(QIODevice::WriteOnly | QIODevice::Truncate))
         return false;
-    for(int i = 0; i < _mdaReaderFactories->size(); ++i) {
+    for (int i = 0; i < _mdaReaderFactories->size(); ++i) {
         MdaIOHandler* handler = _mdaReaderFactories->at(i)->create(device(), format());
         if (handler->canWrite()) {
             bool result = handler->write(mda);
             delete handler;
-            if (QSaveFile *f = qobject_cast<QSaveFile*>(device()))
+            if (QSaveFile* f = qobject_cast<QSaveFile*>(device()))
                 f->commit();
             else if (closeAfterWrite)
                 device()->close();
@@ -254,17 +255,17 @@ bool MdaWriter::write(const Mda& mda)
     return false;
 }
 
-bool MdaWriter::write(const Mda32 &mda)
+bool MdaWriter::write(const Mda32& mda)
 {
     bool closeAfterWrite = !device()->isOpen();
     if (!device()->isOpen() && !device()->open(QIODevice::WriteOnly | QIODevice::Truncate))
         return false;
-    for(int i = 0; i < _mdaReaderFactories->size(); ++i) {
+    for (int i = 0; i < _mdaReaderFactories->size(); ++i) {
         MdaIOHandler* handler = _mdaReaderFactories->at(i)->create(device(), format());
         if (handler->canWrite()) {
             bool result = handler->write(mda);
             delete handler;
-            if (QSaveFile *f = qobject_cast<QSaveFile*>(device()))
+            if (QSaveFile* f = qobject_cast<QSaveFile*>(device()))
                 f->commit();
             else if (closeAfterWrite)
                 device()->close();
@@ -282,21 +283,21 @@ MdaIOHandler::MdaIOHandler()
 
 bool MdaIOHandler::canWrite() const { return false; }
 
-bool MdaIOHandler::read(Mda32 *) { return false; }
+bool MdaIOHandler::read(Mda32*) { return false; }
 
-bool MdaIOHandler::write(const Mda &) { return false; }
+bool MdaIOHandler::write(const Mda&) { return false; }
 
-bool MdaIOHandler::write(const Mda32 &) { return false; }
+bool MdaIOHandler::write(const Mda32&) { return false; }
 
-QIODevice *MdaIOHandler::device() const { return dev; }
+QIODevice* MdaIOHandler::device() const { return dev; }
 
-void MdaIOHandler::setDevice(QIODevice *d) { dev = d; }
+void MdaIOHandler::setDevice(QIODevice* d) { dev = d; }
 
 QByteArray MdaIOHandler::format() const { return fmt; }
 
-void MdaIOHandler::setFormat(const QByteArray &ba) { fmt = ba; }
+void MdaIOHandler::setFormat(const QByteArray& ba) { fmt = ba; }
 
-MdaIOHandlerMDA::MdaIOHandlerMDA(QIODevice *d, const QByteArray &fmt)
+MdaIOHandlerMDA::MdaIOHandlerMDA(QIODevice* d, const QByteArray& fmt)
 {
     setFormat(fmt);
     setDevice(d);
@@ -312,7 +313,7 @@ bool MdaIOHandlerMDA::canRead() const
         return true;
     if (format().isEmpty()) {
         // try to auto detect by file name
-        if(QFileDevice *f = qobject_cast<QFileDevice*>(device())) {
+        if (QFileDevice* f = qobject_cast<QFileDevice*>(device())) {
             QFileInfo finfo(f->fileName());
             if (finfo.suffix().toLower() == "mda")
                 return true;
@@ -332,7 +333,7 @@ bool MdaIOHandlerMDA::canWrite() const
     return false;
 }
 
-bool MdaIOHandlerMDA::read(Mda *mda)
+bool MdaIOHandlerMDA::read(Mda* mda)
 {
     Header header;
     if (!readLE(&header.data_type))
@@ -373,7 +374,8 @@ bool MdaIOHandlerMDA::read(Mda *mda)
     return true;
 }
 
-bool MdaIOHandlerMDA::read(Mda32 *mda) {
+bool MdaIOHandlerMDA::read(Mda32* mda)
+{
     Header header;
     if (!readLE(&header.data_type))
         return false;
@@ -413,7 +415,7 @@ bool MdaIOHandlerMDA::read(Mda32 *mda) {
     return true;
 }
 
-bool MdaIOHandlerMDA::write(const Mda &mda)
+bool MdaIOHandlerMDA::write(const Mda& mda)
 {
     Header header;
     if (format().toLower().startsWith("mda.")) {
@@ -421,28 +423,36 @@ bool MdaIOHandlerMDA::write(const Mda &mda)
         if (subFormat == "byte") {
             header.data_type = Byte;
             header.num_bytes_per_entry = 1;
-        } else if (subFormat == "float" || subFormat == "float32") {
+        }
+        else if (subFormat == "float" || subFormat == "float32") {
             header.data_type = Float32;
             header.num_bytes_per_entry = 4;
-        } else if (subFormat == "int16") {
+        }
+        else if (subFormat == "int16") {
             header.data_type = Int16;
             header.num_bytes_per_entry = 2;
-        } else if (subFormat == "int" || subFormat == "int32") {
+        }
+        else if (subFormat == "int" || subFormat == "int32") {
             header.data_type = Int32;
             header.num_bytes_per_entry = 4;
-        } else if (subFormat == "uint16") {
+        }
+        else if (subFormat == "uint16") {
             header.data_type = UInt16;
             header.num_bytes_per_entry = 2;
-        } else if (subFormat == "double" || subFormat == "float64") {
+        }
+        else if (subFormat == "double" || subFormat == "float64") {
             header.data_type = Float64;
             header.num_bytes_per_entry = 8;
-        } else if (subFormat == "uint" || subFormat == "uint32") {
+        }
+        else if (subFormat == "uint" || subFormat == "uint32") {
             header.data_type = UInt32;
             header.num_bytes_per_entry = 4;
-        } else {
+        }
+        else {
             return false;
         }
-    } else {
+    }
+    else {
         header.data_type = Float64;
         header.num_bytes_per_entry = 8;
     }
@@ -479,7 +489,7 @@ bool MdaIOHandlerMDA::write(const Mda &mda)
     }
 }
 
-bool MdaIOHandlerMDA::write(const Mda32 &mda)
+bool MdaIOHandlerMDA::write(const Mda32& mda)
 {
     Header header;
     if (format().toLower().startsWith("mda.")) {
@@ -487,28 +497,36 @@ bool MdaIOHandlerMDA::write(const Mda32 &mda)
         if (subFormat == "byte") {
             header.data_type = Byte;
             header.num_bytes_per_entry = 1;
-        } else if (subFormat == "float" || subFormat == "float32") {
+        }
+        else if (subFormat == "float" || subFormat == "float32") {
             header.data_type = Float32;
             header.num_bytes_per_entry = 4;
-        } else if (subFormat == "int16") {
+        }
+        else if (subFormat == "int16") {
             header.data_type = Int16;
             header.num_bytes_per_entry = 2;
-        } else if (subFormat == "int" || subFormat == "int32") {
+        }
+        else if (subFormat == "int" || subFormat == "int32") {
             header.data_type = Int32;
             header.num_bytes_per_entry = 4;
-        } else if (subFormat == "uint16") {
+        }
+        else if (subFormat == "uint16") {
             header.data_type = UInt16;
             header.num_bytes_per_entry = 2;
-        } else if (subFormat == "double" || subFormat == "float64") {
+        }
+        else if (subFormat == "double" || subFormat == "float64") {
             header.data_type = Float64;
             header.num_bytes_per_entry = 8;
-        } else if (subFormat == "uint" || subFormat == "uint32") {
+        }
+        else if (subFormat == "uint" || subFormat == "uint32") {
             header.data_type = UInt32;
             header.num_bytes_per_entry = 4;
-        } else {
+        }
+        else {
             return false;
         }
-    } else {
+    }
+    else {
         header.data_type = Float64;
         header.num_bytes_per_entry = 8;
     }
@@ -545,19 +563,21 @@ bool MdaIOHandlerMDA::write(const Mda32 &mda)
     }
 }
 
-MdaIOHandlerCSV::MdaIOHandlerCSV(QIODevice *device, const QByteArray &format) {
+MdaIOHandlerCSV::MdaIOHandlerCSV(QIODevice* device, const QByteArray& format)
+{
     setDevice(device);
     setFormat(format);
 }
 
-bool MdaIOHandlerCSV::canRead() const {
+bool MdaIOHandlerCSV::canRead() const
+{
     if (!device())
         return false;
     if (format().toLower() == "csv")
         return true;
     if (format().isEmpty()) {
         // try to auto detect by file name
-        if(QFileDevice *f = qobject_cast<QFileDevice*>(device())) {
+        if (QFileDevice* f = qobject_cast<QFileDevice*>(device())) {
             QFileInfo finfo(f->fileName());
             if (finfo.suffix().toLower() == "csv")
                 return true;
@@ -566,7 +586,8 @@ bool MdaIOHandlerCSV::canRead() const {
     return false;
 }
 
-bool MdaIOHandlerCSV::canWrite() const {
+bool MdaIOHandlerCSV::canWrite() const
+{
     if (!device())
         return false;
     if (format().toLower() == "csv")
@@ -574,19 +595,21 @@ bool MdaIOHandlerCSV::canWrite() const {
     return false;
 }
 
-bool MdaIOHandlerCSV::read(Mda *mda) {
+bool MdaIOHandlerCSV::read(Mda* mda)
+{
     QVector<QVector<double> > data;
 
     QTextStream stream(device());
-    while(!device()->atEnd()) {
+    while (!device()->atEnd()) {
         QString line = stream.readLine().trimmed();
-        if(line.isEmpty()) continue;
+        if (line.isEmpty())
+            continue;
         /// TODO: handle header
         if (line.startsWith('#'))
             continue;
         QStringList tokens = line.split(',', QString::SkipEmptyParts);
         QVector<double> row;
-        foreach(const QString &token, tokens) {
+        foreach (const QString& token, tokens) {
             row.append(token.toDouble());
         }
         data.append(row);
@@ -598,7 +621,7 @@ bool MdaIOHandlerCSV::read(Mda *mda) {
     if (!mda->allocate(columnCount, rowCount))
         return false;
     for (int r = 0; r < rowCount; ++r) {
-        const QVector<double> &row = data.at(r);
+        const QVector<double>& row = data.at(r);
         for (int c = 0; c < columnCount; ++c) {
             double value = c < row.count() ? row.at(c) : 0.0;
             mda->setValue(value, c, r);
@@ -607,19 +630,21 @@ bool MdaIOHandlerCSV::read(Mda *mda) {
     return true;
 }
 
-bool MdaIOHandlerCSV::read(Mda32 *mda) {
+bool MdaIOHandlerCSV::read(Mda32* mda)
+{
     QVector<QVector<float> > data;
 
     QTextStream stream(device());
-    while(!device()->atEnd()) {
+    while (!device()->atEnd()) {
         QString line = stream.readLine().trimmed();
-        if(line.isEmpty()) continue;
+        if (line.isEmpty())
+            continue;
         /// TODO: handle header
         if (line.startsWith('#'))
             continue;
         QStringList tokens = line.split(',', QString::SkipEmptyParts);
         QVector<float> row;
-        foreach(const QString &token, tokens) {
+        foreach (const QString& token, tokens) {
             row.append(token.toFloat());
         }
         data.append(row);
@@ -631,7 +656,7 @@ bool MdaIOHandlerCSV::read(Mda32 *mda) {
     if (!mda->allocate(columnCount, rowCount))
         return false;
     for (int r = 0; r < rowCount; ++r) {
-        const QVector<float> &row = data.at(r);
+        const QVector<float>& row = data.at(r);
         for (int c = 0; c < columnCount; ++c) {
             float value = c < row.count() ? row.at(c) : 0.0;
             mda->setValue(value, c, r);
@@ -640,7 +665,8 @@ bool MdaIOHandlerCSV::read(Mda32 *mda) {
     return true;
 }
 
-bool MdaIOHandlerCSV::write(const Mda &mda) {
+bool MdaIOHandlerCSV::write(const Mda& mda)
+{
     QTextStream stream(device());
     for (size_t r = 0; r < (size_t)mda.N2(); ++r) {
         for (size_t c = 0; c < (size_t)mda.N1(); ++c) {
@@ -655,7 +681,8 @@ bool MdaIOHandlerCSV::write(const Mda &mda) {
     return true;
 }
 
-bool MdaIOHandlerCSV::write(const Mda32 &mda) {
+bool MdaIOHandlerCSV::write(const Mda32& mda)
+{
     QTextStream stream(device());
     for (size_t r = 0; r < (size_t)mda.N2(); ++r) {
         for (size_t c = 0; c < (size_t)mda.N1(); ++c) {
@@ -670,10 +697,12 @@ bool MdaIOHandlerCSV::write(const Mda32 &mda) {
     return true;
 }
 
-MdaIOHandler *MdaIOHandlerCSVFactory::create(QIODevice *device, const QByteArray &format) const {
+MdaIOHandler* MdaIOHandlerCSVFactory::create(QIODevice* device, const QByteArray& format) const
+{
     return new MdaIOHandlerCSV(device, format);
 }
 
-MdaIOHandler *MdaIOHandlerMDAFactory::create(QIODevice *device, const QByteArray &format) const {
+MdaIOHandler* MdaIOHandlerMDAFactory::create(QIODevice* device, const QByteArray& format) const
+{
     return new MdaIOHandlerMDA(device, format);
 }

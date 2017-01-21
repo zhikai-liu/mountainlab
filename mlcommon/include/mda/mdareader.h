@@ -19,7 +19,7 @@ public:
     Mda read();
     Mda32 read32();
     bool read(Mda*);
-    bool read(Mda32*mda);
+    bool read(Mda32* mda);
     void setDevice(QIODevice*);
     void setFileName(const QString&);
 
