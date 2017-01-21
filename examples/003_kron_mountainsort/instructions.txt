@@ -1,5 +1,9 @@
 *** Install and configure mountainlab
 
+*** Start the processor daemon, for example:
+mp-set-default-daemon admin
+mp-daemon-start admin
+
 *** Generate the synthetic data
 ./001_generate_synthetic_data
 
