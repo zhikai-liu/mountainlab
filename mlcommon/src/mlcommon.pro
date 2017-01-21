@@ -19,6 +19,8 @@ HEADERS += mlcommon.h sumit.h \
     ../include/mda/diskreadmda32.h \
     ../include/mda/mda_p.h \
     ../include/mliterator.h \
+    ../include/mda/mdareader.h \
+    ../include/mda/mdareader_p.h \
     ../include/objectregistry.h \
     ../include/mlprivate.h \
     ../include/icounter.h
@@ -28,6 +30,7 @@ SOURCES += \
     mda/mda32.cpp \
     mda/diskreadmda32.cpp \
     objectregistry.cpp \
+    mda/mdareader.cpp \
     componentmanager/icomponent.cpp \
     icounter.cpp
 
