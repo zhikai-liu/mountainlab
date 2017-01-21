@@ -777,6 +777,8 @@ QJsonValue MLUtil::configValue(const QString& group, const QString& key)
     QJsonParseError err1;
     QJsonObject obj1 = QJsonDocument::fromJson(json1.toUtf8(), &err1).object();
     if (err1.error != QJsonParseError::NoError) {
+        qWarning() << "Error parsing mountainlab.default.json at offset:" + err1.offset;
+        qDebug() << json1.toUtf8();
         qWarning() << err1.errorString();
         qWarning() << "Error parsing mountainlab.default.json.";
         abort();
