@@ -73,7 +73,8 @@ If you are on a later version of Ubuntu (such as 16.04), you can get away with t
 #### NodeJS
 > apt-get install -y nodejs npm
 
-> npm install ini extend
+> sudo npm install -g ini extend
+(Note to self: I need to figure out how to properly deal with nodejs packages, right now it's a mess)
 
 ## Installing Qt5 from qt.io
 
