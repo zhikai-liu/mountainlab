@@ -18,7 +18,7 @@ Next, clone this repository and compile:
 
 > cd mountainlab
 
-> ./compile_components default
+> ./compile_components.sh
 
 Add mountainlab/bin to your PATH environment variable. For example append
 
