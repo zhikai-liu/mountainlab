@@ -773,7 +773,18 @@ QStringList MLUtil::configResolvedPathList(const QString& group, const QString& 
 
 QJsonValue MLUtil::configValue(const QString& group, const QString& key)
 {
-    QString json1 = TextFile::read(MLUtil::mountainlabBasePath() + "/mountainlab.default.json");
+    QString json1_fname=MLUtil::mountainlabBasePath() + "/mountainlab.default.json";
+    if (!QFile::exists(json1_fname)) {
+        qWarning() << "Unexpected problem. Configuration file does not exist: "+json1_fname;
+        abort();
+        return QJsonValue();
+    }
+    QString json1 = TextFile::read(json1_fname);
+    if (json1.isEmpty()) {
+        qWarning() << "Unexpected problem. Text file appears to be empty: "+json1_fname;
+        abort();
+        return QJsonValue();
+    }
     QJsonParseError err1;
     QJsonObject obj1 = QJsonDocument::fromJson(json1.toUtf8(), &err1).object();
     if (err1.error != QJsonParseError::NoError) {
