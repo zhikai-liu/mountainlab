@@ -10,7 +10,7 @@
 #include "cachemanager.h"
 
 #include "clusterdetailplugin.h"
-#include "isolationmatrixplugin.h"
+//#include "isolationmatrixplugin.h"
 
 #include "usagetracking.h"
 #include "mda.h"
@@ -866,7 +866,7 @@ void setup_main_window(MVMainWindow* W)
 {
     W->loadPlugin(new ClusterDetailPlugin);
     W->loadPlugin(new ClusterMetricsPlugin);
-    W->loadPlugin(new IsolationMatrixPlugin);
+    //W->loadPlugin(new IsolationMatrixPlugin);
     W->loadPlugin(new ClipsViewPlugin);
     W->loadPlugin(new ClusterContextMenuPlugin);
     W->loadPlugin(new CurationProgramPlugin);
