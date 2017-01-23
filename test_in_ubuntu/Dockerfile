@@ -14,3 +14,15 @@ RUN apt-get install -y qt5-default qtbase5-dev qtscript5-dev make g++
 
 # Install nodejs and npm
 RUN apt-get install -y nodejs npm
+
+# Install git
+RUN apt-get install -y git
+
+# Install fftw
+RUN apt-get install -y libfftw3-dev
+
+# Install octave
+RUN apt-get install -y octave
+
+# Create user
+RUN useradd magland; mkdir /home/magland; chown magland:magland /home/magland
