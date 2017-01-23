@@ -97,7 +97,7 @@ bool branch_cluster_v2c(const QString& timeseries_path, const QString& detect_pa
                     times << detect.value(1, i) - 1; //convert to 0-based indexing
                 }
             }
-            qDebug() << "Extracting clips. #times=" << times.count();
+            qDebug().noquote() << "Extracting clips. #times=" << times.count();
             clips = extract_clips(X, times, neighborhood, opts.clip_size);
         }
         ClipsGroup clips_group;

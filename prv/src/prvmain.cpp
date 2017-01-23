@@ -257,7 +257,7 @@ public:
         args.removeFirst(); // remove command name
         if (args.size() < 2) {
             println("Too few arguments to prv upload.");
-            qDebug() << args;
+            qDebug().noquote() << args;
             return -1;
         }
 
@@ -662,7 +662,7 @@ public:
             }
         }
         if (verbose) {
-            qDebug() << QJsonDocument(obj).toJson();
+            qDebug().noquote() << QJsonDocument(obj).toJson();
         }
         if (obj.contains("original_checksum")) {
             QVariantMap params;
@@ -1021,6 +1021,9 @@ private:
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
+    Q_UNUSED(type)
+    Q_UNUSED(context)
+    Q_UNUSED(msg)
     // do not display anything!
     /*
     QByteArray localMsg = msg.toLocal8Bit();

@@ -396,7 +396,7 @@ Mda compute_isolation_matrix(QString timeseries, QString firings, noise_nearest_
     for (int i = 0; i < opts.cluster_numbers.count(); i++) {
         cluster_numbers_set.insert(opts.cluster_numbers[i]);
     }
-    qDebug() << "Using cluster numbers:" << opts.cluster_numbers;
+    qDebug().noquote() << "Using cluster numbers:" << opts.cluster_numbers;
 
     printf("Extracting times and labels...\n");
     //QVector<long> inds;
@@ -529,7 +529,7 @@ Mda compute_isolation_matrix_old(QString timeseries, QString firings, noise_near
     for (int i = 0; i < opts.cluster_numbers.count(); i++) {
         cluster_numbers_set.insert(opts.cluster_numbers[i]);
     }
-    qDebug() << "Using cluster numbers:" << opts.cluster_numbers;
+    qDebug().noquote() << "Using cluster numbers:" << opts.cluster_numbers;
 
     printf("Extracting times and labels...\n");
     //QVector<long> inds;

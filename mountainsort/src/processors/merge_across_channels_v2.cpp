@@ -214,7 +214,7 @@ bool cluster_is_already_being_used(const QVector<double>& times_in, const QVecto
     }
     if (best_frac >= opts.event_fraction_threshold) {
         printf("Cluster is already being used: frac=%g, dt=%d!\n", best_frac, best_t - T);
-        qDebug() << counts.mid(best_t - max_dt, max_dt * 2 + 1);
+        qDebug().noquote() << counts.mid(best_t - max_dt, max_dt * 2 + 1);
         return true;
     }
     return false;

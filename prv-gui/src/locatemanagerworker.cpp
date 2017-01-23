@@ -69,7 +69,6 @@ void LocateManagerWorker::startSearch()
     else {
         cmd += " --server=" + d->m_server;
     }
-    qDebug() << "XXXXXXXXXXXXXXXXXXXXXXXXXXX" << cmd;
 
     d->m_process.start(cmd);
     if (!d->m_process.waitForStarted()) {

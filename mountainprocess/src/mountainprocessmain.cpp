@@ -395,7 +395,6 @@ int main(int argc, char* argv[])
             }
         }
 
-        //qDebug() << results;
         QJsonArray PP = results["processes"].toArray();
 
         printf("\nPeak Memory (MB):\n");

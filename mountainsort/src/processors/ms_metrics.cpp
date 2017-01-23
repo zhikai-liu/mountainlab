@@ -49,7 +49,7 @@ bool ms_metrics(QString timeseries, QString firings, QString cluster_metrics_pat
     for (int i = 0; i < opts.cluster_numbers.count(); i++) {
         cluster_numbers_set.insert(opts.cluster_numbers[i]);
     }
-    qDebug() << "Using cluster numbers:" << opts.cluster_numbers;
+    qDebug().noquote() << "Using cluster numbers:" << opts.cluster_numbers;
 
     printf("Extracting times and labels...\n");
     //QVector<long> inds;
@@ -188,7 +188,7 @@ bool ms_metrics(QString timeseries, QString firings, QString cluster_metrics_pat
     timer1.start();
     for (int i1 = 0; i1 < opts.cluster_numbers.count(); i1++) {
         if (timer1.elapsed() > 5000) {
-            qDebug() << QString("Cluster pair metrics %1 of %2").arg(i1 + 1).arg(opts.cluster_numbers.count());
+            qDebug().noquote() << QString("Cluster pair metrics %1 of %2").arg(i1 + 1).arg(opts.cluster_numbers.count());
             timer1.restart();
         }
         for (int i2 = 0; i2 < opts.cluster_numbers.count(); i2++) {
@@ -407,7 +407,7 @@ double compute_noise_overlap(const DiskReadMda32& X, const QVector<double>& time
     elapsed_times << timer.restart();
 
     if (false)
-        qDebug() << "TIMES:" << elapsed_times;
+        qDebug().noquote() << "TIMES:" << elapsed_times;
 
     if (!num_total)
         return 0;

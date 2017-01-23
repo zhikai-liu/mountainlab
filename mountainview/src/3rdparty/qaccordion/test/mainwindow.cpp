@@ -64,7 +64,7 @@ void MainWindow::networkRequestFinished(QNetworkReply* reply)
         ipsumLabel->setText(QString(data));
     }
     else {
-        qDebug() << Q_FUNC_INFO << "Netowrk error: " << reply->error() << "\n"
+        qDebug() << Q_FUNC_INFO << "Network error: " << reply->error() << "\n"
                  << reply->errorString();
         ipsumLabel->setText(this->offlineIpsum);
     }

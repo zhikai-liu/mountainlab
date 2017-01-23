@@ -18,16 +18,13 @@
 
 QString compute_the_file_hash(const QString& path, long num_bytes)
 {
-    //printf("compute_the_file_hash: %s (%ld)",path.toUtf8().data(),num_bytes);
+    // Do not printf here!
     QCryptographicHash hash(QCryptographicHash::Sha1);
     QFile FF(path);
     if (!FF.open(QFile::ReadOnly))
         return "";
-    QTime timer;
-    timer.start();
-    //printf("Computing checksum for file %s\n", path.toLatin1().data());
     long num_bytes_processed = 0;
-    while ((!FF.atEnd()) && ((num_bytes == 0) || (num_bytes_processed == num_bytes))) {
+    while ((!FF.atEnd()) && ((num_bytes == 0) || (num_bytes_processed < num_bytes))) {
         QByteArray tmp = FF.read(10000);
         if (num_bytes != 0) {
             if (num_bytes_processed + tmp.count() > num_bytes) {
@@ -39,7 +36,6 @@ QString compute_the_file_hash(const QString& path, long num_bytes)
     }
 
     QString ret = QString(hash.result().toHex());
-    //printf("%s -- Elapsed: %g sec\n", ret.toLatin1().data(), timer.elapsed() * 1.0 / 1000);
     return ret;
 }
 

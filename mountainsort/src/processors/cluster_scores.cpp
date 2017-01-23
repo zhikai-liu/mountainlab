@@ -249,7 +249,6 @@ QVector<double> compute_cluster_pair_scores(DiskReadMda32 timeseries, const Mda3
     int M = clips1.N1();
     int T = clips1.N2();
 
-    qDebug() << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << opts.add_noise_level;
     Mda32 clips1_noise = add_self_noise_to_clips(timeseries, clips1, opts.add_noise_level);
     Mda32 clips2_noise = add_self_noise_to_clips(timeseries, clips2, opts.add_noise_level);
 

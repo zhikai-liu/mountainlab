@@ -150,6 +150,7 @@ int main(int argc, char* argv[])
     CounterManager* counterManager = new CounterManager;
     registry.addAutoReleasedObject(counterManager);
 
+    printf("Setting up object registry...\n");
     ObjectRegistry::addAutoReleasedObject(new IIntCounter("allocated_bytes"));
     ObjectRegistry::addAutoReleasedObject(new IIntCounter("freed_bytes"));
     ObjectRegistry::addAutoReleasedObject(new IIntCounter("remote_processing_time"));
@@ -172,6 +173,7 @@ int main(int argc, char* argv[])
 
     setbuf(stdout, 0);
 
+    printf("Parsing command-line parameters...\n");
     CLParams CLP(argc, argv);
     {
         TaskProgressView TPV;
@@ -317,12 +319,14 @@ int main(int argc, char* argv[])
         }
         */
 
+        printf("Creating MVContext...\n");
         MVContext* context = new MVContext; //note that the view agent does not get deleted. :(
         context->setChannelColors(channel_colors);
         context->setClusterColors(label_colors);
         MVMainWindow* W = new MVMainWindow(context);
 
         if (mv2_fname.isEmpty()) {
+            printf("Setting up context...\n");
             MVContext dc; //dummy context
             if (CLP.named_parameters.contains("samplerate")) {
                 dc.setSampleRate(CLP.named_parameters.value("samplerate", 0).toDouble());
@@ -438,7 +442,9 @@ int main(int argc, char* argv[])
 
         W->show();
 
+        printf("Setting up main window...\n");
         setup_main_window(W);
+        printf("Adding controls to main window...\n");
         W->addControl(new MVOpenViewsControl(context, W), true);
         W->addControl(new MVGeneralControl(context, W), false);
         W->addControl(new MVExportControl(context, W), true);
@@ -450,12 +456,14 @@ int main(int argc, char* argv[])
 
         a.processEvents();
 
+        printf("Opening initial views...\n");
         W->setCurrentContainerName("north");
         W->openView("open-cluster-details");
         W->setCurrentContainerName("south");
         //W->openView("open-auto-correlograms");
         W->openView("open-cluster-metrics");
 
+        printf("Starting event loop...\n");
         return a.exec();
     }
     else if (mode == "spikespy") {

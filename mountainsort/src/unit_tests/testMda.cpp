@@ -63,9 +63,9 @@ static bool verify_sizes(const Mda& m, const long dims[6], const QString& messag
     result = result && (m.ndims() == num_dims(dims));
     result = result && (m.totalSize() == totalSize);
     if (!result) {
-        qDebug() << message << ", verify_sizes() failed for dimensions ";
+        qDebug().noquote() << message << ", verify_sizes() failed for dimensions ";
         for (int k = 0; k < 6; ++k)
-            qDebug() << dims[k];
+            qDebug().noquote() << dims[k];
     }
     return result;
 }

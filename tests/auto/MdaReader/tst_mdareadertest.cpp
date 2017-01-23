@@ -30,7 +30,7 @@ void MdaReaderTest::initTestCase()
     m_dir = new QTemporaryDir;
     if (!qgetenv("MDAREADERTEST_DEBUG_DIR").isEmpty()) {
         m_dir->setAutoRemove(false);
-        qDebug() << "MdaReaderTest: test directory:" << m_dir->path();
+        qDebug().noquote() << "MdaReaderTest: test directory:" << m_dir->path();
     }
 }
 

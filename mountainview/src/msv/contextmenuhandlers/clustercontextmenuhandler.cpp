@@ -241,7 +241,7 @@ void MVClusterContextMenuHandler::slot_extract_selected_clusters()
     }
 
     args << tmp_fname << "--clusters=" + clusters_str.join(",");
-    qDebug() << "EXECUTING: " + exe + " " + args.join(" ");
+    qDebug().noquote() << "EXECUTING: " + exe + " " + args.join(" ");
     QProcess::startDetached(exe, args);
 }
 

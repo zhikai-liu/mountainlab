@@ -69,7 +69,7 @@ bool branch_cluster_v2(const QString& timeseries_path, const QString& detect_pat
                     times << detect.value(1, i) - 1; //convert to 0-based indexing
                 }
             }
-            qDebug() << "Extracting clips. #times=" << times.count();
+            qDebug().noquote() << "Extracting clips. #times=" << times.count();
             clips = extract_clips(X, times, neighborhood, opts.clip_size);
         }
         QVector<int> labels = do_branch_cluster_v2(clips, opts, m);

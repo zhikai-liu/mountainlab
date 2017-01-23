@@ -671,8 +671,13 @@ QString system_call_return_output(QString cmd)
     QProcess process;
     process.start(cmd);
     process.waitForStarted();
-    process.waitForFinished(-1);
-    return process.readAllStandardOutput().trimmed();
+    QTime timer;
+    timer.start();
+    while (!process.waitForFinished(1000)) {
+        qDebug().noquote() << "Waiting for process: " + cmd << QString("Elapsed: %1 sec").arg(timer.elapsed() / 1000);
+    }
+    QString ret = process.readAllStandardOutput();
+    return ret.trimmed();
 }
 
 QString locate_file_with_checksum(QString checksum, QString fcs, long size, bool allow_downloads)
@@ -812,7 +817,7 @@ QJsonValue MLUtil::configValue(const QString& group, const QString& key)
     QJsonObject obj1 = QJsonDocument::fromJson(json1.toUtf8(), &err1).object();
     if (err1.error != QJsonParseError::NoError) {
         qWarning() << "Error parsing mountainlab.default.json at offset:" + err1.offset;
-        qDebug() << json1.toUtf8();
+        qDebug().noquote() << json1.toUtf8();
         qWarning() << err1.errorString();
         qWarning() << "Error parsing mountainlab.default.json.";
         abort();
@@ -886,6 +891,10 @@ bool MLUtil::matchesFastChecksum(QString path, QString fcs)
     QString fcs_value = fcs.mid(ind0 + 1);
 
     if (fcs_name == "head1000") {
+        if (fcs_value == "da39a3ee5e6b4b0d3255bfef95601890afd80709") {
+            // Need to handle this exceptional case because there was a bug in the initial implementation where all the head1000 fcs values were computed incorrectly to this value, which I believe is the checksum of an empty string
+            return true;
+        }
         return (MLUtil::computeSha1SumOfFileHead(path, 1000) == fcs_value);
     }
     else {

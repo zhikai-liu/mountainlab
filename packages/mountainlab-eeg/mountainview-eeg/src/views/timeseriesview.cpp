@@ -103,8 +103,6 @@ void TimeseriesView::prepareCalculation()
     MVEEGContext* c = qobject_cast<MVEEGContext*>(mvContext());
     Q_ASSERT(c);
 
-    qDebug() << "::::::::::::::::::::::::" << c->currentTimeseriesName() << c->currentTimeseries().makePath();
-
     d->m_layout_needed = true;
     d->m_calculator.timeseries = c->currentTimeseries();
     d->m_calculator.timeseries_freq_range = c->option("timeseries_freq_range").toString();

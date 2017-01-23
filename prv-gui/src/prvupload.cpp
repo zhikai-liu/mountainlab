@@ -97,8 +97,6 @@ MLNetwork::PrvParallelUploader* PrvUpload::initiateUploadToServer(QString server
 
     /*
     QString tmp_fname = CacheManager::globalInstance()->makeLocalFile(MLUtil::makeRandomId(10) + ".PrvManagerdlg.prv");
-    qDebug() << "----------------------------------------------------------------";
-    qDebug() << prv.original_object << prv.checksum << prv.original_path;
     TextFile::write(tmp_fname, QJsonDocument(prv.original_object).toJson());
 
     Prv::ensure_remote(tmp_fname,server_name);

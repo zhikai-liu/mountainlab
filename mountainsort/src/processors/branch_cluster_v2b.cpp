@@ -177,7 +177,7 @@ bool branch_cluster_v2b(const QString& timeseries_path, const QString& detect_pa
 
     //QStringList keys=s_timers.keys();
     //foreach (QString key,keys) {
-    //    qDebug() << "TIMER" << key << s_timers[key]*1.0/1000;
+    //    qDebug().noquote() << "TIMER" << key << s_timers[key]*1.0/1000;
     //}
 
     return true;

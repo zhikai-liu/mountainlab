@@ -499,7 +499,7 @@ void unit_test_remote_read_mda()
     Mda chunk;
     X.readChunk(chunk, 0, 100);
     for (int j = 0; j < 10; j++) {
-        qDebug() << j << chunk.value(j); // unit_test
+        qDebug().noquote() << j << chunk.value(j); // unit_test
     }
 }
 

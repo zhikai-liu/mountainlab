@@ -454,7 +454,7 @@ QString PrvFilePrivate::find_remote_file(long size, const QString& checksum, con
         QString passcode = server0["passcode"].toString();
         QString url0 = host + ":" + QString::number(port) + url_path + QString("/?a=locate&checksum=%1&fcs=%2&size=%3&passcode=%4").arg(checksum).arg(fcs_optional).arg(size).arg(passcode);
         if (opts.verbose) {
-            qDebug() << url0;
+            printf("%s\n", url0.toUtf8().data());
         }
         QString txt = http_get_text_curl_0(url0);
         if (!txt.isEmpty()) {
@@ -473,7 +473,7 @@ QString PrvFilePrivate::find_file(long size, const QString& checksum, const QStr
 {
     if (opts.search_locally) {
         if (opts.verbose)
-            printf("Searching locally...\n");
+            printf("Searching locally......\n");
         QString local_fname = find_local_file(size, checksum, fcs_optional, opts);
         if (!local_fname.isEmpty()) {
             if (opts.verbose) {
@@ -498,21 +498,37 @@ QString PrvFilePrivate::find_file(long size, const QString& checksum, const QStr
     return "";
 }
 
-QString find_file_2(QString directory, QString checksum, QString fcs_optional, long size, bool recursive)
+QString find_file_2(QString directory, QString checksum, QString fcs_optional, long size, bool recursive, bool verbose)
 {
     QStringList files = QDir(directory).entryList(QStringList("*"), QDir::Files);
     foreach (QString file, files) {
         QString path = directory + "/" + file;
         if (QFileInfo(path).size() == size) {
             if (!fcs_optional.isEmpty()) {
+                if (verbose)
+                    printf("Fast checksum test for %s\n", path.toUtf8().data());
                 if (MLUtil::matchesFastChecksum(path, fcs_optional)) {
+                    if (verbose)
+                        printf("Matches. Computing full checksum...\n");
                     QString checksum1 = MLUtil::computeSha1SumOfFile(path);
                     if (checksum1 == checksum) {
+                        if (verbose)
+                            printf("Matches.\n");
                         return path;
                     }
+                    else {
+                        if (verbose)
+                            printf("Does not match.\n");
+                    }
+                }
+                else {
+                    if (verbose)
+                        printf("Does not match.\n");
                 }
             }
             else {
+                if (verbose)
+                    printf("Computing sha1 sum for: %s\n", path.toUtf8().data());
                 QString checksum1 = MLUtil::computeSha1SumOfFile(path);
                 if (checksum1 == checksum) {
                     return path;
@@ -523,7 +539,7 @@ QString find_file_2(QString directory, QString checksum, QString fcs_optional, l
     if (recursive) {
         QStringList dirs = QDir(directory).entryList(QStringList("*"), QDir::Dirs | QDir::NoDotAndDotDot);
         foreach (QString dir, dirs) {
-            QString path = find_file_2(directory + "/" + dir, checksum, fcs_optional, size, recursive);
+            QString path = find_file_2(directory + "/" + dir, checksum, fcs_optional, size, recursive, verbose);
             if (!path.isEmpty())
                 return path;
         }
@@ -536,7 +552,9 @@ QString PrvFilePrivate::find_local_file(long size, const QString& checksum, cons
     QStringList local_search_paths = opts.local_search_paths;
     for (int i = 0; i < local_search_paths.count(); i++) {
         QString search_path = local_search_paths[i];
-        QString fname = find_file_2(search_path, checksum, fcs_optional, size, true);
+        if (opts.verbose)
+            printf("Searching %s\n", search_path.toUtf8().data());
+        QString fname = find_file_2(search_path, checksum, fcs_optional, size, true, opts.verbose);
         if (!fname.isEmpty())
             return fname;
     }
