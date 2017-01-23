@@ -73,10 +73,6 @@ If you are on a later version of Ubuntu (such as 16.04), you can get away with t
 #### NodeJS
 > apt-get install -y nodejs npm
 
-> sudo npm install -g ini extend
-
-(Note to self: I need to figure out how to properly deal with nodejs packages, right now it's a mess)
-
 ## Installing Qt5 from qt.io
 
 As mentioned above, if you are not using a later version of Ubuntu, you probably won't get a recent enough version from the package manager. In that case follow these directions to install a recent version of Qt5:
