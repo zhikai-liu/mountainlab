@@ -43,10 +43,15 @@ args=args.split(' ');
 params0={samplerate:30000,sign:1};
 write_text_file(dspath0+'/params.json',JSON.stringify(params0));
 
-make_system_call(cmd,args,function() {
-	make_prv_file(bigpath0+'/waveforms.mda',dspath0+'/waveforms.mda.prv',function() {});
-	make_prv_file(bigpath0+'/raw.mda',dspath0+'/raw.mda.prv',function() {});
-	make_prv_file(bigpath0+'/firings_true.mda',dspath0+'/firings_true.mda.prv',function() {});
+make_system_call(cmd,args,function(tmp) {
+	if (tmp.success) {
+		make_prv_file(bigpath0+'/waveforms.mda',dspath0+'/waveforms.mda.prv',function() {});
+		make_prv_file(bigpath0+'/raw.mda',dspath0+'/raw.mda.prv',function() {});
+		make_prv_file(bigpath0+'/firings_true.mda',dspath0+'/firings_true.mda.prv',function() {});
+	}
+	else {
+		console.log('Error in system call. Please be sure that mountainlab/bin is in your path.\n');
+	}
 });
 
 function make_prv_file(fname,fname_out,callback) {
@@ -62,11 +67,13 @@ function make_system_call(cmd,args,callback) {
 	pp.stdout.setEncoding('utf8');
 	pp.stderr.setEncoding('utf8');
 	var done=false;
+	var success=true;
 	pp.on('close', function(code) {
   		done=true;
-		callback();
+		callback({success:success});
 	});
 	pp.on('error',function(err) {
+		success=false;
 		console.log ('Process error: '+cmd+' '+args.join(' '));
 		console.log (err);
 	});

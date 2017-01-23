@@ -1,0 +1,2 @@
+sudo docker build -t test1 .
+sudo docker run -it test1 /bin/bash
