@@ -13,7 +13,7 @@ addpath([mfile_path,'/validation']);
 addpath([mfile_path,'/misc_examples']);
 addpath([mfile_path,'/../mountainsort/src/isosplit']);
 addpath([mfile_path,'/../mountainsort/src/isosplit5']);
-//addpath([mfile_path,'/../spikespy/matlab']); %added on 4/12/16
+%addpath([mfile_path,'/../spikespy/matlab']); %added on 4/12/16
 
 % the following removed by jfm, because instead I changed mscmd_exe.m.
 %Other *_exe.m files should probably also be modified
