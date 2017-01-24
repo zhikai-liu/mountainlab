@@ -107,8 +107,24 @@ bool ProcessManager::loadProcessorFile(const QString& path)
         QString output = pp.readAll();
         json = output;
         if (json.isEmpty()) {
-            qCritical() << "Executable processor file did not return output for spec: " + path;
-            return false;
+            qWarning() << "Potential problem with executable processor file: " + path;
+            if (QFileInfo(path).size() < 1e6) {
+                json = TextFile::read(path);
+                //now test it, since it is executable we are suspicious...
+                QJsonParseError error;
+                QJsonObject obj = QJsonDocument::fromJson(json.toLatin1(), &error).object();
+                if (error.error != QJsonParseError::NoError) {
+                    qCritical() << "Executable processor file did not return output for spec: " + path;
+                    return false;
+                }
+                else {
+                    //we are okay -- apparently the text file .mp got marked as executable by the user, so let's proceed
+                }
+            }
+            else {
+                qCritical() << "File is too large to be a text file. Executable processor file did not return output for spec: " + path;
+                return false;
+            }
         }
     }
     else {
