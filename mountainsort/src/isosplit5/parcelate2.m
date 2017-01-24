@@ -98,6 +98,9 @@ end;
 function ret=compute_max_distance(pt,X)
 dm=distance_matrix(pt,X);
 ret=max(dm);
+if (length(ret)==0)
+    ret=0;
+end;
 
 function ret=distance_matrix(X1,X2)
 [M,N1]=size(X1);
