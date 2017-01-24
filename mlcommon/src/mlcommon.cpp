@@ -168,9 +168,10 @@ QString find_ancestor_path_with_file(QString path, QString file_name)
             return "";
         }
     }
-    if (QFile::exists(path+"/"+file_name))
+    if (QFile::exists(path + "/" + file_name))
         return path;
-    else return "";
+    else
+        return "";
 }
 
 QString MLUtil::mountainlabBasePath()

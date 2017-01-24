@@ -141,99 +141,104 @@ bool ms_metrics(QString timeseries, QString firings, QString cluster_metrics_pat
         return false;
     }
 
-    printf("get pairs to compare...\n");
-    QSet<QString> pairs_to_compare = get_pairs_to_compare(X, F, 10, opts);
-    QStringList pairs_to_compare_list = pairs_to_compare.toList();
-    QMap<QString, double> overlap_scores;
+    if (opts.compute_pair_metrics) {
+        printf("get pairs to compare...\n");
+        QSet<QString> pairs_to_compare = get_pairs_to_compare(X, F, 10, opts);
+        QStringList pairs_to_compare_list = pairs_to_compare.toList();
+        QMap<QString, double> overlap_scores;
 
-    printf("Computing pair metrics...\n");
-    timer.start();
+        printf("Computing pair metrics...\n");
+        timer.start();
 #pragma omp parallel for
-    for (int i = 0; i < pairs_to_compare_list.count(); i++) {
-        QString pairstr = pairs_to_compare_list[i];
-        QStringList vals = pairstr.split("-");
-        int k1 = vals[0].toInt();
-        int k2 = vals[1].toInt();
-        QVector<double> times_k1;
-        QVector<double> times_k2;
+        for (int i = 0; i < pairs_to_compare_list.count(); i++) {
+            QString pairstr = pairs_to_compare_list[i];
+            QStringList vals = pairstr.split("-");
+            int k1 = vals[0].toInt();
+            int k2 = vals[1].toInt();
+            QVector<double> times_k1;
+            QVector<double> times_k2;
 #pragma omp critical
-        {
-            if (timer.elapsed() > 5000) {
-                printf("Computing pair metrics: completed %d of %d (%d%%)\n", overlap_scores.count(), pairs_to_compare_list.count(), (overlap_scores.count() * 100) / pairs_to_compare_list.count());
-                timer.restart();
-            }
-            for (long i = 0; i < times.count(); i++) {
-                if (labels[i] == k1) {
-                    times_k1 << times[i];
+            {
+                if (timer.elapsed() > 5000) {
+                    printf("Computing pair metrics: completed %d of %d (%d%%)\n", overlap_scores.count(), pairs_to_compare_list.count(), (overlap_scores.count() * 100) / pairs_to_compare_list.count());
+                    timer.restart();
+                }
+                for (long i = 0; i < times.count(); i++) {
+                    if (labels[i] == k1) {
+                        times_k1 << times[i];
+                    }
+                }
+
+                for (long i = 0; i < times.count(); i++) {
+                    if (labels[i] == k2) {
+                        times_k2 << times[i];
+                    }
                 }
             }
-
-            for (long i = 0; i < times.count(); i++) {
-                if (labels[i] == k2) {
-                    times_k2 << times[i];
-                }
+            DiskReadMda32 X0(timeseries);
+            double val = compute_overlap(X0, times_k1, times_k2, opts);
+#pragma omp critical
+            {
+                overlap_scores[pairstr] = val;
             }
         }
-        DiskReadMda32 X0(timeseries);
-        double val = compute_overlap(X0, times_k1, times_k2, opts);
-#pragma omp critical
-        {
-            overlap_scores[pairstr] = val;
-        }
-    }
 
-    //////////////////////////////////////////////////////////////
-    QMap<QString, Metric> cluster_pair_metrics;
-    QTime timer1;
-    timer1.start();
-    for (int i1 = 0; i1 < opts.cluster_numbers.count(); i1++) {
-        if (timer1.elapsed() > 5000) {
-            qDebug().noquote() << QString("Cluster pair metrics %1 of %2").arg(i1 + 1).arg(opts.cluster_numbers.count());
-            timer1.restart();
-        }
-        for (int i2 = 0; i2 < opts.cluster_numbers.count(); i2++) {
-            int k1 = opts.cluster_numbers[i1];
-            int k2 = opts.cluster_numbers[i2];
+        //////////////////////////////////////////////////////////////
+        QMap<QString, Metric> cluster_pair_metrics;
+        QTime timer1;
+        timer1.start();
+        for (int i1 = 0; i1 < opts.cluster_numbers.count(); i1++) {
+            if (timer1.elapsed() > 5000) {
+                qDebug().noquote() << QString("Cluster pair metrics %1 of %2").arg(i1 + 1).arg(opts.cluster_numbers.count());
+                timer1.restart();
+            }
+            for (int i2 = 0; i2 < opts.cluster_numbers.count(); i2++) {
+                int k1 = opts.cluster_numbers[i1];
+                int k2 = opts.cluster_numbers[i2];
 
-            QString pairstr = QString("%1-%2").arg(k1).arg(k2);
-            if (pairs_to_compare.contains(pairstr)) {
-                double val = overlap_scores[pairstr];
-                if (val >= 0.01) { //to save some space in the file
-                    cluster_pair_metrics["overlap"].values << val;
+                QString pairstr = QString("%1-%2").arg(k1).arg(k2);
+                if (pairs_to_compare.contains(pairstr)) {
+                    double val = overlap_scores[pairstr];
+                    if (val >= 0.01) { //to save some space in the file
+                        cluster_pair_metrics["overlap"].values << val;
+                    }
+                    else {
+                        cluster_pair_metrics["overlap"].values << 0;
+                    }
                 }
                 else {
                     cluster_pair_metrics["overlap"].values << 0;
                 }
             }
-            else {
-                cluster_pair_metrics["overlap"].values << 0;
-            }
         }
-    }
 
-    QStringList cluster_pair_metric_names = cluster_pair_metrics.keys();
-    QString cluster_pair_metric_txt = "cluster1,cluster2," + cluster_pair_metric_names.join(",") + "\n";
-    int jj = 0;
-    for (int i1 = 0; i1 < opts.cluster_numbers.count(); i1++) {
-        for (int i2 = 0; i2 < opts.cluster_numbers.count(); i2++) {
-            bool has_something_non_zero = false;
-            foreach (QString name, cluster_pair_metric_names) {
-                if (cluster_pair_metrics[name].values[jj])
-                    has_something_non_zero = true;
-            }
-            if ((has_something_non_zero) && (i1 != i2)) {
-                QString line = QString("%1,%2").arg(opts.cluster_numbers[i1]).arg(opts.cluster_numbers[i2]);
+        QStringList cluster_pair_metric_names = cluster_pair_metrics.keys();
+        QString cluster_pair_metric_txt = "cluster1,cluster2," + cluster_pair_metric_names.join(",") + "\n";
+        int jj = 0;
+        for (int i1 = 0; i1 < opts.cluster_numbers.count(); i1++) {
+            for (int i2 = 0; i2 < opts.cluster_numbers.count(); i2++) {
+                bool has_something_non_zero = false;
                 foreach (QString name, cluster_pair_metric_names) {
-                    line += QString(",%1").arg(cluster_pair_metrics[name].values[jj]);
+                    if (cluster_pair_metrics[name].values[jj])
+                        has_something_non_zero = true;
                 }
-                cluster_pair_metric_txt += line + "\n";
+                if ((has_something_non_zero) && (i1 != i2)) {
+                    QString line = QString("%1,%2").arg(opts.cluster_numbers[i1]).arg(opts.cluster_numbers[i2]);
+                    foreach (QString name, cluster_pair_metric_names) {
+                        line += QString(",%1").arg(cluster_pair_metrics[name].values[jj]);
+                    }
+                    cluster_pair_metric_txt += line + "\n";
+                }
+                jj++;
             }
-            jj++;
+        }
+        if (!TextFile::write(cluster_pair_metrics_path, cluster_pair_metric_txt)) {
+            qWarning() << "Problem writing output file: " + cluster_pair_metrics_path;
+            return false;
         }
     }
-    if (!TextFile::write(cluster_pair_metrics_path, cluster_pair_metric_txt)) {
-        qWarning() << "Problem writing output file: " + cluster_pair_metrics_path;
-        return false;
+    else {
+        TextFile::write("cluster_pair_metrics_path", "");
     }
 
     return true;

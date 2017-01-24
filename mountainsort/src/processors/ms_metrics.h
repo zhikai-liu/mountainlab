@@ -18,6 +18,7 @@ struct ms_metrics_opts {
     int exhaustive_search_num = 100;
     int max_num_to_use = 500;
     int min_num_to_use = 100;
+    bool compute_pair_metrics = true;
 };
 
 namespace MSMetrics {

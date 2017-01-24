@@ -408,6 +408,7 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
         args << QString("--_request_num_threads=%1").arg(request_num_threads);
     QProcess* P1 = new QProcess;
     P1->setReadChannelMode(QProcess::MergedChannels);
+    qDebug() << exe + " " + args.join(" ");
     P1->start(exe, args);
     if (!P1->waitForStarted()) {
         qWarning() << "Error waiting for process to start: " + processor_name;
