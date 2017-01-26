@@ -41,6 +41,8 @@ HEADERS += \
     processors/isocluster_v1.h \
     processors/isocluster_v2_processor.h \
     processors/isocluster_v2.h \
+    processors/isocluster_drift_v1_processor.h \
+    processors/isocluster_drift_v1.h \
     isosplit/isosplit2.h \
     isosplit/isocut.h \
     isosplit/jisotonic.h \
@@ -142,6 +144,8 @@ SOURCES += \
     processors/isocluster_v1.cpp \
     processors/isocluster_v2_processor.cpp \
     processors/isocluster_v2.cpp \
+    processors/isocluster_drift_v1_processor.cpp \
+    processors/isocluster_drift_v1.cpp \
     processors/extract_clips.cpp \
     processors/remove_duplicate_clusters_processor.cpp \
     processors/remove_duplicate_clusters.cpp \
