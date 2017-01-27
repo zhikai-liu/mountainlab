@@ -238,7 +238,7 @@ bool ms_metrics(QString timeseries, QString firings, QString cluster_metrics_pat
         }
     }
     else {
-        TextFile::write("cluster_pair_metrics_path", "");
+        TextFile::write("cluster_pair_metrics_path", " "); //use space so not an empty file (necessary?)
     }
 
     return true;

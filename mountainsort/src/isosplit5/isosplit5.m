@@ -25,11 +25,12 @@ if ~isfield(opts,'isocut_threshold') opts.isocut_threshold=1; end;
 if ~isfield(opts,'min_cluster_size') opts.min_cluster_size=10; end;
 if ~isfield(opts,'K_init') opts.K_init=200; end;
 if ~isfield(opts,'refine_clusters'), opts.refine_clusters=true; end;
-if ~isfield(opts,'max_iterations'), opts.max_iterations_per_pass=500; end;
+if ~isfield(opts,'max_iterations_per_pass'), opts.max_iterations_per_pass=500; end;
 if ~isfield(opts,'verbose') opts.verbose=0; end;
 if ~isfield(opts,'verbose_pause_duration') opts.verbose_pause_duration=2.0; end;
 if ~isfield(opts,'whiten_cluster_pairs') opts.whiten_cluster_pairs=1; end;
 if ~isfield(opts,'initial_labels') opts.initial_labels=[]; end;
+if ~isfield(opts,'prevent_merge') opts.prevent_merge=false; end;
 
 
 %% Initialize the timers for diagnostic
@@ -52,7 +53,13 @@ else
     Kmax=max(data.labels);
     inds0=find(data.labels==0);
     if (~isempty(inds0))
-        data.labels(inds0)=randi(Kmax,length(inds0));
+        inds1=find(data.labels>0);
+        if (~isempty(inds1))
+            idx1=knnsearch(X(:,inds1)',X(:,inds0)');
+            data.labels(inds0)=data.labels(inds1(idx1));
+        else
+            data.labels(inds0)=1;
+        end;
     end;
 end;
 
@@ -180,6 +187,7 @@ info.timers=timers;
 % of the new clusters, recursively. Unless we only found one cluster.
 if ((opts.refine_clusters)&&(max(labels)>1))
     opts2=opts;
+    opts2.initial_labels=[];
     opts2.refine_clusters=true; % Maybe we should provide an option on whether to do recursive refinement
     K=max(labels);
     labels_split=zeros(1,N);
@@ -218,9 +226,11 @@ for i1=1:length(k1s)
             [do_merge,L12,proj]=merge_test(X(:,inds1),X(:,inds2),opts);
         end;
         if (do_merge)
-            new_labels(find(new_labels==k2))=k1;
-            clusters_changed_vec(k1)=1;
-            clusters_changed_vec(k2)=1;
+            if (~opts.prevent_merge)
+                new_labels(find(new_labels==k2))=k1;
+                clusters_changed_vec(k1)=1;
+                clusters_changed_vec(k2)=1;
+            end;
         else
             %redistribute
             new_labels(inds12(find(L12==1)))=k1;
@@ -248,11 +258,14 @@ X2_centered=X2-repmat(centroid2,1,N2);
 C1=(X1_centered*X1_centered')/N1;
 C2=(X2_centered*X2_centered')/N2;
 avg_cov=(C1+C2)/2;
-inv_avg_cov=inv(avg_cov);
+
 X1b=X1;
 X2b=X2;
 V=centroid2-centroid1;
-V=inv_avg_cov*V;
+if (abs(det(avg_cov))>1e-6)
+    inv_avg_cov=inv(avg_cov);
+    V=inv_avg_cov*V;
+end;
 V=V/sqrt(V'*V);
 
 function [X1b,X2b,V]=whiten_two_clusters(X1,X2)

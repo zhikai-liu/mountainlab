@@ -1,3 +1,4 @@
+//only difference with mountainsort is detect threshold set at 3 vs. 3.5
 function main(params) {
 	run_mountainsort(params);
 }
@@ -6,7 +7,7 @@ function run_mountainsort(params) {
 	set_default_parameters(params,{
 		samplerate:30000, //Hz
 		freq_min:300,freq_max:6000, //Hz
-		detect_threshold:3.5, // std. dev's
+		detect_threshold:3, // std. dev's
 		detect_interval:10, //timepoints
 		clip_size:50, //timepoints
 		sign:0, // use 1 to detect only positive spikes, -1 to detect only negative spikes, and 0 for both
@@ -115,7 +116,6 @@ function run_mountainsort(params) {
 	var metrics=Process('ms_metrics',{timeseries:pre_concat,firings:firings3},{
 		clip_size:params.clip_size,add_noise_level:params.metrics_noise_level
 	});
-
 	var firings_split=Process('split_firings',{firings:firings3,raw_timeseries:raws},{},{firings_split:empties}).firings_split;
 
 	// Write the output
@@ -123,9 +123,9 @@ function run_mountainsort(params) {
 		for (var i=0; i<raws.length; i++) {
 			if (adjacency_matrix) {
 				write_file(adjacency_matrix,outpaths[i]+'/adjacency_matrix.mda');
-				write_file(metrics.cluster_metrics,outpaths[i]+'/cluster_metrics.csv');
-				write_file(metrics.cluster_pair_metrics,outpaths[i]+'/cluster_pair_metrics.csv');
 			}
+			write_file(metrics.cluster_metrics,outpaths[i]+'/cluster_metrics.csv');
+			// write_file(metrics.cluster_pair_metrics,outpaths[i]+'/cluster_pair_metrics.csv');
 			write_prv(raws[i],outpaths[i]+'/raw.mda.prv');
 			write_prv(filts[i],outpaths[i]+'/filt.mda.prv');
 			write_prv(pre_split[i],outpaths[i]+'/pre.mda.prv');
@@ -136,9 +136,9 @@ function run_mountainsort(params) {
 	if (1) {
 		if (adjacency_matrix) {
 			write_file(adjacency_matrix,params.outpath+'/adjacency_matrix.mda');
-			write_file(metrics.cluster_metrics,params.outpath+'/cluster_metrics.csv');
-			write_file(metrics.cluster_pair_metrics,params.outpath+'/cluster_pair_metrics.csv');
 		}
+		write_file(metrics.cluster_metrics,params.outpath+'/cluster_metrics.csv');
+		// write_file(metrics.cluster_pair_metrics,params.outpath+'/cluster_pair_metrics.csv');
 		var raw_concat=Process('concat_timeseries',{timeseries:raws},{}).timeseries_concat;
 		write_prv(raw_concat,params.outpath+'/raw.mda.prv');
 		write_prv(filt_concat,params.outpath+'/filt.mda.prv');
