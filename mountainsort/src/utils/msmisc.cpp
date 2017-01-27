@@ -103,44 +103,6 @@ Mda32 compute_stdev_clip(const Mda32& clips)
     return stdevs;
 }
 
-Mda grab_clips_subset(const Mda& clips, const QVector<int>& inds)
-{
-    int M = clips.N1();
-    int T = clips.N2();
-    int LLL = inds.count();
-    Mda ret;
-    ret.allocate(M, T, LLL);
-    for (int i = 0; i < LLL; i++) {
-        long aaa = i * M * T;
-        long bbb = inds[i] * M * T;
-        for (int k = 0; k < M * T; k++) {
-            ret.set(clips.get(bbb), aaa);
-            aaa++;
-            bbb++;
-        }
-    }
-    return ret;
-}
-
-Mda32 grab_clips_subset(const Mda32& clips, const QVector<int>& inds)
-{
-    int M = clips.N1();
-    int T = clips.N2();
-    int LLL = inds.count();
-    Mda32 ret;
-    ret.allocate(M, T, LLL);
-    for (int i = 0; i < LLL; i++) {
-        long aaa = i * M * T;
-        long bbb = inds[i] * M * T;
-        for (int k = 0; k < M * T; k++) {
-            ret.set(clips.get(bbb), aaa);
-            aaa++;
-            bbb++;
-        }
-    }
-    return ret;
-}
-
 /*
 bool eigenvalue_decomposition_sym_isosplit(Mda& U, Mda& S, Mda& X)
 {
@@ -179,3 +141,41 @@ bool eigenvalue_decomposition_sym_isosplit(Mda& U, Mda& S, Mda& X)
     return true;
 }
 */
+
+Mda grab_clips_subset(const Mda& clips, const QVector<int>& inds)
+{
+    int M = clips.N1();
+    int T = clips.N2();
+    int LLL = inds.count();
+    Mda ret;
+    ret.allocate(M, T, LLL);
+    for (int i = 0; i < LLL; i++) {
+        long aaa = i * M * T;
+        long bbb = inds[i] * M * T;
+        for (int k = 0; k < M * T; k++) {
+            ret.set(clips.get(bbb), aaa);
+            aaa++;
+            bbb++;
+        }
+    }
+    return ret;
+}
+
+Mda32 grab_clips_subset(const Mda32& clips, const QVector<int>& inds)
+{
+    int M = clips.N1();
+    int T = clips.N2();
+    int LLL = inds.count();
+    Mda32 ret;
+    ret.allocate(M, T, LLL);
+    for (int i = 0; i < LLL; i++) {
+        long aaa = i * M * T;
+        long bbb = inds[i] * M * T;
+        for (int k = 0; k < M * T; k++) {
+            ret.set(clips.get(bbb), aaa);
+            aaa++;
+            bbb++;
+        }
+    }
+    return ret;
+}
