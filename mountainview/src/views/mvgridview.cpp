@@ -232,8 +232,9 @@ RenderOptionSet *MVGridView::renderOptions() const
     RenderOptionSet* hist = set->addSubSet("Panel");
     hist->addOption<bool>("Fixed size panel", false);
     hist->addOption<QSize>("Fixed size", QSize(600, 350));
-    hist->addOption<bool>("Fixed number of columns", false);
-    hist->addOption<int>("Number of columns", 5);
+    RenderOption<int>* colNum = hist->addOption<int>("Column Count", 0);
+    colNum->setAttribute("minimum", 0);
+    colNum->setAttribute("specialValueText", "Auto");
 
     RenderOptionSet* extra = optionSet("Extra");
     extra->addOption<QFont>("Font", font());

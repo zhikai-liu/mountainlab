@@ -6,6 +6,55 @@
 #include "mlcommon.h"
 #include <QMenu>
 
+class HistogramControl {
+public:
+    HistogramControl(const QSize &s = QSize())
+        : m_size(s) {}
+    virtual ~HistogramControl() {}
+    const QSize& size() const { return m_size; }
+
+    QColor line_color;
+    QColor fill_color;
+    QColor hover_color;
+    QVector<int> m_highlight;
+
+    void render(QPainter *painter, const QVector<QRectF> &data) {
+        renderBars(painter, data);
+    }
+
+protected:
+    virtual void renderBars(QPainter *painter, const QVector<QRectF> &data) {
+        QBrush brush = fill_color;
+        QPen pen = line_color;
+        for (int i = 0; i < data.count(); ++i) {
+            if (m_highlight.contains(i)) {
+                brush = hover_color;
+            } else {
+                brush = fill_color;
+            }
+            drawBar(painter, data.at(i), brush, pen);
+        }
+    }
+//    virtual QPointF coord2pix(const QPointF &pt) {
+
+//    }
+//    virtual QPointF pix2coord(const QPointF &pt) {
+
+//    }
+
+    virtual void drawBar(QPainter *painter, const QRectF &rect, const QBrush& fill, const QPen& pen) {
+        painter->setBrush(fill);
+        painter->setPen(pen);
+        painter->drawRect(rect);
+    }
+
+private:
+    QSize m_size;
+//    QVector<double> m_data;
+
+
+};
+
 QVector<double> sum(const QVector<double>& V1, const QVector<double>& V2);
 QColor modify_color_for_second_histogram2(QColor col);
 QColor lighten2(QColor col, int dr, int dg, int db);
@@ -321,7 +370,6 @@ void HistogramView::renderView(QPainter *painter, const RenderOptionSet* options
     int num_bins = d->m_bin_lefts.count();
     if (num_bins < 2)
         return;
-
     for (int pass = 0; pass <= 2; pass++) {
         QVector<double> bin_densities;
         QColor col, line_color;
@@ -340,20 +388,21 @@ void HistogramView::renderView(QPainter *painter, const RenderOptionSet* options
             col = modify_color_for_second_histogram2(d->m_fill_color);
             line_color = modify_color_for_second_histogram2(d->m_line_color);
         }
-
+        HistogramControl control(rect.size().toSize());
+        control.line_color = line_color;
+        control.fill_color = col;
+        control.hover_color = lighten2(col, 25, 25, 25);
+        if (d->m_hovered_bin_index >= 0)
+            control.m_highlight << d->m_hovered_bin_index;
+        QVector<QRectF> data;
         for (int i = 0; i < num_bins; i++) {
             QPointF pt1 = d->coord2pix(QPointF(d->m_bin_lefts[i], 0), rect.width(), rect.height());
             QPointF pt2 = d->coord2pix(QPointF(d->m_bin_rights[i], bin_densities[i]), rect.width(), rect.height());
             QRectF R = QRectF(pt1, pt2).normalized();
-            if (i == d->m_hovered_bin_index)
-                painter->fillRect(R, lighten2(col, 25, 25, 25));
-            else
-                painter->fillRect(R, col);
-            painter->setPen(line_color);
-            painter->drawRect(R);
+            data << R;
         }
+        control.render(painter, data);
     }
-
     if (d->m_draw_vertical_axis_at_zero) {
         QPointF pt0 = d->coord2pix(QPointF(0, 0));
         QPointF pt1 = d->coord2pix(QPointF(0, d->m_max_bin_density));
@@ -407,7 +456,11 @@ void HistogramView::renderView(QPainter *painter, const RenderOptionSet* options
         //int text_height = 11;
         QRect R(0, rect.height() - margin_bottom - caption_height, rect.width(), margin_bottom + caption_height);
         QFont font = painter->font();
-        font.setFamily("Arial");
+        if (options->option("Font")) {
+            font = options->option("Font")->value().value<QFont>();
+        } else {
+            font.setFamily("Arial");
+        }
         //font.setPixelSize(text_height);
         painter->setFont(font);
         painter->setPen(Qt::darkGray);
@@ -419,16 +472,6 @@ void HistogramView::renderView(QPainter *painter, const RenderOptionSet* options
     d->m_hovered = hovered;
     d->m_hovered_bin_index = hovered_bin_index;
     d->m_current = current;
-}
-
-QRectF make_rect2(QPointF p1, QPointF p2)
-{
-    qWarning() << Q_FUNC_INFO << "deprecated. Use QRectF(p1, p2).normalized() instead.";
-    double x = qMin(p1.x(), p2.x());
-    double y = qMin(p1.y(), p2.y());
-    double w = qAbs(p2.x() - p1.x());
-    double h = qAbs(p2.y() - p1.y());
-    return QRectF(x, y, w, h);
 }
 
 QColor lighten2(QColor col, int dr, int dg, int db)
@@ -891,3 +934,7 @@ double HistogramViewPrivate::transform2(double x)
     }
     return x;
 }
+
+
+
+

@@ -96,6 +96,9 @@ public:
     void setSelected(bool val);
     void setStdevShading(bool val);
     bool stdevShading();
+    bool isHighlighted() const;
+    bool isHovered() const;
+    bool isSelected() const;
 
     void paint(QPainter* painter, QRectF rect, bool render_image_mode = false);
     void renderView(QPainter *painter, const RenderOptionSet* options, const QRectF &rect = QRectF());
@@ -189,7 +192,7 @@ ClusterDetailView::ClusterDetailView(MVAbstractContext* context)
     MVContext* c = qobject_cast<MVContext*>(context);
     Q_ASSERT(c);
 //    QFont f = font();
-//    f.setPointSize(11);
+//    f.setPointSize(8);
 //    setFont(f);
 
 
@@ -420,15 +423,12 @@ void ClusterDetailView::paintEvent(QPaintEvent* evt)
 
     QPainter painter(this);
     QFont f = painter.font();
-    f.setPointSize(10);
+    f.setPixelSize(10);
     painter.setFont(f);
     if (!d->m_renderOptions) {
         // default options
         d->m_renderOptions = renderOptions();
     }
-
-    QVariantMap viewOptions = d->m_viewOptions;
-    viewOptions["Render stats"] = true;
 
 #if 1
     renderView(&painter, d->m_renderOptions, QRect(0,0,width(), height()));
@@ -859,7 +859,7 @@ void ClusterDetailView::renderView(QPainter *painter, const RenderOptionSet *opt
             pt1.setY(pt1.y());
             pt2.setY(pt2.y());
             draw_axis_opts opts;
-            opts.font_size_pix = painter->font().pointSize();
+            opts.font_size_pix = painter->font().pixelSize();
             opts.pt1 = pt1;
             opts.pt2 = pt2;
             opts.draw_tick_labels = false;
@@ -890,7 +890,10 @@ RenderOptionSet *ClusterDetailView::renderOptions() const
 
     RenderOptionSet* ext = optionSet("Extension");
     ext->addOption<QColor>("Background", Qt::transparent);
-    ext->addOption<QFont>("Font", font());
+    QFont f = font();
+    f.setPixelSize(10);
+    ext->addOption<QFont>("Font", f);
+    ext->addOption<QPalette>("Palette", palette());
     set->setExtension(ext);
     return set;
 }
@@ -1141,7 +1144,7 @@ void ClusterView::paint(QPainter* painter, QRectF rect, bool render_image_mode)
         //font.setPixelSize(12);
         //font.setPixelSize(d->m_properties.cluster_number_font_size);
         QFont font = painter->font();
-        font.setPointSize(font.pointSize()+1);
+        font.setPixelSize(font.pixelSize()+1);
         painter->setFont(font);
 
         txt = truncate_based_on_font_and_width(txt, font, m_top_rect.width());
@@ -1220,13 +1223,13 @@ void ClusterView::renderView(QPainter *painter, const RenderOptionSet *options, 
     painter->setClipRect(rect, Qt::IntersectClip);
 
     QColor background_color = ctx->color("view_background");
-    if (m_highlighted)
+    background_color = options->option("Background")->value().value<QColor>();
+    if (isHighlighted())
         background_color = ctx->color("view_background_highlighted");
-    else if (m_selected)
+    else if (isSelected())
         background_color = ctx->color("view_background_selected");
-    else if (m_hovered)
+    else if (isHovered())
         background_color = ctx->color("view_background_hovered");
-      background_color = options->option("Background")->value().value<QColor>();
 //    painter->fillRect(rect, QColor(220, 220, 225));
     painter->fillRect(rect2, background_color); // or shouldn't it?
 
@@ -1269,7 +1272,7 @@ void ClusterView::renderView(QPainter *painter, const RenderOptionSet *options, 
     {
         painter->save();
         //the midline
-        QColor midline_color = lighten(background_color, 0.9);
+        QColor midline_color = Qt::lightGray;//lighten(background_color, 0.9);
         QPointF pt0 = template_coord2pix(0, Tmid, 0);
         QPen pen;
         pen.setWidth(1);
@@ -1282,11 +1285,8 @@ void ClusterView::renderView(QPainter *painter, const RenderOptionSet *options, 
     for (int m = 0; m < M; m++) {
         QColor col = ctx->channelColor(m);
         QPen pen;
-        pen.setWidth(1);
+        pen.setWidth(options->value("Stroke width", 1).toInt());
         pen.setColor(col);
-        if (options->option("Stroke width")) {
-            pen.setWidth(options->option("Stroke width")->value().toInt());
-        }
         painter->setPen(pen);
         if (d->m_stdev_shading) {
             static const QColor quite_light_gray(200, 200, 205);
@@ -1343,7 +1343,7 @@ void ClusterView::renderView(QPainter *painter, const RenderOptionSet *options, 
         //font.setPixelSize(12);
         //font.setPixelSize(d->m_properties.cluster_number_font_size);
         QFont font = painter->font();
-        font.setPointSize(font.pointSize()+1);
+        font.setPixelSize(font.pixelSize()+1);
         painter->setFont(font);
 
         txt = truncate_based_on_font_and_width(txt, font, m_top_rect.width());
@@ -1536,7 +1536,7 @@ void ClusterDetailViewPrivate::do_paint(QPainter& painter, int W_in, int H_in, b
 
     if ((q->isCalculating()) && (!render_image_mode)) {
         QFont font = painter.font();
-        font.setPointSize(20);
+        font.setPixelSize(20);
         painter.setFont(font);
         painter.fillRect(QRectF(0, 0, q->width(), q->height()), c->color("calculation-in-progress"));
         painter.drawText(QRectF(left_margin, 0, W, H), Qt::AlignCenter | Qt::AlignVCenter, "Calculating...");
@@ -1964,6 +1964,21 @@ void ClusterView::setStdevShading(bool val)
 bool ClusterView::stdevShading()
 {
     return m_stdev_shading;
+}
+
+bool ClusterView::isHighlighted() const
+{
+    return m_highlighted;
+}
+
+bool ClusterView::isHovered() const
+{
+    return m_hovered;
+}
+
+bool ClusterView::isSelected() const
+{
+    return m_selected;
 }
 
 ClusterData* ClusterView::clusterData()
