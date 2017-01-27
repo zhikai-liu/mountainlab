@@ -125,7 +125,7 @@ function run_mountainsort(params) {
 				write_file(adjacency_matrix,outpaths[i]+'/adjacency_matrix.mda');
 			}
 			write_file(metrics.cluster_metrics,outpaths[i]+'/cluster_metrics.csv');
-			// write_file(metrics.cluster_pair_metrics,outpaths[i]+'/cluster_pair_metrics.csv');
+			write_file(metrics.cluster_pair_metrics,outpaths[i]+'/cluster_pair_metrics.csv');
 			write_prv(raws[i],outpaths[i]+'/raw.mda.prv');
 			write_prv(filts[i],outpaths[i]+'/filt.mda.prv');
 			write_prv(pre_split[i],outpaths[i]+'/pre.mda.prv');
@@ -138,7 +138,7 @@ function run_mountainsort(params) {
 			write_file(adjacency_matrix,params.outpath+'/adjacency_matrix.mda');
 		}
 		write_file(metrics.cluster_metrics,params.outpath+'/cluster_metrics.csv');
-		// write_file(metrics.cluster_pair_metrics,params.outpath+'/cluster_pair_metrics.csv');
+		write_file(metrics.cluster_pair_metrics,params.outpath+'/cluster_pair_metrics.csv');
 		var raw_concat=Process('concat_timeseries',{timeseries:raws},{}).timeseries_concat;
 		write_prv(raw_concat,params.outpath+'/raw.mda.prv');
 		write_prv(filt_concat,params.outpath+'/filt.mda.prv');
