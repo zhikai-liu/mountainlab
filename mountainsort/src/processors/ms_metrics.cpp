@@ -141,7 +141,7 @@ bool ms_metrics(QString timeseries, QString firings, QString cluster_metrics_pat
         return false;
     }
 
-    if (opts.compute_pair_metrics) {
+    if (!opts.do_not_compute_pair_metrics) {
         printf("get pairs to compare...\n");
         QSet<QString> pairs_to_compare = get_pairs_to_compare(X, F, 10, opts);
         QStringList pairs_to_compare_list = pairs_to_compare.toList();
@@ -238,7 +238,7 @@ bool ms_metrics(QString timeseries, QString firings, QString cluster_metrics_pat
         }
     }
     else {
-        TextFile::write("cluster_pair_metrics_path", " "); //use space so not an empty file (necessary?)
+        TextFile::write(cluster_pair_metrics_path, " "); //use space so not an empty file (necessary?)
     }
 
     return true;
