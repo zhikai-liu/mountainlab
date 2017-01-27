@@ -71,6 +71,7 @@ public:
     }
 
     const RenderOptionBase* option(const QString &name) const;
+    QVariant value(const QString &optionName, const QVariant &defaultValue = QVariant()) const;
     QList<RenderOptionBase*> options() const;
     QList<RenderOptionSet *> sets() const;
     RenderOptionSet *extension() const;

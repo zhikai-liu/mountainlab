@@ -151,6 +151,12 @@ const RenderOptionBase *RenderOptionSet::option(const QString &name) const {
     return opt;
 }
 
+QVariant RenderOptionSet::value(const QString &optionName, const QVariant &defaultValue) const {
+    const RenderOptionBase* opt = option(optionName);
+    if (opt) return opt->value();
+    return defaultValue;
+}
+
 QList<RenderOptionBase *> RenderOptionSet::options() const { return m_options.values(); }
 
 QList<RenderOptionSet *> RenderOptionSet::sets() const { return m_sets.values(); }
