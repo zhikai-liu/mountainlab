@@ -14,6 +14,7 @@ function [labels,info]=isosplit5(X,opts)
 %   opts.verbose
 %   opts.verbose_pause_duration
 %   opts.whiten_cluster_pairs -- whether to whiten at each comparison
+%   opts.initial_labels -- optional -- if provided will skip the parcelation step
 %
 % Magland 5/19/2015, updated dec 2016
 
@@ -28,6 +29,8 @@ if ~isfield(opts,'max_iterations'), opts.max_iterations_per_pass=500; end;
 if ~isfield(opts,'verbose') opts.verbose=0; end;
 if ~isfield(opts,'verbose_pause_duration') opts.verbose_pause_duration=2.0; end;
 if ~isfield(opts,'whiten_cluster_pairs') opts.whiten_cluster_pairs=1; end;
+if ~isfield(opts,'initial_labels') opts.initial_labels=[]; end;
+
 
 %% Initialize the timers for diagnostic
 timers.get_pairs_to_compare=0;
@@ -37,12 +40,22 @@ timers.compute_centers=0;
 [M,N]=size(X);
 
 %% Compute the initial clusters
-target_parcel_size=opts.min_cluster_size;
-target_num_parcels=opts.K_init;
-% !! important not to do a final reassign because then the shapes will not
-% be conducive to isosplit iterations -- hexagons are not good for isosplit!
-data.labels=parcelate2(X,target_parcel_size,target_num_parcels,struct('final_reassign',0));
-Kmax=max(data.labels);
+if (isempty(opts.initial_labels))
+    target_parcel_size=opts.min_cluster_size;
+    target_num_parcels=opts.K_init;
+    % !! important not to do a final reassign because then the shapes will not
+    % be conducive to isosplit iterations -- hexagons are not good for isosplit!
+    data.labels=parcelate2(X,target_parcel_size,target_num_parcels,struct('final_reassign',0));
+    Kmax=max(data.labels);
+else
+    data.labels=opts.initial_labels;
+    Kmax=max(data.labels);
+    inds0=find(data.labels==0);
+    if (~isempty(inds0))
+        data.labels(inds0)=randi(Kmax,length(inds0));
+    end;
+end;
+
 
 %debug
 %labels=data.labels;
