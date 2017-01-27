@@ -2,22 +2,49 @@
 #define VIEWPROPERTYEDITOR_H
 
 #include <qttreepropertybrowser.h>
+#include <qtvariantproperty.h>
 #include <renderable.h>
 
-//class ViewProperty {
-//public:
+class QSpinBox;
 
-//    ViewProperty(const QString &name);
-//    void setAttribute(const QString &name, const QVariant &value);
-//    QVariant defaultValue();
-//private:
+class MountainLabPropertyManager : public QtVariantPropertyManager {
+    Q_OBJECT
+public:
+    MountainLabPropertyManager(QObject* parent = 0);
 
-//};
+    bool isPropertyTypeSupported(int propertyType) const override;
+    int valueType(int propertyType) const override;
+    QStringList attributes(int propertyType) const override;
+    int attributeType(int propertyType, const QString &attribute) const override;
+    QVariant value(const QtProperty *property) const override;
+    QVariant attributeValue(const QtProperty *property, const QString &attribute) const override;
+    void setAttribute(QtProperty *property, const QString &attribute, const QVariant &value) override;
 
-//class ViewPropertyGroup {
-//public:
+protected:
+    QString valueText(const QtProperty *property) const override;
+private:
+    typedef QMap<QtProperty *, QString> PropertyStringMap;
+    PropertyStringMap m_stringAttrs;
 
-//};
+};
+
+class MountainLabEditorFactory : public QtVariantEditorFactory {
+    Q_OBJECT
+public:
+    MountainLabEditorFactory(QObject* parent = 0);
+
+protected:
+    QWidget *createEditor(QtVariantPropertyManager *manager, QtProperty *property, QWidget *parent) override;
+    void connectPropertyManager(QtVariantPropertyManager *manager) override;
+    void disconnectPropertyManager(QtVariantPropertyManager *manager) override;
+private slots:
+    void editorDestroyed(QObject* editor);
+    void attributeChanged(QtProperty *property, const QString &attribute, const QVariant &value);
+private:
+    QMap<QtProperty*, QList<QSpinBox*> > m_intPropertyToEditors;
+    QMap<QSpinBox*, QtProperty* > m_intEditorToProperty;
+
+};
 
 class QtVariantPropertyManager;
 class QtVariantEditorFactory;
