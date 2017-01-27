@@ -54,6 +54,7 @@
 #include "basic_metrics_processor.h"
 #include "isocluster_v1_processor.h"
 #include "isocluster_v2_processor.h"
+#include "isocluster_drift_v1_processor.h"
 #include "concat_mda_processor.h"
 #include "split_timeseries_processor.h"
 #include <sys/stat.h>
@@ -138,6 +139,7 @@ void MSProcessManager::loadDefaultProcessors()
     loadProcessor(new basic_metrics_Processor);
     loadProcessor(new isocluster_v1_Processor);
     loadProcessor(new isocluster_v2_Processor);
+    loadProcessor(new isocluster_drift_v1_Processor);
     loadProcessor(new concat_mda_Processor);
     loadProcessor(new split_timeseries_Processor);
     loadProcessor(new concat_timeseries_Processor);

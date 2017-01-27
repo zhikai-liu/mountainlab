@@ -226,7 +226,7 @@ void parcelate2(int* labels, int M, long N, float* X, int target_parcel_size, in
                     if (PP.indices.size() > 0)
                         parcels.push_back(PP);
                     else
-                        printf("Unexpected problem. New parcel has no points -- original size = %ld.\n", sz);
+                        printf("Unexpected problem. New parcel has no points -- perhaps dataset contains duplicate points? -- original size = %ld.\n", sz);
                 }
                 if ((long)parcels[p_index].indices.size() == sz) {
                     printf("Warning: Size did not change after splitting parcel.\n");

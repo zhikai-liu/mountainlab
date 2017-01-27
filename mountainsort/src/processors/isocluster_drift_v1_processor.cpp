@@ -1,19 +1,19 @@
-#include "isocluster_v2_processor.h"
-#include "isocluster_v2.h"
+#include "isocluster_drift_v1_processor.h"
+#include "isocluster_drift_v1.h"
 #include "omp.h"
 
-class isocluster_v2_ProcessorPrivate {
+class isocluster_drift_v1_ProcessorPrivate {
 public:
-    isocluster_v2_Processor* q;
+    isocluster_drift_v1_Processor* q;
 };
 
-isocluster_v2_Processor::isocluster_v2_Processor()
+isocluster_drift_v1_Processor::isocluster_drift_v1_Processor()
 {
-    d = new isocluster_v2_ProcessorPrivate;
+    d = new isocluster_drift_v1_ProcessorPrivate;
     d->q = this;
 
-    this->setName("isocluster_v2");
-    this->setVersion("0.1.1");
+    this->setName("isocluster_drift_v1");
+    this->setVersion("0.2.7");
     this->setInputFileParameters("timeseries", "detect", "adjacency_matrix");
     this->setOutputFileParameters("firings_out");
     this->setRequiredParameters("clip_size", "num_features", "num_features2");
@@ -22,24 +22,26 @@ isocluster_v2_Processor::isocluster_v2_Processor()
     this->setOptionalParameters("num_features2");
     this->setOptionalParameters("isocut_threshold");
     this->setOptionalParameters("K_init");
-    this->setOptionalParameters("time_segment_size");
+    this->setRequiredParameters("segment_size");
 }
 
-isocluster_v2_Processor::~isocluster_v2_Processor()
+isocluster_drift_v1_Processor::~isocluster_drift_v1_Processor()
 {
     delete d;
 }
 
-bool isocluster_v2_Processor::check(const QMap<QString, QVariant>& params)
+bool isocluster_drift_v1_Processor::check(const QMap<QString, QVariant>& params)
 {
     if (!this->checkParameters(params))
         return false;
     return true;
 }
 
-bool isocluster_v2_Processor::run(const QMap<QString, QVariant>& params)
+bool isocluster_drift_v1_Processor::run(const QMap<QString, QVariant>& params)
 {
-    isocluster_v2_opts opts;
+    isocluster_drift_v1_opts opts;
+
+    printf("isocluster_drift_v1_Processor...\n");
 
     QString timeseries_path = params["timeseries"].toString();
     QString detect_path = params["detect"].toString();
@@ -52,7 +54,7 @@ bool isocluster_v2_Processor::run(const QMap<QString, QVariant>& params)
     opts.consolidation_factor = params.value("consolidation_factor", 0.9).toDouble();
     opts.isocut_threshold = params.value("isocut_threshold", 1).toDouble();
     opts.K_init = params.value("K_init", 200).toInt();
-    opts.time_segment_size = (long)params.value("time_segment_size", 0).toDouble(); //important to go to double first because of scientific notation
+    opts.segment_size = (long)params.value("segment_size", 0).toDouble(); //important to go to double first because of scientific notation
 
-    return isocluster_v2(timeseries_path, detect_path, adjacency_matrix_path, firings_path, opts);
+    return Isocluster_drift_v1::isocluster_drift_v1(timeseries_path, detect_path, adjacency_matrix_path, firings_path, opts);
 }

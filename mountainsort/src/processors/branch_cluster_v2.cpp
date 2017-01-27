@@ -396,6 +396,46 @@ QVector<double> compute_dists_from_template(Mda& clips, Mda& template0)
     return ret;
 }
 
+namespace Branch_cluster_v2 {
+Mda grab_clips_subset(const Mda& clips, const QVector<long>& inds)
+{
+    int M = clips.N1();
+    int T = clips.N2();
+    int LLL = inds.count();
+    Mda ret;
+    ret.allocate(M, T, LLL);
+    for (int i = 0; i < LLL; i++) {
+        long aaa = i * M * T;
+        long bbb = inds[i] * M * T;
+        for (int k = 0; k < M * T; k++) {
+            ret.set(clips.get(bbb), aaa);
+            aaa++;
+            bbb++;
+        }
+    }
+    return ret;
+}
+
+Mda32 grab_clips_subset(const Mda32& clips, const QVector<long>& inds)
+{
+    int M = clips.N1();
+    int T = clips.N2();
+    int LLL = inds.count();
+    Mda32 ret;
+    ret.allocate(M, T, LLL);
+    for (int i = 0; i < LLL; i++) {
+        long aaa = i * M * T;
+        long bbb = inds[i] * M * T;
+        for (int k = 0; k < M * T; k++) {
+            ret.set(clips.get(bbb), aaa);
+            aaa++;
+            bbb++;
+        }
+    }
+    return ret;
+}
+}
+
 QVector<int> do_branch_cluster_v2(Mda& clips, const Branch_Cluster_V2_Opts& opts, long channel_for_display)
 {
     printf("do_branch_cluster_v2 %ldx%ldx%ld (channel %ld)\n", clips.N1(), clips.N2(), clips.N3(), channel_for_display + 1);
@@ -410,7 +450,7 @@ QVector<int> do_branch_cluster_v2(Mda& clips, const Branch_Cluster_V2_Opts& opts
     double max0 = MLCompute::max(peaks);
     if ((min0 < 0) && (max0 >= 0)) {
         //find the event inds corresponding to negative and positive peaks
-        QVector<int> inds_neg, inds_pos;
+        QVector<long> inds_neg, inds_pos;
         for (long i = 0; i < L; i++) {
             if (peaks[i] < 0)
                 inds_neg << i;
@@ -419,8 +459,8 @@ QVector<int> do_branch_cluster_v2(Mda& clips, const Branch_Cluster_V2_Opts& opts
         }
 
         //grab the negative and positive clips
-        Mda clips_neg = grab_clips_subset(clips, inds_neg);
-        Mda clips_pos = grab_clips_subset(clips, inds_pos);
+        Mda clips_neg = Branch_cluster_v2::grab_clips_subset(clips, inds_neg);
+        Mda clips_pos = Branch_cluster_v2::grab_clips_subset(clips, inds_pos);
 
         //cluster the negatives and positives separately
         printf("Channel %ld: NEGATIVES (%d)\n", channel_for_display + 1, inds_neg.count());

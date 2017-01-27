@@ -554,6 +554,46 @@ QVector<int> split_clusters_c(ClipsGroup clips, const QVector<int>& original_lab
     return new_labels;
 }
 
+namespace Branch_cluster_v2c {
+Mda grab_clips_subset(const Mda& clips, const QVector<long>& inds)
+{
+    int M = clips.N1();
+    int T = clips.N2();
+    int LLL = inds.count();
+    Mda ret;
+    ret.allocate(M, T, LLL);
+    for (int i = 0; i < LLL; i++) {
+        long aaa = i * M * T;
+        long bbb = inds[i] * M * T;
+        for (int k = 0; k < M * T; k++) {
+            ret.set(clips.get(bbb), aaa);
+            aaa++;
+            bbb++;
+        }
+    }
+    return ret;
+}
+
+Mda32 grab_clips_subset(const Mda32& clips, const QVector<long>& inds)
+{
+    int M = clips.N1();
+    int T = clips.N2();
+    int LLL = inds.count();
+    Mda32 ret;
+    ret.allocate(M, T, LLL);
+    for (int i = 0; i < LLL; i++) {
+        long aaa = i * M * T;
+        long bbb = inds[i] * M * T;
+        for (int k = 0; k < M * T; k++) {
+            ret.set(clips.get(bbb), aaa);
+            aaa++;
+            bbb++;
+        }
+    }
+    return ret;
+}
+}
+
 QVector<int> do_branch_cluster_v2c(ClipsGroup clips, const Branch_Cluster_V2_Opts& opts, long channel_for_display)
 {
     printf("do_branch_cluster_v2 %ldx%ldx%d (channel %ld)\n", clips.clips->N1(), clips.clips->N2(), clips.inds.count(), channel_for_display + 1);
