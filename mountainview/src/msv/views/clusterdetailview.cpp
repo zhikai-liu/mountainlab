@@ -366,6 +366,11 @@ void ClusterDetailView::loadStaticView(const QJsonObject& X)
     this->recalculate();
 }
 
+void ClusterDetailView::leaveEvent(QEvent *)
+{
+    d->set_hovered_k(-1);
+}
+
 ChannelSpacingInfo compute_channel_spacing_info(QList<ClusterData>& cdata, double vscale_factor)
 {
     ChannelSpacingInfo info;

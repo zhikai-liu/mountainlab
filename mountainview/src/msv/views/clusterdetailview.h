@@ -40,6 +40,7 @@ public:
     void loadStaticView(const QJsonObject& X) Q_DECL_OVERRIDE;
 
 protected:
+    void leaveEvent(QEvent*);
     void paintEvent(QPaintEvent* evt);
     void keyPressEvent(QKeyEvent* evt);
     void mousePressEvent(QMouseEvent* evt);
