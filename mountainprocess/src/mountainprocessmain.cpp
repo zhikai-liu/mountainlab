@@ -550,7 +550,27 @@ int main(int argc, char* argv[])
             printf("For example you can use your user name\n");
             exit(-1);
         }
+        bool user_wants_to_set_as_default = false;
+        while (1) {
+            printf("Would you like to set this as the default daemon (Y/N)? ");
+            char response[1000];
+            /// Witold, I suppose I should use something better than gets() to avoid the warning
+            gets(response);
+            QString resp = QString(response);
+            if (resp.toLower() == "y") {
+                user_wants_to_set_as_default = true;
+                break;
+            }
+            else if (resp.toLower() == "n") {
+                user_wants_to_set_as_default = false;
+                break;
+            }
+        }
         qputenv("MP_DAEMON_ID", daemon_id.toUtf8().data());
+        if (user_wants_to_set_as_default) {
+            /// Witold, ideally this should be done *after* the daemon is started
+            set_default_daemon_id(daemon_id);
+        }
 
 // Start the mountainprocess daemon
 #ifndef NO_FORK

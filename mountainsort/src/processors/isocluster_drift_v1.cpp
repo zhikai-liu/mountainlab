@@ -25,12 +25,12 @@ struct ClipsGroup {
     Mda32* features2; //FxL
 };
 
-Mda32 compute_clips_features_per_channel(const Mda32& clips, const QVector<long> &inds, int num_features_per_channel)
+Mda32 compute_clips_features_per_channel(const Mda32& clips, const QVector<long>& inds, int num_features_per_channel)
 {
     int M = clips.N1();
     int T = clips.N2();
     //long L = clips.N3();
-    long LL=inds.count();
+    long LL = inds.count();
 
     Mda32 FF(M * num_features_per_channel, LL);
 
@@ -156,7 +156,7 @@ QVector<int> consolidate_labels(const DiskReadMda32& X, const QVector<double>& t
     return ret;
 }
 
-QVector<double> compute_peaks(const Mda32 &clips, long ch)
+QVector<double> compute_peaks(const Mda32& clips, long ch)
 {
     long T = clips.N2();
     long L = clips.N3();
@@ -202,11 +202,12 @@ QVector<long> find_peaks_above_threshold(QVector<double>& peaks, double threshol
     return ret;
 }
 
-QVector<int> do_cluster_2(const Mda32& clips, const QVector<long> &inds, const isocluster_drift_v1_opts& opts) {
+QVector<int> do_cluster_2(const Mda32& clips, const QVector<long>& inds, const isocluster_drift_v1_opts& opts)
+{
     int M = clips.N1();
     int T = clips.N2();
     //long L = clips.N3();
-    long LL=inds.count();
+    long LL = inds.count();
 
     Mda32 CC, FF; // CC will be MTxK, FF will be KxL
     Mda32 sigma;
@@ -216,11 +217,11 @@ QVector<int> do_cluster_2(const Mda32& clips, const QVector<long> &inds, const i
     if (!opts.num_features2) {
         //do this inside a block so memory gets released
         Mda32 clips_reshaped(M * T, LL);
-        long iii=0;
-        for (long ii=0; ii<LL; ii++) {
-            for (int t=0; t<T; t++) {
-                for (int m=0; m<M; m++) {
-                    clips_reshaped.setValue(clips.value(m,t,inds[ii]),iii);
+        long iii = 0;
+        for (long ii = 0; ii < LL; ii++) {
+            for (int t = 0; t < T; t++) {
+                for (int m = 0; m < M; m++) {
+                    clips_reshaped.setValue(clips.value(m, t, inds[ii]), iii);
                     iii++;
                 }
             }
@@ -241,29 +242,28 @@ QVector<int> do_cluster_2(const Mda32& clips, const QVector<long> &inds, const i
     isosplit5(labels.data(), FF.N1(), FF.N2(), FF.dataPtr(), oo5);
 
     // Check for further splits while re-computing the PCA features (branch method)
-    int K=MLCompute::max(labels);
+    int K = MLCompute::max(labels);
     //if (K>1) {
     if (0) {
         // More than one cluster, so we proceed with the branch method
         QVector<int> new_labels(LL);
-        for (long jj=0; jj<LL; jj++)
-            new_labels[jj]=0;
-        int k_offset=0;
-        for (int k=1; k<=K; k++) {
-            QVector<long> inds_k,inds_k_b;
-            for (long i=0; i<LL; i++) {
-                if (labels[i]==k) {
+        for (long jj = 0; jj < LL; jj++)
+            new_labels[jj] = 0;
+        int k_offset = 0;
+        for (int k = 1; k <= K; k++) {
+            QVector<long> inds_k, inds_k_b;
+            for (long i = 0; i < LL; i++) {
+                if (labels[i] == k) {
                     inds_k << inds[i];
                     inds_k_b << i;
                 }
             }
             if (!inds_k.isEmpty()) {
-                QVector<int> labels_k=do_cluster_2(clips,inds_k,opts);
-                for (long jj=0; jj<inds_k.count(); jj++) {
-                    new_labels[inds_k_b[jj]]=k_offset+labels_k[jj];
+                QVector<int> labels_k = do_cluster_2(clips, inds_k, opts);
+                for (long jj = 0; jj < inds_k.count(); jj++) {
+                    new_labels[inds_k_b[jj]] = k_offset + labels_k[jj];
                 }
-                k_offset+=MLCompute::max(labels_k);
-
+                k_offset += MLCompute::max(labels_k);
             }
         }
         return new_labels;
@@ -319,8 +319,6 @@ QVector<int> do_cluster(const Mda32& clips, const isocluster_drift_v1_opts& opts
     }
     return labels;
 }
-
-
 
 QVector<int> remove_empty_labels(const QVector<int>& labels)
 {
@@ -468,77 +466,80 @@ Mda32 grab_clips_subset(const Mda32& clips, const QVector<long>& inds)
     return ret;
 }
 
-Mda32 compute_sliding_average(const Mda32 &clips, int radius) {
-    int M=clips.N1();
-    int T=clips.N2();
-    long L=clips.N3();
-    Mda32 ret(M,T,L);
-    Mda sum(M,T);
-    long count0=0;
-    for (int i=0; (i<=radius-1)&&(i<L); i++) {
-        for (int t=0; t<T; t++)
-            for (int m=0; m<M; m++)
-                sum.set(sum.get(m,t)+clips.get(m,t,i),m,t);
+Mda32 compute_sliding_average(const Mda32& clips, int radius)
+{
+    int M = clips.N1();
+    int T = clips.N2();
+    long L = clips.N3();
+    Mda32 ret(M, T, L);
+    Mda sum(M, T);
+    long count0 = 0;
+    for (int i = 0; (i <= radius - 1) && (i < L); i++) {
+        for (int t = 0; t < T; t++)
+            for (int m = 0; m < M; m++)
+                sum.set(sum.get(m, t) + clips.get(m, t, i), m, t);
         count0++;
     }
-    for (long i=0; i<L; i++) {
-        if (i-radius-1>=0) {
-            for (int t=0; t<T; t++)
-                for (int m=0; m<M; m++)
-                    sum.set(sum.get(m,t)-clips.get(m,t,i-radius-1),m,t);
+    for (long i = 0; i < L; i++) {
+        if (i - radius - 1 >= 0) {
+            for (int t = 0; t < T; t++)
+                for (int m = 0; m < M; m++)
+                    sum.set(sum.get(m, t) - clips.get(m, t, i - radius - 1), m, t);
             count0--;
         }
-        if (i+radius<L) {
-            for (int t=0; t<T; t++)
-                for (int m=0; m<M; m++)
-                    sum.set(sum.get(m,t)+clips.get(m,t,i+radius),m,t);
+        if (i + radius < L) {
+            for (int t = 0; t < T; t++)
+                for (int m = 0; m < M; m++)
+                    sum.set(sum.get(m, t) + clips.get(m, t, i + radius), m, t);
             count0++;
         }
         {
-            for (int t=0; t<T; t++)
-                for (int m=0; m<M; m++)
-                    ret.set(sum.get(m,t)/count0,m,t);
+            for (int t = 0; t < T; t++)
+                for (int m = 0; m < M; m++)
+                    ret.set(sum.get(m, t) / count0, m, t);
         }
     }
     return ret;
 }
 
-void drift_correct_clips_in_single_cluster(Mda32 &clips) {
-    int M=clips.N1();
-    int T=clips.N2();
-    long L=clips.N3();
-    int sliding_avg_radius=100;
-    Mda32 avg=compute_sliding_average(clips,sliding_avg_radius);
+void drift_correct_clips_in_single_cluster(Mda32& clips)
+{
+    int M = clips.N1();
+    int T = clips.N2();
+    long L = clips.N3();
+    int sliding_avg_radius = 100;
+    Mda32 avg = compute_sliding_average(clips, sliding_avg_radius);
     Mda32 last;
-    avg.getChunk(last,0,0,L-1,M,T,1);
-    for (long i=0; i<clips.N3(); i++) {
-        for (int t=0; t<T; t++) {
-            for (int m=0; m<M; m++) {
-                clips.setValue(clips.value(m,t,i)+last.value(m,t)-avg.value(m,t,i),m,t,i); //do the drift correction
+    avg.getChunk(last, 0, 0, L - 1, M, T, 1);
+    for (long i = 0; i < clips.N3(); i++) {
+        for (int t = 0; t < T; t++) {
+            for (int m = 0; m < M; m++) {
+                clips.setValue(clips.value(m, t, i) + last.value(m, t) - avg.value(m, t, i), m, t, i); //do the drift correction
             }
         }
     }
 }
 
-void drift_correct_clips(Mda32 &clips, const QVector<double> &times, const QVector<int> &labels) {
-    int M=clips.N1();
-    int T=clips.N2();
-    QList<long> time_sort_inds=get_sort_indices(times);
-    int K=MLCompute::max(labels);
-    for (int k=1; k<=K; k++) {
+void drift_correct_clips(Mda32& clips, const QVector<double>& times, const QVector<int>& labels)
+{
+    int M = clips.N1();
+    int T = clips.N2();
+    QList<long> time_sort_inds = get_sort_indices(times);
+    int K = MLCompute::max(labels);
+    for (int k = 1; k <= K; k++) {
         QVector<long> inds_k;
-        for (long jj=0; jj<time_sort_inds.count(); jj++) {
-            if (labels[time_sort_inds[jj]]==k) {
+        for (long jj = 0; jj < time_sort_inds.count(); jj++) {
+            if (labels[time_sort_inds[jj]] == k) {
                 inds_k << time_sort_inds[jj];
             }
         }
         if (!inds_k.isEmpty()) {
-            Mda32 clips_k=grab_clips_subset(clips,inds_k);
+            Mda32 clips_k = grab_clips_subset(clips, inds_k);
             drift_correct_clips_in_single_cluster(clips_k);
-            for (long ii=0; ii<inds_k.count(); ii++) {
+            for (long ii = 0; ii < inds_k.count(); ii++) {
                 Mda32 tmp;
-                clips_k.getChunk(tmp,0,0,ii,M,T,1);
-                clips.setChunk(tmp,0,0,inds_k[ii]);
+                clips_k.getChunk(tmp, 0, 0, ii, M, T, 1);
+                clips.setChunk(tmp, 0, 0, inds_k[ii]);
             }
         }
     }
@@ -552,59 +553,65 @@ struct Segment {
     QVector<int> labels2;
 };
 
-void assess_cluster_agreements(QMap<int,int> &agreement_map,QMap<int,double> &agreement_scores,const QVector<int> &labels,const QVector<int> &labels_prev) {
+void assess_cluster_agreements(QMap<int, int>& agreement_map, QMap<int, double>& agreement_scores, const QVector<int>& labels, const QVector<int>& labels_prev)
+{
 
-    QMap<int,double> counts,counts_prev;
-    for (int jj=0; jj<labels.count(); jj++)
+    QMap<int, double> counts, counts_prev;
+    for (int jj = 0; jj < labels.count(); jj++)
         counts[labels[jj]]++;
-    for (int jj=0; jj<labels_prev.count(); jj++)
+    for (int jj = 0; jj < labels_prev.count(); jj++)
         counts_prev[labels_prev[jj]]++;
-    QMap<int,QMap<int,double>> pair_counts;
-    for (int jj=0; jj<labels.count(); jj++) {
+    QMap<int, QMap<int, double> > pair_counts;
+    for (int jj = 0; jj < labels.count(); jj++) {
         pair_counts[labels[jj]][labels_prev[jj]]++;
     }
 
-    QSet<int> labels_set,labels_prev_set;
-    foreach (int k,labels) labels_set.insert(k);
-    foreach (int k,labels_prev) labels_prev_set.insert(k);
-    foreach (int k,labels_set) {
-        double best_score=0;
-        int best_match=0;
-        foreach (int k_prev,labels_prev_set) {
-            double numer0=pair_counts[k][k_prev];
-            double denom0=counts[k]+counts_prev[k_prev]-pair_counts[k][k_prev];
-            if (!denom0) denom0=1;
-            double score0=numer0/denom0;
-            if (score0>best_score) {
-                best_score=score0;
-                best_match=k_prev;
+    QSet<int> labels_set, labels_prev_set;
+    foreach (int k, labels)
+        labels_set.insert(k);
+    foreach (int k, labels_prev)
+        labels_prev_set.insert(k);
+    foreach (int k, labels_set) {
+        double best_score = 0;
+        int best_match = 0;
+        foreach (int k_prev, labels_prev_set) {
+            double numer0 = pair_counts[k][k_prev];
+            double denom0 = counts[k] + counts_prev[k_prev] - pair_counts[k][k_prev];
+            if (!denom0)
+                denom0 = 1;
+            double score0 = numer0 / denom0;
+            if (score0 > best_score) {
+                best_score = score0;
+                best_match = k_prev;
             }
         }
-        agreement_map[k]=best_match;
-        agreement_scores[k]=best_score;
+        agreement_map[k] = best_match;
+        agreement_scores[k] = best_score;
     }
 }
 
 QVector<int> cluster_in_neighborhood(const DiskReadMda32& X, const QVector<int>& neighborhood_channels, const QVector<double>& times, const isocluster_drift_v1_opts& opts)
 {
-    printf("cluster_in_neighborhood (Channel %d, %d events)...\n",neighborhood_channels[0]+1,times.count());
-    long N=X.N2();
+    printf("cluster_in_neighborhood (Channel %d, %d events)...\n", neighborhood_channels[0] + 1, times.count());
+    long N = X.N2();
     long L = times.count();
 
     QList<Segment> segments;
-    int jj=0;
+    int jj = 0;
     while (1) {
-        long tt1=jj*opts.segment_size/2;
-        long tt2=(jj+1)*opts.segment_size/2;
-        if (tt2>=N) break;
-        long tt3=(jj+2)*opts.segment_size/2;
-        if (tt3>N) tt3=N;
+        long tt1 = jj * opts.segment_size / 2;
+        long tt2 = (jj + 1) * opts.segment_size / 2;
+        if (tt2 >= N)
+            break;
+        long tt3 = (jj + 2) * opts.segment_size / 2;
+        if (tt3 > N)
+            tt3 = N;
         Segment S;
-        for (long ii=0; ii<L; ii++) {
-            if ((tt1<=times[ii])&&(times[ii]<tt2)) {
+        for (long ii = 0; ii < L; ii++) {
+            if ((tt1 <= times[ii]) && (times[ii] < tt2)) {
                 S.indices1 << ii;
             }
-            else if ((tt2<=times[ii])&&(times[ii]<tt3)) {
+            else if ((tt2 <= times[ii]) && (times[ii] < tt3)) {
                 S.indices2 << ii;
             }
         }
@@ -612,73 +619,74 @@ QVector<int> cluster_in_neighborhood(const DiskReadMda32& X, const QVector<int>&
         jj++;
     }
 
-    int k_offset=0;
-    for (int i=0; i<segments.count(); i++) {
-        QVector<long> indices_seg=segments[i].indices1;
+    int k_offset = 0;
+    for (int i = 0; i < segments.count(); i++) {
+        QVector<long> indices_seg = segments[i].indices1;
         indices_seg.append(segments[i].indices2);
-        printf("Channel %d: Clustering %d events in segment %d of %d\n",neighborhood_channels[0]+1,indices_seg.count(),i+1,segments.count());
+        printf("Channel %d: Clustering %d events in segment %d of %d\n", neighborhood_channels[0] + 1, indices_seg.count(), i + 1, segments.count());
         QVector<double> times_seg;
-        for (long jj=0; jj<indices_seg.count(); jj++)
+        for (long jj = 0; jj < indices_seg.count(); jj++)
             times_seg << times[indices_seg[jj]];
-        Mda32 clips_seg=extract_clips(X,times_seg,neighborhood_channels,opts.clip_size);
-        QVector<int> labels_seg=do_cluster(clips_seg,opts);
-        printf("Channel %d: Found %d clusters in segment.\n",neighborhood_channels[0]+1,MLCompute::max(labels_seg));
-        for (long jj=0; jj<segments[i].indices1.count(); jj++) {
-            int label0=labels_seg[jj];
-            if (label0>0)
-                segments[i].labels1 << k_offset+label0;
+        Mda32 clips_seg = extract_clips(X, times_seg, neighborhood_channels, opts.clip_size);
+        QVector<int> labels_seg = do_cluster(clips_seg, opts);
+        printf("Channel %d: Found %d clusters in segment.\n", neighborhood_channels[0] + 1, MLCompute::max(labels_seg));
+        for (long jj = 0; jj < segments[i].indices1.count(); jj++) {
+            int label0 = labels_seg[jj];
+            if (label0 > 0)
+                segments[i].labels1 << k_offset + label0;
             else
                 segments[i].labels1 << 0;
         }
-        for (long jj=0; jj<segments[i].indices2.count(); jj++) {
-            int label0=labels_seg[segments[i].indices1.count()+jj];
-            if (label0>0)
-                segments[i].labels2 << k_offset+label0;
+        for (long jj = 0; jj < segments[i].indices2.count(); jj++) {
+            int label0 = labels_seg[segments[i].indices1.count() + jj];
+            if (label0 > 0)
+                segments[i].labels2 << k_offset + label0;
             else
                 segments[i].labels2 << 0;
         }
-        k_offset+=MLCompute::max(labels_seg);
+        k_offset += MLCompute::max(labels_seg);
     }
 
-    double agreement_threshold=0.8;
+    double agreement_threshold = 0.8;
 
     QVector<int> output_labels(L);
-    for (int i=0; i<L; i++) output_labels[i]=0;
-    for (int i=0; i<segments.count(); i++) {
-        Segment *S=&segments[i];
-        if (i==0) {
-            for (int jj=0; jj<S->indices1.count(); jj++) {
-                output_labels[S->indices1[jj]]=S->labels1[jj];
+    for (int i = 0; i < L; i++)
+        output_labels[i] = 0;
+    for (int i = 0; i < segments.count(); i++) {
+        Segment* S = &segments[i];
+        if (i == 0) {
+            for (int jj = 0; jj < S->indices1.count(); jj++) {
+                output_labels[S->indices1[jj]] = S->labels1[jj];
             }
-            for (int jj=0; jj<S->indices2.count(); jj++) {
-                output_labels[S->indices2[jj]]=S->labels2[jj];
+            for (int jj = 0; jj < S->indices2.count(); jj++) {
+                output_labels[S->indices2[jj]] = S->labels2[jj];
             }
         }
         else {
-            Segment *Sprev=&segments[i-1];
-            if (Sprev->indices2.count()!=S->indices1.count()) {
+            Segment* Sprev = &segments[i - 1];
+            if (Sprev->indices2.count() != S->indices1.count()) {
                 qCritical() << "Unexpected mismatch of cluster sizes." << Sprev->indices2.count() << S->indices1.count();
                 abort();
             }
-            QMap<int,int> agreement_map;
-            QMap<int,double> agreement_scores;
-            printf("Assessing agreements for segment %d of %d\n",i+1,segments.count());
-            assess_cluster_agreements(agreement_map,agreement_scores,S->labels1,Sprev->labels2);
+            QMap<int, int> agreement_map;
+            QMap<int, double> agreement_scores;
+            printf("Assessing agreements for segment %d of %d\n", i + 1, segments.count());
+            assess_cluster_agreements(agreement_map, agreement_scores, S->labels1, Sprev->labels2);
             qDebug() << agreement_scores << agreement_map;
-            for (int jj=0; jj<S->indices1.count(); jj++) {
-                int label0=S->labels1[jj];
-                if ((agreement_map.contains(label0))&&(agreement_scores[label0]>agreement_threshold)) {
-                    label0=agreement_map[label0];
+            for (int jj = 0; jj < S->indices1.count(); jj++) {
+                int label0 = S->labels1[jj];
+                if ((agreement_map.contains(label0)) && (agreement_scores[label0] > agreement_threshold)) {
+                    label0 = agreement_map[label0];
                 }
-                S->labels1[jj]=label0;
+                S->labels1[jj] = label0;
             }
-            for (int jj=0; jj<S->indices2.count(); jj++) {
-                int label0=S->labels2[jj];
-                if ((agreement_map.contains(label0))&&(agreement_scores[label0]>agreement_threshold)) {
-                    label0=agreement_map[label0];
+            for (int jj = 0; jj < S->indices2.count(); jj++) {
+                int label0 = S->labels2[jj];
+                if ((agreement_map.contains(label0)) && (agreement_scores[label0] > agreement_threshold)) {
+                    label0 = agreement_map[label0];
                 }
-                S->labels2[jj]=label0;
-                output_labels[S->indices2[jj]]=label0;
+                S->labels2[jj] = label0;
+                output_labels[S->indices2[jj]] = label0;
             }
         }
     }
@@ -689,7 +697,7 @@ QVector<int> cluster_in_neighborhood(const DiskReadMda32& X, const QVector<int>&
     // Here's the critical step of discarding all clusters that are deemed redundant because they have higher energy on a channel other than the one they were identified on
     output_labels = consolidate_labels(X, times, output_labels, neighborhood_channels[0], opts.clip_size, opts.detect_interval, opts.consolidation_factor);
 
-    printf("Found %d clusters in neighborhood of channel %d\n",MLCompute::max(output_labels),neighborhood_channels[0]+1);
+    printf("Found %d clusters in neighborhood of channel %d\n", MLCompute::max(output_labels), neighborhood_channels[0] + 1);
 
     printf(".\n");
     return output_labels;
@@ -732,19 +740,18 @@ bool isocluster_drift_v1(const QString& timeseries_path, const QString& detect_p
         return false;
     }
 
-
     QVector<ChannelResult> channel_results(M);
 
 #pragma omp parallel for
     for (long m = 0; m < M; m++) {
-    //for (long m = 0; m <= 0; m++) {
+        //for (long m = 0; m <= 0; m++) {
         QVector<double> times_m;
         QVector<int> neighborhood_channels;
 #pragma omp critical
         {
             for (long i = 0; i < L; i++) {
                 int central_channel = detect.value(0, i);
-                if ((central_channel == m + 1) || ((central_channel == 0)&&(m==0))) {
+                if ((central_channel == m + 1) || ((central_channel == 0) && (m == 0))) {
                     times_m << detect.value(1, i) - 1; //convert to 0-based indexing
                 }
             }
@@ -754,13 +761,13 @@ bool isocluster_drift_v1(const QString& timeseries_path, const QString& detect_p
                     neighborhood_channels << a;
         }
 
-        DiskReadMda32 X_m=X;
+        DiskReadMda32 X_m = X;
         QVector<int> labels_m = cluster_in_neighborhood(X_m, neighborhood_channels, times_m, opts);
 
 #pragma omp critical
         {
-            channel_results[m].times=times_m;
-            channel_results[m].labels=labels_m;
+            channel_results[m].times = times_m;
+            channel_results[m].labels = labels_m;
         }
     }
 
@@ -768,12 +775,12 @@ bool isocluster_drift_v1(const QString& timeseries_path, const QString& detect_p
     QVector<long> output_chans;
     QVector<int> output_labels;
     int k_offset = 0;
-    for (int m=0; m<M; m++) {
-        int K_m=MLCompute::max(channel_results[m].labels);
-        for (long jj=0; jj<channel_results[m].times.count(); jj++) {
+    for (int m = 0; m < M; m++) {
+        int K_m = MLCompute::max(channel_results[m].labels);
+        for (long jj = 0; jj < channel_results[m].times.count(); jj++) {
             output_times << channel_results[m].times[jj];
             output_labels << k_offset + channel_results[m].labels[jj];
-            output_chans << m+1;
+            output_chans << m + 1;
         }
         k_offset += K_m;
     }
