@@ -120,6 +120,7 @@ bool get_missing_prvs(const QVariantMap& clparams, QJsonObject& missing_prvs);
 QString get_default_daemon_id();
 void set_default_daemon_id(QString daemon_id);
 void print_default_daemon_id();
+QJsonObject get_daemon_state(QString daemon_id);
 
 int main(int argc, char* argv[])
 {
@@ -315,11 +316,24 @@ int main(int argc, char* argv[])
     }
     else if (arg1 == "run-script") { // run a script synchronously (although note that individual processes will be queued (unless --_nodaemon is specified), but the script will wait for them to complete before exiting)
         QString daemon_id = qgetenv("MP_DAEMON_ID");
-        if ((daemon_id.isEmpty()) && (!CLP.named_parameters.contains("_nodaemon"))) {
-            printf("\nCANNOT RUN SCRIPT: No daemon has been specified.\n");
-            printf("Use the --_nodaemon flag or do the following:\n");
-            print_daemon_instructions();
-            return -1;
+        if (!CLP.named_parameters.contains("_nodaemon")) {
+            if (daemon_id.isEmpty()) {
+                printf("*****************************************************************\n");
+                printf("Cannot run script because...\n");
+                printf("\nNo daemon has been specified.\n");
+                printf("Use the --_nodaemon flag or do the following:\n");
+                print_daemon_instructions();
+                return -1;
+            }
+            QJsonObject state = get_daemon_state(daemon_id);
+            if (!state["is_running"].toBool()) {
+                printf("*****************************************************************\n");
+                printf("Cannot run script because...\n");
+                printf("\nDaemon \"%s\" is not running.\n", daemon_id.toUtf8().data());
+                printf("Use the --_nodaemon flag or do the following:\n");
+                print_daemon_instructions();
+                return -1;
+            }
         }
 
         if (!initialize_process_manager()) { // load the processor plugins etc
@@ -397,53 +411,56 @@ int main(int argc, char* argv[])
 
         QJsonArray PP = results["processes"].toArray();
 
-        printf("\nPeak Memory (MB):\n");
-        for (int i = 0; i < PP.count(); i++) {
-            QJsonObject QQ = PP[i].toObject();
-            QJsonObject RR = QQ["results"].toObject();
-            QString processor_name = QQ["processor_name"].toString();
-            double mem = RR["peak_mem_bytes"].toDouble() / 1e6;
-            if (!processor_name.isEmpty()) {
-                QString tmp = QString("  %1 (%2)").arg(mem).arg(processor_name);
-                printf("%s\n", tmp.toUtf8().data());
-            }
-        }
+        if (ret == 0) { //success
 
-        printf("\nPeak CPU percent:\n");
-        for (int i = 0; i < PP.count(); i++) {
-            QJsonObject QQ = PP[i].toObject();
-            QJsonObject RR = QQ["results"].toObject();
-            QString processor_name = QQ["processor_name"].toString();
-            double cpu = RR["peak_cpu_pct"].toDouble();
-            if (!processor_name.isEmpty()) {
-                QString tmp = QString("  %1 (%2)").arg(cpu).arg(processor_name);
-                printf("%s\n", tmp.toUtf8().data());
+            printf("\nPeak Memory (MB):\n");
+            for (int i = 0; i < PP.count(); i++) {
+                QJsonObject QQ = PP[i].toObject();
+                QJsonObject RR = QQ["results"].toObject();
+                QString processor_name = QQ["processor_name"].toString();
+                double mem = RR["peak_mem_bytes"].toDouble() / 1e6;
+                if (!processor_name.isEmpty()) {
+                    QString tmp = QString("  %1 (%2)").arg(mem).arg(processor_name);
+                    printf("%s\n", tmp.toUtf8().data());
+                }
             }
-        }
 
-        printf("\nAvg CPU (pct):\n");
-        for (int i = 0; i < PP.count(); i++) {
-            QJsonObject QQ = PP[i].toObject();
-            QJsonObject RR = QQ["results"].toObject();
-            QString processor_name = QQ["processor_name"].toString();
-            double cpu = RR["avg_cpu_pct"].toDouble();
-            if (!processor_name.isEmpty()) {
-                QString tmp = QString("  %1 (%2)").arg(cpu).arg(processor_name);
-                printf("%s\n", tmp.toUtf8().data());
+            printf("\nPeak CPU percent:\n");
+            for (int i = 0; i < PP.count(); i++) {
+                QJsonObject QQ = PP[i].toObject();
+                QJsonObject RR = QQ["results"].toObject();
+                QString processor_name = QQ["processor_name"].toString();
+                double cpu = RR["peak_cpu_pct"].toDouble();
+                if (!processor_name.isEmpty()) {
+                    QString tmp = QString("  %1 (%2)").arg(cpu).arg(processor_name);
+                    printf("%s\n", tmp.toUtf8().data());
+                }
             }
-        }
 
-        printf("\nElapsed time (sec):\n");
-        for (int i = 0; i < PP.count(); i++) {
-            QJsonObject QQ = PP[i].toObject();
-            QJsonObject RR = QQ["results"].toObject();
-            QString processor_name = QQ["processor_name"].toString();
-            QDateTime start_time = QDateTime::fromString(RR["start_time"].toString(), "yyyy-MM-dd:hh-mm-ss.zzz");
-            QDateTime finish_time = QDateTime::fromString(RR["finish_time"].toString(), "yyyy-MM-dd:hh-mm-ss.zzz");
-            double elapsed = start_time.msecsTo(finish_time) * 1.0 / 1000;
-            if (!processor_name.isEmpty()) {
-                QString tmp = QString("  %1 (%2)").arg(elapsed).arg(processor_name);
-                printf("%s\n", tmp.toUtf8().data());
+            printf("\nAvg CPU (pct):\n");
+            for (int i = 0; i < PP.count(); i++) {
+                QJsonObject QQ = PP[i].toObject();
+                QJsonObject RR = QQ["results"].toObject();
+                QString processor_name = QQ["processor_name"].toString();
+                double cpu = RR["avg_cpu_pct"].toDouble();
+                if (!processor_name.isEmpty()) {
+                    QString tmp = QString("  %1 (%2)").arg(cpu).arg(processor_name);
+                    printf("%s\n", tmp.toUtf8().data());
+                }
+            }
+
+            printf("\nElapsed time (sec):\n");
+            for (int i = 0; i < PP.count(); i++) {
+                QJsonObject QQ = PP[i].toObject();
+                QJsonObject RR = QQ["results"].toObject();
+                QString processor_name = QQ["processor_name"].toString();
+                QDateTime start_time = QDateTime::fromString(RR["start_time"].toString(), "yyyy-MM-dd:hh-mm-ss.zzz");
+                QDateTime finish_time = QDateTime::fromString(RR["finish_time"].toString(), "yyyy-MM-dd:hh-mm-ss.zzz");
+                double elapsed = start_time.msecsTo(finish_time) * 1.0 / 1000;
+                if (!processor_name.isEmpty()) {
+                    QString tmp = QString("  %1 (%2)").arg(elapsed).arg(processor_name);
+                    printf("%s\n", tmp.toUtf8().data());
+                }
             }
         }
 
@@ -501,7 +518,6 @@ int main(int argc, char* argv[])
         {
             QSettings settings("Magland", "MountainLab");
             QStringList candidates = settings.value("mp-list-daemons-candidates").toStringList();
-            printf("Daemons:\n");
             foreach (QString candidate, candidates) {
                 qputenv("MP_DAEMON_ID", candidate.toUtf8().data());
                 MPDaemonClient client;
@@ -552,17 +568,22 @@ int main(int argc, char* argv[])
         }
         bool user_wants_to_set_as_default = false;
         while (1) {
-            printf("Would you like to set this as the default daemon (Y/N)? ");
-            char response[1000];
-            /// Witold, I suppose I should use something better than gets() to avoid the warning
-            gets(response);
-            QString resp = QString(response);
-            if (resp.toLower() == "y") {
-                user_wants_to_set_as_default = true;
-                break;
+            if (daemon_id != get_default_daemon_id()) {
+                printf("Would you like to set this as the default daemon (Y/N)? ");
+                char response[1000];
+                /// Witold, I suppose I should use something better than gets() to avoid the warning
+                gets(response);
+                QString resp = QString(response);
+                if (resp.toLower() == "y") {
+                    user_wants_to_set_as_default = true;
+                    break;
+                }
+                else if (resp.toLower() == "n") {
+                    user_wants_to_set_as_default = false;
+                    break;
+                }
             }
-            else if (resp.toLower() == "n") {
-                user_wants_to_set_as_default = false;
+            else {
                 break;
             }
         }
@@ -632,6 +653,9 @@ int main(int argc, char* argv[])
     else if (arg1 == "daemon-stop") { //Stop the daemon
         QString daemon_id = arg2;
         if (daemon_id.isEmpty()) {
+            daemon_id = get_default_daemon_id();
+        }
+        if (daemon_id.isEmpty()) {
             printf("You must specify a daemon id like this:\n");
             printf("daemon-stop [some_id]\n");
             exit(-1);
@@ -643,6 +667,9 @@ int main(int argc, char* argv[])
     }
     else if (arg1 == "daemon-restart") { //Restart the daemon
         QString daemon_id = arg2;
+        if (daemon_id.isEmpty()) {
+            daemon_id = get_default_daemon_id();
+        }
         if (daemon_id.isEmpty()) {
             printf("You must specify a daemon id like this:\n");
             printf("daemon-restart [some_id]\n");
@@ -700,18 +727,14 @@ int main(int argc, char* argv[])
     else if (arg1 == "daemon-state") { //Print some information on the state of the daemon
         QString daemon_id = arg2;
         if (daemon_id.isEmpty()) {
+            daemon_id = get_default_daemon_id();
+        }
+        if (daemon_id.isEmpty()) {
             printf("You must specify a daemon id like this:\n");
             printf("daemon-state [some_id]\n");
             exit(-1);
         }
-        qputenv("MP_DAEMON_ID", daemon_id.toUtf8().data());
-
-        MPDaemonClient client;
-        QJsonObject state = client.state();
-        if (state.isEmpty()) {
-            qWarning() << "Can't connect to daemon";
-            return 0;
-        }
+        QJsonObject state = get_daemon_state(daemon_id);
         QString json = QJsonDocument(state).toJson();
         printf("%s", json.toLatin1().constData());
         //log_end();
@@ -719,6 +742,9 @@ int main(int argc, char* argv[])
     }
     else if (arg1 == "daemon-state-summary") { //Print some information on the state of the daemon
         QString daemon_id = arg2;
+        if (daemon_id.isEmpty()) {
+            daemon_id = get_default_daemon_id();
+        }
         if (daemon_id.isEmpty()) {
             printf("You must specify a daemon id like this:\n");
             printf("daemon-state-summary [some_id]\n");
@@ -734,6 +760,9 @@ int main(int argc, char* argv[])
     }
     else if (arg1 == "clear-processing") { // stop all active processing including running or queued pripts
         QString daemon_id = arg2;
+        if (daemon_id.isEmpty()) {
+            daemon_id = get_default_daemon_id();
+        }
         if (daemon_id.isEmpty()) {
             printf("You must specify a daemon id like this:\n");
             printf("clear-processing [some_id]\n");
@@ -1307,3 +1336,16 @@ void //log_end() {
     QFile::remove(s_log_file);
 }
 */
+
+QJsonObject get_daemon_state(QString daemon_id)
+{
+    qputenv("MP_DAEMON_ID", daemon_id.toUtf8().data());
+
+    MPDaemonClient client;
+    QJsonObject state = client.state();
+    if (state.isEmpty()) {
+        qWarning() << "Can't connect to daemon";
+        return QJsonObject();
+    }
+    return state;
+}
