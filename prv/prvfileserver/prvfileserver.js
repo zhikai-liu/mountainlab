@@ -9,6 +9,8 @@ var riverbot=require('./riverbot.js').riverbot;
 // npm install extend
 var extend=require('extend');
 
+require('process').env.PATH=__dirname+'/../../bin:'+require('process').env.PATH;
+
 CLP=new CLParams(process.argv);
 
 // The first argument is the data directory -- the base path from which files will be served

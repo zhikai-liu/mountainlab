@@ -3,12 +3,13 @@ var fs=require('fs');
 function riverbot(path,query,callback) {
 	var token;
 	try {
-		fs.readFileSync(__dirname+'/riverbot_token.txt','utf8');
+		token=fs.readFileSync(__dirname+'/riverbot_token.txt','utf8').trim();
 	}
 	catch(err) {
 		callback({text:'Problem reading riverbot_token.txt'});
 		return;
 	}
+	console.log('token='+token+' from '+__dirname+'/riverbot_token.txt');
 	if ((token!='*')&&(query.token!=token)) {
 		callback({text:'Invalid token.'});
 		return;
@@ -38,6 +39,7 @@ function run_process_and_read_stdout(exe,args,callback) {
 		P=require('child_process').spawn(exe,args);
 		P.on('error',function(err) {
 		var txt='Error spawning: '+exe+" "+args.join(" ")+":::"+JSON.stringify(err);
+		txt+='PATH='+require('process').env.PATH;
 		console.log(txt);
 		callback(txt);
 		return "";
