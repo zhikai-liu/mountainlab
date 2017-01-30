@@ -27,13 +27,13 @@ function riverbot(path,query,callback) {
 				format_msg({title:'/riverbot '+query.text,text:output})
 			);
 		});
-		},1000);
+		},10);
 		return;
 	}	
 	function format_msg(X) {
 		var ret={};
 		ret.text='*'+X.title+'*'+'\n'+X.text;
-		ret.mrkdwn=true;
+		//ret.mrkdwn=true;
 		//ret.response_type='in_channel';
 		return ret;
 	}
