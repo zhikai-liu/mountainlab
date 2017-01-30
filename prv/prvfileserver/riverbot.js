@@ -36,10 +36,18 @@ function run_process_and_read_stdout(exe,args,callback) {
 	var P;
 	try {
 		P=require('child_process').spawn(exe,args);
+		P.on('error',function(err) {
+		var txt='Error spawning: '+exe+" "+args.join(" ")+":::"+JSON.stringify(err);
+		console.log(txt);
+		callback(txt);
+		return "";
+	});
+
 	}
 	catch(err) {
 		console.log(err);
 		console.log("Problem launching: "+exe+" "+args.join(" "));
+		callback("Problem launching: "+exec+" "+args.join(" ")+"::::"+err);
 		return "";
 	}
 	var txt='';
