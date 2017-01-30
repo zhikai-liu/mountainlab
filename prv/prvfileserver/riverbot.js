@@ -1,5 +1,7 @@
 function riverbot(path,query,callback) {
-	callback(query);
+	var resp={};
+	resp.text='QUERY: '+JSON.stringify(query);
+	callback(resp);
 }
 
 exports.riverbot=riverbot;
