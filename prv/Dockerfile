@@ -20,7 +20,7 @@ RUN apt-get install -y libfftw3-dev octave
 
 ADD . /home/mluser/dev/mountainlab
 WORKDIR /home/mluser/dev/mountainlab
-RUN ./compile_components.sh prv
+RUN ./compile_components.sh prv mdaconvert mountainprocess
 
 ENV PATH /home/mluser/dev/mountainlab/bin:$PATH
 
