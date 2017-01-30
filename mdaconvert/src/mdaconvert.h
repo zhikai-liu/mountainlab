@@ -15,6 +15,7 @@ struct mdaconvert_opts {
     QString input_format; // mda, raw, ...
     int input_num_header_rows = 0; //for csv
     int input_num_header_cols = 0; //for csv
+    int num_channels = 0; //for nrd
 
     QString output_path;
     QString output_dtype; // uint16, float32, ...

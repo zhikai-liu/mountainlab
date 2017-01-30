@@ -75,6 +75,7 @@ int main(int argc, char* argv[])
     foreach (QString str, dims_strlist) {
         opts.dims << str.toLong();
     }
+    opts.num_channels = params.named_parameters.value("num_channels", 0).toInt();
 
     printf("Converting %s --> %s\n", opts.input_path.toLatin1().data(), opts.output_path.toLatin1().data());
     if (!mdaconvert(opts)) {
@@ -102,6 +103,12 @@ QString get_default_format(QString path)
         return "mda";
     else if (suf == "csv")
         return "csv";
+    else if (suf.toLower() == "nrd") {
+        return "nrd";
+    }
+    else if (suf.toLower() == "ncs") {
+        return "ncs";
+    }
     else
         return "raw";
 }
@@ -114,6 +121,8 @@ void print_usage()
     printf("mdaconvert input.mda output.dat\n");
     printf("mdaconvert input.file output.file --input_format=dat --input_dtype=float64 --output_format=mda --output_dtype=float32\n");
     printf("mdaconvert input.csv output.mda --input_num_header_rows=1 --input_num_header_cols=0\n");
+    printf("mdaconvert input.ncs output.mda\n");
+    printf("mdaconvert input.nrd output.mda --num_channels=32\n");
 }
 
 #define MDAIO_MAX_DIMS 50

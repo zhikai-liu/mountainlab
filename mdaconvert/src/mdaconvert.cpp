@@ -37,6 +37,8 @@ struct working_data {
 
 bool copy_data(working_data& D, long N);
 int get_num_bytes_per_entry(int dtype);
+bool convert_ncs(const mdaconvert_opts& opts);
+bool convert_nrd(const mdaconvert_opts& opts);
 
 bool mdaconvert(const mdaconvert_opts& opts)
 {
@@ -56,6 +58,22 @@ bool mdaconvert(const mdaconvert_opts& opts)
     else if (opts.input_format == "csv") {
         if (!opts.dims.isEmpty()) {
             qWarning() << "dims should not be specified for input type csv";
+            return false;
+        }
+    }
+    else if (opts.input_format == "nrd") {
+        if (!opts.dims.isEmpty()) {
+            qWarning() << "dims should not be specified for input type nrd";
+            return false;
+        }
+        if (opts.num_channels == 0) {
+            qWarning() << "Number of channels must be specified for type nrd. Use, for example, --num_channels=32";
+            return false;
+        }
+    }
+    else if (opts.input_format == "ncs") {
+        if (!opts.dims.isEmpty()) {
+            qWarning() << "dims should not be specified for input type ncs";
             return false;
         }
     }
@@ -109,6 +127,12 @@ bool mdaconvert(const mdaconvert_opts& opts)
         }
         out.write32(opts.output_path);
         return true;
+    }
+    if (opts.input_format == "nrd") {
+        return convert_nrd(opts);
+    }
+    if (opts.input_format == "ncs") {
+        return convert_ncs(opts);
     }
 
     // initialize working data
@@ -309,6 +333,184 @@ bool copy_data(working_data& D, long N)
         qWarning() << "Error writing data" << num_written << N;
         return false;
     }
+
+    return true;
+}
+
+/*
+function test_read_ncs
+
+% Open the file
+F=fopen('CSC1.ncs');
+
+% Skip the header
+fseek(F,16*1024,'cof');
+
+% Read all of the data
+all_data=fread(F,inf,'int16');
+
+% Compute the number of records
+record_size_bytes=20+512*2;
+data_size_bytes=length(all_data)*2;
+num_records=floor(data_size_bytes/record_size_bytes);
+
+% Use a reshape trick to remove the record headers (20 bytes each)
+all_data=reshape(all_data(1:record_size_bytes/2*num_records),record_size_bytes/2,num_records);
+all_data=all_data(11:end,:);
+all_data=all_data(:);
+
+% Close the file
+fclose(F);
+
+% Plot the first bit
+figure; plot(all_data(1:2000));
+*/
+
+bool convert_ncs(const mdaconvert_opts& opts)
+{
+    FILE* inf = fopen(opts.input_path.toUtf8().data(), "r");
+    if (!inf) {
+        qWarning() << "Unable to open input file for reading: " + opts.input_path;
+        return false;
+    }
+    FILE* outf = fopen(opts.output_path.toUtf8().data(), "w");
+    if (!outf) {
+        qWarning() << "Unable to open output file for writing: " + opts.output_path;
+        fclose(inf);
+        return false;
+    }
+    long size_of_input = QFileInfo(opts.input_path).size();
+    long header_size = 16 * 1024;
+    long record_size = 20 + 512 * 2;
+    long num_records = (size_of_input - header_size) / record_size;
+    fseek(inf, header_size, SEEK_SET); //skip the header
+    MDAIO_HEADER H_out;
+    H_out.data_type = MDAIO_TYPE_INT16;
+    H_out.num_bytes_per_entry = 2;
+    H_out.dims[0] = 1;
+    H_out.dims[1] = num_records * 512;
+    H_out.num_dims = 2;
+    mda_write_header(&H_out, outf);
+    char buffer[record_size];
+    qint16* record_data = (qint16*)(&buffer[record_size - 512 * 2]);
+    for (long i = 0; i < num_records; i++) {
+        {
+            long ret = fread(buffer, sizeof(char), record_size, inf);
+            if (ret != record_size) {
+                qWarning() << QString("Problem reading record %1 of %2 from .ncs file: ").arg(i).arg(num_records) + opts.input_path;
+                fclose(inf);
+                fclose(outf);
+                return false;
+            }
+        }
+        {
+            long ret = mda_write_int16(record_data, &H_out, 512, outf);
+            if (ret != 512) {
+                qWarning() << QString("Problem writing record %1 of %2 from .ncs file: ").arg(i).arg(num_records) + opts.input_path;
+                fclose(inf);
+                fclose(outf);
+                return false;
+            }
+        }
+    }
+    long test_num_bytes = fread(buffer, sizeof(char), record_size, inf);
+    if (test_num_bytes != 0) {
+        qWarning() << "Warning: extra bytes found in input file: " + opts.input_path;
+    }
+
+    fclose(inf);
+    fclose(outf);
+
+    return true;
+}
+
+/*
+
+function test_read_nrd
+
+fname='/home/spike/lilia/2017-01-25_12-51-32/DigitalLynxSXRawDataFile.nrd';
+num_channels=96;
+
+% Open the file
+F=fopen(fname);
+
+% Skip the header
+fseek(F,16*1024,'cof');
+
+% Read all of the data
+all_data=fread(F,inf,'int32');
+
+% Compute the number of records
+record_size_bytes=32+40+4*num_channels;
+data_size_bytes=length(all_data)*4;
+num_records=floor(data_size_bytes/record_size_bytes);
+
+% Use a reshape trick to extract the data part
+all_data=reshape(all_data(1:record_size_bytes/4*num_records),record_size_bytes/4,num_records);
+all_data=all_data(28+40+1:end-4,:);
+
+% Close the file
+fclose(F);
+
+% Plot the first bit on the first bunch of channels
+figure; plot(all_data(1:25,1:50000)');
+
+*/
+
+bool convert_nrd(const mdaconvert_opts& opts)
+{
+    FILE* inf = fopen(opts.input_path.toUtf8().data(), "r");
+    if (!inf) {
+        qWarning() << "Unable to open input file for reading: " + opts.input_path;
+        return false;
+    }
+    FILE* outf = fopen(opts.output_path.toUtf8().data(), "w");
+    if (!outf) {
+        qWarning() << "Unable to open output file for writing: " + opts.output_path;
+        fclose(inf);
+        return false;
+    }
+    long size_of_input = QFileInfo(opts.input_path).size();
+    long header_size = 16 * 1024;
+    long record_size = 32 + 40 + 4 * opts.num_channels; //TODO: this should be auto-detected
+    long num_records = (size_of_input - header_size) / record_size;
+    fseek(inf, header_size, SEEK_SET); //skip the header
+    MDAIO_HEADER H_out;
+    H_out.data_type = MDAIO_TYPE_INT32;
+    H_out.num_bytes_per_entry = 2;
+    H_out.dims[0] = opts.num_channels;
+    H_out.dims[1] = num_records;
+    H_out.num_dims = 2;
+    mda_write_header(&H_out, outf);
+    char buffer[record_size];
+    qint32* record_data = (qint32*)(&buffer[record_size - opts.num_channels * 4 - 4]);
+    for (long i = 0; i < num_records; i++) {
+        {
+            long ret = fread(buffer, sizeof(char), record_size, inf);
+            if (ret != record_size) {
+                qWarning() << QString("Problem reading record %1 of %2 from .ncs file: ").arg(i).arg(num_records) + opts.input_path;
+                fclose(inf);
+                fclose(outf);
+                return false;
+            }
+        }
+        {
+            long ret = mda_write_int32(record_data, &H_out, 512, outf);
+            if (ret != 512) {
+                qWarning() << QString("Problem writing record %1 of %2 from .ncs file: ").arg(i).arg(num_records) + opts.input_path;
+                fclose(inf);
+                fclose(outf);
+                return false;
+            }
+        }
+    }
+    long test_num_bytes = fread(buffer, sizeof(char), record_size, inf);
+    if (test_num_bytes != 0) {
+        qWarning() << "Warning: extra bytes found in input file: " + opts.input_path;
+    }
+
+    fclose(inf);
+    fclose(outf);
 
     return true;
 }
