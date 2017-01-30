@@ -4,6 +4,7 @@ console.log ('Running prvfileserver...');
 var	url=require('url');
 var http=require('http');
 var fs=require('fs');
+var riverbot=require('./riverbot.js').riverbot;
 
 // npm install extend
 var extend=require('extend');
@@ -76,6 +77,14 @@ var SERVER=http.createServer(function (REQ, RESP) {
 					return;
 				}
 			}
+		}
+
+		//handle the riverbot case
+		if (path=="/riverbot") {
+			riverbot(path,query,function(resp) {
+				send_json_response(resp);
+			});
+			return;
 		}
 
 		if (config.url_path) {
