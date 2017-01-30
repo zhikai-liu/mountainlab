@@ -1,7 +1,14 @@
 var fs=require('fs');
 
 function riverbot(path,query,callback) {
-	var token=fs.readFileSync(__dirname+'/riverbot_token.txt','utf8');
+	var token;
+	try {
+		fs.readFileSync(__dirname+'/riverbot_token.txt','utf8');
+	}
+	catch(err) {
+		callback({text:'Problem reading riverbot_token.txt'});
+		return;
+	}
 	if ((token!='*')&&(query.token!=token)) {
 		callback({text:'Invalid token.'});
 		return;
