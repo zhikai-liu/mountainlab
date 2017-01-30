@@ -21,18 +21,20 @@ function riverbot(path,query,callback) {
 	}
 	if (command_is_allowed(query.text)) {
 		var list=query.text.split(' ');
+		setTimeout(function() {
 		run_process_and_read_stdout(list[0],list.slice(1),function(output) {
 			callback(
 				format_msg({title:'/riverbot '+query.text,text:output})
 			);
 		});
+		},1000);
 		return;
 	}	
 	function format_msg(X) {
 		var ret={};
 		ret.text='*'+X.title+'*'+'\n'+X.text;
-		ret.mrkdwn=true
-		ret.response_type='in_channel';
+		ret.mrkdwn=true;
+		//ret.response_type='in_channel';
 		return ret;
 	}
 }
