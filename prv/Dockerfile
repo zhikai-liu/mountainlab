@@ -18,6 +18,8 @@ RUN apt-get install -y nodejs npm
 # Install fftw and octave
 RUN apt-get install -y libfftw3-dev octave
 
+RUN apt-get install -y git
+
 ADD . /home/mluser/dev/mountainlab
 WORKDIR /home/mluser/dev/mountainlab
 RUN ./compile_components.sh prv mdaconvert mountainprocess
