@@ -9,7 +9,7 @@ var riverbot=require('./riverbot.js').riverbot;
 // npm install extend
 var extend=require('extend');
 
-require('process').env.PATH=__dirname+'/../../bin:'+require('process').env.PATH;
+//require('process').env.PATH=__dirname+'/../../bin:'+require('process').env.PATH;
 
 CLP=new CLParams(process.argv);
 

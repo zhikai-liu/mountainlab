@@ -40,9 +40,9 @@ int get_num_bytes_per_entry(int dtype);
 bool convert_ncs(const mdaconvert_opts& opts);
 bool convert_nrd(const mdaconvert_opts& opts);
 
-bool mdaconvert(const mdaconvert_opts& opts)
+bool mdaconvert(const mdaconvert_opts& opts_in)
 {
-    QList<long> opts_dims = opts.dims;
+    mdaconvert_opts opts=opts_in;
 
     //default inputs in case input format is mda, csv, or dat
     if (opts.input_format == "mda") {
@@ -77,9 +77,34 @@ bool mdaconvert(const mdaconvert_opts& opts)
             return false;
         }
     }
+    else if (opts.input_format == "raw_timeseries") {
+        if (opts.input_dtype.isEmpty()) {
+            qWarning() << "Input datatype (e.g., --dtype=int16)  must be specified";
+            return false;
+        }
+        if (!opts.dims.isEmpty()) {
+            qWarning() << "dims should not be specified for input type raw_timeseries. Use, e.g., --num_channels=32 instead";
+            return false;
+        }
+        if (opts.num_channels == 0) {
+            qWarning() << "Number of channels must be specified for type raw_timeeries. Use, for example, --num_channels=32";
+            return false;
+        }
+        opts.dims.clear();
+        opts.dims << opts.num_channels;
+        long input_size=QFileInfo(opts.input_path).size();
+        int dtype_size=get_num_bytes_per_entry(get_mda_dtype(opts.input_dtype));
+        long num_timepoints=input_size/(dtype_size*opts.num_channels);
+        if (input_size!=num_timepoints*dtype_size*opts.num_channels) {
+            qWarning() << QString("The size of the file (%1) is not compatible with this datatype (%2) and number of channels (%3).").arg(input_size).arg(opts.input_dtype).arg(opts.num_channels);
+            return false;
+        }
+        printf("Auto-setting number of timepoints to %ld\n",num_timepoints);
+        opts.dims << num_timepoints;
+    }
     else {
         if (opts.input_dtype.isEmpty()) {
-            qWarning() << "Input datatype must be specified";
+            qWarning() << "Input datatype (e.g., --dtype=int16) must be specified";
             return false;
         }
         if (opts.dims.isEmpty()) {
@@ -163,19 +188,23 @@ bool mdaconvert(const mdaconvert_opts& opts)
             qWarning() << "Unable to determine input number of bytes per entry.";
             return false;
         }
-        if (opts_dims.value(opts_dims.count() - 1) == 0) {
+        if (opts.dims.value(opts.dims.count() - 1) == 0) {
+            qWarning() << "Final dimension of 0 is no longer supported because there was apparently a bug. If your array is two-dimensional you may want to use --input_format=raw_timeseries.\n";
+            return false;
+            /*
             //auto-determine final dimension
             long size0 = QFileInfo(opts.input_path).size();
             long tmp = size0 / D.HH_in.num_bytes_per_entry;
-            for (int j = 0; j < opts_dims.count() - 1; j++) {
-                tmp /= opts_dims[j];
+            for (int j = 0; j < opts.dims.count() - 1; j++) {
+                tmp /= opts.dims[j];
             }
             printf("Auto-setting final dimension to %ld\n", tmp);
-            opts_dims[opts_dims.count() - 1] = tmp;
+            opts.dims[opts.dims.count() - 1] = tmp;
+            */
         }
-        D.HH_in.num_dims = opts_dims.count();
+        D.HH_in.num_dims = opts.dims.count();
         for (int i = 0; i < D.HH_in.num_dims; i++) {
-            D.HH_in.dims[i] = opts_dims[i];
+            D.HH_in.dims[i] = opts.dims[i];
         }
     }
 

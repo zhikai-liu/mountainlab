@@ -18,10 +18,25 @@ function riverbot(path,query,callback) {
 		callback({text:'QUERY: '+JSON.stringify(query)});
 		return;
 	}
-	if (command_is_allowed(query.text)) {
-		var list=query.text.split(' ');
+	response_opts={
+		public:false
+	};
+	var query_list=query.text.split(' ');
+	var ii=0;
+	option_args=[];
+	while ((query_list[ii])&&(query_list[ii][0]=='-')) {
+		option_args.push(query_list[ii]);
+		ii++;
+	}
+	query_list=query_list.slice(ii);
+	for (var i in option_args) {
+		if (option_args[i]=='-p') {
+			response_opts.public=true;
+		}
+	}
+	if (command_is_allowed(query_list)) {
 		//setTimeout(function() {
-		run_process_and_read_stdout(list[0],list.slice(1),function(output) {
+		run_process_and_read_stdout(query_list[0],query_list.slice(1),function(output) {
 			callback(
 				format_msg({title:'/riverbot '+query.text,text:output})
 			);
@@ -33,7 +48,9 @@ function riverbot(path,query,callback) {
 		var ret={};
 		ret.text='*'+X.title+'*'+'\n'+X.text;
 		//ret.mrkdwn=true;
-		//ret.response_type='in_channel';
+		if (response_opts.public) {
+			ret.response_type='in_channel';
+		}
 		return ret;
 	}
 }
