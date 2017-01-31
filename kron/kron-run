@@ -1,7 +1,7 @@
 #!/usr/bin/env nodejs
 
 function print_usage() {
-	console.log ('kron_run [pipeline_names] [dataset_names] --outpath=[output(default)] [--output-to-dataset-folder]');
+	console.log ('kron-run [pipeline_names] [dataset_names] --outpath=[output(default)] [--output-to-dataset-folder]');
 }
 
 var fs=require('fs');
