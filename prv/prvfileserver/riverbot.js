@@ -21,13 +21,13 @@ function riverbot(path,query,callback) {
 	}
 	if (command_is_allowed(query.text)) {
 		var list=query.text.split(' ');
-		setTimeout(function() {
+		//setTimeout(function() {
 		run_process_and_read_stdout(list[0],list.slice(1),function(output) {
 			callback(
 				format_msg({title:'/riverbot '+query.text,text:output})
 			);
 		});
-		},10);
+		//},10);
 		return;
 	}	
 	function format_msg(X) {
