@@ -61,6 +61,10 @@ function riverbot(path,query,callback) {
 			//},10);
 			return;
 		}	
+		else {
+			callback({text:'command is not allowed: '+query_list.join(' ')});
+			return;
+		}
 	}
 	function format_msg(X) {
 		var ret={};
