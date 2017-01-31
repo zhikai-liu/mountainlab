@@ -73,8 +73,19 @@ function riverbot(path,query,callback) {
 	}
 }
 
-function command_is_allowed() {
-	return true;
+function command_is_allowed(cmd) {
+	if (cmd.length==1) {
+		if (cmd[0]=='ls') return true;
+		if (cmd[0]=='kron-list-datasets') return true;
+		if (cmd[0]=='kron-list-pipelines') return true;
+		if (cmd[0]=='mdaconvert') return true;
+	}
+	if (cmd[0]=='kron-run') return true;
+	if (cmd[0]=='mp-daemon-start') return true;
+	if (cmd[0]=='mp-daemon-stop') return true;
+	if (cmd[0]=='mp-daemon-state') return true;
+	if (cmd[0]=='mp-daemon-state-summary') return true;
+	return false;
 }
 
 function run_process_and_read_stdout(exe,args,working_directory,callback) {
