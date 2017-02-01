@@ -1,5 +1,7 @@
 var fs=require('fs');
 
+var user_contexts={};
+
 function riverbot(path,query,callback) {
 	var token;
 	try {
@@ -18,6 +20,12 @@ function riverbot(path,query,callback) {
 		callback({text:'QUERY: '+JSON.stringify(query)});
 		return;
 	}
+	
+	var user_id=query.user_id||'anonymous';
+	if (!user_contexts[user_id])
+		user_contexts[user_id]=new UserContext();
+	var user_context=user_contexts[user_id];
+
 	response_opts={
 		public:false
 	};
@@ -29,21 +37,35 @@ function riverbot(path,query,callback) {
 		ii++;
 	}
 	query_list=query_list.slice(ii);
-	for (var i in option_args) {
-		if (option_args[i]=='-p') {
-			response_opts.public=true;
+
+
+	if (query_list[0]=='cd') {
+		user_context.setWorkingDirectory(query_list[1]||'');
+		callback(
+			format_msg({title:'/riverbot '+query.text,text:'Working directory is: '+user_context.workingDirectory()})
+		);
+	}
+	else {
+		for (var i in option_args) {
+			if (option_args[i]=='-p') {
+				response_opts.public=true;
+			}
+		}
+		if (command_is_allowed(query_list)) {
+			//setTimeout(function() {
+			run_process_and_read_stdout(query_list[0],query_list.slice(1),user_context.workingDirectory(),function(output) {
+				callback(
+					format_msg({title:'/riverbot '+query.text,text:output})
+				);
+			});
+			//},10);
+			return;
+		}	
+		else {
+			callback({text:'command is not allowed: '+query_list.join(' ')});
+			return;
 		}
 	}
-	if (command_is_allowed(query_list)) {
-		//setTimeout(function() {
-		run_process_and_read_stdout(query_list[0],query_list.slice(1),function(output) {
-			callback(
-				format_msg({title:'/riverbot '+query.text,text:output})
-			);
-		});
-		//},10);
-		return;
-	}	
 	function format_msg(X) {
 		var ret={};
 		ret.text='*'+X.title+'*'+'\n'+X.text;
@@ -55,15 +77,28 @@ function riverbot(path,query,callback) {
 	}
 }
 
-function command_is_allowed() {
-	return true;
+function command_is_allowed(cmd) {
+	if (cmd.length==1) {
+		if (cmd[0]=='ls') return true;
+		if (cmd[0]=='kron-list-datasets') return true;
+		if (cmd[0]=='kron-list-pipelines') return true;
+		if (cmd[0]=='mdaconvert') return true;
+	}
+	if (cmd[0]=='kron-run') return true;
+	if (cmd[0]=='mp-daemon-start') return true;
+	if (cmd[0]=='mp-daemon-stop') return true;
+	if (cmd[0]=='mp-daemon-state') return true;
+	if (cmd[0]=='mp-daemon-state-summary') return true;
+	return false;
 }
 
-function run_process_and_read_stdout(exe,args,callback) {
-	console.log ('RUNNING:'+exe+' '+args.join(' '));
+function run_process_and_read_stdout(exe,args,working_directory,callback) {
+	console.log ('RUNNING:'+exe+' '+args.join(' ')+' in '+working_directory);
 	var P;
 	try {
-		P=require('child_process').spawn(exe,args);
+		var opts={};
+		if (working_directory) opts.cwd=working_directory;
+		P=require('child_process').spawn(exe,args,opts);
 		P.on('error',function(err) {
 			var txt='Error spawning: '+exe+" "+args.join(" ")+":::"+JSON.stringify(err);
 			txt+='PATH='+require('process').env.PATH;
@@ -86,6 +121,13 @@ function run_process_and_read_stdout(exe,args,callback) {
 		callback(txt);
 	});
 }
+
+function UserContext() {
+	this.setWorkingDirectory=function(path) {m_working_directory=path;};
+	this.workingDirectory=function(path) {return m_working_directory;};
+
+	var m_working_directory='';
+};
 
 
 exports.riverbot=riverbot;
