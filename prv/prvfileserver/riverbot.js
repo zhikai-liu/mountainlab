@@ -15,11 +15,6 @@ function riverbot(path,query,callback) {
 		callback({text:'Invalid token.'});
 		return;
 	}
-	if (!query.text) {
-		query.token=''; //hide the token
-		callback({text:'QUERY: '+JSON.stringify(query)});
-		return;
-	}
 	
 	var user_id=query.user_id||'anonymous';
 	if (!user_contexts[user_id])
@@ -29,7 +24,7 @@ function riverbot(path,query,callback) {
 	response_opts={
 		public:false
 	};
-	var query_list=query.text.split(' ');
+	var query_list=(query.text||'').split(' ');
 	var ii=0;
 	option_args=[];
 	while ((query_list[ii])&&(query_list[ii][0]=='-')) {
@@ -42,8 +37,20 @@ function riverbot(path,query,callback) {
 	if (query_list[0]=='cd') {
 		user_context.setWorkingDirectory(query_list[1]||'');
 		callback(
-			format_msg({title:'/riverbot '+query.text,text:'Working directory is: '+user_context.workingDirectory()})
+			format_msg({text:'Working directory is: '+user_context.workingDirectory()})
 		);
+	}
+	else if (query_list[0]=='debug') {
+		query.token=''; //hide the token
+		callback(
+			format_msg({text:'QUERY: '+JSON.stringify(query)})
+		);
+	}
+	else if (query_list[0]=='git-pull') {
+		git_pull(callback);
+	}
+	else if (query_list[0]=='compile-mountainlab') {
+		compile_mountainlab(callback);
 	}
 	else {
 		for (var i in option_args) {
@@ -55,7 +62,7 @@ function riverbot(path,query,callback) {
 			//setTimeout(function() {
 			run_process_and_read_stdout(query_list[0],query_list.slice(1),user_context.workingDirectory(),function(output) {
 				callback(
-					format_msg({title:'/riverbot '+query.text,text:output})
+					format_msg({text:output})
 				);
 			});
 			//},10);
@@ -66,13 +73,44 @@ function riverbot(path,query,callback) {
 			return;
 		}
 	}
+	function git_pull(callback) {
+		var exe='git';
+		var args=['pull'];
+		var working_directory=__dirname+'/../..';
+		run_process_and_read_stdout(exe,args,working_directory,function(output) {
+			callback(
+				format_msg({text:'Note: git-pull will not restart the server\n'+output})
+			);
+		});
+	}
+	function compile_mountainlab(callback) {
+		var exe=__dirname+'/../../compile_components.sh';
+		var args=[];
+		var working_directory=__dirname+'/../..';
+		run_process_and_read_stdout(exe,args,working_directory,function(output) {
+			callback(
+				format_msg({text:output})
+			);
+		});	
+	}
 	function format_msg(X) {
+		var title='/riverbot '+query.text;
+		/*
 		var ret={};
-		ret.text='*'+X.title+'*'+'\n'+X.text;
+		ret.text='*'+title+'*'+'\n'+X.text;
 		//ret.mrkdwn=true;
 		if (response_opts.public) {
 			ret.response_type='in_channel';
 		}
+		return ret;
+		*/
+		var ret={
+			attachment:{
+				fallback:title,
+				title:title,
+				text:X.text
+			}
+		};
 		return ret;
 	}
 }
@@ -80,9 +118,12 @@ function riverbot(path,query,callback) {
 function command_is_allowed(cmd) {
 	if (cmd.length==1) {
 		if (cmd[0]=='ls') return true;
+		if (cmd[0]=='debug') return true;
 		if (cmd[0]=='kron-list-datasets') return true;
 		if (cmd[0]=='kron-list-pipelines') return true;
 		if (cmd[0]=='mdaconvert') return true;
+		if (cmd[0]=='git-pull') return true;
+		if (cmd[0]=='compile-mountainlab') return true;
 	}
 	if (cmd[0]=='kron-run') return true;
 	if (cmd[0]=='mp-daemon-start') return true;
@@ -101,7 +142,7 @@ function run_process_and_read_stdout(exe,args,working_directory,callback) {
 		P=require('child_process').spawn(exe,args,opts);
 		P.on('error',function(err) {
 			var txt='Error spawning: '+exe+" "+args.join(" ")+":::"+JSON.stringify(err);
-			txt+='PATH='+require('process').env.PATH;
+			txt+='PATH='+process.env.PATH;
 			console.log(txt);
 			callback(txt);
 			return "";
