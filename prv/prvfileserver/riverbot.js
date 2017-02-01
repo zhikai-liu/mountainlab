@@ -105,11 +105,11 @@ function riverbot(path,query,callback) {
 		return ret;
 		*/
 		var ret={
-			attachment:{
+			attachments:[{
 				fallback:title,
 				title:title,
 				text:X.text
-			}
+			}]
 		};
 		return ret;
 	}
