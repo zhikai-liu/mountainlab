@@ -523,10 +523,9 @@ int main(int argc, char* argv[])
                 MPDaemonClient client;
                 QJsonObject state = client.state();
                 if (!state.isEmpty()) {
-                    printf("%s ", candidate.toUtf8().data());
+                    printf("%s\n", candidate.toUtf8().data());
                 }
             }
-            printf("\n");
         }
         return 0;
     }
@@ -566,6 +565,17 @@ int main(int argc, char* argv[])
             printf("For example you can use your user name\n");
             exit(-1);
         }
+        /// Witold, I am changing the behavior to the following so that there is no interaction with stdin. I believe this is best.
+        if (daemon_id != get_default_daemon_id()) {
+            QString msg;
+            if (get_default_daemon_id().isEmpty())
+                msg = "Setting default daemon to: " + get_default_daemon_id();
+            else
+                msg = QString("Changing default daemon id from %1 to %2. To change it back use mp-set-default-daemon-id.").arg(get_default_daemon_id()).arg(daemon_id);
+            printf("%s\n", msg.toUtf8().data());
+            set_default_daemon_id(daemon_id);
+        }
+/*
         bool user_wants_to_set_as_default = false;
         while (1) {
             if (daemon_id != get_default_daemon_id()) {
@@ -592,6 +602,7 @@ int main(int argc, char* argv[])
             /// Witold, ideally this should be done *after* the daemon is started
             set_default_daemon_id(daemon_id);
         }
+        */
 
 // Start the mountainprocess daemon
 #ifndef NO_FORK

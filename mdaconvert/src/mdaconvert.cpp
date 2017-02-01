@@ -42,7 +42,7 @@ bool convert_nrd(const mdaconvert_opts& opts);
 
 bool mdaconvert(const mdaconvert_opts& opts_in)
 {
-    mdaconvert_opts opts=opts_in;
+    mdaconvert_opts opts = opts_in;
 
     //default inputs in case input format is mda, csv, or dat
     if (opts.input_format == "mda") {
@@ -92,14 +92,14 @@ bool mdaconvert(const mdaconvert_opts& opts_in)
         }
         opts.dims.clear();
         opts.dims << opts.num_channels;
-        long input_size=QFileInfo(opts.input_path).size();
-        int dtype_size=get_num_bytes_per_entry(get_mda_dtype(opts.input_dtype));
-        long num_timepoints=input_size/(dtype_size*opts.num_channels);
-        if (input_size!=num_timepoints*dtype_size*opts.num_channels) {
+        long input_size = QFileInfo(opts.input_path).size();
+        int dtype_size = get_num_bytes_per_entry(get_mda_dtype(opts.input_dtype));
+        long num_timepoints = input_size / (dtype_size * opts.num_channels);
+        if (input_size != num_timepoints * dtype_size * opts.num_channels) {
             qWarning() << QString("The size of the file (%1) is not compatible with this datatype (%2) and number of channels (%3).").arg(input_size).arg(opts.input_dtype).arg(opts.num_channels);
             return false;
         }
-        printf("Auto-setting number of timepoints to %ld\n",num_timepoints);
+        printf("Auto-setting number of timepoints to %ld\n", num_timepoints);
         opts.dims << num_timepoints;
     }
     else {
