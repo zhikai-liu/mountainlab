@@ -4,7 +4,7 @@
 
 #include <QtDebug>
 
-JsonMerger::JsonMerger(QObject *parent)
+JsonMerger::JsonMerger(QObject* parent)
     : QObject(parent)
 {
 }
@@ -24,7 +24,7 @@ QString JsonMerger::resultJson() const
     return m_result.toJson();
 }
 
-void JsonMerger::setDefaultJson(const QString &contents)
+void JsonMerger::setDefaultJson(const QString& contents)
 {
     QJsonDocument doc = parseJson(contents);
     if (doc.isNull())
@@ -33,7 +33,7 @@ void JsonMerger::setDefaultJson(const QString &contents)
     merge();
 }
 
-void JsonMerger::setUserJson(const QString &contents)
+void JsonMerger::setUserJson(const QString& contents)
 {
     QJsonDocument doc = parseJson(contents);
     if (doc.isNull())
@@ -42,7 +42,7 @@ void JsonMerger::setUserJson(const QString &contents)
     merge();
 }
 
-QJsonDocument JsonMerger::parseJson(const QString &contents)
+QJsonDocument JsonMerger::parseJson(const QString& contents)
 {
     QJsonParseError err;
     QJsonDocument doc = QJsonDocument::fromJson(contents.toUtf8(), &err);
@@ -59,10 +59,10 @@ void JsonMerger::merge()
     m_result = m_default;
     QJsonObject resultObj = m_result.object();
     QJsonObject userObj = m_user.object();
-    for (const QString &group : userObj.keys()) {
+    for (const QString& group : userObj.keys()) {
         QJsonObject resultGroupObj = resultObj[group].toObject();
         QJsonObject userGroupObj = userObj[group].toObject();
-        for (const QString &value : userGroupObj.keys()) {
+        for (const QString& value : userGroupObj.keys()) {
             resultGroupObj[value] = userGroupObj[value];
         }
         resultObj[group] = resultGroupObj;

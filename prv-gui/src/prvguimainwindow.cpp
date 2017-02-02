@@ -57,7 +57,7 @@ PrvGuiMainWindow::PrvGuiMainWindow()
     d->m_control_panel = new PrvGuiControlPanel;
     d->m_control_panel->addControlWidget("Main", new PrvGuiMainControlWidget(this));
     d->m_control_panel->addControlWidget("Item details", new PrvGuiItemDetailWidget(d->m_tree));
-    QPushButton *configEditor = new QPushButton("Config Editor");
+    QPushButton* configEditor = new QPushButton("Config Editor");
     d->m_control_panel->addControlWidget("Tools", configEditor);
 
     d->m_left_splitter = new QSplitter(Qt::Vertical);

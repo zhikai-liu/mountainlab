@@ -3,13 +3,13 @@
 
 #include <QFile>
 
-JsonEditorWindow::JsonEditorWindow(const QString &path,
-                                   JsonMerger *merger,
-                                   QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::JsonEditorWindow),
-    m_path(path),
-    m_merger(merger)
+JsonEditorWindow::JsonEditorWindow(const QString& path,
+    JsonMerger* merger,
+    QWidget* parent)
+    : QMainWindow(parent)
+    , ui(new Ui::JsonEditorWindow)
+    , m_path(path)
+    , m_merger(merger)
 {
     ui->setupUi(this);
 
@@ -35,14 +35,14 @@ JsonEditorWindow::JsonEditorWindow(const QString &path,
     connect(ui->actionSave, &QAction::triggered, this, &JsonEditorWindow::saveUserJson);
     connect(m_merger, &JsonMerger::resultChanged, this, &JsonEditorWindow::updateResult);
     connect(ui->userJsonEdit, &QPlainTextEdit::textChanged,
-            [this]() {
-        if (m_merger)
-            m_merger->setUserJson(ui->userJsonEdit->toPlainText());
-    });
+        [this]() {
+            if (m_merger)
+                m_merger->setUserJson(ui->userJsonEdit->toPlainText());
+        });
     connect(m_merger, &JsonMerger::parsingFailed,
-            [this](const QString &msg) {
-        ui->statusbar->showMessage(QStringLiteral("JSON parsing failed: ") + msg);
-    });
+        [this](const QString& msg) {
+            ui->statusbar->showMessage(QStringLiteral("JSON parsing failed: ") + msg);
+        });
 }
 
 JsonEditorWindow::~JsonEditorWindow()
@@ -50,7 +50,7 @@ JsonEditorWindow::~JsonEditorWindow()
     delete ui;
 }
 
-void JsonEditorWindow::updateResult(const QString &result)
+void JsonEditorWindow::updateResult(const QString& result)
 {
     ui->resultEdit->setPlainText(result);
     ui->statusbar->clearMessage();
