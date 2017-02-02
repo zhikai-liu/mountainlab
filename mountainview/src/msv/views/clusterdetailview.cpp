@@ -1309,7 +1309,7 @@ void ClusterView::renderView(QPainter *painter, const RenderOptionSet *options, 
             painter->fillPath(path, QBrush(quite_light_gray));
         }
         painter->save();
-        painter->setClipRect(m_template_rect);
+        painter->setClipRect(painter->clipBoundingRect().intersected(m_template_rect));
         { // the template
             painter->setRenderHint(QPainter::Antialiasing);
             QPainterPath path;
