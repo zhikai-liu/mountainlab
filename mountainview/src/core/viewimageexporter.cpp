@@ -178,6 +178,20 @@ public:
             m_preview->resize(propertyBrowser->values()["Size"].toSize());
             m_preview->update();
         });
+        connect(ui->exportSettings, &QPushButton::clicked, [this]() {
+            QString path = QFileDialog::getSaveFileName(this, tr("Export settings"), QString(), "(*.json) JSON files" );
+            if (path.isEmpty()) return;
+            JsonRenderOptionWriter writer;
+            writer.write(m_options);
+            QFile f(path);
+            if (!f.open(QFile::WriteOnly|QFile::Text|QFile::Truncate)) return;
+            QTextStream stream(&f);
+            stream << writer.result().toJson();
+        });
+        connect(ui->importSettings, &QPushButton::clicked, []() {
+           qDebug() << "Import settings";
+        });
+
     }
 
     ~ExportPreviewDialog() {

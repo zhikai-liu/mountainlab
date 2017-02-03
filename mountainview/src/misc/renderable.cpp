@@ -168,6 +168,11 @@ RenderOptionSet *RenderOptionSet::extension() const {
     return parent()->extension();
 }
 
+bool RenderOptionSet::hasOwnExtension() const
+{
+    return m_extension;
+}
+
 void RenderOptionSet::setExtension(RenderOptionSet *e) { m_extension = e; }
 
 RenderOptionSet *RenderOptionSet::clone() const
@@ -194,4 +199,110 @@ RenderOptionSet *RenderOptionSet::parent() const {
 
 RenderOptionSet *RenderOptionSet::createNew(const QString &name) const {
     return new RenderOptionSet(name);
+}
+
+
+void JsonRenderOptionReader::read(const QJsonObject &object, RenderOptionSet *set) {
+    qDebug() << object.toVariantMap();
+    QMap<QString, RenderOptionBase*> opts;
+    for (RenderOptionBase* b: set->options()) {
+        opts.insert(b->name(), b);
+    }
+    QJsonArray options = object["options"].toArray();
+    for(QJsonValue val: options) {
+        QJsonObject opt = val.toObject();
+        QString name = opt["name"].toString();
+        RenderOptionBase* b = opts.value(name, nullptr);
+        if (b) {
+            read(opt, b);
+            opts.remove(name);
+        }
+    }
+    // set remaining options to their default value
+    for (RenderOptionBase* b: opts.values()) {
+        read(QJsonObject(), b);
+    }
+
+    // rince and repeat for sets
+    QMap<QString, RenderOptionSet*> sets;
+    for (RenderOptionSet* b: set->sets()) {
+        sets.insert(b->name(), b);
+    }
+    QJsonArray subsets = object["sets"].toArray();
+    for(QJsonValue val: subsets) {
+        QJsonObject subset = val.toObject();
+        QString name = subset["name"].toString();
+        RenderOptionSet* b = sets.value(name, nullptr);
+        if (b) {
+            read(subset, b);
+            sets.remove(name);
+        }
+    }
+
+    if (set->hasOwnExtension()) {
+        // read extension
+        QJsonObject extObject = object["extension"].toObject();
+        read(extObject, set->extension());
+    }
+}
+
+void JsonRenderOptionReader::read(const QJsonObject &object, RenderOptionBase *option) {
+    if (object.isEmpty()) {
+        // set option to its default value
+        option->setValue(option->defaultValue());
+        return;
+    }
+    // todo: check if type matches
+    option->setValue(object["value"].toVariant());
+}
+
+JsonRenderOptionWriter::JsonRenderOptionWriter(bool includeDefaults) : m_iter(&m_result), m_def(includeDefaults) {}
+
+QJsonDocument JsonRenderOptionWriter::result() const { return QJsonDocument(m_result); }
+
+void JsonRenderOptionWriter::write(RenderOptionSet *set) {
+    QJsonObject& ref = *m_iter;
+    ref["name"] = set->name();
+    QJsonArray array;
+
+    for (RenderOptionBase* opt: set->options()) {
+        QJsonObject optionObject;
+        m_iter = &optionObject;
+        write(opt);
+        if (!optionObject.isEmpty())
+            array.append(optionObject);
+    }
+    if (!array.isEmpty())
+        ref["options"] = array;
+
+    QJsonArray setArray;
+    for (RenderOptionSet* subset: set->sets()) {
+        QJsonObject setObject;
+        m_iter = &setObject;
+        write(subset);
+        setArray.append(setObject);
+    }
+    if (!setArray.isEmpty())
+        ref["sets"] = setArray;
+
+    // check for extension set
+    if (set->hasOwnExtension()) {
+        RenderOptionSet* ext = set->extension();
+        QJsonObject extObject;
+        m_iter = &extObject;
+        write(ext);
+        if (!extObject.isEmpty())
+            ref["extension"] = extObject;
+    }
+    m_iter = &ref;
+}
+
+void JsonRenderOptionWriter::write(RenderOptionBase *option) {
+    QJsonObject& ref = *m_iter;
+    if(m_def || (option->defaultValue() != option->value())) {
+        ref["name"] = option->name();
+        ref["type"] = QVariant::typeToName(option->defaultValue().type());
+        if (!option->value().isNull())
+            ref["value"] = QJsonValue::fromVariant(option->value());
+    }
 }

@@ -4,6 +4,10 @@
 class QPainter;
 #include <QRectF>
 #include <QVariant>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QtDebug>
 
 // TODO: Subclass QObject?
 // TODO: Add parent?
@@ -66,7 +70,12 @@ public:
     const RenderOptionSet* subSet(const QString &name) const;
     template<typename T> RenderOption<T>* addOption(const QString &name, const T & defaultValue) {
         RenderOption<T>* opt = new RenderOption<T>(name, defaultValue);
+//        return addOption(opt);
         m_options.insert(name, opt);
+        return opt;
+    }
+    RenderOptionBase* addOption(RenderOptionBase* opt) {
+        m_options.insert(opt->name(), opt);
         return opt;
     }
 
@@ -75,6 +84,7 @@ public:
     QList<RenderOptionBase*> options() const;
     QList<RenderOptionSet *> sets() const;
     RenderOptionSet *extension() const;
+    bool hasOwnExtension() const;
     void setExtension(RenderOptionSet* e);
     //static from JSON
     /*
@@ -92,6 +102,9 @@ public:
      */
     virtual RenderOptionSet* clone() const;
     RenderOptionSet* parent() const;
+
+    void write(QJsonObject &);
+
 protected:
     RenderOptionSet(const QString &name) : m_name(name) {}
     // subclass can override to create subsets of its own class (for future use)
@@ -128,6 +141,65 @@ protected:
     RenderOptionSet* optionSet(const QString &name) const {
         return new RenderOptionSet(name);
     }
+};
+
+
+class JsonRenderOptionReader {
+public:
+    JsonRenderOptionReader(){}
+    void read(const QJsonObject& object, RenderOptionSet* set);
+    void read(const QJsonObject& object, RenderOptionBase* option);
+};
+
+#if 0
+class JsonRenderOptionReader : private Renderable {
+public:
+    JsonRenderOptionReader(const QJsonDocument &doc)
+        : m_doc(doc.object()) {}
+    RenderOptionSet* read() {
+        return readSet(m_doc);
+    }
+protected:
+    RenderOptionSet* readSet(const QJsonObject& obj) {
+        RenderOptionSet* set = optionSet(obj["name"].toString());
+        const QJsonArray& options = obj["options"].toArray();
+        for(QJsonValue val: options) {
+            readOption(val.toObject(), set);
+        }
+
+        const QJsonArray& subsets = obj["sets"].toArray();
+        for(QJsonValue val: options) {
+            RenderOptionSet* subset = readSet(val.toObject());
+            if (subset) set->addSubSet(subset);
+        }
+        return set;
+    }
+    RenderOptionBase* readOption(const QJsonObject& obj, RenderOptionSet* set) {
+        QString type = obj["type"].toString();
+        QString name = obj["name"].toString();
+        QVariant value = ob["value"].toVariant();
+        switch (qHash(type)) {
+        case qHash("int"): return set->addOption<int>()
+        }
+
+        return nullptr;
+    }
+
+private:
+    QJsonObject m_doc;
+};
+#endif
+
+class JsonRenderOptionWriter {
+public:
+    JsonRenderOptionWriter(bool includeDefaults = true);
+    QJsonDocument result() const;
+    void write(RenderOptionSet* set);
+    void write(RenderOptionBase *option);
+private:
+    QJsonObject m_result;
+    QJsonObject* m_iter;
+    bool m_def;
 };
 
 #endif // RENDERABLE_H

@@ -40,7 +40,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>880</width>
+         <width>774</width>
          <height>499</height>
         </rect>
        </property>
@@ -67,14 +67,14 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
-            <widget class="QPushButton" name="pushButton">
+            <widget class="QPushButton" name="importSettings">
              <property name="text">
               <string>Import settings from file</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton_2">
+            <widget class="QPushButton" name="exportSettings">
              <property name="text">
               <string>Export settings to file</string>
              </property>
