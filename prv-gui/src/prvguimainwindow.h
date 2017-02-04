@@ -42,6 +42,7 @@ signals:
     void prvFileNameChanged();
 private slots:
     void slot_update_window_title();
+    void slot_open_config_editor();
 
 protected:
     void resizeEvent(QResizeEvent* evt);

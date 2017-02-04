@@ -4,6 +4,7 @@
 ** Created: 9/29/2016
 *******************************************************/
 
+#include "jsoneditorwindow.h"
 #include "prvguiitemdetailwidget.h"
 #include "prvguimaincontrolwidget.h"
 #include "prvguimainwindow.h"
@@ -20,6 +21,7 @@
 #include <QSplitter>
 #include <QTreeWidget>
 #include <taskprogress.h>
+#include <QPushButton>
 #include "taskprogressview.h"
 #include "prvguicontrolpanel.h"
 #include "mlcommon.h"
@@ -37,6 +39,9 @@ public:
     QSplitter* m_splitter;
     QSplitter* m_left_splitter;
 
+    JsonMerger* m_merger = nullptr;
+    JsonEditorWindow* m_editorWindow = nullptr;
+
     void update_sizes();
 };
 
@@ -52,6 +57,8 @@ PrvGuiMainWindow::PrvGuiMainWindow()
     d->m_control_panel = new PrvGuiControlPanel;
     d->m_control_panel->addControlWidget("Main", new PrvGuiMainControlWidget(this));
     d->m_control_panel->addControlWidget("Item details", new PrvGuiItemDetailWidget(d->m_tree));
+    QPushButton* configEditor = new QPushButton("Config Editor");
+    d->m_control_panel->addControlWidget("Tools", configEditor);
 
     d->m_left_splitter = new QSplitter(Qt::Vertical);
     d->m_left_splitter->addWidget(d->m_control_panel);
@@ -71,6 +78,7 @@ PrvGuiMainWindow::PrvGuiMainWindow()
     QObject::connect(this, SIGNAL(prvFileNameChanged()), this, SLOT(slot_update_window_title()));
     QObject::connect(d->m_tree, SIGNAL(dirtyChanged()), this, SLOT(slot_update_window_title()));
     slot_update_window_title();
+    connect(configEditor, SIGNAL(clicked()), this, SLOT(slot_open_config_editor()));
 }
 
 PrvGuiMainWindow::~PrvGuiMainWindow()
@@ -187,6 +195,19 @@ void PrvGuiMainWindow::slot_update_window_title()
     if (d->m_tree->isDirty())
         title += " *";
     this->setWindowTitle(title);
+}
+
+void PrvGuiMainWindow::slot_open_config_editor()
+{
+    if (!d->m_merger)
+        d->m_merger = new JsonMerger(this);
+    if (!d->m_editorWindow) {
+        d->m_editorWindow = new JsonEditorWindow(MLUtil::mountainlabBasePath(), d->m_merger, this);
+        d->m_editorWindow->setWindowFlags(Qt::Window);
+    }
+    d->m_editorWindow->show();
+    d->m_editorWindow->raise();
+    d->m_editorWindow->activateWindow();
 }
 
 bool PrvGuiMainWindow::loadPrv(QString prv_file_name)
