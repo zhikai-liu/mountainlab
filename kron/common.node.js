@@ -24,6 +24,7 @@ exports.read_pipelines_from_text_file=function(file_path) {
 	var pipelines=[];
 	{
 		var txt=common.read_text_file(file_path);
+		txt=txt.split('\r').join('\n');
 		var lines=txt.split('\n');
 		for (var i in lines) {
 			if (lines[i].trim().slice(0,1)!='#') {
@@ -68,6 +69,7 @@ exports.read_datasets_from_text_file=function(file_path) {
 	var datasets=[];
 	{
 		var txt=common.read_text_file(file_path);
+		txt=txt.split('\r').join('\n');
 		var lines=txt.split('\n');
 		for (var i in lines) {
 			if (lines[i].trim().slice(0,1)!='#') {
@@ -307,6 +309,7 @@ exports.transpose_matrix=function(X) {
 exports.read_csv_matrix=function(path) {
 	var ret=[];
 	var txt=common.read_text_file(path);
+	txt=txt.split('\r').join('\n');
 	var lines=txt.split('\n');
 	for (var i in lines) {
 		var vals=lines[i].split(',');
