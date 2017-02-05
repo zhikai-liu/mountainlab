@@ -366,7 +366,7 @@ void ClusterDetailView::loadStaticView(const QJsonObject& X)
     this->recalculate();
 }
 
-void ClusterDetailView::leaveEvent(QEvent *)
+void ClusterDetailView::leaveEvent(QEvent*)
 {
     d->set_hovered_k(-1);
 }

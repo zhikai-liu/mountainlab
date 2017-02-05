@@ -74,7 +74,7 @@ exports.read_datasets_from_text_file=function(file_path) {
 		for (var i in lines) {
 			if (lines[i].trim().slice(0,1)!='#') {
 				var vals=lines[i].trim().split(' ');
-				if (vals.length==2) {
+				if (vals.length>=2) {
 					var absolute_folder_path=find_absolute_dataset_folder_path(vals[1],path.dirname(file_path)||'.');
 					if (!absolute_folder_path) {
 						console.log ('Unable to find dataset folder: '+vals[1]);
@@ -93,7 +93,8 @@ exports.read_datasets_from_text_file=function(file_path) {
 						name:vals[0],
 						folder:vals[1],
 						absolute_folder_path:absolute_folder_path,
-						dataset_params:dataset_params
+						dataset_params:dataset_params,
+						arguments:vals.slice(2)
 					});
 				}
 				else {

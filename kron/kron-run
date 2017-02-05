@@ -1,7 +1,7 @@
 #!/usr/bin/env nodejs
 
 function print_usage() {
-	console.log ('kron-run [pipeline_names] [dataset_names] --outpath=[output(default)] [--output-to-dataset-folder]');
+	console.log ('kron-run [pipeline_names] [dataset_names] --outpath=[output(default)] [--output-to-dataset-folder] [--_iff=intermediate_file_folder]');
 }
 
 var fs=require('fs');
@@ -78,6 +78,19 @@ function run_pipeline(pipeline,dataset,callback) {
 		}
 	}
 
+	{
+		var arguments0=dataset.arguments;
+		for (var i in arguments0) {
+			args+=' '+arguments0[i];
+		}
+	}
+	{
+		var arguments0=pipeline.arguments;
+		for (var i in arguments0) {
+			args+=' '+arguments0[i];
+		}
+	}
+
 	if ('_force_run' in CLP.namedParameters) {
 		args+=' --_force_run='+CLP.namedParameters['_force_run'];
 	}
@@ -87,12 +100,15 @@ function run_pipeline(pipeline,dataset,callback) {
 	if ('_prvgui' in CLP.namedParameters) {
 		args+=' --_prvgui';	
 	}
+	if ('_intermediate_file_folder' in CLP.namedParameters) {
+		args+=' --_intermediate_file_folder='+CLP.namedParameters['_intermediate_file_folder'];;	
+	}
+	if ('_iff' in CLP.namedParameters) {
+		args+=' --_iff='+CLP.namedParameters['_iff'];;	
+	}
 	args+=' --outpath='+outpath0;
 	args+=' --_script_output='+outpath0+'/pipeline_output.json';
-	var arguments0=pipeline.arguments;
-	for (var i in arguments0) {
-		args+=' '+arguments0[i];
-	}
+
 	args=args.split(' ');
 	common.make_system_call(cmd,args,function() {
 		if (pipeline.absolute_curation_script_path) {

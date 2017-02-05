@@ -22,8 +22,10 @@ public:
     virtual ~CacheManager();
 
     void setLocalBasePath(const QString& path);
+    void setIntermediateFileFolder(const QString& folder);
     QString makeRemoteFile(const QString& mlproxy_url, const QString& file_name = "", Duration duration = ShortTerm);
     QString makeLocalFile(const QString& file_name = "", Duration duration = ShortTerm);
+    QString makeIntermediateFile(const QString& file_name = "");
     QString localTempPath();
 
     void cleanUp();

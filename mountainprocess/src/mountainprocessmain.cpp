@@ -175,6 +175,17 @@ int main(int argc, char* argv[])
     QString tmp_path = MLUtil::tempPath();
     CacheManager::globalInstance()->setLocalBasePath(tmp_path);
 
+    QString iff;
+    if (CLP.named_parameters.contains("_intermediate_file_folder"))
+        iff = CLP.named_parameters["_intermediate_file_folder"].toString();
+    if (CLP.named_parameters.contains("_iff"))
+        iff = CLP.named_parameters["_iff"].toString();
+
+    if (!iff.isEmpty()) {
+        qDebug().noquote() << "### Setting intermediate file folder: " + iff;
+        CacheManager::globalInstance()->setIntermediateFileFolder(iff);
+    }
+
     qInstallMessageHandler(mountainprocessMessageOutput);
 
     /// TODO don't need to always load the process manager?

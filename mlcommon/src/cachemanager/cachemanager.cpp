@@ -18,6 +18,7 @@ class CacheManagerPrivate {
 public:
     CacheManager* q;
     QString m_local_base_path;
+    QString m_intermediate_file_folder;
 
     QString create_random_file_name();
 };
@@ -53,6 +54,11 @@ void CacheManager::setLocalBasePath(const QString& path)
     QFile::setPermissions(path, perm);
     QFile::setPermissions(path + "/tmp_short_term", perm);
     QFile::setPermissions(path + "/tmp_long_term", perm);
+}
+
+void CacheManager::setIntermediateFileFolder(const QString& folder)
+{
+    d->m_intermediate_file_folder = folder;
 }
 
 QString CacheManager::makeRemoteFile(const QString& mlproxy_url, const QString& file_name_in, CacheManager::Duration duration)
@@ -92,6 +98,29 @@ QString CacheManager::makeLocalFile(const QString& file_name_in, CacheManager::D
         return "";
     }
     QString ret = QString("%1/%2/%3").arg(localTempPath()).arg(str).arg(file_name);
+
+    return ret;
+}
+
+QString CacheManager::makeIntermediateFile(const QString& file_name_in)
+{
+    QString file_name = file_name_in;
+    if (file_name.isEmpty())
+        file_name = d->create_random_file_name();
+
+    QString dirname;
+    if (d->m_intermediate_file_folder.isEmpty()) {
+        dirname = localTempPath() + "/tmp_long_term";
+    }
+    else if (QFileInfo(d->m_intermediate_file_folder).isAbsolute())
+        dirname = d->m_intermediate_file_folder;
+    else {
+        QDir(localTempPath()).mkdir("/tmp_long_term");
+        dirname = localTempPath() + "/tmp_long_term/" + d->m_intermediate_file_folder;
+    }
+    QDir(QFileInfo(dirname).path()).mkdir(QFileInfo(dirname).fileName());
+
+    QString ret = QString("%1/%2").arg(dirname).arg(file_name);
 
     return ret;
 }

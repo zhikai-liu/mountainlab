@@ -665,7 +665,7 @@ QString create_temporary_path_for_output(QString processor_name, QVariantMap inp
     QString str = "";
     if (output_index >= 0)
         str = QString("-%1").arg(output_index);
-    return CacheManager::globalInstance()->makeLocalFile(code + "-" + processor_name + "-" + output_pname + str + ".tmp", CacheManager::LongTerm);
+    return CacheManager::globalInstance()->makeIntermediateFile(code + "-" + processor_name + "-" + output_pname + str + ".tmp");
 }
 
 bool ScriptController2Private::handle_running_processes()
