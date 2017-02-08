@@ -761,6 +761,10 @@ int main(int argc, char* argv[])
             exit(-1);
         }
         QJsonObject state = get_daemon_state(daemon_id);
+        if (CLP.named_parameters.contains("script_id")) {
+            QString script_id=CLP.named_parameters["script_id"].toString();
+            state=state.value("scripts").toObject().value(script_id).toObject();
+        }
         QString json = QJsonDocument(state).toJson();
         printf("%s", json.toLatin1().constData());
         //log_end();
@@ -965,6 +969,7 @@ void print_usage()
     printf("mp-daemon-stop [some daemon id]\n");
     printf("mp-daemon-restart [some daemon id]\n");
     printf("mp-daemon-state [some daemon id]\n");
+    printf("mp-daemon-state [some daemon id] [--script_id=id]\n");
     printf("mp-daemon-state-summary [some daemon id]\n");
     printf("mp-get-default-daemon\n");
     printf("mp-set-default-daemon [some daemon id]\n");
