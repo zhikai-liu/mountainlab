@@ -247,7 +247,6 @@ exports.copy_file_sync=function(src,dst) {
 
 var s_num_system_calls_running=0;
 exports.make_system_call=function(cmd,args,callback) {
-	console.log ('Running '+cmd+' '+args.join(' '));
 	s_num_system_calls_running++;
 	var pp=child_process.spawn(cmd,args);
 	pp.stdout.setEncoding('utf8');

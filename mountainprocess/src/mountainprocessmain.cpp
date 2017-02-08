@@ -127,6 +127,8 @@ int main(int argc, char* argv[])
     QCoreApplication app(argc, argv);
     CLParams CLP(argc, argv);
 
+    bool detach_mode = CLP.named_parameters.contains("_detach");
+
     //log_begin(argc,argv);
 
     // Do not allow downloads or *processing* to resolve prv files
@@ -182,7 +184,9 @@ int main(int argc, char* argv[])
         iff = CLP.named_parameters["_iff"].toString();
 
     if (!iff.isEmpty()) {
-        qDebug().noquote() << "### Setting intermediate file folder: " + iff;
+        if (!detach_mode) {
+            qDebug().noquote() << "### Setting intermediate file folder: " + iff;
+        }
         CacheManager::globalInstance()->setIntermediateFileFolder(iff);
     }
 
@@ -998,7 +1002,12 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
 {
     MPDaemonPript PP;
 
-    bool detach = CLP.named_parameters.value("_detach", false).toBool();
+    if (CLP.named_parameters.contains("_pript_id")) {
+        PP.id = CLP.named_parameters["_pript_id"].toString();
+    }
+
+    //bool detach = CLP.named_parameters.value("_detach", false).toBool();
+    bool detach = CLP.named_parameters.contains("_detach");
 
     QVariantMap params;
     if (prtype == ScriptType) {
@@ -1034,7 +1043,8 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
     remove_system_parameters(params);
     PP.parameters = params;
 
-    PP.id = MLUtil::makeRandomId(20); // Random id for the process or script
+    if (PP.id.isEmpty())
+        PP.id = MLUtil::makeRandomId(20); // Random id for the process or script
 
     if (prtype == ScriptType) {
         // It is a script
