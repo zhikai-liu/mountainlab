@@ -101,6 +101,7 @@ if (session_names.length>0) {
 args+=' --dataset_names='+dsnames.join(',');
 args+=' --pipeline_names='+pipnames.join(',');
 args=args.split(' ');
+console.log ('Running '+view_program_file+' '+args.join(' '));
 common.make_system_call(view_program_file,args,function() {
 });
 
@@ -123,6 +124,7 @@ function open_view(alg,ds,callback) {
 	args+=' --samplerate='+samplerate;
 	
 	args=args.split(' ');
+	console.log ('Running '+cmd+' '+args.join(' '));
 	common.make_system_call(cmd,args,callback);
 }
 */

@@ -1,7 +1,9 @@
 #!/usr/bin/env nodejs
 
+var child_process=require('child_process');
+
 function print_usage() {
-	console.log ('kron-run [pipeline_names] [dataset_names] --outpath=[output(default)] [--output-to-dataset-folder] [--_iff=intermediate_file_folder]');
+	console.log ('kron-run [pipeline_names] [dataset_names] --outpath=[output(default)] [--output-to-dataset-folder] [--_iff=intermediate_file_folder] [--_return]');
 }
 
 var fs=require('fs');
@@ -12,6 +14,7 @@ var CLP=new common.CLParams(process.argv);
 var pipnames=CLP.unnamedParameters[0];
 var dsnames=CLP.unnamedParameters[1];
 var outpath=CLP.namedParameters.outpath||'output';
+var return_immediately=('_return' in CLP.namedParameters);
 var output_to_dataset_folder=('output-to-dataset-folder' in CLP.namedParameters);
 var pipelines_path='pipelines.txt';
 var datasets_path='datasets.txt';
@@ -28,6 +31,9 @@ var pipelines=common.read_pipelines_from_text_file(pipelines_path);
 var datasets=common.read_datasets_from_text_file(datasets_path);
 var interface=common.get_interface(); //for now it is hard-coded for spike sorting
 
+check_pipelines(pipnames);
+check_datasets(dsnames);
+
 for (var p in pipelines) {
 	if (common.contains_pipeline(pipnames,pipelines[p])) {
 		for (var d in datasets) {
@@ -42,6 +48,54 @@ common.wait_for_system_calls_to_finish(function() {
 
 });
 
+function print_error(str) {
+	if (return_immediately) {
+		var obj={
+			error:str
+		};
+		console.log(JSON.stringify(obj));
+	}
+	else {
+		console.log(str);
+	}
+}
+
+function valid_pipeline(name) {
+	if (name=='all') return true;
+	for (var i in pipelines) {
+		if (pipelines[i].name==name) return true;
+	}
+	return false;
+}
+
+function valid_dataset(name) {
+	if (name=='all') return true;
+	for (var i in datasets) {
+		if (datasets[i].name==name) return true;
+	}
+	return false;
+}
+
+function check_pipelines(pipnames) {
+	var vals=pipnames.split(',');
+	for (var i in vals) {
+		if (!valid_pipeline(vals[i])) {
+			print_error('Unable to find pipeline: '+vals[i]);
+			process.exit(-1);	
+		}
+	}
+}
+
+function check_datasets(dsnames) {
+	var vals=dsnames.split(',');
+	for (var i in vals) {
+		if (!valid_dataset(vals[i])) {
+			print_error('Unable to find dataset: '+vals[i]);
+			process.exit(-1);	
+		}
+	}
+}
+
 function run_pipeline(pipeline,dataset,callback) {
 	var ds_folder=dataset.absolute_folder_path;
 	var pipeline_script_path=pipeline.absolute_script_path;
@@ -54,11 +108,11 @@ function run_pipeline(pipeline,dataset,callback) {
 	common.mkdir_safe(outpath0);
 
 	if (!ds_folder) {
-		console.log ('Unable to find dataset: '+ds_folder);
+		print_error('Unable to find dataset: '+ds_folder);
 		process.exit(-1);
 	}
 	if (!pipeline_script_path) {
-		console.log ('Unable to find pipeline: '+pipeline_script_path);
+		print_error('Unable to find pipeline: '+pipeline_script_path);
 		process.exit(-1);
 	}
 
@@ -69,7 +123,13 @@ function run_pipeline(pipeline,dataset,callback) {
 	//}
 
 	var cmd='mountainprocess';
-	args='run-script '+pipeline_script_path;
+	var args='';
+	if (return_immediately)
+		args+='queue-script';
+	else
+		args+='run-script';
+	args+=' '+pipeline_script_path;
+	
 	args+=' '+ds_folder+'/params.json';
 	for (var pname in interface.parameters) {
 		var val=get_interface_parameter_value(interface.parameters[pname]);
@@ -97,6 +157,9 @@ function run_pipeline(pipeline,dataset,callback) {
 	if ('_nodaemon' in CLP.namedParameters) {
 		args+=' --_nodaemon';
 	}
+	//if (return_immediately) {
+	//	args+=' --_detach';
+	//}
 	if ('_prvgui' in CLP.namedParameters) {
 		args+=' --_prvgui';	
 	}
@@ -110,14 +173,30 @@ function run_pipeline(pipeline,dataset,callback) {
 	args+=' --_script_output='+outpath0+'/pipeline_output.json';
 
 	args=args.split(' ');
-	common.make_system_call(cmd,args,function() {
-		if (pipeline.absolute_curation_script_path) {
-			common.copy_file_sync(pipeline.absolute_curation_script_path,outpath0+'/curation.script');
-		}
-		else {
-			if (callback) callback();
-		}
-	});
+	if (return_immediately) {
+		var script_id=make_random_id(10);
+		args.push('--_pript_id='+script_id);
+		var pp=child_process.spawn(cmd,args,{detached: true});
+		pp.unref();
+		var obj={
+			script_id:script_id,
+			command:cmd+' '+args.join(' ')
+		};
+		console.log(JSON.stringify(obj));
+		process.exit(0);
+	}
+	else {
+		console.log ('Running '+cmd+' '+args.join(' '));
+		common.make_system_call(cmd,args,function() {
+			if (pipeline.absolute_curation_script_path) {
+				common.copy_file_sync(pipeline.absolute_curation_script_path,outpath0+'/curation.script');
+			}
+			else {
+				if (callback) callback();
+			}
+		});
+	}
+	
 
 	function get_interface_parameter_value(val) {
 		val=str_replace(val,'$dataset_folder$',ds_folder);
@@ -129,4 +208,14 @@ function str_replace(str,str1,str2) {
 	return str.split(str1).join(str2);
 }
 
+function make_random_id(len)
+{
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( var i=0; i < len; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
+}
 

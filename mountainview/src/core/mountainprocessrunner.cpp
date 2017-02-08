@@ -30,7 +30,7 @@ public:
     QMap<QString, QVariant> m_parameters;
     //QString m_mscmdserver_url;
     QString m_mlproxy_url;
-    bool m_detach;
+    bool m_detach = false;
 
     QString create_temporary_output_file_name(const QString& remote_url, const QString& processor_name, const QMap<QString, QVariant>& params, const QString& parameter_name);
 };
@@ -39,7 +39,6 @@ MountainProcessRunner::MountainProcessRunner()
 {
     d = new MountainProcessRunnerPrivate;
     d->q = this;
-    d->m_detach = false;
 }
 
 MountainProcessRunner::~MountainProcessRunner()
