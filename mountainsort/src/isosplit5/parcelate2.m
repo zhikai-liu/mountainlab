@@ -16,7 +16,7 @@ P.radius=compute_max_distance(P.centroid,X(:,P.indices));
 labels(P.indices)=1;
 parcels{end+1}=P;
 
-fprintf('Radius of initial cluster is %g\n',P.radius);
+%fprintf('Radius of initial cluster is %g\n',P.radius);
 
 split_factor=3; % split factor around 2.71 is in a sense ideal
 
