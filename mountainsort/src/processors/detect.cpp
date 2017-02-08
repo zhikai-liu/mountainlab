@@ -8,6 +8,7 @@
 
 bool detect(const QString& timeseries_path, const QString& detect_path, const Detect_Opts& opts)
 {
+    qDebug() << __FILE__ << __LINE__;
     DiskReadMda X(timeseries_path);
     long M = X.N1();
     long N = X.N2();
@@ -29,12 +30,16 @@ bool detect(const QString& timeseries_path, const QString& detect_path, const De
         long num_timepoints_handled = 0;
 #pragma omp parallel for
         for (long timepoint = 0; timepoint < N; timepoint += chunk_size) {
+            qDebug() << __FILE__ << __LINE__;
             Mda chunk;
 #pragma omp critical(lock1)
             {
+                qDebug() << __FILE__ << __LINE__;
                 X.readChunk(chunk, 0, timepoint - overlap_size, M, chunk_size + 2 * overlap_size);
+                qDebug() << __FILE__ << __LINE__;
             }
 
+            qDebug() << __FILE__ << __LINE__;
             QVector<double> times1;
             QVector<int> channels1;
             int m_begin = 0, m_end = M - 1;
@@ -79,8 +84,10 @@ bool detect(const QString& timeseries_path, const QString& detect_path, const De
                     }
                 }
             }
+            qDebug() << __FILE__ << __LINE__;
 #pragma omp critical(lock2)
             {
+                qDebug() << __FILE__ << __LINE__;
                 times.append(times1);
                 channels.append(channels1);
                 num_timepoints_handled += qMin(chunk_size, N - timepoint);
@@ -88,9 +95,12 @@ bool detect(const QString& timeseries_path, const QString& detect_path, const De
                     printf("%ld/%ld (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
                     timer.restart();
                 }
+                qDebug() << __FILE__ << __LINE__;
             }
+            qDebug() << __FILE__ << __LINE__;
         }
     }
+    qDebug() << __FILE__ << __LINE__;
 
     Mda output(2, times.count());
     for (int i = 0; i < times.count(); i++) {
@@ -99,6 +109,7 @@ bool detect(const QString& timeseries_path, const QString& detect_path, const De
     }
     output.write64(detect_path);
 
+    qDebug() << __FILE__ << __LINE__;
     printf("Detected %ld events.\n", output.N2());
 
     return true;
