@@ -31,7 +31,7 @@ void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_cha
 }
 
 namespace smi {
-void get_inverse_via_lu_decomposition(int M, float* out, float* in);
+bool get_inverse_via_lu_decomposition(int M, float* out, float* in);
 }
 
 void isosplit5_mex(double* labels_out, int M, int N, double* X)
@@ -111,6 +111,7 @@ double p2_compute_max_distance(const std::vector<float>& centroid, int M, float*
 
 std::vector<long> p2_randsample(long N, long K)
 {
+    // Not we are not actually randomizing here. There's a reason, I believe.
     std::vector<long> inds;
     for (int a = 0; a < K; a++)
         inds.push_back(a);
@@ -924,9 +925,9 @@ std::vector<float> compute_centroid(int M, long N, float* X)
     return retf;
 }
 
-void matinv(int M, float* out, float* in)
+bool matinv(int M, float* out, float* in)
 {
-    smi::get_inverse_via_lu_decomposition(M, out, in);
+    return smi::get_inverse_via_lu_decomposition(M, out, in);
 }
 
 void matvec(int M, int N, float* out, float* mat, float* vec)
@@ -982,7 +983,11 @@ bool merge_test(std::vector<int>* L12, int M, long N1, long N2, float* X1, float
     }
     std::vector<float> inv_avg_covmat;
     inv_avg_covmat.resize(M * M);
-    matinv(M, inv_avg_covmat.data(), avg_covmat.data());
+    if (!matinv(M, inv_avg_covmat.data(), avg_covmat.data())) {
+        printf("Unable to invert matrix. This may be due to the fact that you have duplicate events. Contact Jeremy if this is not the case, or if you would prefer the program to continue in this case. Aborting.\n");
+        abort();
+        return false;
+    }
 
     std::vector<float> V2(M);
     matvec(M, M, V2.data(), inv_avg_covmat.data(), V.data());
@@ -1426,7 +1431,7 @@ int LUPinverse(int M, int* P, float* LU,
     return 0;
 }
 
-void get_inverse_via_lu_decomposition(int M, float* out, float* in)
+bool get_inverse_via_lu_decomposition(int M, float* out, float* in)
 {
     std::vector<float> A((M + 1) * (M + 1));
     std::vector<int> P((M + 1));
@@ -1435,7 +1440,11 @@ void get_inverse_via_lu_decomposition(int M, float* out, float* in)
             A[(1 + i) + (M + 1) * (1 + j)] = in[i + M * j];
         }
     }
-    LUPdecompose(M + 1, A.data(), P.data());
+    int ret = LUPdecompose(M + 1, A.data(), P.data());
+    if (ret < 0) {
+        //handle case reported by Alex Morley. Don't proceed because inverse will crash (I believe)
+        return false;
+    }
     std::vector<float> B((M + 1) * (M + 1));
     std::vector<float> X(M + 1);
     std::vector<float> Y(M + 1);
@@ -1445,5 +1454,6 @@ void get_inverse_via_lu_decomposition(int M, float* out, float* in)
             out[i + M * j] = A[(1 + i) + (M + 1) * (1 + j)];
         }
     }
+    return true;
 }
 }
