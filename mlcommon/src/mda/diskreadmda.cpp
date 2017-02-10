@@ -339,6 +339,7 @@ long DiskReadMda::N6() const
 
 long DiskReadMda::N(int dim) const
 {
+    d->read_header_if_needed();
     if (dim == 0)
         return 0; //should be 1-based
     if (dim == 1)
@@ -359,11 +360,13 @@ long DiskReadMda::N(int dim) const
 
 long DiskReadMda::totalSize() const
 {
+    d->read_header_if_needed();
     return d->total_size();
 }
 
 MDAIO_HEADER DiskReadMda::mdaioHeader() const
 {
+    d->read_header_if_needed();
     return d->m_header;
 }
 
