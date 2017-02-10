@@ -8,12 +8,16 @@
 #include "mlcommon.h"
 
 #include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <diskreadmda.h>
 
 void print_usage();
 
 QString get_default_format(QString path);
 QString get_info_string(const DiskReadMda& X);
+QString get_json_header_string(const DiskReadMda& X);
 
 /// TODO, auto-calculate the last dimension
 
@@ -42,9 +46,16 @@ int main(int argc, char* argv[])
     if (opts.output_path.isEmpty()) {
         //if (opts.input_path.endsWith(".mda")) {
         DiskReadMda X(opts.input_path);
-        QString str = get_info_string(X);
-        printf("%s\n", str.toUtf8().data());
-        return 0;
+        if (params.named_parameters.contains("readheader")) {
+            QString str = get_json_header_string(X);
+            printf("%s\n", str.toUtf8().data());
+            return 0;
+        }
+        else {
+            QString str = get_info_string(X);
+            printf("%s\n", str.toUtf8().data());
+            return 0;
+        }
         //}
         //else {
         //    print_usage();
@@ -176,4 +187,32 @@ QString get_info_string(const DiskReadMda& X)
     MDAIO_HEADER header = X.mdaioHeader();
     str += QString(" (%1)").arg(mdaio_type_string(header.data_type));
     return str;
+}
+
+QString get_data_type_string(int data_type) {
+    if (data_type==MDAIO_TYPE_BYTE) return "byte";
+    if (data_type==MDAIO_TYPE_FLOAT32) return "float32";
+    if (data_type==MDAIO_TYPE_FLOAT64) return "float64";
+    if (data_type==MDAIO_TYPE_INT16) return "int16";
+    if (data_type==MDAIO_TYPE_INT32) return "int32";
+    if (data_type==MDAIO_TYPE_UINT16) return "uint16";
+    if (data_type==MDAIO_TYPE_UINT32) return "uint32";
+    return "";
+}
+
+QString get_json_header_string(const DiskReadMda& X)
+{
+    MDAIO_HEADER H = X.mdaioHeader();
+    QJsonObject ret;
+    ret["num_dims"]=H.num_dims;
+    QJsonArray dims0;
+    for (int i=0; i<H.num_dims; i++) {
+        dims0.push_back(H.dims[i]);
+    }
+    ret["dims"]=dims0;
+    ret["num_bytes_per_entry"]=H.num_bytes_per_entry;
+    ret["header_size"]=(int)H.header_size;
+    ret["data_type"]=H.data_type;
+    ret["data_type_string"]=get_data_type_string(H.data_type);
+    return QJsonDocument(ret).toJson(QJsonDocument::Indented);
 }
