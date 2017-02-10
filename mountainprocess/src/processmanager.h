@@ -76,7 +76,7 @@ public:
 
     bool checkParameters(const QString& processor_name, const QVariantMap& parameters);
     bool processAlreadyCompleted(const QString& processor_name, const QVariantMap& parameters);
-    QString startProcess(const QString& processor_name, const QVariantMap& parameters, const RequestProcessResources& RPR); //returns the process id/handle (a random string)
+    QString startProcess(const QString& processor_name, const QVariantMap& parameters, const RequestProcessResources& RPR, bool exec_mode); //returns the process id/handle (a random string)
     bool waitForFinished(const QString& process_id);
     MLProcessInfo processInfo(const QString& id);
     void clearProcess(const QString& id);

@@ -7,7 +7,7 @@ function Y=ms_bandpass_filter(X,opts)
 %
 % Inputs:
 %    X - MxN array of raw data
-%    opts.samplefreq - the sampling frequency corresponding to X, e.g.
+%    opts.samplerate - the sampling frequency corresponding to X, e.g.
 %                      30000
 %    The following are optional:
 %    opts.freq_min - the lower end of the bandpass filter (Hz)
@@ -20,7 +20,7 @@ function Y=ms_bandpass_filter(X,opts)
 %    Y - MxN array of filtered data
 %
 % Example:
-%    Y=ms_bandpass_filter(X,struct('samplefreq',30000,'freq_min',300,'freq_max',6000));
+%    Y=ms_bandpass_filter(X,struct('samplerate',30000,'freq_min',300,'freq_max',6000));
 %
 % Other m-files required: none
 %

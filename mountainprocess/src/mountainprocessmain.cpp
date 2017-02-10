@@ -228,7 +228,8 @@ int main(int argc, char* argv[])
         QString json = QJsonDocument(MLP.spec).toJson(QJsonDocument::Indented);
         printf("%s\n", json.toLatin1().data());
     }
-    else if (arg1 == "run-process") { //Run a process synchronously
+    else if ((arg1 == "run-process")||(arg1 == "exec-process")) { //Run a process synchronously
+        bool exec_mode=(arg1 == "exec-process");
         if (!initialize_process_manager()) { // load the processor plugins etc
             //log_end();
             return -1;
@@ -246,7 +247,7 @@ int main(int argc, char* argv[])
 
         bool force_run = CLP.named_parameters.contains("_force_run"); // do not check for already computed
         int request_num_threads = CLP.named_parameters.value("_request_num_threads", 0).toInt(); // the processor may or may not respect this request. But mountainsort/omp does.
-        if ((!force_run) && (PM->processAlreadyCompleted(processor_name, process_parameters))) {
+        if ((!force_run)  && (!exec_mode) && (PM->processAlreadyCompleted(processor_name, process_parameters))) {
             // We have a record of this procesor already completed. If so, we save a lot of time by not re-running
             printf("Process already completed: %s\n", processor_name.toLatin1().data());
         }
@@ -261,7 +262,7 @@ int main(int argc, char* argv[])
             else {
                 RequestProcessResources RPR;
                 RPR.request_num_threads = request_num_threads;
-                id = PM->startProcess(processor_name, process_parameters, RPR); //start the process and retrieve a unique id
+                id = PM->startProcess(processor_name, process_parameters, RPR, exec_mode); //start the process and retrieve a unique id
                 if (id.isEmpty()) {
                     error_message = "Problem starting process: " + processor_name;
                     ret = -1;

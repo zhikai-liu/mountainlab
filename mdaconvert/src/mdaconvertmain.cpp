@@ -18,6 +18,7 @@ void print_usage();
 QString get_default_format(QString path);
 QString get_info_string(const DiskReadMda& X);
 QString get_json_header_string(const DiskReadMda& X);
+bool extract_time_chunk(QString input_fname,QString output_fname,const QMap<QString,QVariant> &params);
 
 /// TODO, auto-calculate the last dimension
 
@@ -29,6 +30,18 @@ int main(int argc, char* argv[])
         print_usage();
         return 0;
     }
+
+    QString arg1=params.unnamed_parameters.value(0);
+    QString arg2=params.unnamed_parameters.value(1);
+    QString arg3=params.unnamed_parameters.value(2);
+
+    if (arg1=="extract_time_chunk") {
+        if (extract_time_chunk(arg2,arg3,params.named_parameters))
+            return 0;
+        else
+            return -1;
+    }
+
 
     mdaconvert_opts opts;
 
@@ -215,4 +228,36 @@ QString get_json_header_string(const DiskReadMda& X)
     ret["data_type"]=H.data_type;
     ret["data_type_string"]=get_data_type_string(H.data_type);
     return QJsonDocument(ret).toJson(QJsonDocument::Indented);
+}
+
+bool extract_time_chunk(QString input_fname,QString output_fname,const QMap<QString,QVariant> &params) {
+    DiskReadMda X(input_fname);
+    Mda Y;
+
+    long t1=params["t1"].toLongLong();
+    long t2=params["t2"].toLongLong();
+
+    if (!X.readChunk(Y,0,t1,X.N1(),t2-t1+1)) {
+        qWarning() << "Problem reading chunk.";
+        return false;
+    }
+    MDAIO_HEADER H=X.mdaioHeader();
+    if (H.data_type==MDAIO_TYPE_FLOAT32)
+        return Y.write32(output_fname);
+    else if (H.data_type==MDAIO_TYPE_FLOAT64)
+        return Y.write64(output_fname);
+    else if (H.data_type==MDAIO_TYPE_INT16)
+        return Y.write16i(output_fname);
+    else if (H.data_type==MDAIO_TYPE_UINT16)
+        return Y.write16ui(output_fname);
+    else if (H.data_type==MDAIO_TYPE_INT32)
+        return Y.write16i(output_fname);
+    else if (H.data_type==MDAIO_TYPE_UINT32)
+        return Y.write16ui(output_fname);
+    else if (H.data_type==MDAIO_TYPE_BYTE)
+        return Y.write8(output_fname);
+    else {
+        qWarning() << "Unexpected data type: " << H.data_type;
+        return false;
+    }
 }
