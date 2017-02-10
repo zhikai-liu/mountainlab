@@ -25,6 +25,7 @@
 
 struct PMProcess {
     MLProcessInfo info;
+    bool exec_mode=false;
     QProcess* qprocess;
 };
 
@@ -107,7 +108,7 @@ bool ProcessManager::loadProcessorFile(const QString& path)
         QString output = pp.readAll();
         json = output;
         if (json.isEmpty()) {
-            qWarning() << "Potential problem with executable processor file: " + path;
+            qWarning() << "Potential problem with executable processor file: " + path+". Expected json output but got empty string.";
             if (QFileInfo(path).size() < 1e6) {
                 json = TextFile::read(path);
                 //now test it, since it is executable we are suspicious...
@@ -171,7 +172,7 @@ MLProcessor ProcessManager::processor(const QString& name)
     return d->m_processors.value(name);
 }
 
-QString ProcessManager::startProcess(const QString& processor_name, const QVariantMap& parameters_in, const RequestProcessResources& RPR)
+QString ProcessManager::startProcess(const QString& processor_name, const QVariantMap& parameters_in, const RequestProcessResources& RPR, bool exec_mode)
 {
     QVariantMap parameters = d->resolve_file_names_in_parameters(processor_name, parameters_in);
 
@@ -218,8 +219,9 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
             }
         }
 
-        if (RPR.request_num_threads)
+        if (RPR.request_num_threads) {
             ppp += QString("--_request_num_threads=%1 ").arg(RPR.request_num_threads);
+        }
 
         exe_command.replace(QRegExp("\\$\\(arguments\\)"), ppp);
     }
@@ -232,6 +234,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     PP.info.finished = false;
     PP.info.exit_code = 0;
     PP.info.exit_status = QProcess::NormalExit;
+    PP.exec_mode=exec_mode;
     PP.qprocess = new QProcess;
     PP.qprocess->setProcessChannelMode(QProcess::MergedChannels);
     //connect(PP.qprocess,SIGNAL(readyRead()),this,SLOT(slot_qprocess_output()));
@@ -400,16 +403,18 @@ void ProcessManager::slot_process_finished()
         }
         else {
             MLProcessor processor = d->m_processors[processor_name];
-            QJsonObject obj = d->compute_unique_process_object(processor, parameters);
-            QString code = d->compute_unique_object_code(obj);
-            QString fname = MPDaemon::daemonPath() + "/completed_processes/" + code + ".json";
-            QString json = QJsonDocument(obj).toJson();
-            if (QFile::exists(fname))
-                QFile::remove(fname); //shouldn't be needed
-            if (TextFile::write(fname + ".tmp", json)) {
-                QFile::rename(fname + ".tmp", fname);
-                QFile::Permissions perm = QFileDevice::ReadUser | QFileDevice::WriteUser | QFileDevice::ExeUser | QFileDevice::ReadGroup | QFileDevice::WriteGroup | QFileDevice::ExeGroup | QFileDevice::ReadOther | QFileDevice::WriteOther | QFileDevice::ExeOther;
-                QFile::setPermissions(fname, perm);
+            if (!d->m_processes[id].exec_mode) { //in exec_mode we don't keep track of which processes have already completed
+                QJsonObject obj = d->compute_unique_process_object(processor, parameters);
+                QString code = d->compute_unique_object_code(obj);
+                QString fname = MPDaemon::daemonPath() + "/completed_processes/" + code + ".json";
+                QString json = QJsonDocument(obj).toJson();
+                if (QFile::exists(fname))
+                    QFile::remove(fname); //shouldn't be needed
+                if (TextFile::write(fname + ".tmp", json)) {
+                    QFile::rename(fname + ".tmp", fname);
+                    QFile::Permissions perm = QFileDevice::ReadUser | QFileDevice::WriteUser | QFileDevice::ExeUser | QFileDevice::ReadGroup | QFileDevice::WriteGroup | QFileDevice::ExeGroup | QFileDevice::ReadOther | QFileDevice::WriteOther | QFileDevice::ExeOther;
+                    QFile::setPermissions(fname, perm);
+                }
             }
         }
     }
