@@ -228,8 +228,8 @@ int main(int argc, char* argv[])
         QString json = QJsonDocument(MLP.spec).toJson(QJsonDocument::Indented);
         printf("%s\n", json.toLatin1().data());
     }
-    else if ((arg1 == "run-process")||(arg1 == "exec-process")) { //Run a process synchronously
-        bool exec_mode=(arg1 == "exec-process");
+    else if ((arg1 == "run-process") || (arg1 == "exec-process")) { //Run a process synchronously
+        bool exec_mode = (arg1 == "exec-process");
         if (!initialize_process_manager()) { // load the processor plugins etc
             //log_end();
             return -1;
@@ -247,7 +247,7 @@ int main(int argc, char* argv[])
 
         bool force_run = CLP.named_parameters.contains("_force_run"); // do not check for already computed
         int request_num_threads = CLP.named_parameters.value("_request_num_threads", 0).toInt(); // the processor may or may not respect this request. But mountainsort/omp does.
-        if ((!force_run)  && (!exec_mode) && (PM->processAlreadyCompleted(processor_name, process_parameters))) {
+        if ((!force_run) && (!exec_mode) && (PM->processAlreadyCompleted(processor_name, process_parameters))) {
             // We have a record of this procesor already completed. If so, we save a lot of time by not re-running
             printf("Process already completed: %s\n", processor_name.toLatin1().data());
         }
@@ -763,8 +763,8 @@ int main(int argc, char* argv[])
         }
         QJsonObject state = get_daemon_state(daemon_id);
         if (CLP.named_parameters.contains("script_id")) {
-            QString script_id=CLP.named_parameters["script_id"].toString();
-            state=state.value("scripts").toObject().value(script_id).toObject();
+            QString script_id = CLP.named_parameters["script_id"].toString();
+            state = state.value("scripts").toObject().value(script_id).toObject();
         }
         QString json = QJsonDocument(state).toJson();
         printf("%s", json.toLatin1().constData());

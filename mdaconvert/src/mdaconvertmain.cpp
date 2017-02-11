@@ -18,7 +18,7 @@ void print_usage();
 QString get_default_format(QString path);
 QString get_info_string(const DiskReadMda& X);
 QString get_json_header_string(const DiskReadMda& X);
-bool extract_time_chunk(QString input_fname,QString output_fname,const QMap<QString,QVariant> &params);
+bool extract_time_chunk(QString input_fname, QString output_fname, const QMap<QString, QVariant>& params);
 
 /// TODO, auto-calculate the last dimension
 
@@ -31,17 +31,16 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    QString arg1=params.unnamed_parameters.value(0);
-    QString arg2=params.unnamed_parameters.value(1);
-    QString arg3=params.unnamed_parameters.value(2);
+    QString arg1 = params.unnamed_parameters.value(0);
+    QString arg2 = params.unnamed_parameters.value(1);
+    QString arg3 = params.unnamed_parameters.value(2);
 
-    if (arg1=="extract_time_chunk") {
-        if (extract_time_chunk(arg2,arg3,params.named_parameters))
+    if (arg1 == "extract_time_chunk") {
+        if (extract_time_chunk(arg2, arg3, params.named_parameters))
             return 0;
         else
             return -1;
     }
-
 
     mdaconvert_opts opts;
 
@@ -202,14 +201,22 @@ QString get_info_string(const DiskReadMda& X)
     return str;
 }
 
-QString get_data_type_string(int data_type) {
-    if (data_type==MDAIO_TYPE_BYTE) return "byte";
-    if (data_type==MDAIO_TYPE_FLOAT32) return "float32";
-    if (data_type==MDAIO_TYPE_FLOAT64) return "float64";
-    if (data_type==MDAIO_TYPE_INT16) return "int16";
-    if (data_type==MDAIO_TYPE_INT32) return "int32";
-    if (data_type==MDAIO_TYPE_UINT16) return "uint16";
-    if (data_type==MDAIO_TYPE_UINT32) return "uint32";
+QString get_data_type_string(int data_type)
+{
+    if (data_type == MDAIO_TYPE_BYTE)
+        return "byte";
+    if (data_type == MDAIO_TYPE_FLOAT32)
+        return "float32";
+    if (data_type == MDAIO_TYPE_FLOAT64)
+        return "float64";
+    if (data_type == MDAIO_TYPE_INT16)
+        return "int16";
+    if (data_type == MDAIO_TYPE_INT32)
+        return "int32";
+    if (data_type == MDAIO_TYPE_UINT16)
+        return "uint16";
+    if (data_type == MDAIO_TYPE_UINT32)
+        return "uint32";
     return "";
 }
 
@@ -217,44 +224,45 @@ QString get_json_header_string(const DiskReadMda& X)
 {
     MDAIO_HEADER H = X.mdaioHeader();
     QJsonObject ret;
-    ret["num_dims"]=H.num_dims;
+    ret["num_dims"] = H.num_dims;
     QJsonArray dims0;
-    for (int i=0; i<H.num_dims; i++) {
+    for (int i = 0; i < H.num_dims; i++) {
         dims0.push_back(H.dims[i]);
     }
-    ret["dims"]=dims0;
-    ret["num_bytes_per_entry"]=H.num_bytes_per_entry;
-    ret["header_size"]=(int)H.header_size;
-    ret["data_type"]=H.data_type;
-    ret["data_type_string"]=get_data_type_string(H.data_type);
+    ret["dims"] = dims0;
+    ret["num_bytes_per_entry"] = H.num_bytes_per_entry;
+    ret["header_size"] = (int)H.header_size;
+    ret["data_type"] = H.data_type;
+    ret["data_type_string"] = get_data_type_string(H.data_type);
     return QJsonDocument(ret).toJson(QJsonDocument::Indented);
 }
 
-bool extract_time_chunk(QString input_fname,QString output_fname,const QMap<QString,QVariant> &params) {
+bool extract_time_chunk(QString input_fname, QString output_fname, const QMap<QString, QVariant>& params)
+{
     DiskReadMda X(input_fname);
     Mda Y;
 
-    long t1=params["t1"].toLongLong();
-    long t2=params["t2"].toLongLong();
+    long t1 = params["t1"].toLongLong();
+    long t2 = params["t2"].toLongLong();
 
-    if (!X.readChunk(Y,0,t1,X.N1(),t2-t1+1)) {
+    if (!X.readChunk(Y, 0, t1, X.N1(), t2 - t1 + 1)) {
         qWarning() << "Problem reading chunk.";
         return false;
     }
-    MDAIO_HEADER H=X.mdaioHeader();
-    if (H.data_type==MDAIO_TYPE_FLOAT32)
+    MDAIO_HEADER H = X.mdaioHeader();
+    if (H.data_type == MDAIO_TYPE_FLOAT32)
         return Y.write32(output_fname);
-    else if (H.data_type==MDAIO_TYPE_FLOAT64)
+    else if (H.data_type == MDAIO_TYPE_FLOAT64)
         return Y.write64(output_fname);
-    else if (H.data_type==MDAIO_TYPE_INT16)
+    else if (H.data_type == MDAIO_TYPE_INT16)
         return Y.write16i(output_fname);
-    else if (H.data_type==MDAIO_TYPE_UINT16)
+    else if (H.data_type == MDAIO_TYPE_UINT16)
         return Y.write16ui(output_fname);
-    else if (H.data_type==MDAIO_TYPE_INT32)
+    else if (H.data_type == MDAIO_TYPE_INT32)
         return Y.write16i(output_fname);
-    else if (H.data_type==MDAIO_TYPE_UINT32)
+    else if (H.data_type == MDAIO_TYPE_UINT32)
         return Y.write16ui(output_fname);
-    else if (H.data_type==MDAIO_TYPE_BYTE)
+    else if (H.data_type == MDAIO_TYPE_BYTE)
         return Y.write8(output_fname);
     else {
         qWarning() << "Unexpected data type: " << H.data_type;

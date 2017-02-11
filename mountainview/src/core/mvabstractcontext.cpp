@@ -1,6 +1,7 @@
 #include "mvabstractcontext.h"
 
 #include <QAction>
+#include <QDebug>
 
 struct OptionChangedAction {
     QString option_name;

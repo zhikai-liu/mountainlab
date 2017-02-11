@@ -31,6 +31,8 @@ public:
     Q_INVOKABLE void log(const QString& message);
     Q_INVOKABLE QString dir(const QString& path);
     Q_INVOKABLE void mkdir(const QString& path);
+    Q_INVOKABLE QString createPrvObject(const QString& path);
+    Q_INVOKABLE bool writeTextFile(const QString& path, const QString& text);
 
 private:
     ScriptController2Private* d;
