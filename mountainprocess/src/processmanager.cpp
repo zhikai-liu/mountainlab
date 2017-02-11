@@ -25,7 +25,7 @@
 
 struct PMProcess {
     MLProcessInfo info;
-    bool exec_mode=false;
+    bool exec_mode = false;
     QProcess* qprocess;
 };
 
@@ -108,7 +108,7 @@ bool ProcessManager::loadProcessorFile(const QString& path)
         QString output = pp.readAll();
         json = output;
         if (json.isEmpty()) {
-            qWarning() << "Potential problem with executable processor file: " + path+". Expected json output but got empty string.";
+            qWarning() << "Potential problem with executable processor file: " + path + ". Expected json output but got empty string.";
             if (QFileInfo(path).size() < 1e6) {
                 json = TextFile::read(path);
                 //now test it, since it is executable we are suspicious...
@@ -234,7 +234,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     PP.info.finished = false;
     PP.info.exit_code = 0;
     PP.info.exit_status = QProcess::NormalExit;
-    PP.exec_mode=exec_mode;
+    PP.exec_mode = exec_mode;
     PP.qprocess = new QProcess;
     PP.qprocess->setProcessChannelMode(QProcess::MergedChannels);
     //connect(PP.qprocess,SIGNAL(readyRead()),this,SLOT(slot_qprocess_output()));

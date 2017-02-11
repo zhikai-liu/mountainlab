@@ -101,6 +101,7 @@ public:
     bool run_or_queue_node(PipelineNode2* node, const QMap<QString, int>& node_indices_for_outputs);
     PipelineNode2* find_node_ready_to_run();
     bool handle_running_processes();
+    bool get_node_indices_for_outputs(QMap<QString, int>& node_indices_for_outputs);
 };
 
 ScriptController2::ScriptController2()
@@ -257,17 +258,8 @@ bool ScriptController2::runPipeline()
 
     //record which outputs get created by which nodes (by index)
     QMap<QString, int> node_indices_for_outputs;
-    for (int i = 0; i < d->m_pipeline_nodes.count(); i++) {
-        QStringList output_paths = d->m_pipeline_nodes[i].output_paths();
-        foreach (QString path, output_paths) {
-            if (!path.isEmpty()) {
-                if (node_indices_for_outputs.contains(path)) {
-                    qWarning() << "Same output is created twice in pipeline." << path;
-                    return false;
-                }
-            }
-            node_indices_for_outputs[path] = i;
-        }
+    if (!d->get_node_indices_for_outputs(node_indices_for_outputs)) {
+        return false;
     }
 
     bool done = false;
@@ -379,6 +371,32 @@ QString ScriptController2::dir(const QString& path)
 void ScriptController2::mkdir(const QString& path)
 {
     QDir(QFileInfo(path).path()).mkpath(QFileInfo(path).fileName());
+}
+
+QString ScriptController2::createPrvObject(const QString& path)
+{
+    QMap<QString, int> node_indices_for_outputs;
+    if (!d->get_node_indices_for_outputs(node_indices_for_outputs))
+        return "";
+    QJsonObject obj = make_prv_object_2(path);
+    if (obj.isEmpty())
+        return "";
+    /*
+    bool ok;
+    QSet<int> node_indices_already_used; //to avoid infinite cycles, which can happen, for example, when an input file is the same as an output file
+    obj["processes"] = get_prv_processes_2(d->m_pipeline_nodes, node_indices_for_outputs, path, node_indices_already_used, &ok);
+    if (!ok) {
+        qWarning() << "Error in get_prv_processes";
+        return "";
+    }
+    */
+    QString obj_json = QJsonDocument(obj).toJson(QJsonDocument::Indented);
+    return obj_json;
+}
+
+bool ScriptController2::writeTextFile(const QString& path, const QString& text)
+{
+    return TextFile::write(path, text);
 }
 
 QProcess* ScriptController2Private::queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, QString process_output_fname, int request_num_threads)
@@ -725,6 +743,23 @@ bool ScriptController2Private::handle_running_processes()
                 delete node->qprocess;
                 node->qprocess = 0;
             }
+        }
+    }
+    return true;
+}
+
+bool ScriptController2Private::get_node_indices_for_outputs(QMap<QString, int>& node_indices_for_outputs)
+{
+    for (int i = 0; i < m_pipeline_nodes.count(); i++) {
+        QStringList output_paths = m_pipeline_nodes[i].output_paths();
+        foreach (QString path, output_paths) {
+            if (!path.isEmpty()) {
+                if (node_indices_for_outputs.contains(path)) {
+                    qWarning() << "Same output is created twice in pipeline." << path;
+                    return false;
+                }
+            }
+            node_indices_for_outputs[path] = i;
         }
     }
     return true;

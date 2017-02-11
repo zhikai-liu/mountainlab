@@ -39,7 +39,7 @@
 #include <clusterpaircontextmenuhandler.h>
 #include <mvcrosscorrelogramswidget3.h>
 #include <mvdiscrimhistview.h>
-#include <mvdiscrimhistview_guide.h>
+//#include <mvdiscrimhistview_guide.h>
 #include <mvfiringeventview2.h>
 #include <mvmergecontrol.h>
 #include <mvspikesprayview.h>
@@ -433,7 +433,7 @@ int main(int argc, char* argv[])
                 }
                 else
                     done_checking = true;
-            }
+            };
             context->setFromMV2FileObject(obj);
             context->setMV2FileName(mv2_fname);
         }
@@ -893,7 +893,7 @@ void setup_main_window(MVMainWindow* W)
     //W->registerViewFactory(new MVAmplitudeHistogramsFactory(W));
     W->registerViewFactory(new MVAmplitudeHistograms3Factory(W));
     W->registerViewFactory(new MVDiscrimHistFactory(W));
-    W->registerViewFactory(new MVDiscrimHistGuideFactory(W));
+    //W->registerViewFactory(new MVDiscrimHistGuideFactory(W));
     W->registerViewFactory(new MVFireTrackFactory(W));
 }
 

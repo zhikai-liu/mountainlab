@@ -53,6 +53,7 @@ public:
     QString m_cluster_order_scores_name;
 
     void update_current_and_selected_clusters_according_to_merged();
+    void set_default_options();
 };
 
 QJsonArray intlist_to_json_array(const QList<int>& X);
@@ -69,13 +70,7 @@ MVContext::MVContext()
     d->m_current_cluster = 0;
     d->m_current_timepoint = 0;
 
-    this->setOption("clip_size", 100);
-    this->setOption("cc_max_dt_msec", 100);
-    this->setOption("cc_log_time_constant_msec", 1);
-    this->setOption("cc_bin_size_msec", 0.5);
-    this->setOption("cc_max_est_data_size", "1e4");
-    this->setOption("amp_thresh_display", 3);
-    this->setOption("discrim_hist_method", "centroid");
+    d->set_default_options();
 
     // default colors
     d->m_colors["background"] = QColor(240, 240, 240);
@@ -105,6 +100,7 @@ void MVContext::clear()
     d->m_timeseries.clear();
     d->m_firings = DiskReadMda();
     clearOptions();
+    d->set_default_options();
 }
 
 QJsonObject cluster_attributes_to_object(const QMap<int, QJsonObject>& map)
@@ -1316,4 +1312,15 @@ void MVContextPrivate::update_current_and_selected_clusters_according_to_merged(
         m_selected_clusters = selected_clusters_set.toList();
         qSort(m_selected_clusters);
     }
+}
+
+void MVContextPrivate::set_default_options()
+{
+    q->setOption("clip_size", 100);
+    q->setOption("cc_max_dt_msec", 100);
+    q->setOption("cc_log_time_constant_msec", 1);
+    q->setOption("cc_bin_size_msec", 0.5);
+    q->setOption("cc_max_est_data_size", "1e4");
+    q->setOption("amp_thresh_display", 3);
+    q->setOption("discrim_hist_method", "centroid");
 }
