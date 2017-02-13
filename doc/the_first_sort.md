@@ -8,7 +8,7 @@
 
 ### A note about processing
 
-MountainLab processing is defined in layers. This tutorial shows the recommend way to do the processing. However you are by no means restricted to doing it this way -- for example, the need to launch a processing daemon may seem like overkill. All processing routines may be traced back to simple executables. An explanation of the processing layers and different ways to invoke spike sorting is found [[todo: elsewhere]].
+MountainLab processing is defined in layers. This tutorial shows the recommended way to do the processing. However you are by no means restricted to doing it this way -- for example, the need to launch a processing daemon may seem like overkill. All processing routines may be traced back to simple executables. An explanation of the processing layers and different ways to invoke spike sorting is found [[todo: elsewhere]].
 
 ### 1. Install and configure MountainLab
 
