@@ -26,13 +26,17 @@ See below for details on installing these packages.
 First time:
 
 > git clone https://github.com/magland/mountainlab.git
+
 > cd mountainlab
+
 > ./compile_components.sh
 
 Subsequent updates:
 
 > cd mountainlab
+
 > git pull
+
 > ./compile_components.sh
 
 Add mountainlab/bin to your PATH environment variable. For example append the following to your ~/.bashrc file, and open a new terminal (or, source .bashrc):
@@ -44,6 +48,7 @@ Add mountainlab/bin to your PATH environment variable. For example append the fo
 Prepare the example spike sorting:
 
 > cd examples/003_kron_mountainsort
+
 > ./001_generate_synthetic_data.sh
 
 This will use matlab if you have it installed, otherwise it will use octave. It will generate 5 example synthetic datasets in an examples subdirectory, and the raw data are written to the BIGFILES subdirectory. Thus we begin following the principle of separating large files from their contents, as will be described in more detail.
@@ -68,16 +73,23 @@ If you are on a later version of Ubuntu (such as 16.04), you can get away with i
 If you've got Ubuntu 16.04 or later (good news):
 
 > apt-get install software-properties-common
+
 > apt-add-repository ppa:ubuntu-sdk-team/ppa
+
 > apt-get update
+
 > apt-get install qtdeclarative5-dev
+
 > apt-get install qt5-default qtbase5-dev qtscript5-dev make g++
 
 ### Prerequisite: Install FFTW, Octave, and NodeJS
 
 > apt-get install libfftw3-dev
+
 > apt-get install octave
+
 > apt-get install nodejs npm
+
 > Or a one-liner: apt-get install -y libfft23-dev nodejs npm octave
 
 ### Prerequisite: If necessary, install Qt5 from qt.io
