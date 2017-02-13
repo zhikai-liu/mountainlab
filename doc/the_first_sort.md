@@ -6,9 +6,13 @@
 4. Run the sorting
 5. View the results
 
-### Install and configure MountainLab
+### A note about processing
 
-This involves installing prerequisites, cloning the repository, compiling, and editing mountainlab.user.json. Installation instructions are [found here](doc/installation.md).
+MountainLab processing is defined in layers. This tutorial shows the recommend way to do the processing. However you are by no means restricted to doing it this way -- for example, the need to launch a processing daemon may seem like overkill. All processing routines may be traced back to simple executables. An explanation of the processing layers and different ways to invoke spike sorting is found [[todo: elsewhere]].
+
+### 1. Install and configure MountainLab
+
+This involves installing prerequisites, cloning the repository, compiling, and editing mountainlab.user.json. Installation instructions are [found here](doc/installation.md). You should test the installation by running the example before proceeding.
 
 Once installed do the following:
 
@@ -53,11 +57,11 @@ prv.local_search_paths (default=["examples"]). Add the full path of the base dir
 
 The other settings are described in [[todo: Advanced settings]].
 
-### Prepare the raw data
+### 2. Prepare the raw data
 
 The raw timeseries data must first be converted to .mda format. This is [described here](doc/mda_format.md). Next, put it somewhere in the /path/to/prvdata as configured in mountainlab.user.json. That directory will be searched recursively. The principle (as will be described in more detail) is to separate the huge raw data files from the rest of the analysis procedure.
 
-### Prepare a sorting project
+### 3. Prepare a sorting project
 
 The directory structure for a sorting project is as follows:
 
@@ -74,6 +78,7 @@ project_name
     dataset2_name
       ...
     ```
+```
 ```
 
 These files are defined as follows:
@@ -124,7 +129,7 @@ You can also specify whether to look for positive spike peaks (sign=1) , negativ
 {"samplerate":30000,"sign":1}
 ```
 
-### Run the sorting
+### 4. Run the sorting
 
 Before running the sorting you should start the processing daemon:
 
@@ -140,7 +145,7 @@ The output will go into the outputs/ms2–ds1 folder. In particular you will get
 
 Further description of the daemon is found [[todo: elsewhere]].
 
-### View the results
+### 5. View the results
 
 To view the results use the following command:
 
