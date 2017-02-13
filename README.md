@@ -12,15 +12,17 @@ The software comprises tools for processing electrophysiological recordings and 
 
 ## How to run spike sorting
 
-See the following article which explains how to actually perform spike sorting:
-
-https://mountainlab.vbulletin.net/articles/15-running-spike-sorting-using-mountainlab
+[The first sort](doc/the_first_sort.md)
 
 ## Data formats used in MountainLab
 
 [The .mda file format](doc/mda_format.md)
 
 ## Older information
+
+Here is an old tutorial for running spike sorting:
+
+https://mountainlab.vbulletin.net/articles/15-running-spike-sorting-using-mountainlab
 
 [About the software](https://mountainlab.vbulletin.net/articles/22-about-mountainlab)
 
