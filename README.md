@@ -1,6 +1,6 @@
 # MountainLab
 
-MountainSort is spike sorting software developed by Jeremy Magland, Alex Barnett, and Leslie Greengard at the Simons Center for Data Analysis in close collaboration with Jason Chung and Loren Frank at UCSF department of Physiology. It is part of MountainLab, a general framework for data analysis and visualization.
+MountainSort is spike sorting software developed by Jeremy Magland, Alex Barnett, and Leslie Greengard at the Center for Computational Biology, Flatiron Institute in close collaboration with Jason Chung and Loren Frank at UCSF department of Physiology. It is part of MountainLab, a general framework for data analysis and visualization.
 
 MountainLab is being developed by Jeremy Magland and Witold Wysota.
 
@@ -15,6 +15,10 @@ The software comprises tools for processing electrophysiological recordings and 
 See the following article which explains how to actually perform spike sorting:
 
 https://mountainlab.vbulletin.net/articles/15-running-spike-sorting-using-mountainlab
+
+## Data formats used in MountainLab
+
+[The .mda file format](doc/mda_format.md)
 
 ## Older information
 
