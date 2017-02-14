@@ -17,7 +17,7 @@
 	},
 	"kron":{
 		"dataset_paths":["mountainsort/example_datasets","user/datasets"],
-		"pipeline_paths":["mountainsort/pipelines","/user/pipelines"],
+		"pipeline_paths":["mountainsort/pipelines","user/pipelines","packages"],
 		"view_program_paths":["mountainsort/view_programs","/user/view_programs"]
 	}
 }

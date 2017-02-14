@@ -152,7 +152,7 @@ function find_absolute_pipeline_script_path(script_path,text_file_path) {
 	if (text_file_path)
 		pipeline_paths.push(text_file_path);
 	for (var i in pipeline_paths) {
-		var p=resolve_from_mountainlab(pipeline_paths[i]+'/'+script_path);
+		var p=resolve_recursively_from_mountainlab(pipeline_paths[i],script_path);
 		if (fs.existsSync(p)) {
 			return p;
 		}
@@ -170,6 +170,31 @@ exports.find_view_program_file=function(program_name) {
 	}
 	return null;
 };
+
+function resolve_recursively_from_mountainlab(path,fname) {
+	var tmp=false;
+	if (path.indexOf('/')===0) tmp=true; //absolute
+	if (path.indexOf('.')===0) tmp=true; //prob referring to the working directory. Witold, help!!
+	if (!tmp)
+		path=__dirname+'/../'+path;
+	return find_recursively(path,fname);
+}
+
+function find_recursively(path,fname) {
+	if (fs.existsSync(path+'/'+fname))
+		return path+'/'+fname;
+	if (!fs.existsSync(path))
+		return '';
+	var files=fs.readdirSync(path);
+	for (var i in files) {
+		var stat = fs.statSync(path+'/'+files[i]);
+        if (stat && stat.isDirectory()) {
+        	var tmp=find_recursively(path+'/'+files[i],fname);
+        	if (tmp) return tmp;
+        }
+	}
+	return '';
+}
 
 function resolve_from_mountainlab(path) {
 	if (path.indexOf('/')===0) return path; //absolute
