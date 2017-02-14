@@ -1,0 +1,21 @@
+{
+	"processors":[
+		{
+			"name":"bandpass_filter_kernel",
+			"version":"0.1",
+			"description":"",
+			"inputs":[
+				{"name":"timeseries"}
+			],
+			"outputs":[
+				{"name":"timeseries_out"}
+			],
+			"parameters":[
+				{"name":"samplerate","optional":false},
+				{"name":"freq_min","optional":false},
+				{"name":"freq_max","optional":false}
+			],
+			"exe_command":"$(basepath)/run_matlab.sh $(basepath) \"opts=struct('samplerate',$samplerate$,'freq_min',$freq_min$,'freq_max',$freq_max$); run_mountainlab_setup; bandpass_filter_kernel('$timeseries$','$timeseries_out$',opts);\""
+		}
+	]
+}
