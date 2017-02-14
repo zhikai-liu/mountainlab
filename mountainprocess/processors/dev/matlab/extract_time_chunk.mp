@@ -1,0 +1,20 @@
+{
+	"processors":[
+		{
+			"name":"extract_time_chunk",
+			"version":"0.1",
+			"description":"",
+			"inputs":[
+				{"name":"timeseries"}
+			],
+			"outputs":[
+				{"name":"timeseries_out"}
+			],
+			"parameters":[
+				{"name":"t1","optional":false},
+				{"name":"t2","optional":false}
+			],
+			"exe_command":"$(basepath)/run_matlab.sh $(basepath) \"opts=struct('t1',$t1$,'t2',$t2$); run_mountainlab_setup; extract_time_chunk('$timeseries$','$timeseries_out$',opts);\""
+		}
+	]
+}
