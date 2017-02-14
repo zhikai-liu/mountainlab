@@ -821,6 +821,11 @@ int main(int argc, char* argv[])
     else if (arg1 == "cleanup-cache") { // remove old files in the temporary directory
         CacheManager::globalInstance()->cleanUp();
     }
+    else if (arg1 == "temp") {
+        QString tmp_path=CacheManager::globalInstance()->localTempPath();
+        printf("%s\n",tmp_path.toUtf8().data());
+        return 0;
+    }
     else {
         print_usage(); //print usage information
         //log_end();
