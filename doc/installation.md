@@ -27,40 +27,47 @@ See below for details on installing these packages.
 
 First time:
 
-> git clone https://github.com/magland/mountainlab.git
-
-> cd mountainlab
-
-> ./compile_components.sh
+```bash
+git clone https://github.com/magland/mountainlab.git
+cd mountainlab
+./compile_components.sh
+```
 
 Subsequent updates:
 
-> cd mountainlab
-
-> git pull
-
-> ./compile_components.sh
+```bash
+cd mountainlab
+git pull
+./compile_components.sh
+```
 
 Add mountainlab/bin to your PATH environment variable. For example append the following to your ~/.bashrc file, and open a new terminal (or, source .bashrc):
 
-> export PATH=/path/to/mountainlab/bin:$PATH
+```bash
+export PATH=/path/to/mountainlab/bin:$PATH
+```
 
 ### Step 3: Test the installation
 
 Prepare the example spike sorting:
 
-> cd examples/003_kron_mountainsort
-
-> ./001_generate_synthetic_data.sh
+```bash
+cd examples/003_kron_mountainsort
+./001_generate_synthetic_data.sh
+```
 
 This will use matlab if you have it installed, otherwise it will use octave. It will generate 5 example synthetic datasets in an examples subdirectory, and the raw data are written to the BIGFILES subdirectory. Thus we begin following the principle of separating large files from their contents, as will be described in more detail.
 Run the standard mountainsort processing pipeline
 
-> kron-run ms2 example1
+```bash
+kron-run ms2 example1
+```
 
 Finally, launch the viewer:
 
-> kron-view results ms2 example1
+```bash
+kron-view results ms2 example1
+```
 
 See the other docs for details on what's going on here.
 
@@ -74,25 +81,23 @@ If you are on a later version of Ubuntu (such as 16.04), you can get away with i
 
 If you've got Ubuntu 16.04 or later (good news):
 
-> sudo apt-get install software-properties-common
-
-> sudo apt-add-repository ppa:ubuntu-sdk-team/ppa
-
-> sudo apt-get update
-
-> sudo apt-get install qtdeclarative5-dev
-
-> sudo apt-get install qt5-default qtbase5-dev qtscript5-dev make g++
+```bash
+sudo apt-get install software-properties-common
+sudo apt-add-repository ppa:ubuntu-sdk-team/ppa
+sudo apt-get update
+sudo apt-get install qtdeclarative5-dev
+sudo apt-get install qt5-default qtbase5-dev qtscript5-dev make g++
+```
 
 ### Prerequisite: Install FFTW, Octave, and NodeJS
 
-> sudo apt-get install libfftw3-dev
+```bash
+sudo apt-get install libfftw3-dev
+sudo apt-get install octave
+sudo apt-get install nodejs npm
+```
 
-> sudo apt-get install octave
-
-> sudo apt-get install nodejs npm
-
-> Or a one-liner: sudo apt-get install -y libfft23-dev nodejs npm octave
+Or a one-liner: sudo apt-get install -y libfft23-dev nodejs npm octave
 
 ### Prerequisite: If necessary, install Qt5 from qt.io
 
