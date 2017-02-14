@@ -23,6 +23,8 @@ See below for details on installing these packages.
 
 ### Step 2: Clone and compile MountainLab
 
+(You should be a regular user when you perform this step -- do not use sudo here or your files will be owned by root)
+
 First time:
 
 > git clone https://github.com/magland/mountainlab.git
@@ -72,25 +74,25 @@ If you are on a later version of Ubuntu (such as 16.04), you can get away with i
 
 If you've got Ubuntu 16.04 or later (good news):
 
-> apt-get install software-properties-common
+> sudo apt-get install software-properties-common
 
-> apt-add-repository ppa:ubuntu-sdk-team/ppa
+> sudo apt-add-repository ppa:ubuntu-sdk-team/ppa
 
-> apt-get update
+> sudo apt-get update
 
-> apt-get install qtdeclarative5-dev
+> sudo apt-get install qtdeclarative5-dev
 
-> apt-get install qt5-default qtbase5-dev qtscript5-dev make g++
+> sudo apt-get install qt5-default qtbase5-dev qtscript5-dev make g++
 
 ### Prerequisite: Install FFTW, Octave, and NodeJS
 
-> apt-get install libfftw3-dev
+> sudo apt-get install libfftw3-dev
 
-> apt-get install octave
+> sudo apt-get install octave
 
-> apt-get install nodejs npm
+> sudo apt-get install nodejs npm
 
-> Or a one-liner: apt-get install -y libfft23-dev nodejs npm octave
+> Or a one-liner: sudo apt-get install -y libfft23-dev nodejs npm octave
 
 ### Prerequisite: If necessary, install Qt5 from qt.io
 
