@@ -30,9 +30,21 @@ else
 	echo ""
 	echo "Compilation successful."
 
+	RES=$(which mountainprocess)
+	if [[ -z $RES ]]; then
+		echo ""
+		echo "******************************************"
+		echo "It appears that mountainprocess is not"
+		echo "found in your path. Be sure to add"
+		echo "mountainlab/bin to your path. See the"
+		echo "installation instructions for more"
+		echo "information."
+		echo "******************************************"
+	fi
+
 	sha1sum_output_after=$(sha1sum mountainprocess/bin/mountainprocess)
 	if [[ $sha1sum_output_before != $sha1sum_output_after ]]; then
-		output=$(mp-daemon-state-summary)
+		output=$(bin/mp-daemon-state-summary)
 		if [[ $output == "Daemon is running"* ]]; then
 			echo ""
 			echo "******************************************"
