@@ -122,6 +122,14 @@ void set_default_daemon_id(QString daemon_id);
 void print_default_daemon_id();
 QJsonObject get_daemon_state(QString daemon_id);
 
+void silent_message_output(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+    Q_UNUSED(type)
+    Q_UNUSED(context)
+    Q_UNUSED(msg)
+    return;
+}
+
 int main(int argc, char* argv[])
 {
     QCoreApplication app(argc, argv);
@@ -220,13 +228,28 @@ int main(int argc, char* argv[])
         return 0;
     }
     else if (arg1 == "spec") { // Show the spec for a single processor
+        qInstallMessageHandler(silent_message_output);
         if (!initialize_process_manager()) { // load the processor plugins etc
             //log_end();
             return -1;
         }
-        MLProcessor MLP = PM->processor(arg2);
-        QString json = QJsonDocument(MLP.spec).toJson(QJsonDocument::Indented);
-        printf("%s\n", json.toLatin1().data());
+        if (!arg2.isEmpty()) {
+            MLProcessor MLP = PM->processor(arg2);
+            QString json = QJsonDocument(MLP.spec).toJson(QJsonDocument::Indented);
+            printf("%s\n", json.toLatin1().data());
+        }
+        else {
+            QJsonArray processors_array;
+            QStringList pnames = PM->processorNames();
+            foreach (QString pname, pnames) {
+                MLProcessor MLP = PM->processor(pname);
+                processors_array.push_back(MLP.spec);
+            }
+            QJsonObject obj;
+            obj["processors"] = processors_array;
+            QString json = QJsonDocument(obj).toJson(QJsonDocument::Indented);
+            printf("%s\n", json.toLatin1().data());
+        }
     }
     else if ((arg1 == "run-process") || (arg1 == "exec-process")) { //Run a process synchronously
         bool exec_mode = (arg1 == "exec-process");
@@ -517,6 +540,11 @@ int main(int argc, char* argv[])
             printf("\nCANNOT QUEUE PROCESS: No daemon has been specified.\n");
             printf("Use the --_nodaemon flag or do the following:\n");
             print_daemon_instructions();
+            return -1;
+        }
+
+        if (!initialize_process_manager()) { // load the processor plugins etc... needed because we check to see if the processor exists, and attach the spec (for later checking), before it is queued
+            //log_end();
             return -1;
         }
 
@@ -857,7 +885,7 @@ bool initialize_process_manager()
         int previous_num_processors = PM->processorNames().count();
         PM->loadProcessors(processor_path);
         int num_processors = PM->processorNames().count() - previous_num_processors;
-        printf("Loaded %d processors in %s\n", num_processors, processor_path.toLatin1().data());
+        qDebug().noquote() << QString("Loaded %1 processors in %2").arg(num_processors).arg(processor_path);
     }
 
     return true;
@@ -1044,6 +1072,12 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
         PP.prtype = ProcessType;
         PP.RPR.request_num_threads = request_num_threads;
         PP.processor_name = CLP.unnamed_parameters.value(1); //arg2 -- the name of the processor
+        ProcessManager* PM = ProcessManager::globalInstance();
+        if (!PM->processorNames().contains(PP.processor_name)) {
+            qWarning() << QString("Unable to find processor %1. (%2 processors loaded)").arg(PP.processor_name).arg(PM->processorNames().count());
+            return false;
+        }
+        PP.processor_spec = PM->processor(PP.processor_name).spec; //this will be checked later for consistency (make sure processor has not changed)
     }
 
     // Command-line parameters
@@ -1392,4 +1426,3 @@ QJsonObject get_daemon_state(QString daemon_id)
     }
     return state;
 }
-

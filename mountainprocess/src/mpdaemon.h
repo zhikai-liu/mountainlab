@@ -205,6 +205,7 @@ struct MPDaemonPript {
     //double memory_gb_requested = 0;
     RequestProcessResources RPR;
     ProcessRuntimeOpts runtime_opts; //defined at run time
+    QJsonObject processor_spec;
 };
 
 enum RecordType {
