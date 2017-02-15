@@ -23,6 +23,7 @@ defineReplace(ifcomponent) {
 }
 
 SUBDIRS += $$ifcomponent(mdaconvert,mdaconvert/src/mdaconvert.pro)
+SUBDIRS += $$ifcomponent(mda,mda/src/mda.pro)
 SUBDIRS += $$ifcomponent(mountainbrowser,mountainbrowser/src/mountainbrowser.pro)
 SUBDIRS += $$ifcomponent(mountainprocess,mountainprocess/src/mountainprocess.pro)
 SUBDIRS += $$ifcomponent(mountainsort,mountainsort/src/mountainsort.pro)

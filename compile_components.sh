@@ -5,7 +5,7 @@
 #    echo "usage:"
 #    echo "./compile_components.sh default"
 #    echo "./compile_components.sh mountainview"
-#    echo "example components: mdachunk mdaconvert mountainprocess mountainsort mountainview mountaincompare prv"
+#    echo "example components: mdachunk mdaconvert mountainprocess mountainsort mountainview mountaincompare prv mda"
 #    exit 0
 #fi
 
