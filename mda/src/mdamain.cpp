@@ -32,7 +32,6 @@ void silent_message_output(QtMsgType type, const QMessageLogContext& context, co
 QList<long> parse_int_list(QString str);
 int parse_data_type(QString str);
 
-
 int main(int argc, char* argv[])
 {
     CLParams params(argc, argv);
@@ -66,72 +65,75 @@ int main(int argc, char* argv[])
             printf("Input file does not exist.\n");
             return -1;
         }
-        QList<long> index=parse_int_list(params.named_parameters["index"].toString());
-        QList<long> size=parse_int_list(params.named_parameters["size"].toString());
-        if ((index.count()<2)||(index.count()>3)) {
+        QList<long> index = parse_int_list(params.named_parameters["index"].toString());
+        QList<long> size = parse_int_list(params.named_parameters["size"].toString());
+        if ((index.count() < 2) || (index.count() > 3)) {
             print_usage();
             return -1;
         }
-        if (index.count()!=size.count()) {
+        if (index.count() != size.count()) {
             return -1;
         }
 
         DiskReadMda X(arg2);
         Mda chunk;
-        if (index.count()==2) {
-            if (!X.readChunk(chunk,index[0],index[1],size[0],size[1]))
+        if (index.count() == 2) {
+            if (!X.readChunk(chunk, index[0], index[1], size[0], size[1]))
                 return -1;
         }
-        else if (index.count()==3) {
-            if (!X.readChunk(chunk,index[0],index[1],index[2],size[0],size[1],size[2]))
+        else if (index.count() == 3) {
+            if (!X.readChunk(chunk, index[0], index[1], index[2], size[0], size[1], size[2]))
                 return -1;
         }
         else {
             print_usage();
             return -1;
         }
-        int format=X.mdaioHeader().data_type;
-        bool ret=false;
+        int format = X.mdaioHeader().data_type;
+        bool ret = false;
         if (format == MDAIO_TYPE_BYTE)
-            ret=chunk.write8(arg3);
+            ret = chunk.write8(arg3);
         else if (format == MDAIO_TYPE_INT16)
-            ret=chunk.write16i(arg3);
+            ret = chunk.write16i(arg3);
         else if (format == MDAIO_TYPE_INT32)
-            ret=chunk.write32i(arg3);
+            ret = chunk.write32i(arg3);
         else if (format == MDAIO_TYPE_UINT16)
-            ret=chunk.write16ui(arg3);
+            ret = chunk.write16ui(arg3);
         else if (format == MDAIO_TYPE_UINT32)
-            ret=chunk.write32ui(arg3);
+            ret = chunk.write32ui(arg3);
         else if (format == MDAIO_TYPE_FLOAT32)
-            ret=chunk.write32(arg3);
+            ret = chunk.write32(arg3);
         else if (format == MDAIO_TYPE_FLOAT64)
-            ret=chunk.write64(arg3);
+            ret = chunk.write64(arg3);
         else {
             print_usage();
             return -1;
         }
-        if (!ret) return -1;
+        if (!ret)
+            return -1;
         return 0;
     }
     else if (arg1 == "create") {
-        QList<long> size=parse_int_list(params.named_parameters["size"].toString());
+        QList<long> size = parse_int_list(params.named_parameters["size"].toString());
         if (!arg2.endsWith(".mda")) {
             print_usage();
             return -1;
         }
-        if (size.count()<2) {
+        if (size.count() < 2) {
             printf("Unable to create file. Invalid size.\n");
             return -1;
         }
-        int data_type=parse_data_type(params.named_parameters["dtype"].toString());
+        int data_type = parse_data_type(params.named_parameters["dtype"].toString());
         if (!data_type) {
             print_usage();
             return -1;
         }
-        while (size.count()<6) size << 1;
+        while (size.count() < 6)
+            size << 1;
         DiskWriteMda X;
-        X.open(data_type,arg2,size[0],size[1],size[2],size[3],size[4],size[5]);
-        X.close();;
+        X.open(data_type, arg2, size[0], size[1], size[2], size[3], size[4], size[5]);
+        X.close();
+        ;
     }
     else {
         printf("Unrecognized command.\n");
@@ -381,18 +383,21 @@ bool extract_time_chunk(QString input_fname, QString output_fname, const QMap<QS
     }
 }
 
-QList<long> parse_int_list(QString str) {
+QList<long> parse_int_list(QString str)
+{
     QList<long> ret;
-    if (str.isEmpty()) return ret;
-    str=str.split("x").join(",");
-    QStringList vals=str.split(",");
-    foreach (QString val,vals) {
+    if (str.isEmpty())
+        return ret;
+    str = str.split("x").join(",");
+    QStringList vals = str.split(",");
+    foreach (QString val, vals) {
         ret << val.toLong();
     }
     return ret;
 }
 
-int parse_data_type(QString format) {
+int parse_data_type(QString format)
+{
     if (format == "byte")
         return MDAIO_TYPE_BYTE;
     if (format == "int8")

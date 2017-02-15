@@ -678,7 +678,7 @@ bool DiskReadMda32Private::open_file_if_needed()
         }
     }
     else {
-	qWarning() << ":::: Failed to open diskreadmda32 file: "+m_path;
+        qWarning() << ":::: Failed to open diskreadmda32 file: " + m_path;
         m_file_open_failed = true; //we don't want to try this more than once
         return false;
     }

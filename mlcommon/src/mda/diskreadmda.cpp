@@ -682,7 +682,7 @@ bool DiskReadMdaPrivate::open_file_if_needed()
         }
     }
     else {
-	qWarning() << ":::: Failed to open diskreadmda file: "+m_path;
+        qWarning() << ":::: Failed to open diskreadmda file: " + m_path;
         if (QFile::exists(m_path)) {
             printf("Even though this file does exist.\n");
         }

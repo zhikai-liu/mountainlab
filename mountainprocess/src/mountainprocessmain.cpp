@@ -822,8 +822,8 @@ int main(int argc, char* argv[])
         CacheManager::globalInstance()->cleanUp();
     }
     else if (arg1 == "temp") {
-        QString tmp_path=CacheManager::globalInstance()->localTempPath();
-        printf("%s\n",tmp_path.toUtf8().data());
+        QString tmp_path = CacheManager::globalInstance()->localTempPath();
+        printf("%s\n", tmp_path.toUtf8().data());
         return 0;
     }
     else {

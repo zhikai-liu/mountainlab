@@ -417,7 +417,7 @@ bool DiskReadMdaPrivate::open_file_if_needed()
             m_mda_header_total_size *= m_header.dims[i];
     }
     else {
-	qWarning() << "::::---- Failed to open diskreadmda file: "+m_path;
+        qWarning() << "::::---- Failed to open diskreadmda file: " + m_path;
         m_file_open_failed = true;
         return false;
     }
