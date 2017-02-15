@@ -1,4 +1,12 @@
 sudo docker build -t test1 .
+sudo docker run -v $PWD:/base -t test1 bash -c "/bin/bash /base/run_in_docker.sh"
+
+
+
+
+
+OLD INSTRUCTIONS::::::::::::::::
+
 sudo docker run -it test1 /bin/bash
 
 Then from within the container:

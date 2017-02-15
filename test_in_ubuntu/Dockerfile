@@ -23,6 +23,3 @@ RUN apt-get install -y libfftw3-dev
 
 # Install octave
 RUN apt-get install -y octave
-
-# Create user
-RUN useradd magland; mkdir /home/magland; chown magland:magland /home/magland

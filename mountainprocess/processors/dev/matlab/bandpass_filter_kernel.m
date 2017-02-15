@@ -2,7 +2,7 @@ function bandpass_filter_kernel(timeseries,timeseries_out,opts)
 
 X=readmda(timeseries);
 X=do_filter(X,opts);
-writemda(X,timeseries_out);
+writemda32(X,timeseries_out);
 
 function X=do_filter(X,opts)
 opts2.samplerate=opts.samplerate;

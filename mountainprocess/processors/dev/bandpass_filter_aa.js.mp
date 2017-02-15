@@ -11,7 +11,7 @@ function get_spec() {
 	        {name: "timeseries"}
 	    ],
 	    outputs: [
-	        //{name: "timeseries_out"}
+	        {name: "timeseries_out"}
 	    ],
 	    parameters: [
 	        {name: "samplerate",optional: false},
@@ -36,32 +36,39 @@ else if (arg1=='bandpass_filter_aa') {
 
 function bandpass_filter_aa(params) {
 	var timeseries=params.timeseries;
+	var timeseries_out=params.timeseries_out;
 	read_mda_header(timeseries,function (header) {
 		var M=header.dims[0]; //number of channels
 		var N=header.dims[1]; //number of timepoints
-		var time_chunks=get_time_chunks(M,N,{chunk_size:1000000,overlap_pct:0.1});
-		foreach(time_chunks,{num_parallel:request_num_threads},function(ii,time_chunk,cb) {
-			console.log ('Processing chunk '+(ii+1)+' of '+time_chunks.length+' ('+Math.floor(100*ii/time_chunks.length)+'%)'+'('+time_chunk.t1+','+time_chunk.t2+') ('+time_chunk.t1_minus_overlap+','+time_chunk.t2_plus_overlap+')');
-			process_chunk(time_chunk,function() {
-				cb();
+		create_array(timeseries_out,M,N,function() {
+			var time_chunks=get_time_chunks(M,N,{chunk_size:1000000,overlap_pct:0.1});
+			foreach(time_chunks,{num_parallel:request_num_threads},function(ii,time_chunk,cb) {
+				console.log ('Processing chunk '+(ii+1)+' of '+time_chunks.length+' ('+Math.floor(100*ii/time_chunks.length)+'%)'+'('+time_chunk.t1+','+time_chunk.t2+') ('+time_chunk.t1_minus_overlap+','+time_chunk.t2_plus_overlap+')');
+				process_chunk(time_chunk,function() {
+					cb();
+				});
+			},function() {
+				cleanup();
+				//done
 			});
-		},function() {
-			cleanup();
-			//done
 		});
-	});
 
-	function process_chunk(time_chunk,callback) {
-		var chunk_path=create_temporary_mda_path();
-		//mp_exec_process('extract_time_chunk',{timeseries:params.timeseries},{timeseries_out:chunk_path},{t1:time_chunk.t1_minus_overlap,t2:time_chunk.t2_plus_overlap},function() {
-		extract_time_chunk(params.timeseries,chunk_path,time_chunk.t1_minus_overlap,time_chunk.t2_plus_overlap,function() {
-			mp_exec_process('bandpass_filter_kernel',{timeseries:chunk_path},{timeseries_out:chunk_path+'.out'},{samplerate:params.samplerate,freq_min:params.freq_min,freq_max:params.freq_max},function() {
-				remove_temporary_file(chunk_path);
-				callback();
+		function process_chunk(time_chunk,callback) {
+			var chunk_path=create_temporary_mda_path();
+			get_chunk(params.timeseries,chunk_path,M,time_chunk.t1_minus_overlap,time_chunk.t2_plus_overlap,function() {
+				mp_exec_process('bandpass_filter_kernel',{timeseries:chunk_path},{timeseries_out:chunk_path+'.out.mda'},{samplerate:params.samplerate,freq_min:params.freq_min,freq_max:params.freq_max},function() {
+					remove_temporary_file(chunk_path);
+					get_chunk(chunk_path+'.out.mda',chunk_path+'.out2.mda',M,time_chunk.t1-time_chunk.t1_minus_overlap,time_chunk.t2-time_chunk.t1_minus_overlap,function() {
+						remove_temporary_file(chunk_path+'.out.mda');
+						set_chunk(params.timeseries_out,chunk_path+'.out2.mda',M,time_chunk.t1,time_chunk.t2,function() {
+							remove_temporary_file(chunk_path+'.out2.mda');
+							callback();
+						});
+					});
+				});
 			});
-		});
-		//});
-	}
+		}
+	});	
 }
 
 var fs=require('fs');
@@ -73,9 +80,35 @@ function cleanup() {
 
 }
 
-function extract_time_chunk(timeseries,timeseries_out,t1,t2,callback) {
-	var exe='mdaconvert';
-	var args=['extract_time_chunk',timeseries,timeseries_out,'--t1='+t1,'--t2='+t2];
+function create_array(path,M,N,callback) {
+	var exe='mda';
+	var args=['create',path,'--size='+M+'x'+N,'--dtype=float32'];
+	make_system_call(exe,args,{show_stdout:false,show_stderr:false,num_tries:5},function(aa) {
+		if (aa.return_code!=0) {
+			console.log ('Returned non-zero exit code: '+exe+' '+args.join(' '));
+			cleanup();
+			process.exit(-1);
+		}
+		callback(aa);
+	});
+}
+
+function get_chunk(path,chunk_path,M,t1,t2,callback) {
+	var exe='mda';
+	var args=['get_chunk',path,chunk_path,'--index=0,'+t1,'--size='+M+'x'+(t2-t1+1)];
+	make_system_call(exe,args,{show_stdout:false,show_stderr:false,num_tries:5},function(aa) {
+		if (aa.return_code!=0) {
+			console.log ('Returned non-zero exit code: '+exe+' '+args.join(' '));
+			cleanup();
+			process.exit(-1);
+		}
+		callback(aa);
+	});
+}
+
+function set_chunk(path,chunk_path,M,t1,t2,callback) {
+	var exe='mda';
+	var args=['set_chunk',path,chunk_path,'--index=0,'+t1];
 	make_system_call(exe,args,{show_stdout:false,show_stderr:false,num_tries:5},function(aa) {
 		if (aa.return_code!=0) {
 			console.log ('Returned non-zero exit code: '+exe+' '+args.join(' '));
