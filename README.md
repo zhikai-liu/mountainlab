@@ -6,6 +6,8 @@ MountainLab software is being developed by Jeremy Magland and Witold Wysota.
 
 The software comprises tools for processing electrophysiological recordings and for visualizing and validating the results.
 
+Contact the authors for information on the slack team for users and developers.
+
 ## Installation
 
 [Installation instructions](doc/installation.md)
