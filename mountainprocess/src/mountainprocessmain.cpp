@@ -1392,3 +1392,4 @@ QJsonObject get_daemon_state(QString daemon_id)
     }
     return state;
 }
+
