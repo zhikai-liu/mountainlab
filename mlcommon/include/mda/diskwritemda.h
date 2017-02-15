@@ -20,6 +20,7 @@ public:
     DiskWriteMda(int data_type, const QString& path, long N1, long N2, long N3 = 1, long N4 = 1, long N5 = 1, long N6 = 1);
     virtual ~DiskWriteMda();
     bool open(int data_type, const QString& path, long N1, long N2, long N3 = 1, long N4 = 1, long N5 = 1, long N6 = 1);
+    bool open(const QString& path);
     void close();
 
     long N1();

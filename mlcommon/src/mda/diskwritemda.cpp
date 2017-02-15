@@ -13,6 +13,7 @@ public:
     QString m_path;
     MDAIO_HEADER m_header;
     FILE* m_file;
+    bool m_requires_rename = false;
 
     int determine_ndims(long N1, long N2, long N3, long N4, long N5, long N6);
 };
@@ -64,6 +65,7 @@ bool DiskWriteMda::open(int data_type, const QString& path, long N1, long N2, lo
     d->m_header.num_dims = d->determine_ndims(N1, N2, N3, N4, N5, N6);
 
     d->m_file = fopen((path + ".tmp").toLatin1().data(), "wb");
+    d->m_requires_rename = true;
 
     if (!d->m_file)
         return false;
@@ -94,12 +96,31 @@ bool DiskWriteMda::open(int data_type, const QString& path, long N1, long N2, lo
     return true;
 }
 
+bool DiskWriteMda::open(const QString& path)
+{
+    if (d->m_file)
+        return false; //can't open twice!
+
+    d->m_path = path;
+
+    d->m_requires_rename = false;
+    d->m_file = fopen(path.toLatin1().data(), "r+"); //open file for update, both read and write
+    mda_read_header(&d->m_header, d->m_file);
+
+    if (!d->m_file)
+        return false;
+
+    return true;
+}
+
 void DiskWriteMda::close()
 {
     if (d->m_file) {
         fclose(d->m_file);
-        if (!QFile::rename(d->m_path + ".tmp", d->m_path)) {
-            qWarning() << "Unable to rename file in diskwritemda::open" << d->m_path + ".tmp" << d->m_path;
+        if (d->m_requires_rename) {
+            if (!QFile::rename(d->m_path + ".tmp", d->m_path)) {
+                qWarning() << "Unable to rename file in diskwritemda::open" << d->m_path + ".tmp" << d->m_path;
+            }
         }
         d->m_file = 0;
     }

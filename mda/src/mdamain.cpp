@@ -4,7 +4,6 @@
 ** Created: 7/4/2016
 *******************************************************/
 
-#include "mda0.h"
 #include "mlcommon.h"
 
 #include <QFile>
@@ -135,6 +134,52 @@ int main(int argc, char* argv[])
         X.close();
         ;
     }
+    else if (arg1 == "set_chunk") {
+        if (!arg2.endsWith(".mda")) {
+            print_usage();
+            return -1;
+        }
+        if (!arg3.endsWith(".mda")) {
+            print_usage();
+            return -1;
+        }
+        if (!QFile::exists(arg2)) {
+            printf("Target file does not exist.\n");
+            return -1;
+        }
+        QList<long> index = parse_int_list(params.named_parameters["index"].toString());
+
+        DiskWriteMda Y;
+        Y.open(arg2);
+        Mda chunk;
+        if (!chunk.read(arg3)) {
+            printf("Unable to read chunk.\n");
+            Y.close();
+            return -1;
+        }
+        if (index.count() == 2) {
+            if (!Y.writeChunk(chunk, index[0], index[1])) {
+                printf("Problem writing chunk.\n");
+                Y.close();
+                return -1;
+            }
+        }
+        else if (index.count() == 3) {
+            if (!Y.writeChunk(chunk, index[0], index[1], index[2])) {
+                printf("Problem writing chunk.\n");
+                Y.close();
+                return -1;
+            }
+        }
+        else {
+            printf("Unexpected length of index vector: %d.\n", index.count());
+            Y.close();
+            return -1;
+        }
+        Y.close();
+
+        return 0;
+    }
     else {
         printf("Unrecognized command.\n");
         return -1;
@@ -249,6 +294,7 @@ void print_usage()
     printf("mda file.mda\n");
     printf("mda get_chunk file.mda chunk_out.mda --index=0,100 --size=4x50\n");
     printf("mda create file.mda --dtype=int16 --size=4x1000\n");
+    printf("mda set_chunk target_file.mda chunk.mda --index=0,100\n");
     /*
     printf("Example usages for converting between raw and mda formats:\n");
     printf("mdaconvert input.mda\n");
