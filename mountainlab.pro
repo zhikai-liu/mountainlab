@@ -7,7 +7,7 @@ TEMPLATE = subdirs
 #COMPONENTS = mdaconvert  mountainprocess mountainview prv prv-gui
 
 isEmpty(COMPONENTS) {
-    COMPONENTS = mdaconvert mountainprocess mountainsort mountainview mountaincompare prv prv-gui
+    COMPONENTS = mda mdaconvert mountainprocess mountainsort mountainview mountaincompare prv prv-gui
 }
 
 CONFIG += ordered

@@ -175,6 +175,7 @@ MLProcessor ProcessManager::processor(const QString& name)
 
 void delete_tempdir(QString tempdir)
 {
+    //return; // Uncomment this line for debugging -- but remember to put it back!!!
     // to be safe!
     if (!tempdir.startsWith(CacheManager::globalInstance()->localTempPath())) {
         qWarning() << "Unexpected tempdir in delete_tempdir: " + tempdir;

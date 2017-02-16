@@ -31,32 +31,33 @@ exports.read_pipelines_from_text_file=function(file_path) {
 				if (lines[i].trim()) {
 					var vals=lines[i].trim().split(' ');
 					var absolute_script_path=find_absolute_pipeline_script_path(vals[1],path.dirname(file_path)||'.');
-					if (!absolute_script_path) {
-						console.log ('Unable to find pipeline script path: '+vals[1]);
-						process.exit(-1);
-					}
-					if (vals.length>=2) {
-						var pip={
-							name:vals[0],
-							script:vals[1],
-							absolute_script_path:absolute_script_path,
-							arguments:vals.slice(2)
-						};
-						var argv=['',''];
-						argv=argv.concat(pip.arguments);
-						var CLP=new common.CLParams(argv);
-						if ('curation' in CLP.namedParameters) {
-							pip.absolute_curation_script_path=find_absolute_pipeline_script_path(CLP.namedParameters.curation,path.dirname(file_path)||'.');
+					if (absolute_script_path) {
+						if (vals.length>=2) {
+							var pip={
+								name:vals[0],
+								script:vals[1],
+								absolute_script_path:absolute_script_path,
+								arguments:vals.slice(2)
+							};
+							var argv=['',''];
+							argv=argv.concat(pip.arguments);
+							var CLP=new common.CLParams(argv);
+							if ('curation' in CLP.namedParameters) {
+								pip.absolute_curation_script_path=find_absolute_pipeline_script_path(CLP.namedParameters.curation,path.dirname(file_path)||'.');
+							}
+							else {
+								pip.absolute_curation_script_path='';
+							}
+							pipelines.push(pip);
 						}
 						else {
-							pip.absolute_curation_script_path='';
+							if (lines[i].trim()) {
+								throw 'problem in pipelines file: '+lines[i].trim();
+							}
 						}
-						pipelines.push(pip);
 					}
 					else {
-						if (lines[i].trim()) {
-							throw 'problem in pipelines file: '+lines[i].trim();
-						}
+						console.log ('Warning: Unable to find pipeline script path: '+vals[1]);
 					}
 				}
 			}
@@ -76,26 +77,27 @@ exports.read_datasets_from_text_file=function(file_path) {
 				var vals=lines[i].trim().split(' ');
 				if (vals.length>=2) {
 					var absolute_folder_path=find_absolute_dataset_folder_path(vals[1],path.dirname(file_path)||'.');
-					if (!absolute_folder_path) {
-						console.log ('Unable to find dataset folder: '+vals[1]);
-						process.exit(-1);
+					if (absolute_folder_path) {
+						var dataset_params={};
+						var params_fname=absolute_folder_path+'/params.json';
+						try {
+							dataset_params=JSON.parse(common.read_text_file(params_fname));
+						}
+						catch(err) {
+							console.log ('Error parsing json from file: '+params_fname);
+							//console.log (common.read_text_file(params_fname));
+						}
+						datasets.push({
+							name:vals[0],
+							folder:vals[1],
+							absolute_folder_path:absolute_folder_path,
+							dataset_params:dataset_params,
+							arguments:vals.slice(2)
+						});
 					}
-					var dataset_params={};
-					var params_fname=absolute_folder_path+'/params.json';
-					try {
-						dataset_params=JSON.parse(common.read_text_file(params_fname));
+					else {
+						console.log ('Warning: Unable to find dataset folder: '+vals[1]);
 					}
-					catch(err) {
-						console.log ('Error parsing json from file: '+params_fname);
-						//console.log (common.read_text_file(params_fname));
-					}
-					datasets.push({
-						name:vals[0],
-						folder:vals[1],
-						absolute_folder_path:absolute_folder_path,
-						dataset_params:dataset_params,
-						arguments:vals.slice(2)
-					});
 				}
 				else {
 					if (lines[i].trim()) {

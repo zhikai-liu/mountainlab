@@ -11,8 +11,7 @@
 
 qmake -recursive
 
-if [ $1 == "default" ]
-then
+if [[ $1 == "default" ]]; then
 eval qmake
 elif [ -z "$1" ]; then
 eval qmake
