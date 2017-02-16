@@ -3,6 +3,7 @@ FROM ubuntu:16.04
 
 MAINTAINER Jeremy Magland
 
+RUN echo "clear"
 RUN apt-get update
 
 # Install qt5

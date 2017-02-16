@@ -146,6 +146,7 @@ bool MSProcessor::checkParameters(const QMap<QString, QVariant>& params)
         }
     }
     optional.append("_request_num_threads");
+    optional.append("_tempdir");
     QStringList keys = params.keys();
     foreach (QString key, keys) {
         if ((!required.contains(key)) && (!optional.contains(key))) {
