@@ -603,6 +603,9 @@ int main(int argc, char* argv[])
     */
     else if (arg1 == "daemon-start") {
         QString daemon_id = arg2;
+
+        qputenv("MP_DAEMON_ID", daemon_id.toUtf8().data());
+
         if (daemon_id.isEmpty()) {
             printf("You must specify a daemon id like this:\n");
             printf("daemon-start [some_id]\n");
@@ -613,7 +616,7 @@ int main(int argc, char* argv[])
         if (daemon_id != get_default_daemon_id()) {
             QString msg;
             if (get_default_daemon_id().isEmpty())
-                msg = "Setting default daemon to: " + get_default_daemon_id();
+                msg = "Setting default daemon to: " + daemon_id;
             else
                 msg = QString("Changing default daemon id from %1 to %2. To change it back use mp-set-default-daemon-id.").arg(get_default_daemon_id()).arg(daemon_id);
             printf("%s\n", msg.toUtf8().data());

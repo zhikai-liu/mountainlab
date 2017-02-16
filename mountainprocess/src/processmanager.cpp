@@ -173,23 +173,24 @@ MLProcessor ProcessManager::processor(const QString& name)
     return d->m_processors.value(name);
 }
 
-void delete_tempdir(QString tempdir) {
+void delete_tempdir(QString tempdir)
+{
     // to be safe!
     if (!tempdir.startsWith(CacheManager::globalInstance()->localTempPath())) {
-        qWarning() << "Unexpected tempdir in delete_tempdir: "+tempdir;
+        qWarning() << "Unexpected tempdir in delete_tempdir: " + tempdir;
         return;
     }
 
     {
-        QStringList list=QDir(tempdir).entryList(QStringList("*"),QDir::Files,QDir::Name);
-        foreach (QString fname,list) {
-            QFile::remove(tempdir+"/"+fname);
+        QStringList list = QDir(tempdir).entryList(QStringList("*"), QDir::Files, QDir::Name);
+        foreach (QString fname, list) {
+            QFile::remove(tempdir + "/" + fname);
         }
     }
     {
-        QStringList list=QDir(tempdir).entryList(QStringList("*"),QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
-        foreach (QString foldername,list) {
-            delete_tempdir(tempdir+"/"+foldername);
+        QStringList list = QDir(tempdir).entryList(QStringList("*"), QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+        foreach (QString foldername, list) {
+            delete_tempdir(tempdir + "/" + foldername);
         }
     }
     QDir(QFileInfo(tempdir).path()).rmdir(QFileInfo(tempdir).fileName());
@@ -212,9 +213,9 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
 
     QString id = MLUtil::makeRandomId();
 
-    QString tempdir=CacheManager::globalInstance()->makeLocalFile("tempdir_"+id,CacheManager::ShortTerm);
+    QString tempdir = CacheManager::globalInstance()->makeLocalFile("tempdir_" + id, CacheManager::ShortTerm);
     if (!QDir(QFileInfo(tempdir).path()).mkdir(QFileInfo(tempdir).fileName())) {
-        qWarning() << "Error creating temporary directory for process: "+tempdir;
+        qWarning() << "Error creating temporary directory for process: " + tempdir;
         return "";
     }
 
@@ -266,7 +267,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     PP.info.finished = false;
     PP.info.exit_code = 0;
     PP.info.exit_status = QProcess::NormalExit;
-    PP.tempdir=tempdir;
+    PP.tempdir = tempdir;
     PP.exec_mode = exec_mode;
     PP.qprocess = new QProcess;
     PP.qprocess->setProcessChannelMode(QProcess::MergedChannels);
