@@ -24,13 +24,20 @@ function get_spec() {
 }
 
 var CLP=new CLParams(process.argv);
-arg1=CLP.unnamedParameters[0]||'';
+var arg1=CLP.unnamedParameters[0]||'';
 var request_num_threads=CLP.namedParameters['_request_num_threads']||1;
+var tempdir=CLP.namedParameters['_tempdir']||'';
 if (arg1=='spec') {
 	var spec=get_spec();
 	console.log (JSON.stringify(spec));
 }
 else if (arg1=='bandpass_filter_aa') {
+	if (!tempdir) {
+		console.log('Missing required system parameter: _tempdir');
+		process.exit(-1);
+		return;
+	}
+
 	bandpass_filter_aa(CLP.namedParameters);
 }
 
@@ -44,7 +51,7 @@ function bandpass_filter_aa(params) {
 			var time_chunks=get_time_chunks(M,N,{chunk_size:1000000,overlap_pct:0.1});
 			foreach(time_chunks,{num_parallel:request_num_threads},function(ii,time_chunk,cb) {
 				console.log ('Processing chunk '+(ii+1)+' of '+time_chunks.length+' ('+Math.floor(100*ii/time_chunks.length)+'%)'+'('+time_chunk.t1+','+time_chunk.t2+') ('+time_chunk.t1_minus_overlap+','+time_chunk.t2_plus_overlap+')');
-				process_chunk(time_chunk,function() {
+				process_chunk(ii,time_chunk,function() {
 					cb();
 				});
 			},function() {
@@ -53,15 +60,19 @@ function bandpass_filter_aa(params) {
 			});
 		});
 
-		function process_chunk(time_chunk,callback) {
-			var chunk_path=create_temporary_mda_path();
+		function process_chunk(index,time_chunk,callback) {
+			//var chunk_path=create_temporary_mda_path();
+			var base_path=tempdir+'/'+index+'-';
+			var chunk_path=base_path+'-chunk.mda'; //input chunk
+			var chunk2_path=base_path+'-chunk2.mda'; //output chunk
+			var subchunk2_path=base_path+'-subchunk2.mda'; //subset of output chunk
 			get_chunk(params.timeseries,chunk_path,M,time_chunk.t1_minus_overlap,time_chunk.t2_plus_overlap,function() {
-				mp_exec_process('bandpass_filter_kernel',{timeseries:chunk_path},{timeseries_out:chunk_path+'.out.mda'},{samplerate:params.samplerate,freq_min:params.freq_min,freq_max:params.freq_max},function() {
+				mp_exec_process('bandpass_filter_kernel',{timeseries:chunk_path},{timeseries_out:chunk2_path},{samplerate:params.samplerate,freq_min:params.freq_min,freq_max:params.freq_max},function() {
 					remove_temporary_file(chunk_path);
-					get_chunk(chunk_path+'.out.mda',chunk_path+'.out2.mda',M,time_chunk.t1-time_chunk.t1_minus_overlap,time_chunk.t2-time_chunk.t1_minus_overlap,function() {
-						remove_temporary_file(chunk_path+'.out.mda');
-						set_chunk(params.timeseries_out,chunk_path+'.out2.mda',M,time_chunk.t1,time_chunk.t2,function() {
-							remove_temporary_file(chunk_path+'.out2.mda');
+					get_chunk(chunk2_path,subchunk2_path,M,time_chunk.t1-time_chunk.t1_minus_overlap,time_chunk.t2-time_chunk.t1_minus_overlap,function() {
+						remove_temporary_file(chunk2_path);
+						set_chunk(params.timeseries_out,subchunk2_path,M,time_chunk.t1,time_chunk.t2,function() {
+							remove_temporary_file(subchunk2_path);
 							callback();
 						});
 					});
@@ -143,14 +154,6 @@ function mp_exec_process(processor_name,inputs,outputs,params,callback) {
 		}
 		callback(aa);
 	});
-}
-
-
-
-function create_temporary_mda_path() {
-	var dirname='/tmp/mountainlab/tmp_short_term/bandpass_filter_aa';
-	mkdir(dirname);
-	return dirname+'/'+make_random_id(12)+'.tmp.mda';
 }
 
 var fs=require('fs');

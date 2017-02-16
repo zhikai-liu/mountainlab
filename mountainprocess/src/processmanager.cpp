@@ -25,6 +25,7 @@
 
 struct PMProcess {
     MLProcessInfo info;
+    QString tempdir = "";
     bool exec_mode = false;
     QProcess* qprocess;
 };
@@ -172,6 +173,28 @@ MLProcessor ProcessManager::processor(const QString& name)
     return d->m_processors.value(name);
 }
 
+void delete_tempdir(QString tempdir) {
+    // to be safe!
+    if (!tempdir.startsWith(CacheManager::globalInstance()->localTempPath())) {
+        qWarning() << "Unexpected tempdir in delete_tempdir: "+tempdir;
+        return;
+    }
+
+    {
+        QStringList list=QDir(tempdir).entryList(QStringList("*"),QDir::Files,QDir::Name);
+        foreach (QString fname,list) {
+            QFile::remove(tempdir+"/"+fname);
+        }
+    }
+    {
+        QStringList list=QDir(tempdir).entryList(QStringList("*"),QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+        foreach (QString foldername,list) {
+            delete_tempdir(tempdir+"/"+foldername);
+        }
+    }
+    QDir(QFileInfo(tempdir).path()).rmdir(QFileInfo(tempdir).fileName());
+}
+
 QString ProcessManager::startProcess(const QString& processor_name, const QVariantMap& parameters_in, const RequestProcessResources& RPR, bool exec_mode)
 {
     QVariantMap parameters = d->resolve_file_names_in_parameters(processor_name, parameters_in);
@@ -187,8 +210,17 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     }
     MLProcessor P = d->m_processors[processor_name];
 
+    QString id = MLUtil::makeRandomId();
+
+    QString tempdir=CacheManager::globalInstance()->makeLocalFile("tempdir_"+id,CacheManager::ShortTerm);
+    if (!QDir(QFileInfo(tempdir).path()).mkdir(QFileInfo(tempdir).fileName())) {
+        qWarning() << "Error creating temporary directory for process: "+tempdir;
+        return "";
+    }
+
     QString exe_command = P.exe_command;
     exe_command.replace(QRegExp("\\$\\(basepath\\)"), P.basepath);
+    exe_command.replace(QRegExp("\\$\\(tempdir\\)"), tempdir);
     {
         QString ppp;
         {
@@ -222,11 +254,11 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
         if (RPR.request_num_threads) {
             ppp += QString("--_request_num_threads=%1 ").arg(RPR.request_num_threads);
         }
+        ppp += QString("--_tempdir=%1 ").arg(tempdir);
 
         exe_command.replace(QRegExp("\\$\\(arguments\\)"), ppp);
     }
 
-    QString id = MLUtil::makeRandomId();
     PMProcess PP;
     PP.info.exe_command = exe_command;
     PP.info.parameters = parameters;
@@ -234,6 +266,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     PP.info.finished = false;
     PP.info.exit_code = 0;
     PP.info.exit_status = QProcess::NormalExit;
+    PP.tempdir=tempdir;
     PP.exec_mode = exec_mode;
     PP.qprocess = new QProcess;
     PP.qprocess->setProcessChannelMode(QProcess::MergedChannels);
@@ -251,6 +284,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     PP.qprocess->setProperty("pp_id", id);
     if (!PP.qprocess->waitForStarted(2000)) {
         qWarning() << "Problem starting process: " + exe_command;
+        delete_tempdir(tempdir);
         delete PP.qprocess;
         return "";
     }
@@ -418,6 +452,7 @@ void ProcessManager::slot_process_finished()
             }
         }
     }
+    delete_tempdir(d->m_processes[id].tempdir);
     emit this->processFinished(id);
 }
 
