@@ -20,8 +20,7 @@ export PATH=/home/magland/mountainlab/bin:$PATH
 cd examples/003_kron_mountainsort
 ./001_generate_synthetic_data.sh
 
-# Twice? TODO: fix this bug
-mp-daemon-start magland
+# Start the processing daemon
 mp-daemon-start magland
 
 # run the processing
