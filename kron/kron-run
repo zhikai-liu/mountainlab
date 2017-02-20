@@ -19,34 +19,93 @@ var output_to_dataset_folder=('output-to-dataset-folder' in CLP.namedParameters)
 var pipelines_path='pipelines.txt';
 var datasets_path='datasets.txt';
 
-if ((!pipnames)||(!dsnames)||(!outpath)||(!pipelines_path)||(!datasets_path)) {
-	print_usage();
-	process.exit(-1);
-}
-
 if (!output_to_dataset_folder)
 	common.mkdir_safe(outpath);
 
-var pipelines=common.read_pipelines_from_text_file(pipelines_path);
-var datasets=common.read_datasets_from_text_file(datasets_path);
 var interface=common.get_interface(); //for now it is hard-coded for spike sorting
 
-check_pipelines(pipnames);
-check_datasets(dsnames);
+var arg1=CLP.unnamedParameters[0]||'';
+if (ends_with(arg1,'.json')) {
+	var json=JSON.parse(common.read_text_file(arg1));
+	if (!json.dataset) {
+		console.error('Missing object: dataset');
+		process.exit(-1);
+	}
+	if (!json.pipeline) {
+		console.error('Missing object: pipeline');
+		process.exit(-1);
+	}
+	if (!json.pipeline.script) {
+		console.error('Missing object: pipeline.script');
+		process.exit(-1);
+	}
+	if (!json.dataset.raw) {
+		console.error('Missing object: dataset.raw');
+		process.exit(-1);
+	}
+	var outpath0=get_output_directory(json.pipeline.name,json.dataset.name);
+	common.mkdir_safe(outpath0);
+	var wpath=outpath0+'/working';
+	common.mkdir_safe(wpath);
+	common.write_text_file(wpath+'/raw.mda.prv',JSON.stringify(json.dataset.raw,null,'\t'));
+	if (json.dataset.params) {
+		common.write_text_file(wpath+'/params.json',JSON.stringify(json.dataset.params||{},null,'\t'));
+	}
+	if (json.dataset.geom) {
+		common.write_text_file(wpath+'/geom.csv',JSON.stringify(json.dataset.geom.csv||'',null,'\t'));
+	}
+	if (json.pipeline.script.content) {
+		common.write_text_file(wpath+'/tmp.pipeline',json.pipeline.script.content);
+	}
+	var absolute_curation_script_path='';
+	if (json.pipeline.curation_script) {
+		absolute_curation_script_path=wpath+'/curation.script';
+		common.write_text_file(absolute_curation_script_path,json.pipeline.curation_script.content||'');
+	}
+	var pipeline={
+		name:json.pipeline.name,
+		absolute_script_path:wpath+'/tmp.pipeline',
+		absolute_curation_script_path:absolute_curation_script_path,
+		arguments:json.pipeline.arguments
+	};
+	var dataset={
+		name:json.dataset.name,
+		absolute_folder_path:wpath,
+		arguments:json.dataset.arguments||{}
+	};
+	run_pipeline(pipeline,dataset,function() {
+		//done
+	});
+}
+else {
+	if ((!pipnames)||(!dsnames)||(!outpath)||(!pipelines_path)||(!datasets_path)) {
+		print_usage();
+		process.exit(-1);
+	}
+	var pipelines=common.read_pipelines_from_text_file(pipelines_path);
+	var datasets=common.read_datasets_from_text_file(datasets_path);
 
-for (var p in pipelines) {
-	if (common.contains_pipeline(pipnames,pipelines[p])) {
-		for (var d in datasets) {
-			if (common.contains_ds(dsnames,datasets[d])) {
-				run_pipeline(pipelines[p],datasets[d]);
+	check_pipelines(pipnames);
+	check_datasets(dsnames);
+
+	for (var p in pipelines) {
+		if (common.contains_pipeline(pipnames,pipelines[p])) {
+			for (var d in datasets) {
+				if (common.contains_ds(dsnames,datasets[d])) {
+					run_pipeline(pipelines[p],datasets[d],function() {
+
+					});
+				}
 			}
 		}
 	}
 }
 
+/*
 common.wait_for_system_calls_to_finish(function() {
 
 });
+*/
 
 function print_error(str) {
 	if (return_immediately) {
@@ -96,11 +155,15 @@ function check_datasets(dsnames) {
 	}
 }
 
+function get_output_directory(pipeline_name,dataset_name) {
+	return outpath+'/'+pipeline_name+'--'+dataset_name;
+}
+
 function run_pipeline(pipeline,dataset,callback) {
 	var ds_folder=dataset.absolute_folder_path;
 	var pipeline_script_path=pipeline.absolute_script_path;
 
-	var outpath0=outpath+'/'+pipeline.name+'--'+dataset.name;
+	var outpath0=get_output_directory(pipeline.name,dataset.name);
 	if (output_to_dataset_folder) {
 		common.mkdir_safe(ds_folder+'/output');
 		outpath0=ds_folder+'/output/'+pipeline.name;
@@ -191,12 +254,9 @@ function run_pipeline(pipeline,dataset,callback) {
 			if (pipeline.absolute_curation_script_path) {
 				common.copy_file_sync(pipeline.absolute_curation_script_path,outpath0+'/curation.script');
 			}
-			else {
-				if (callback) callback();
-			}
+			if (callback) callback();
 		});
-	}
-	
+	}	
 
 	function get_interface_parameter_value(val) {
 		val=str_replace(val,'$dataset_folder$',ds_folder);
@@ -219,3 +279,7 @@ function make_random_id(len)
     return text;
 }
 
+function ends_with(str,suf) {
+	if (str.length<suf.length) return false;
+	return (str.slice(str.length-suf.length)==suf);
+}

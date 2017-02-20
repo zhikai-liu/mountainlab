@@ -266,6 +266,14 @@ exports.read_text_file=function(path) {
 	return fs.readFileSync(path,'utf8');
 };
 
+exports.write_text_file=function(path,txt) {
+	return fs.writeFileSync(path,txt,'utf8');
+};
+
+exports.file_exists=function(path) {
+	return fs.existsSync(path);
+}
+
 exports.copy_file_sync=function(src,dst) {
 	if (!fs.existsSync(src)) return;
 	var data=fs.readFileSync(src);
