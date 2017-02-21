@@ -26,6 +26,9 @@
 #include "mv_subfirings_processor.h"
 #include "mv_compute_templates_processor.h"
 #include "extract_clips_processor.h"
+#include "extract_clips_aa_processor.h"
+#include "link_firings_files_aa_processor.h"
+#include "combine_firings_files_aa_processor.h"
 #include "extract_clips_features_processor.h"
 #include "merge_labels_processor.h"
 #include "filter_events_processor.h"
@@ -54,6 +57,7 @@
 #include "basic_metrics_processor.h"
 #include "isocluster_v1_processor.h"
 #include "isocluster_v2_processor.h"
+#include "cluster_aa_processor.h"
 #include "isocluster_drift_v1_processor.h"
 #include "concat_mda_processor.h"
 #include "split_timeseries_processor.h"
@@ -110,6 +114,9 @@ void MSProcessManager::loadDefaultProcessors()
     loadProcessor(new mv_firings_filter_Processor);
     loadProcessor(new mv_subfirings_Processor);
     loadProcessor(new extract_clips_Processor);
+    loadProcessor(new extract_clips_aa_Processor);
+    loadProcessor(new link_firings_files_aa_Processor);
+    loadProcessor(new combine_firings_files_aa_Processor);
     loadProcessor(new extract_clips_features_Processor);
     loadProcessor(new merge_labels_Processor);
     loadProcessor(new filter_events_Processor);
@@ -139,6 +146,7 @@ void MSProcessManager::loadDefaultProcessors()
     loadProcessor(new basic_metrics_Processor);
     loadProcessor(new isocluster_v1_Processor);
     loadProcessor(new isocluster_v2_Processor);
+    loadProcessor(new cluster_aa_Processor);
     loadProcessor(new isocluster_drift_v1_Processor);
     loadProcessor(new concat_mda_Processor);
     loadProcessor(new split_timeseries_Processor);

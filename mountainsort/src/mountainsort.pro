@@ -41,6 +41,8 @@ HEADERS += \
     processors/isocluster_v1.h \
     processors/isocluster_v2_processor.h \
     processors/isocluster_v2.h \
+    processors/cluster_aa_processor.h \
+    processors/cluster_aa.h \
     processors/isocluster_drift_v1_processor.h \
     processors/isocluster_drift_v1.h \
     isosplit/isosplit2.h \
@@ -50,6 +52,11 @@ HEADERS += \
     isosplit5/isocut5.h \
     isosplit5/jisotonic5.h \
     processors/extract_clips.h \
+    processors/extract_clips_aa.h \
+    processors/link_firings_files_aa.h \
+    processors/link_firings_files_aa_processor.h \
+    processors/combine_firings_files_aa.h \
+    processors/combine_firings_files_aa_processor.h \
     processors/remove_duplicate_clusters_processor.h \
     processors/remove_duplicate_clusters.h \
     processors/compute_outlier_scores_processor.h \
@@ -66,6 +73,7 @@ HEADERS += \
     processors/mv_firings_filter_processor.h \
     processors/mv_firings_filter.h \
     processors/extract_clips_processor.h \
+    processors/extract_clips_aa_processor.h \
     processors/mv_subfirings_processor.h \
     processors/extract_clips_features_processor.h \
     processors/compute_detectability_scores_processor.h \
@@ -144,9 +152,16 @@ SOURCES += \
     processors/isocluster_v1.cpp \
     processors/isocluster_v2_processor.cpp \
     processors/isocluster_v2.cpp \
+    processors/cluster_aa_processor.cpp \
+    processors/cluster_aa.cpp \
     processors/isocluster_drift_v1_processor.cpp \
     processors/isocluster_drift_v1.cpp \
     processors/extract_clips.cpp \
+    processors/extract_clips_aa.cpp \
+    processors/link_firings_files_aa.cpp \
+    processors/link_firings_files_aa_processor.cpp \
+    processors/combine_firings_files_aa.cpp \
+    processors/combine_firings_files_aa_processor.cpp \
     processors/remove_duplicate_clusters_processor.cpp \
     processors/remove_duplicate_clusters.cpp \
     processors/compute_outlier_scores_processor.cpp \
@@ -163,6 +178,7 @@ SOURCES += \
     processors/mv_firings_filter_processor.cpp \
     processors/mv_firings_filter.cpp \
     processors/extract_clips_processor.cpp \
+    processors/extract_clips_aa_processor.cpp \
     processors/mv_subfirings_processor.cpp \
     processors/extract_clips_features_processor.cpp \
     processors/compute_detectability_scores_processor.cpp \

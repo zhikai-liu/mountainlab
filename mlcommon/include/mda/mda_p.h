@@ -121,13 +121,13 @@ public:
         //changed this on 2/21/17 by jfm
         //if (!(N6 > 0 && N5 > 0 && N4 > 0 && N3 > 0 && N2 > 0 && N1 > 0))
         //    return 0;
-        if (N6 > 1)
+        if (N6 != 1)
             return 6;
-        if (N5 > 1)
+        if (N5 != 1)
             return 5;
-        if (N4 > 1)
+        if (N4 != 1)
             return 4;
-        if (N3 > 1)
+        if (N3 != 1)
             return 3;
         return 2;
     }

@@ -71,7 +71,7 @@ long mda_read_header(struct MDAIO_HEADER* HH, FILE* input_file)
         totsize *= HH->dims[i];
     }
 
-    if ((totsize <= 0) || (totsize > MDAIO_MAX_SIZE)) {
+    if ((totsize < 0) || (totsize > MDAIO_MAX_SIZE)) { // changed to <0 rather than <= 0 on 2/21/17 by jfm
         printf("mda_read_header: Problem with total size: %ld\n", totsize);
         return 0;
     }

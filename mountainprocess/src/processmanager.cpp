@@ -100,33 +100,41 @@ bool ProcessManager::loadProcessorFile(const QString& path)
 {
     QString json;
     if (QFileInfo(path).isExecutable()) {
-        QProcess pp;
-        pp.start(path, QStringList("spec"));
-        if (!pp.waitForFinished()) {
-            qCritical() << "Problem with executable processor file, waiting for finish: " + path;
-            return false;
+        if ((QFile::exists(path + ".spec")) && (QFileInfo(path).lastModified().secsTo(QFileInfo(path + ".spec").lastModified()) >= 0) && (QFileInfo(path + ".spec").lastModified().secsTo(QDateTime::currentDateTime()) <= 60)) {
+            json = TextFile::read(path + ".spec"); // read the saved spec so we don't need to make the system call next time, but let's be careful about it... regenerate every 60 seconds
         }
-        pp.waitForReadyRead();
-        QString output = pp.readAll();
-        json = output;
-        if (json.isEmpty()) {
-            qWarning() << "Potential problem with executable processor file: " + path + ". Expected json output but got empty string.";
-            if (QFileInfo(path).size() < 1e6) {
-                json = TextFile::read(path);
-                //now test it, since it is executable we are suspicious...
-                QJsonParseError error;
-                QJsonObject obj = QJsonDocument::fromJson(json.toLatin1(), &error).object();
-                if (error.error != QJsonParseError::NoError) {
-                    qCritical() << "Executable processor file did not return output for spec: " + path;
-                    return false;
+        else {
+            QProcess pp;
+            pp.start(path, QStringList("spec"));
+            if (!pp.waitForFinished()) {
+                qCritical() << "Problem with executable processor file, waiting for finish: " + path;
+                return false;
+            }
+            pp.waitForReadyRead();
+            QString output = pp.readAll();
+            json = output;
+            if (json.isEmpty()) {
+                qWarning() << "Potential problem with executable processor file: " + path + ". Expected json output but got empty string.";
+                if (QFileInfo(path).size() < 1e6) {
+                    json = TextFile::read(path);
+                    //now test it, since it is executable we are suspicious...
+                    QJsonParseError error;
+                    QJsonObject obj = QJsonDocument::fromJson(json.toLatin1(), &error).object();
+                    if (error.error != QJsonParseError::NoError) {
+                        qCritical() << "Executable processor file did not return output for spec: " + path;
+                        return false;
+                    }
+                    else {
+                        //we are okay -- apparently the text file .mp got marked as executable by the user, so let's proceed
+                    }
                 }
                 else {
-                    //we are okay -- apparently the text file .mp got marked as executable by the user, so let's proceed
+                    qCritical() << "File is too large to be a text file. Executable processor file did not return output for spec: " + path;
+                    return false;
                 }
             }
             else {
-                qCritical() << "File is too large to be a text file. Executable processor file did not return output for spec: " + path;
-                return false;
+                TextFile::write(path + ".spec", json); // so we don't need to make the system call this time
             }
         }
     }

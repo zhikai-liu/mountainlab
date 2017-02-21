@@ -253,6 +253,7 @@ int main(int argc, char* argv[])
     }
     else if ((arg1 == "run-process") || (arg1 == "exec-process")) { //Run a process synchronously
         bool exec_mode = (arg1 == "exec-process");
+        printf("Initializing process manager...\n");
         if (!initialize_process_manager()) { // load the processor plugins etc
             //log_end();
             return -1;

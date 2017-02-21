@@ -37,14 +37,14 @@ if (arg1=='spec') {
 }
 else if (arg1=='mountainsort_cluster_aa') {
 	if (!tempdir) {
-		console.log('Missing required system parameter: _tempdir');
+		console.log ('Missing required system parameter: _tempdir');
 		process.exit(-1);
 	}
 
 	mountainsort_cluster_aa(CLP.namedParameters);
 }
 else {
-	console.log('Unexpected processor name: '+arg1);
+	console.log ('Unexpected processor name: '+arg1);
 	process.exit(-1);
 }
 
@@ -54,59 +54,105 @@ function mountainsort_cluster_aa(params) {
 	var geom=params.geom||'';
 	var firings_out=params.firings_out||'';
 	if (!timeseries) {
-		console.log('timeseries is empty.');
+		console.log ('timeseries is empty.');
 		process.exit(-1);
 	}
 	if (!detect) {
-		console.log('detect is empty.');
+		console.log ('detect is empty.');
 		process.exit(-1);
 	}
 	if (!geom) {
-		console.log('geom is empty.');
+		console.log ('geom is empty.');
 		process.exit(-1);
 	}
 	if (!firings_out) {
-		console.log('firings_out is empty.');
+		console.log ('firings_out is empty.');
 		process.exit(-1);
 	}
 
-	var chunk_size=1000*1000;
+	var chunk_size=30000*60*10;
 	var chunk_shift=Math.ceil(chunk_size/2);
 	var clip_size=50;
 	
 	read_mda_header(timeseries,function (header) { // Read the .mda header for the timeseries
-		var M=header.dims[0]; //number of channels
-		var N=header.dims[1]; //number of timepoints
-		console.log('Num. channels = '+M);
-		console.log('Num. timepoints = '+N);
-		var time_chunks=get_time_chunks(N,{chunk_size:chunk_size,chunk_shift:chunk_shift});
-		console.log('Num. time chunks = '+time_chunks.length);
-		var channels=[];
-		for (var m=0; m<M; m++) channels.push(m);
-		foreach(channels,{num_parallel:1},function(ichan,chan,cb) { //loop through the channels
-			console.log('Sorting on channel '+(chan+1)+' of '+M+'...');
-			var neighborhood_channels=get_neighborhood_channels(geom,chan,params.adjacency_radius);
-			foreach(time_chunks,{num_parallel:request_num_threads},function(ichunk,time_chunk,cb2) {
-				console.log('Clustering time chunk '+(ichunk+1)+' of '+time_chunks.length+', channel '+(chan+1)+' of '+M+' ['+time_chunk.t1+','+time_chunk.t2+']...');
-				var clips_path=tempdir+'/clips_'+ichan+'_'+ichunk+'.mda';
-				mp_exec_process('extract_clips',{timeseries:timeseries,firings:detect},{clips:clips_path},{channels:neighborhood_channels.join(','),t1:time_chunk.t1,t2:time_chunk.t2,clip_size:clip_size},function() {
-					read_mda_header(clips_path,function(hh) {
-						console.log(clips_path+' ::::::::----:::::::: '+JSON.stringify(hh.dims));
-						cb2();
-					});
-				});
-			},function() {
-				cb();
-			});
-		},function() {
-			cleanup();
-		});
+		do_sorting(header.dims[0],header.dims[1]);
 	});
 
-	function extract_clips(m,ichunk,callback) {
-		var neighborhood_channels=
-		mp_exec_process('extract_clips_aa')
+	function do_sorting(M,N) {
+		console.log ('Num. channels = '+M);
+		console.log ('Num. timepoints = '+N);
+		var time_chunks=get_time_chunks(N,{chunk_size:chunk_size,chunk_shift:chunk_shift});
+		console.log ('Num. time chunks = '+time_chunks.length);
+		var channels=[];
+		for (var m=0; m<M; m++) channels.push(m);
+		var channel_firings=[];
+		foreach(channels,{num_parallel:1},function(ichan,chan,cb) { //loop through the channels
+			console.log ('Sorting on channel '+(chan+1)+' of '+M+'...');
+			sort_on_channel(M,N,time_chunks,chan,function(firings_files) {
+				var linked_firings_path=tempdir+'/linked_firings_'+(chan+1)+'.mda';
+				link_firings_files(firings_files,linked_firings_path,function() {
+					channel_firings.push(linked_firings_path);
+					cb();
+				});
+			});
+		},function() {
+			combine_firings_files(channel_firings,firings_out,function() {
+				cleanup();
+			});
+		});
 	}
+
+	function sort_on_channel(M,N,time_chunks,chan,cb) {
+		var neighborhood_channels=get_neighborhood_channels(geom,chan,params.adjacency_radius);
+		var firings_files=[];
+		foreach(time_chunks,{num_parallel:request_num_threads},function(ichunk,time_chunk,cb2) {
+			console.log ('Clustering time chunk '+(ichunk+1)+' of '+time_chunks.length+', channel '+(chan+1)+' of '+M+' ['+time_chunk.t1+','+time_chunk.t2+']...');
+			var paths={
+				clips:tempdir+'/clips_'+chan+'_'+ichunk+'.mda',
+				firings:tempdir+'/firings_'+chan+'_'+ichunk+'.mda',
+				detect2:tempdir+'/detect2_'+chan+'_'+ichunk+'.mda'
+			};
+			console.log('chan='+chan);
+			mp_exec_process('extract_clips_aa',
+					{timeseries:timeseries,detect:detect},
+					{clips_out:paths.clips,detect_out:paths.detect2},
+					{central_channel:(chan+1),channels:neighborhood_channels.join(','),t1:time_chunk.t1,t2:time_chunk.t2,clip_size:clip_size},
+					function() {
+				mp_exec_process('cluster_aa',
+						{clips:paths.clips,detect:paths.detect2},
+						{firings_out:paths.firings},
+						{num_features:10,num_features2:10},
+						function() {
+					firings_files.push(paths.firings);
+					remove_temporary_files([paths.clips,paths.detect2]);
+					cb2();
+				});
+				
+			});
+		},function() {
+			cb(firings_files);
+		});
+	}
+}
+
+function link_firings_files(firings_files,linked_firings_path,callback) {
+	mp_exec_process('link_firings_files_aa',
+			{firings_list:firings_files},
+			{firings_out:linked_firings_path},
+			{},
+			function() {
+		callback();
+	});
+}
+
+function combine_firings_files(firings_files,combined_firings_path,callback) {
+	mp_exec_process('combine_firings_files_aa',
+			{firings_list:firings_files},
+			{firings_out:combined_firings_path},
+			{},
+			function() {
+		callback();
+	});
 }
 
 function read_geom_coords(geom) {
@@ -140,11 +186,13 @@ function compute_distance(pt1,pt2) {
 function get_neighborhood_channels(geom,m,adjacency_radius) {
 	var coords=read_geom_coords(geom);
 	var pt0=coords[m];
-	var ret=[];
+	var ret=[Number(m)+1];
 	for (var i in coords) {
-		var dist0=compute_distance(coords[i],pt0);
-		if (dist0<=adjacency_radius)
-			ret.push(i+1);
+		if (i!=m) {
+			var dist0=compute_distance(coords[i],pt0);
+			if (dist0<=adjacency_radius)
+				ret.push(Number(i)+1);
+		}
 	}
 	return ret;
 }
@@ -155,6 +203,11 @@ function read_text_file(path) {
 
 function write_text_file(path,txt) {
 	return fs.writeFileSync(path,txt,'utf8');
+}
+
+function remove_temporary_files(paths) {
+	for (var i in paths)
+		remove_temporary_file(paths[i]);
 }
 
 function remove_temporary_file(path) {
@@ -222,7 +275,13 @@ function mp_exec_process(processor_name,inputs,outputs,params,callback) {
 		all_params[key]=params[key];
 	}
 	for (var key in all_params) {
-		args.push('--'+key+'='+all_params[key]);
+		var val=all_params[key];
+		if (typeof(val)!='object')
+			args.push('--'+key+'='+val);
+		else {
+			for (var j in val)
+				args.push('--'+key+'='+val[j]);
+		}
 	}
 	make_system_call(exe,args,{show_stdout:false,show_stderr:false,num_tries:4},function(aa) {
 		if (aa.return_code!=0) {

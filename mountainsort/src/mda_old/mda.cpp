@@ -629,13 +629,13 @@ int MdaPrivate::determine_num_dims(long N1, long N2, long N3, long N4, long N5, 
     Q_UNUSED(N1)
     Q_UNUSED(N2)
 #endif
-    if (N6 > 1)
+    if (N6 != 1)
         return 6;
-    if (N5 > 1)
+    if (N5 != 1)
         return 5;
-    if (N4 > 1)
+    if (N4 != 1)
         return 4;
-    if (N3 > 1)
+    if (N3 != 1)
         return 3;
     return 2;
 }
