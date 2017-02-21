@@ -87,6 +87,7 @@ Mda32 extract_clips(const DiskReadMda32& X, const QVector<double>& times, const 
     int T = clip_size;
     int L = times.count();
     int Tmid = (int)((T + 1) / 2) - 1;
+    qDebug() << "####################" << M << N << M0 << T << L;
     Mda32 clips(M0, T, L);
     for (int i = 0; i < L; i++) {
         int t1 = (int)times[i] - Tmid;
@@ -104,15 +105,22 @@ Mda32 extract_clips(const DiskReadMda32& X, const QVector<double>& times, const 
     return clips;
 }
 
-bool extract_clips(const QString& timeseries_path, const QString& firings_path, const QString& clips_path, int clip_size)
+bool extract_clips(const QString& timeseries_path, const QString& firings_path, const QString& clips_path, int clip_size, const QList<int> &channels_in,double t1,double t2)
 {
+    qDebug() << "++++++++++++++++++++++++++++";
+    QVector<int> channels;
+    for (int i=0; i<channels_in.count(); i++)
+        channels << channels_in[i]-1;
     DiskReadMda X(timeseries_path);
     DiskReadMda F(firings_path);
     QVector<double> times;
     for (long j = 0; j < F.N2(); j++) {
-        times << F.value(1, j);
+        double t0=F.value(1,j);
+        if ((t2==0)||((t1<=t0)&&(t0<=t2)))
+            times << F.value(1, j);
     }
-    Mda clips = extract_clips(X, times, clip_size);
+    qDebug() << __FILE__ << __LINE__ << times.count();
+    Mda clips = extract_clips(X, times, channels, clip_size);
     clips.write32(clips_path);
     return true;
 }

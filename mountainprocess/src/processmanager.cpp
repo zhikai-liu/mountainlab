@@ -26,6 +26,7 @@
 struct PMProcess {
     MLProcessInfo info;
     QString tempdir = "";
+    bool preserve_tempdir = true; // for debugging set to true, otherwise will clean up the tempdir when process has finished
     bool exec_mode = false;
     QProcess* qprocess;
 };
@@ -197,7 +198,7 @@ void delete_tempdir(QString tempdir)
     QDir(QFileInfo(tempdir).path()).rmdir(QFileInfo(tempdir).fileName());
 }
 
-QString ProcessManager::startProcess(const QString& processor_name, const QVariantMap& parameters_in, const RequestProcessResources& RPR, bool exec_mode)
+QString ProcessManager::startProcess(const QString& processor_name, const QVariantMap& parameters_in, const RequestProcessResources& RPR, bool exec_mode, bool preserve_tempdir)
 {
     QVariantMap parameters = d->resolve_file_names_in_parameters(processor_name, parameters_in);
 
@@ -269,6 +270,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     PP.info.exit_code = 0;
     PP.info.exit_status = QProcess::NormalExit;
     PP.tempdir = tempdir;
+    PP.preserve_tempdir = preserve_tempdir;
     PP.exec_mode = exec_mode;
     PP.qprocess = new QProcess;
     PP.qprocess->setProcessChannelMode(QProcess::MergedChannels);
@@ -454,7 +456,8 @@ void ProcessManager::slot_process_finished()
             }
         }
     }
-    delete_tempdir(d->m_processes[id].tempdir);
+    if (!d->m_processes[id].preserve_tempdir)
+        delete_tempdir(d->m_processes[id].tempdir);
     emit this->processFinished(id);
 }
 

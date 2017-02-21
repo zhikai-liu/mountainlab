@@ -179,6 +179,7 @@ struct MPDaemonPript {
     PriptType prtype = ScriptType;
     QString id;
     QString output_fname;
+    bool preserve_tempdir = false;
     QString stdout_fname;
     QVariantMap parameters;
     bool is_running = false;

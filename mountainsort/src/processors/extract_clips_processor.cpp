@@ -20,10 +20,11 @@ extract_clips_Processor::extract_clips_Processor()
     d->q = this;
 
     this->setName("extract_clips");
-    this->setVersion("0.1");
+    this->setVersion("0.11");
     this->setInputFileParameters("timeseries", "firings");
     this->setOutputFileParameters("clips");
     this->setRequiredParameters("clip_size");
+    this->setOptionalParameters("channels","t1","t2");
 }
 
 extract_clips_Processor::~extract_clips_Processor()
@@ -38,11 +39,16 @@ bool extract_clips_Processor::check(const QMap<QString, QVariant>& params)
     return true;
 }
 
+#include "mlcommon.h"
 bool extract_clips_Processor::run(const QMap<QString, QVariant>& params)
 {
     QString timeseries_path = params["timeseries"].toString();
     QString firings_path = params["firings"].toString();
     QString clips_path = params["clips"].toString();
+    QStringList channels_str = params.value("channels","").toString().split(",");
+    QList<int> channels=MLUtil::stringListToIntList(channels_str);
     int clip_size = params["clip_size"].toInt();
-    return extract_clips(timeseries_path, firings_path, clips_path, clip_size);
+    double t1= params.value("t1",0).toDouble();
+    double t2=params.value("t1",0).toDouble();
+    return extract_clips(timeseries_path, firings_path, clips_path, clip_size, channels,t1,t2);
 }

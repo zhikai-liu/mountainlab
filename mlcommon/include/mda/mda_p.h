@@ -118,8 +118,9 @@ public:
 
     int determine_num_dims(long N1, long N2, long N3, long N4, long N5, long N6) const
     {
-        if (!(N6 > 0 && N5 > 0 && N4 > 0 && N3 > 0 && N2 > 0 && N1 > 0))
-            return 0;
+        //changed this on 2/21/17 by jfm
+        //if (!(N6 > 0 && N5 > 0 && N4 > 0 && N3 > 0 && N2 > 0 && N1 > 0))
+        //    return 0;
         if (N6 > 1)
             return 6;
         if (N5 > 1)

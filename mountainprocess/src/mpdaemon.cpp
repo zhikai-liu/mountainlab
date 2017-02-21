@@ -144,6 +144,7 @@ QJsonObject pript_struct_to_obj(MPDaemonPript S, RecordType rt)
     if (rt != AbbreviatedRecord) {
         ret["parameters"] = variantmap_to_json_obj(S.parameters);
         ret["output_fname"] = S.output_fname;
+        ret["preserve_tempdir"] = S.preserve_tempdir;
         ret["stdout_fname"] = S.stdout_fname;
         ret["parent_pid"] = QString("%1").arg(S.parent_pid);
     }
@@ -186,6 +187,7 @@ MPDaemonPript pript_obj_to_struct(QJsonObject obj)
     ret.parameters = obj.value("parameters").toObject().toVariantMap();
     ret.id = obj.value("id").toString();
     ret.output_fname = obj.value("output_fname").toString();
+    ret.preserve_tempdir = obj.value("preserve_tempdir").toBool();
     ret.stdout_fname = obj.value("stdout_fname").toString();
     ret.success = obj.value("success").toBool();
     ret.error = obj.value("error").toString();
@@ -857,6 +859,8 @@ bool MountainProcessServer::launch_pript(QString pript_id)
         args << S->processor_name;
         if (!S->output_fname.isEmpty())
             args << "--_process_output=" + S->output_fname;
+        if (S->preserve_tempdir)
+            args << "--_preserve_tempdir";
         QStringList pkeys = S->parameters.keys();
         foreach (QString pkey, pkeys) {
             QStringList list = MLUtil::toStringList(S->parameters[pkey]);
