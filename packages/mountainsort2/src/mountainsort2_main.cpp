@@ -17,6 +17,7 @@
 #include "p_consolidate_clusters.h"
 #include "p_create_firings.h"
 #include "p_combine_firings.h"
+#include "p_fit_stage.h"
 
 QJsonObject get_spec() {
     QJsonArray processors;
@@ -53,7 +54,7 @@ QJsonObject get_spec() {
         ProcessorSpec X("mountainsort.consolidate_clusters","0.1");
         X.addInputs("clips","labels");
         X.addOutputs("labels_out");
-        //X.addRequiredParameters();
+        X.addRequiredParameters("central_channel");
         processors.push_back(X.get_spec());
     }
     {
@@ -66,6 +67,13 @@ QJsonObject get_spec() {
     {
         ProcessorSpec X("mountainsort.combine_firings","0.1");
         X.addInputs("firings_list");
+        X.addOutputs("firings_out");
+        //X.addRequiredParameters();
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.fit_stage","0.1");
+        X.addInputs("timeseries","firings");
         X.addOutputs("firings_out");
         //X.addRequiredParameters();
         processors.push_back(X.get_spec());
@@ -126,6 +134,7 @@ int main(int argc,char *argv[]) {
         QString labels=CLP.named_parameters["labels"].toString();
         QString labels_out=CLP.named_parameters["labels_out"].toString();
         Consolidate_clusters_opts opts;
+        opts.central_channel=CLP.named_parameters["central_channel"].toInt();
         ret = p_consolidate_clusters(clips,labels,labels_out,opts);
     }
     else if (arg1=="mountainsort.create_firings") {
@@ -139,6 +148,13 @@ int main(int argc,char *argv[]) {
         QStringList firings_list=MLUtil::toStringList(CLP.named_parameters["firings_list"]);
         QString firings_out=CLP.named_parameters["firings_out"].toString();
         ret = p_combine_firings(firings_list,firings_out);
+    }
+    else if (arg1=="mountainsort.fit_stage") {
+        QString timeseries=CLP.named_parameters["timeseries"].toString();
+        QString firings=CLP.named_parameters["firings"].toString();
+        QString firings_out=CLP.named_parameters["firings_out"].toString();
+        Fit_stage_opts opts;
+        ret = p_fit_stage(timeseries,firings,firings_out,opts);
     }
     else {
         qWarning() << "Unexpected processor name: "+arg1;

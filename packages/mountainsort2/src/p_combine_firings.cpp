@@ -14,13 +14,12 @@ bool p_combine_firings(QStringList firings_list, QString firings_out)
     for (long i=0; i<firings_list.count(); i++) {
         Mda F(firings_list[i]);
         for (long j=0; j<F.N2(); j++) {
-            all_central_channels << F.value(0,j);
-            all_times << F.value(1,j);
-
-            int label0=label_offset+F.value(2,j);
+            int label0=F.value(2,j);
             if (label0>0) {
-                all_labels << label0;
-                if (label0>max_label) max_label=label0;
+                all_central_channels << F.value(0,j);
+                all_times << F.value(1,j);
+                all_labels << label_offset+label0;
+                if (label_offset+label0>max_label) max_label=label_offset+label0;
             }
         }
         label_offset=max_label;

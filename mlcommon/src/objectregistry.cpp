@@ -52,7 +52,7 @@ void ObjectRegistry::addObject(QObject* o)
     if (!o)
         return;
     if (!instance()) {
-        qWarning("No ObjectRegistry instance present");
+        //qWarning("No ObjectRegistry instance present");
         return;
     }
     QWriteLocker lock(listMutex());
@@ -71,7 +71,7 @@ void ObjectRegistry::addAutoReleasedObject(QObject* o)
     if (!o)
         return;
     if (!instance()) {
-        qWarning("No ObjectRegistry instance present");
+        //qWarning("No ObjectRegistry instance present");
         return;
     }
     QWriteLocker lock(listMutex());
@@ -90,7 +90,7 @@ void ObjectRegistry::removeObject(QObject* o)
     if (!o)
         return;
     if (!instance()) {
-        qWarning("No ObjectRegistry instance present");
+        //qWarning("No ObjectRegistry instance present");
         return;
     }
     QWriteLocker lock(listMutex());
@@ -116,7 +116,7 @@ QReadWriteLock* ObjectRegistry::listMutex()
 QObjectList ObjectRegistry::allObjects()
 {
     if (!instance()) {
-        qWarning("No ObjectRegistry instance present");
+        //qWarning("No ObjectRegistry instance present");
         return QObjectList();
     }
     return instance()->d->allObjects;
@@ -125,7 +125,7 @@ QObjectList ObjectRegistry::allObjects()
 QObject* ObjectRegistry::getObjectByName(const QString& name)
 {
     if (!instance()) {
-        qWarning("No ObjectRegistry instance present");
+        //qWarning("No ObjectRegistry instance present");
         return nullptr;
         ;
     }
@@ -141,7 +141,7 @@ QObject* ObjectRegistry::getObjectByName(const QString& name)
 QObject* ObjectRegistry::getObjectByClassName(const QString& className)
 {
     if (!instance()) {
-        qWarning("No ObjectRegistry instance present");
+        //qWarning("No ObjectRegistry instance present");
         return nullptr;
     }
     QReadLocker lock(listMutex());

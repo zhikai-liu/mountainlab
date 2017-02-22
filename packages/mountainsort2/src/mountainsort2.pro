@@ -31,7 +31,8 @@ SOURCES += \
     p_sort_clips.cpp \
     p_consolidate_clusters.cpp \
     p_create_firings.cpp \
-    p_combine_firings.cpp
+    p_combine_firings.cpp \
+    p_fit_stage.cpp
 
 HEADERS += \
     p_extract_clips.h \
@@ -41,7 +42,8 @@ HEADERS += \
     p_sort_clips.h \
     p_consolidate_clusters.h \
     p_create_firings.h \
-    p_combine_firings.h
+    p_combine_firings.h \
+    p_fit_stage.h
 
 INCLUDEPATH += ../../../mountainsort/src/isosplit5
 VPATH += ../../../mountainsort/src/isosplit5
