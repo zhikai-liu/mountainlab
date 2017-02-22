@@ -97,33 +97,41 @@ namespace P_consolidate_clusters {
         int T=template0.N2();
         long Tmid = (int)((T + 1) / 2) - 1;
 
-        QVector<double> energies(M);
-        energies.fill(0);
-        double max_energy = 0;
-        for (long t = 0; t < T; t++) {
-            for (long m = 0; m < M; m++) {
-                double val = template0.value(m, t);
-                energies[m] += val * val;
-                if ((m != opts.central_channel-1) && (energies[m] > max_energy))
-                    max_energy = energies[m];
+        if (opts.central_channel>0) {
+            QVector<double> energies(M);
+            energies.fill(0);
+            double max_energy = 0;
+            for (long t = 0; t < T; t++) {
+                for (long m = 0; m < M; m++) {
+                    double val = template0.value(m, t);
+                    energies[m] += val * val;
+                    if ((m != opts.central_channel-1) && (energies[m] > max_energy))
+                        max_energy = energies[m];
+                }
             }
+            if (energies[opts.central_channel-1] < max_energy * opts.consolidation_factor)
+                return false;
         }
-        if (energies[opts.central_channel-1] < max_energy * opts.consolidation_factor)
-            return false;
 
         double abs_peak_val = 0;
         long abs_peak_ind = 0;
+        long abs_peak_chan = 0;
         for (long t = 0; t < T; t++) {
-            double value = template0.value(opts.central_channel-1, t);
-            if (fabs(value) > abs_peak_val) {
-                abs_peak_val = fabs(value);
-                abs_peak_ind = t;
+            for (int m=0; m<M; m++) {
+                double value = template0.value(m, t);
+                if (fabs(value) > abs_peak_val) {
+                    abs_peak_val = fabs(value);
+                    abs_peak_ind = t;
+                    abs_peak_chan = m+1;
+                }
             }
         }
 
         if (fabs(abs_peak_ind - Tmid) > peak_location_tolerance) {
             return false;
         }
+        if ((opts.central_channel>0)&&(abs_peak_chan!=opts.central_channel))
+            return false;
         return true;
     }
 }

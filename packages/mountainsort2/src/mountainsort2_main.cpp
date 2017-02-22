@@ -11,6 +11,7 @@
 #include <QCoreApplication>
 #include "mountainsort2_main.h"
 #include "p_extract_neighborhood_timeseries.h"
+#include "p_bandpass_filter.h"
 #include "p_detect_events.h"
 #include "p_extract_clips.h"
 #include "p_sort_clips.h"
@@ -27,6 +28,13 @@ QJsonObject get_spec() {
         X.addInputs("timeseries");
         X.addOutputs("timeseries_out");
         X.addRequiredParameters("channels");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.bandpass_filter","0.1");
+        X.addInputs("timeseries");
+        X.addOutputs("timeseries_out");
+        X.addRequiredParameters("samplerate","freq_min","freq_max","freq_wid");
         processors.push_back(X.get_spec());
     }
     {
@@ -107,6 +115,16 @@ int main(int argc,char *argv[]) {
         QStringList channels_str=CLP.named_parameters["channels"].toString().split(",");
         QList<int> channels=MLUtil::stringListToIntList(channels_str);
         ret = p_extract_neighborhood_timeseries(timeseries,timeseries_out,channels);
+    }
+    else if (arg1=="mountainsort.bandpass_filter") {
+        QString timeseries=CLP.named_parameters["timeseries"].toString();
+        QString timeseries_out=CLP.named_parameters["timeseries_out"].toString();
+        Bandpass_filter_opts opts;
+        opts.samplerate=CLP.named_parameters["samplerate"].toDouble();
+        opts.freq_min=CLP.named_parameters["freq_min"].toDouble();
+        opts.freq_max=CLP.named_parameters["freq_max"].toDouble();
+        opts.freq_wid=CLP.named_parameters["freq_wid"].toDouble();
+        ret = p_bandpass_filter(timeseries,timeseries_out,opts);
     }
     else if (arg1=="mountainsort.detect_events") {
         QString timeseries=CLP.named_parameters["timeseries"].toString();

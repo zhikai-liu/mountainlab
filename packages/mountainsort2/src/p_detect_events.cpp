@@ -11,13 +11,31 @@ namespace P_detect_events {
 bool p_detect_events(QString timeseries, QString event_times_out, int central_channel, double detect_threshold, double detect_interval, int sign)
 {
     DiskReadMda32 X(timeseries);
-    //int M=X.N1();
+    int M=X.N1();
     long N=X.N2();
 
     printf("Collecting data vector...\n");
     QVector<double> data(N);
-    for (long i=0; i<N; i++) {
-        data[i]=X.value(central_channel-1,i);
+    if (central_channel>0) {
+        for (long i=0; i<N; i++) {
+            data[i]=X.value(central_channel-1,i);
+        }
+    }
+    else {
+        for (long i=0; i<N; i++) {
+            double best_value=0;
+            int best_m=0;
+            for (int m=0; m<M; m++) {
+                double val=X.value(m,i);
+                if (sign<0) val=-val;
+                if (sign==0) val=fabs(val);
+                if (val>best_value) {
+                    best_value=val;
+                    best_m=m;
+                }
+            }
+            data[i]=X.value(best_m,i);
+        }
     }
 
     printf("Detecting events...\n");
