@@ -44,6 +44,8 @@ Makefile*
 *.qmlproject.user
 *.qmlproject.user.*
 
+*.spec
+
 *server.cfg
 
 */bin
