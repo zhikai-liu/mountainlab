@@ -1,0 +1,14 @@
+#ifndef P_SORT_CLIPS_H
+#define P_SORT_CLIPS_H
+
+#include <QString>
+
+struct Sort_clips_opts {
+    int num_features=10;
+    double isocut_threshold=1;
+    double K_init=200;
+};
+
+bool p_sort_clips(QString clips,QString labels_out,Sort_clips_opts opts);
+
+#endif // P_SORT_CLIPS_H

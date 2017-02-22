@@ -111,6 +111,7 @@ double p2_compute_max_distance(const std::vector<float>& centroid, int M, float*
 
 std::vector<long> p2_randsample(long N, long K)
 {
+    (void)N;
     // Not we are not actually randomizing here. There's a reason, I believe.
     std::vector<long> inds;
     for (int a = 0; a < K; a++)

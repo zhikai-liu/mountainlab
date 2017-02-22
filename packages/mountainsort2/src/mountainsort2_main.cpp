@@ -10,8 +10,13 @@
 #include <QJsonDocument>
 #include <QCoreApplication>
 #include "mountainsort2_main.h"
-#include "p_extract_clips.h"
 #include "p_extract_neighborhood_timeseries.h"
+#include "p_detect_events.h"
+#include "p_extract_clips.h"
+#include "p_sort_clips.h"
+#include "p_consolidate_clusters.h"
+#include "p_create_firings.h"
+#include "p_combine_firings.h"
 
 QJsonObject get_spec() {
     QJsonArray processors;
@@ -24,10 +29,45 @@ QJsonObject get_spec() {
         processors.push_back(X.get_spec());
     }
     {
+        ProcessorSpec X("mountainsort.detect_events","0.1");
+        X.addInputs("timeseries");
+        X.addOutputs("event_times_out");
+        X.addRequiredParameters("central_channel","detect_threshold","detect_interval","sign");
+        processors.push_back(X.get_spec());
+    }
+    {
         ProcessorSpec X("mountainsort.extract_clips","0.1");
         X.addInputs("timeseries","event_times");
         X.addOutputs("clips_out");
         X.addRequiredParameters("clip_size");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.sort_clips","0.1");
+        X.addInputs("clips");
+        X.addOutputs("labels_out");
+        //X.addRequiredParameters();
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.consolidate_clusters","0.1");
+        X.addInputs("clips","labels");
+        X.addOutputs("labels_out");
+        //X.addRequiredParameters();
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.create_firings","0.1");
+        X.addInputs("event_times","labels");
+        X.addOutputs("firings_out");
+        X.addRequiredParameters("central_channel");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.combine_firings","0.1");
+        X.addInputs("firings_list");
+        X.addOutputs("firings_out");
+        //X.addRequiredParameters();
         processors.push_back(X.get_spec());
     }
 
@@ -52,18 +92,53 @@ int main(int argc,char *argv[]) {
     }
 
     bool ret=false;
-    if (arg1=="mountainsort.extract_clips") {
-        QString timeseries=CLP.named_parameters["timeseries"].toString();
-        QString event_times=CLP.named_parameters["event_times"].toString();
-        QString clips_out=CLP.named_parameters["clips_out"].toString();
-        ret = p_extract_clips(timeseries,event_times,clips_out,CLP.named_parameters);
-    }
-    else if (arg1=="mountainsort.extract_neighborhood_timeseries") {
+
+    if (arg1=="mountainsort.extract_neighborhood_timeseries") {
         QString timeseries=CLP.named_parameters["timeseries"].toString();
         QString timeseries_out=CLP.named_parameters["timeseries_out"].toString();
         QStringList channels_str=CLP.named_parameters["channels"].toString().split(",");
         QList<int> channels=MLUtil::stringListToIntList(channels_str);
         ret = p_extract_neighborhood_timeseries(timeseries,timeseries_out,channels);
+    }
+    else if (arg1=="mountainsort.detect_events") {
+        QString timeseries=CLP.named_parameters["timeseries"].toString();
+        QString event_times_out=CLP.named_parameters["event_times_out"].toString();
+        int central_channel=CLP.named_parameters["central_channel"].toInt();
+        double detect_threshold=CLP.named_parameters["detect_threshold"].toDouble();
+        double detect_interval=CLP.named_parameters["detect_interval"].toDouble();
+        int sign=CLP.named_parameters["sign"].toInt();
+        ret = p_detect_events(timeseries,event_times_out,central_channel,detect_threshold,detect_interval,sign);
+    }
+    else if (arg1=="mountainsort.extract_clips") {
+        QString timeseries=CLP.named_parameters["timeseries"].toString();
+        QString event_times=CLP.named_parameters["event_times"].toString();
+        QString clips_out=CLP.named_parameters["clips_out"].toString();
+        ret = p_extract_clips(timeseries,event_times,clips_out,CLP.named_parameters);
+    }
+    else if (arg1=="mountainsort.sort_clips") {
+        QString clips=CLP.named_parameters["clips"].toString();
+        QString labels_out=CLP.named_parameters["labels_out"].toString();
+        Sort_clips_opts opts;
+        ret = p_sort_clips(clips,labels_out,opts);
+    }
+    else if (arg1=="mountainsort.consolidate_clusters") {
+        QString clips=CLP.named_parameters["clips"].toString();
+        QString labels=CLP.named_parameters["labels"].toString();
+        QString labels_out=CLP.named_parameters["labels_out"].toString();
+        Consolidate_clusters_opts opts;
+        ret = p_consolidate_clusters(clips,labels,labels_out,opts);
+    }
+    else if (arg1=="mountainsort.create_firings") {
+        QString event_times=CLP.named_parameters["event_times"].toString();
+        QString labels=CLP.named_parameters["labels"].toString();
+        QString firings_out=CLP.named_parameters["firings_out"].toString();
+        int central_channel=CLP.named_parameters["central_channel"].toInt();
+        ret = p_create_firings(event_times,labels,firings_out,central_channel);
+    }
+    else if (arg1=="mountainsort.combine_firings") {
+        QStringList firings_list=MLUtil::toStringList(CLP.named_parameters["firings_list"]);
+        QString firings_out=CLP.named_parameters["firings_out"].toString();
+        ret = p_combine_firings(firings_list,firings_out);
     }
     else {
         qWarning() << "Unexpected processor name: "+arg1;

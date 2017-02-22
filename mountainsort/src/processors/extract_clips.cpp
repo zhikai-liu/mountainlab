@@ -111,6 +111,13 @@ bool extract_clips(const QString& timeseries_path, const QString& firings_path, 
         channels << channels_in[i] - 1;
     DiskReadMda X(timeseries_path);
     DiskReadMda F(firings_path);
+
+    if (channels.isEmpty()) {
+        for (int m=0; m<X.N1(); m++) {
+            channels << m;
+        }
+    }
+
     QVector<double> times;
     for (long j = 0; j < F.N2(); j++) {
         double t0 = F.value(1, j);

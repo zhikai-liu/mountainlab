@@ -20,7 +20,7 @@ extract_clips_Processor::extract_clips_Processor()
     d->q = this;
 
     this->setName("extract_clips");
-    this->setVersion("0.11");
+    this->setVersion("0.12");
     this->setInputFileParameters("timeseries", "firings");
     this->setOutputFileParameters("clips");
     this->setRequiredParameters("clip_size");
@@ -45,7 +45,7 @@ bool extract_clips_Processor::run(const QMap<QString, QVariant>& params)
     QString timeseries_path = params["timeseries"].toString();
     QString firings_path = params["firings"].toString();
     QString clips_path = params["clips"].toString();
-    QStringList channels_str = params.value("channels", "").toString().split(",");
+    QStringList channels_str = params.value("channels", "").toString().split(",",QString::SkipEmptyParts);
     QList<int> channels = MLUtil::stringListToIntList(channels_str);
     int clip_size = params["clip_size"].toInt();
     double t1 = params.value("t1", 0).toDouble();
