@@ -1,0 +1,90 @@
+function main(params) {
+	set_default_parameters(params,{
+		samplerate:30000, //Hz
+		freq_min:300,freq_max:6000,freq_wid:1000, //bandpass filter
+		clip_size_msec:2, //clip size for event extraction
+		detect_interval_msec:1, //min separation between two events on same channel
+		detect_threshold:3.5, //stdevs away from noise
+		detect_sign:0, //-1,0,1
+		whiten:1, //boolean
+		consolidate_clusters:1, //boolean
+		fit_stage:1, //boolean
+		segment_duration_sec:3600, //duration of a single time segment (drift scale)
+		shift_duration_sec:1800, //shift duration for the sliding window
+		num_time_segment_threads:1, //number of time segments to process in parallel
+		num_basic_sort_threads:0 // 0 means do the default, based on choice for num_time_segment_threads
+	});
+
+	var inpath=params.inpath;
+	var outpath=params.outpath;
+
+	var raw=inpath+'/raw.mda.prv';
+
+	var params2=clone(params);
+	var output=Process('mountainsort.drift_sort',
+			{timeseries:raw},
+			params2);
+	var firings=output.firings_out;
+	var cluster_metrics=output.cluster_metrics_out;
+	var filt=output.filt_out;
+	var pre=output.pre_out;
+
+	// Write the output
+	write_prv(raw,params.outpath+'/raw.mda.prv');
+	write_prv(filt,params.outpath+'/filt.mda.prv');
+	write_prv(pre,params.outpath+'/pre.mda.prv');
+	write_file(firings,params.outpath+'/firings.mda');
+
+	run_pipeline();
+}
+
+function run_pipeline() {
+	_MP2.runPipeline();
+}
+
+function Process(processor_name,inputs,parameters) {
+	if (!parameters) parameters={};
+	var ret=_MP2.addProcess(
+		processor_name,
+		JSON.stringify(inputs),
+		JSON.stringify(parameters),
+		'' // empty outputs means that they will be created as temporary files and the return object will contain the paths to these temporary files
+	);
+	return JSON.parse(ret);
+}
+
+function setNumThreads(num_threads) {
+	_MP2.setNumThreads(num_threads);
+}
+
+function write_file(input,output) {
+	_MP2.addCopyFile(input,output);
+	/*
+	_MP2.addProcess(
+		'copy',
+		JSON.stringify({input:input}),
+		JSON.stringify({}),
+		JSON.stringify({output:output})
+	);
+	*/
+}
+
+function write_prv(input,output) {
+	_MP2.addPrv(input,output);
+}
+
+function clone(obj) {
+	return JSON.parse(JSON.stringify(obj));
+}
+
+var console={
+	log:function(msg) {_MP2.log(msg);}
+};
+
+function set_default_parameters(params,defaults) {
+	for (var pname in defaults) {
+		if (!(pname in params)) {
+			params[pname]=defaults[pname];
+		}
+	}
+}
