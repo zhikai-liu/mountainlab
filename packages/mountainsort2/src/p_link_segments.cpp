@@ -83,7 +83,8 @@ bool p_link_segments(QString firings_path, QString firings_prev_path, QString Km
         }
         firings_out.setValue(labels_out[j], 2, j);
     }
-    if (!firings_out.write64(firings_out_path)) return false;
+    if (!firings_out.write64(firings_out_path))
+        return false;
 
     Mda firings_subset_out(firings.N1(), inds_subset.count());
     for (long j = 0; j < inds_subset.count(); j++) {
@@ -92,7 +93,8 @@ bool p_link_segments(QString firings_path, QString firings_prev_path, QString Km
         }
         firings_subset_out.setValue(labels_out[inds_subset[j]], 2, j);
     }
-    if (!firings_subset_out.write64(firings_subset_out_path)) return false;
+    if (!firings_subset_out.write64(firings_subset_out_path))
+        return false;
 
     return true;
 }
@@ -136,18 +138,20 @@ void sort_times_labels(QVector<double>& times, QVector<long>& labels)
 
 bool should_link(const Mda& CM, const QVector<long>& counts1, const QVector<long>& counts2, int i1, int i2, double link_threshold)
 {
-    int best_i1=0;
-    for (int j1=0; j1<CM.N1(); j1++) {
-        if (CM.value(j1,i2)>CM.value(best_i1,i2))
-            best_i1=j1;
+    int best_i1 = 0;
+    for (int j1 = 0; j1 < CM.N1(); j1++) {
+        if (CM.value(j1, i2) > CM.value(best_i1, i2))
+            best_i1 = j1;
     }
-    int best_i2=0;
-    for (int j2=0; j2<CM.N2(); j2++) {
-        if (CM.value(i1,j2)>CM.value(i1,best_i2))
-            best_i2=j2;
+    int best_i2 = 0;
+    for (int j2 = 0; j2 < CM.N2(); j2++) {
+        if (CM.value(i1, j2) > CM.value(i1, best_i2))
+            best_i2 = j2;
     }
-    if (best_i1!=i1) return false;
-    if (best_i2!=i2) return false;
+    if (best_i1 != i1)
+        return false;
+    if (best_i2 != i2)
+        return false;
     if (CM.value(i1, i2) < link_threshold * counts1[i1])
         return false;
     if (CM.value(i1, i2) < link_threshold * counts2[i2])

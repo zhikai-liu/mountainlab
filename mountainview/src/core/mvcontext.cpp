@@ -764,19 +764,19 @@ void MVContext::loadClusterMetricsFromFile(QString csv_or_json_file_path)
         }
     }
     else {
-        QString json=TextFile::read(csv_or_json_file_path);
-        QJsonObject X=QJsonDocument::fromJson(json.toUtf8()).object();
-        QJsonArray clusters=X["clusters"].toArray();
-        for (int j=0; j<clusters.count(); j++) {
-            QJsonObject C=clusters[j].toObject();
-            long k=C["label"].toDouble();
-            QJsonObject C_metrics=C["metrics"].toObject();
-            if (k>0) {
-                QJsonObject obj=this->clusterAttributes(k);
+        QString json = TextFile::read(csv_or_json_file_path);
+        QJsonObject X = QJsonDocument::fromJson(json.toUtf8()).object();
+        QJsonArray clusters = X["clusters"].toArray();
+        for (int j = 0; j < clusters.count(); j++) {
+            QJsonObject C = clusters[j].toObject();
+            long k = C["label"].toDouble();
+            QJsonObject C_metrics = C["metrics"].toObject();
+            if (k > 0) {
+                QJsonObject obj = this->clusterAttributes(k);
                 QJsonObject metrics = obj["metrics"].toObject();
-                QStringList keys=C_metrics.keys();
-                foreach (QString key,keys) {
-                    metrics[key]=C_metrics[key];
+                QStringList keys = C_metrics.keys();
+                foreach (QString key, keys) {
+                    metrics[key] = C_metrics[key];
                 }
                 obj["metrics"] = metrics;
                 this->setClusterAttributes(k, obj);

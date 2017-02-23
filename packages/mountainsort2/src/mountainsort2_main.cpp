@@ -124,7 +124,7 @@ QJsonObject get_spec()
     }
     {
         ProcessorSpec X("mountainsort.cluster_metrics", "0.1");
-        X.addInputs("timeseries","firings");
+        X.addInputs("timeseries", "firings");
         X.addOutputs("cluster_metrics_out");
         X.addRequiredParameters("samplerate");
         processors.push_back(X.get_spec());
@@ -160,11 +160,16 @@ int main(int argc, char* argv[])
         ret = p_extract_neighborhood_timeseries(timeseries, timeseries_out, channels);
     }
     else if (arg1 == "mountainsort.extract_segment_timeseries") {
-        QString timeseries = CLP.named_parameters["timeseries"].toString();
+        QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries"]);
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
         long t1 = CLP.named_parameters["t1"].toDouble(); //to double to handle scientific notation
         long t2 = CLP.named_parameters["t2"].toDouble(); //to double to handle scientific notation
-        ret = p_extract_segment_timeseries(timeseries, timeseries_out, t1, t2);
+        if (timeseries_list.count() <= 1) {
+            ret = p_extract_segment_timeseries(timeseries_list.value(0), timeseries_out, t1, t2);
+        }
+        else {
+            ret = p_extract_segment_timeseries_from_concat_list(timeseries_list, timeseries_out, t1, t2);
+        }
     }
     else if (arg1 == "mountainsort.bandpass_filter") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
@@ -260,7 +265,7 @@ int main(int argc, char* argv[])
         QString firings = CLP.named_parameters["firings"].toString();
         QString cluster_metrics_out = CLP.named_parameters["cluster_metrics_out"].toString();
         Cluster_metrics_opts opts;
-        opts.samplerate=CLP.named_parameters["samplerate"].toDouble();
+        opts.samplerate = CLP.named_parameters["samplerate"].toDouble();
         ret = p_cluster_metrics(timeseries, firings, cluster_metrics_out, opts);
     }
     else {

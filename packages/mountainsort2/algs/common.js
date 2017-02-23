@@ -25,13 +25,14 @@ common.remove_temporary_file=function(path,callback) {
 common.foreach=function(array,opts,step_function,end_function) {
 	var num_parallel=opts.num_parallel||1;
 	var num_running=0;
+	var num_finished=0;
 	var ii=0;
 	next_step();
 	function next_step() {
-		if (ii>=array.length) {
+		if (num_finished>=array.length) {
 			setTimeout(function() { //important to do it this way so we don't accumulate a call stack
 				end_function();
-			});
+			},0);
 			return;
 		}
 		while ((ii<array.length)&&(num_running<num_parallel)) {
@@ -39,6 +40,7 @@ common.foreach=function(array,opts,step_function,end_function) {
 			ii++;
 			step_function(ii-1,array[ii-1],function() {
 				num_running--;
+				num_finished++;
 				setTimeout(function() { //important to do it this way so we don't accumulate a call stack
 					next_step();
 				},0);
@@ -89,7 +91,18 @@ common.CLParams=function(argv) {
 			arg0=arg0.slice(2);
 			var ind=arg0.indexOf('=');
 			if (ind>=0) {
-				this.namedParameters[arg0.slice(0,ind)]=arg0.slice(ind+1);
+				var key0=arg0.slice(0,ind);
+				var val0=arg0.slice(ind+1);
+				if (!(key0 in this.namedParameters)) {
+					this.namedParameters[key0]=val0;
+				}
+				else {
+					var old_val0=this.namedParameters[key0];
+					if (typeof(old_val0)=='object')
+						old_val0.push(val0);
+					else
+						this.namedParameters[key0]=[old_val0,val0];
+				}
 			}
 			else {
 				this.namedParameters[arg0]=args[i+1]||'';
