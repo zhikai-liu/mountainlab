@@ -24,6 +24,7 @@
 #include "p_apply_timestamp_offset.h"
 #include "p_link_segments.h"
 #include "p_cluster_metrics.h"
+#include "omp.h"
 
 QJsonObject get_spec()
 {
@@ -151,6 +152,12 @@ int main(int argc, char* argv[])
     }
 
     bool ret = false;
+
+    if (CLP.named_parameters.contains("_request_num_threads")) {
+        int num_threads=CLP.named_parameters.value("_request_num_threads",0).toInt();
+        if (num_threads)
+            omp_set_num_threads(num_threads);
+    }
 
     if (arg1 == "mountainsort.extract_neighborhood_timeseries") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();

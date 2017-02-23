@@ -2,13 +2,15 @@
 
 var common=require('./common.js');
 var basic_sort=require('./basic_sort');
+var os=require('os');
 
 exports.spec=function() {
 	var spec0=basic_sort.spec();
 	spec0.name='mountainsort.drift_sort';
 	spec0.parameters.push({name:'segment_duration_sec'});
 	spec0.parameters.push({name:'shift_duration_sec'});
-	spec0.parameters.push({name:'num_time_segment_threads'});
+	spec0.parameters.push({name:'num_time_segment_threads',optional:true});
+	spec0.parameters.push({name:'num_basic_sort_threads',optional:true});
 	return common.clone(spec0);
 };
 
@@ -16,6 +18,15 @@ exports.run=function(opts,callback) {
 	var tmpfiles=[];
 	opts.temp_prefix=opts.temp_prefix||'00';
 	opts.num_time_segment_threads=Number(opts.num_time_segment_threads||1);
+	opts.num_basic_sort_threads=opts.num_basic_sort_threads||0;
+	if (!opts.num_basic_sort_threads) {
+		// determine whether to use multi-threading on the basic sorts
+		// depending on whether we are doing time segment threads
+		if (opts.num_time_segment_threads<=1)
+			opts.num_basic_sort_threads=os.cpus().length;
+		else
+			opts.num_basic_sort_threads=1;
+	}
 	if (!opts._tempdir) {
 		console.error('opts._tempdir is empty');
 		process.exit(-1);
@@ -126,6 +137,7 @@ exports.run=function(opts,callback) {
 					opts2.filt_out=null;
 					opts2.cluster_metrics_out='';
 					opts2._temp_prefix=(opts._temp_prefix||'00')+'-segment_'+iseg;
+					opts2._request_num_threads=opts.num_basic_sort_threads;
 					console.log('>>>>>>>>>>>> Running basic sort for segment '+(iseg+1)+'...\n');
 					basic_sort.run(opts2,function() {
 						apply_timestamp_offset(firings0,firings1,segment.t1,function() {
@@ -226,6 +238,7 @@ exports.run=function(opts,callback) {
 				opts2.pre_out=opts.pre_out;
 				opts2.filt_out=opts.filt_out;
 				opts2._temp_prefix=(opts._temp_prefix||'00')+'-preprocess';
+				opts2._request_num_threads=os.cpus().length; //use all the threads for this part (user has requested something potentially time-consuming)
 				if (typeof(opts2.timeseries)=='object') {
 					var ts_list=opts2.timeseries;
 					opts2.timeseries=mktmp('timeseries_for_preprocessing_output.mda');

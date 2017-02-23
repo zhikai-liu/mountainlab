@@ -223,7 +223,8 @@ exports.run=function(opts,callback) {
 				samplerate:opts.samplerate,
 				freq_min:opts.freq_min||0,
 				freq_max:opts.freq_max||0,
-				freq_wid:opts.freq_wid||0
+				freq_wid:opts.freq_wid||0,
+				_request_num_threads:opts._request_num_threads||1
 			},
 			callback
 		);
@@ -234,6 +235,7 @@ exports.run=function(opts,callback) {
 			{timeseries:timeseries},
 			{timeseries_out:timeseries_out},
 			{
+				_request_num_threads:opts._request_num_threads||1
 			},
 			callback
 		);	
