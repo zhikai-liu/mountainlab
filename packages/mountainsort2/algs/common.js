@@ -176,3 +176,7 @@ common.copy_file=function(src,dst,callback) {
 	});
 	rs.pipe(ws);
 };
+
+common.clone=function(obj) {
+	return JSON.parse(JSON.stringify(obj));
+}

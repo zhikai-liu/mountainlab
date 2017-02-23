@@ -19,6 +19,7 @@
 #include "p_create_firings.h"
 #include "p_combine_firings.h"
 #include "p_fit_stage.h"
+#include "p_whiten.h"
 
 QJsonObject get_spec() {
     QJsonArray processors;
@@ -35,6 +36,13 @@ QJsonObject get_spec() {
         X.addInputs("timeseries");
         X.addOutputs("timeseries_out");
         X.addRequiredParameters("samplerate","freq_min","freq_max","freq_wid");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.whiten","0.1");
+        X.addInputs("timeseries");
+        X.addOutputs("timeseries_out");
+        //X.addRequiredParameters();
         processors.push_back(X.get_spec());
     }
     {
@@ -125,6 +133,12 @@ int main(int argc,char *argv[]) {
         opts.freq_max=CLP.named_parameters["freq_max"].toDouble();
         opts.freq_wid=CLP.named_parameters["freq_wid"].toDouble();
         ret = p_bandpass_filter(timeseries,timeseries_out,opts);
+    }
+    else if (arg1=="mountainsort.whiten") {
+        QString timeseries=CLP.named_parameters["timeseries"].toString();
+        QString timeseries_out=CLP.named_parameters["timeseries_out"].toString();
+        Whiten_opts opts;
+        ret = p_whiten(timeseries,timeseries_out,opts);
     }
     else if (arg1=="mountainsort.detect_events") {
         QString timeseries=CLP.named_parameters["timeseries"].toString();

@@ -212,9 +212,13 @@ exports.run=function(opts,callback) {
 	}
 
 	function whiten(timeseries,timeseries_out,callback) {
-		common.copy_file(timeseries,timeseries_out,function() {
-			callback();
-		});
+		common.mp_exec_process('mountainsort.whiten',
+			{timeseries:timeseries},
+			{timeseries_out:timeseries_out},
+			{
+			},
+			callback
+		);	
 	}
 
 	function detect_events(timeseries,event_times_out,callback) {

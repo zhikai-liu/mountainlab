@@ -5,6 +5,7 @@ var spec={processors:[]};
 var processors_by_name={};
 
 register_processor(require('./basic_sort.js'));
+register_processor(require('./multichannel_sort.js'));
 
 function register_processor(P) {
 	var spec0=P.spec();
