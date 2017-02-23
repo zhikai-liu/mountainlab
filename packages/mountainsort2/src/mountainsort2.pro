@@ -36,7 +36,8 @@ SOURCES += \
     p_bandpass_filter.cpp \
     p_whiten.cpp \
     p_extract_segment_timeseries.cpp \
-    p_apply_timestamp_offset.cpp
+    p_apply_timestamp_offset.cpp \
+    p_link_segments.cpp
 
 HEADERS += \
     p_extract_clips.h \
@@ -51,7 +52,8 @@ HEADERS += \
     p_bandpass_filter.h \
     p_whiten.h \
     p_extract_segment_timeseries.h \
-    p_apply_timestamp_offset.h
+    p_apply_timestamp_offset.h \
+    p_link_segments.h
 
 INCLUDEPATH += ../../../mountainsort/src/isosplit5
 VPATH += ../../../mountainsort/src/isosplit5

@@ -326,9 +326,11 @@ bool ProcessManager::checkParameters(const QString& processor_name, const QVaria
     {
         QStringList keys = P.inputs.keys();
         foreach (QString key, keys) {
-            if (!parameters.contains(key)) {
-                qWarning() << QString("checkProcess: Missing input in %1: %2").arg(processor_name).arg(key);
-                return false;
+            if (!P.inputs[key].optional) {
+                if (!parameters.contains(key)) {
+                    qWarning() << QString("checkProcess: Missing input in %1: %2").arg(processor_name).arg(key);
+                    return false;
+                }
             }
         }
     }

@@ -22,6 +22,7 @@
 #include "p_fit_stage.h"
 #include "p_whiten.h"
 #include "p_apply_timestamp_offset.h"
+#include "p_link_segments.h"
 
 QJsonObject get_spec()
 {
@@ -110,6 +111,13 @@ QJsonObject get_spec()
         X.addInputs("firings");
         X.addOutputs("firings_out");
         X.addRequiredParameters("timestamp_offset");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.link_segments", "0.1");
+        X.addInputs("firings","firings_prev","Kmax_prev");
+        X.addOutputs("firings_out","Kmax_out");
+        X.addRequiredParameters("t1","t2","t1_prev","t2_prev");
         processors.push_back(X.get_spec());
     }
 
@@ -222,6 +230,20 @@ int main(int argc, char* argv[])
         QString firings_out = CLP.named_parameters["firings_out"].toString();
         double timestamp_offset = CLP.named_parameters["timestamp_offset"].toDouble();
         ret = p_apply_timestamp_offset(firings, firings_out, timestamp_offset);
+    }
+    else if (arg1 == "mountainsort.link_segments") {
+        QString firings = CLP.named_parameters["firings"].toString();
+        QString firings_prev = CLP.named_parameters["firings_prev"].toString();
+        QString Kmax_prev = CLP.named_parameters["Kmax_prev"].toString();
+
+        QString firings_out = CLP.named_parameters["firings_out"].toString();
+        QString Kmax_out = CLP.named_parameters["Kmax_out"].toString();
+
+        double t1 = CLP.named_parameters["t1"].toDouble();
+        double t2 = CLP.named_parameters["t2"].toDouble();
+        double t1_prev = CLP.named_parameters["t1_prev"].toDouble();
+        double t2_prev = CLP.named_parameters["t2_prev"].toDouble();
+        ret = p_link_segments(firings, firings_prev, Kmax_prev, firings_out, Kmax_out, t1, t2, t1_prev, t2_prev);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

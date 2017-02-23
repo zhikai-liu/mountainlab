@@ -46,7 +46,12 @@ exports.run=function(opts,callback) {
 			segment_steps.push(function(cb) {
 				var timeseries0=mktmp('timeseries_segment_'+iseg+'.mda');
 				var firings0=mktmp('firings_segment_'+iseg+'.mda');
-				var firings2=mktmp('firings2_segment_'+iseg+'.mda'); //timestamp offset
+				var firings1=mktmp('firings1_segment_'+iseg+'.mda'); //timestamp offset
+				var firings2=mktmp('firings2_segment_'+iseg+'.mda'); //linked!!
+				var Kmax=mktmp('Kmax_segment_'+iseg+'.mda'); //linked!!
+				segments[iseg].firings1=firings1;
+				segments[iseg].firings2=firings2;
+				segments[iseg].Kmax=Kmax;
 				all_segment_firings.push(firings2);
 				console.log('>>>>>>>>>>>> Extracting timeseries for segment '+iseg+' ('+segment.t1+','+segment.t2+')...\n');
 				extract_segment_timeseries(opts.timeseries,timeseries0,segment.t1,segment.t2,function() {
@@ -58,8 +63,12 @@ exports.run=function(opts,callback) {
 					opts2._temp_prefix=(opts._temp_prefix||'00')+'-segment_'+iseg;
 					console.log('>>>>>>>>>>>> Running basic sort for segment '+iseg+'...\n');
 					basic_sort.run(opts2,function() {
-						apply_timestamp_offset(firings0,firings2,segment.t1,function() {
-							cb();
+						apply_timestamp_offset(firings0,firings1,segment.t1,function() {
+							var seg_prev={};
+							if (iseg>0) seg_prev=segments[iseg-1];
+							link_segments(firings1,seg_prev.firings2||'',seg_prev.Kmax||'',firings2,Kmax,segment,seg_prev,function() {
+								cb();	
+							});
 						});
 					});
 				});
@@ -96,13 +105,32 @@ exports.run=function(opts,callback) {
 			);
 		}
 
+		function link_segments(firings1,firings2_prev,Kmax_prev,firings2,Kmax,seg,seg_prev,callback) {
+			if (firings2_prev) {
+				common.mp_exec_process('mountainsort.link_segments',
+					{firings:firings1,firings_prev:firings2_prev,Kmax_prev:Kmax_prev},
+					{firings_out:firings2,Kmax_out:Kmax},
+					{t1:seg.t1,t2:seg.t2,t1_prev:seg_prev.t1,t2_prev:seg_prev.t2},
+					callback
+				);
+			}
+			else {
+				common.copy_file(firings1,firings2,function() {
+					common.make_system_call('mda',['create',Kmax,'--dtype=float64','--size=1x1'],{},function() {
+						callback();
+					});
+				});
+			}
+			
+		}
+
 		function combine_firings() {
 			var firings_combined=mktmp('firings_combined.mda');
 			console.log('>>>>>>>>>>>> Combining '+all_segment_firings.length+' firings...')
 			common.mp_exec_process('mountainsort.combine_firings',
 					{firings_list:all_segment_firings},
 					{firings_out:firings_combined},
-					{},
+					{increment_labels:'false'},
 					function() {
 						common.copy_file(firings_combined,opts.firings_out,function() {
 							cleanup(function() {
