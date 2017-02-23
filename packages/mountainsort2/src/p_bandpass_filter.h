@@ -4,12 +4,12 @@
 #include <QString>
 
 struct Bandpass_filter_opts {
-    double samplerate=0;
-    double freq_min=0;
-    double freq_max=0;
-    double freq_wid=0;
+    double samplerate = 0;
+    double freq_min = 0;
+    double freq_max = 0;
+    double freq_wid = 0;
 };
 
-bool p_bandpass_filter(QString timeseries,QString timeseries_out,Bandpass_filter_opts opts);
+bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filter_opts opts);
 
 #endif // P_BANDPASS_FILTER_H

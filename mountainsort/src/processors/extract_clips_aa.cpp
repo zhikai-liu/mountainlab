@@ -46,14 +46,15 @@ bool extract_clips_aa(const QString& timeseries_path, const QString& detect_path
     Mda32 clips = extract_clips_aa(X, times, channels, clip_size);
     clips.write32(clips_out_path);
 
-    int R=D.N1();
-    if (R<4) R=4;
-    Mda detect_out(R,event_indices.count());
-    for (long i=0; i<event_indices.count(); i++) {
-        for (int r=0; r<R; r++) {
-            detect_out.setValue(D.value(r,event_indices[i]),r,i);
+    int R = D.N1();
+    if (R < 4)
+        R = 4;
+    Mda detect_out(R, event_indices.count());
+    for (long i = 0; i < event_indices.count(); i++) {
+        for (int r = 0; r < R; r++) {
+            detect_out.setValue(D.value(r, event_indices[i]), r, i);
         }
-        detect_out.setValue(event_indices[i],3,i);
+        detect_out.setValue(event_indices[i], 3, i);
     }
     detect_out.write64(detect_out_path);
     return true;

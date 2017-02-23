@@ -14,7 +14,7 @@ cluster_aa_Processor::cluster_aa_Processor()
 
     this->setName("cluster_aa");
     this->setVersion("0.1");
-    this->setInputFileParameters("clips","detect");
+    this->setInputFileParameters("clips", "detect");
     this->setOutputFileParameters("firings_out");
     this->setRequiredParameters("num_features", "num_features2");
     this->setOptionalParameters("consolidation_factor");

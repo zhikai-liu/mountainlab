@@ -22,7 +22,7 @@ extract_clips_aa_Processor::extract_clips_aa_Processor()
     this->setName("extract_clips_aa");
     this->setVersion("0.1");
     this->setInputFileParameters("timeseries", "detect");
-    this->setOutputFileParameters("clips_out","detect_out");
+    this->setOutputFileParameters("clips_out", "detect_out");
     this->setRequiredParameters("clip_size", "central_channel");
     this->setOptionalParameters("channels", "t1", "t2");
 }

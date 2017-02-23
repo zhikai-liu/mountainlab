@@ -4,9 +4,8 @@
 #include <QString>
 
 struct Whiten_opts {
-
 };
 
-bool p_whiten(QString timeseries,QString timeseries_out,Whiten_opts opts);
+bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts);
 
 #endif // P_WHITEN_H

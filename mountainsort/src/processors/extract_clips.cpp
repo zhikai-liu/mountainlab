@@ -113,7 +113,7 @@ bool extract_clips(const QString& timeseries_path, const QString& firings_path, 
     DiskReadMda F(firings_path);
 
     if (channels.isEmpty()) {
-        for (int m=0; m<X.N1(); m++) {
+        for (int m = 0; m < X.N1(); m++) {
             channels << m;
         }
     }

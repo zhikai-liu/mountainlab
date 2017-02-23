@@ -8,7 +8,6 @@
 
 #include <QString>
 
-
-bool p_extract_neighborhood_timeseries(QString timeseries,QString timeseries_out,QList<int> channels);
+bool p_extract_neighborhood_timeseries(QString timeseries, QString timeseries_out, QList<int> channels);
 
 #endif // P_EXTRACT_NEIGHBORHOOD_TIMESERIES_H

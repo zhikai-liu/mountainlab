@@ -19,7 +19,6 @@ void quantize(long N, float* X, double unit)
         X[i] = quantize(X[i], unit);
     }
 }
-
 }
 
 bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
@@ -30,7 +29,7 @@ bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
     long M = X.N1();
     long N = X.N2();
 
-    long processing_chunk_size=1e6;
+    long processing_chunk_size = 1e6;
 
     Mda XXt(M, M);
     double* XXtptr = XXt.dataPtr();

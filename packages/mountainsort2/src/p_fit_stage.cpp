@@ -8,9 +8,9 @@
 #include "mlcommon.h"
 
 namespace P_fit_stage {
-    Mda sort_firings_by_time(const Mda& firings);
-    Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, const QVector<int>& labels, int clip_size);
-    QList<long> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<int>& labels, const Fit_stage_opts& opts);
+Mda sort_firings_by_time(const Mda& firings);
+Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, const QVector<int>& labels, int clip_size);
+QList<long> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<int>& labels, const Fit_stage_opts& opts);
 }
 
 bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_out_path, Fit_stage_opts opts)
@@ -36,10 +36,10 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
     }
 
     //These are the templates corresponding to the clusters
-    Mda32 templates = P_fit_stage::compute_templates(X, times,labels, T); //MxTxK
+    Mda32 templates = P_fit_stage::compute_templates(X, times, labels, T); //MxTxK
 
-    long processing_chunk_size=1e6;
-    long processing_chunk_overlap_size=1e4;
+    long processing_chunk_size = 1e6;
+    long processing_chunk_overlap_size = 1e4;
 
     //Now we do the processing in chunks
     long chunk_size = processing_chunk_size;
@@ -187,7 +187,7 @@ QList<int> get_channel_mask(Mda32 template0, int num)
     for (int m = 0; m < M; m++) {
         double val = 0;
         for (int t = 0; t < T; t++) {
-            val = qMax(val, 1.0*qAbs(template0.value(m, t)));
+            val = qMax(val, 1.0 * qAbs(template0.value(m, t)));
         }
         maxabs << val;
     }
@@ -376,7 +376,7 @@ QList<long> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times,
 
                     //the score needs to be at least as large as neglogprior in order to accept the spike
                     //double neglogprior = 30;
-                    double neglogprior=0;
+                    double neglogprior = 0;
                     if (score0 > neglogprior) {
                         //we are not committing to using this event yet... see below for next step
                         scores_to_try << score0;
@@ -429,5 +429,4 @@ QList<long> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times,
 
     return inds_to_use;
 }
-
 }

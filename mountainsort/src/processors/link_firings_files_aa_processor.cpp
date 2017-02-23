@@ -40,7 +40,7 @@ bool link_firings_files_aa_Processor::check(const QMap<QString, QVariant>& param
 #include "mlcommon.h"
 bool link_firings_files_aa_Processor::run(const QMap<QString, QVariant>& params)
 {
-    QStringList firings_path_list=MLUtil::toStringList(params["firings_list"]);
-    QString firings_out_path=params["firings_out"].toString();
+    QStringList firings_path_list = MLUtil::toStringList(params["firings_list"]);
+    QString firings_out_path = params["firings_out"].toString();
     return link_firings_files_aa(firings_path_list, firings_out_path);
 }

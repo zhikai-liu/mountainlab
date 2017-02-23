@@ -8,12 +8,13 @@
 #include <QFile>
 
 namespace P_bandpass_filter {
-    Mda32 bandpass_filter_kernel(Mda32& X, double samplerate, double freq_min, double freq_max, double freq_wid);
+Mda32 bandpass_filter_kernel(Mda32& X, double samplerate, double freq_min, double freq_max, double freq_wid);
 }
 
-bool p_bandpass_filter(QString timeseries,QString timeseries_out,Bandpass_filter_opts opts) {
-    if (opts.freq_max==0) {
-        return QFile::copy(timeseries,timeseries_out);
+bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filter_opts opts)
+{
+    if (opts.freq_max == 0) {
+        return QFile::copy(timeseries, timeseries_out);
     }
 
     DiskReadMda32 X(timeseries);
@@ -22,7 +23,8 @@ bool p_bandpass_filter(QString timeseries,QString timeseries_out,Bandpass_filter
 
     DiskWriteMda Y(MDAIO_TYPE_FLOAT32, timeseries_out, M, N);
 
-    QTime timer_status; timer_status.start();
+    QTime timer_status;
+    timer_status.start();
 
     int num_threads = omp_get_max_threads();
     long memory_size = 0.1 * 1e9;
@@ -33,10 +35,10 @@ bool p_bandpass_filter(QString timeseries,QString timeseries_out,Bandpass_filter
 
     {
         long num_timepoints_handled = 0;
-    #pragma omp parallel for
+#pragma omp parallel for
         for (long timepoint = 0; timepoint < N; timepoint += chunk_size) {
             Mda32 chunk;
-    #pragma omp critical(lock1)
+#pragma omp critical(lock1)
             {
                 X.readChunk(chunk, 0, timepoint - overlap_size, M, chunk_size + 2 * overlap_size);
             }
@@ -47,7 +49,7 @@ bool p_bandpass_filter(QString timeseries,QString timeseries_out,Bandpass_filter
             {
                 chunk.getChunk(chunk2, 0, overlap_size, M, chunk_size);
             }
-    #pragma omp critical(lock1)
+#pragma omp critical(lock1)
             {
                 {
                     Y.writeChunk(chunk2, 0, timepoint);
@@ -309,5 +311,4 @@ Mda32 bandpass_filter_kernel(Mda32& X, double samplerate, double freq_min, doubl
 
     return Y;
 }
-
 }

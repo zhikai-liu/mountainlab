@@ -34,7 +34,9 @@ SOURCES += \
     p_combine_firings.cpp \
     p_fit_stage.cpp \
     p_bandpass_filter.cpp \
-    p_whiten.cpp
+    p_whiten.cpp \
+    p_extract_segment_timeseries.cpp \
+    p_apply_timestamp_offset.cpp
 
 HEADERS += \
     p_extract_clips.h \
@@ -47,7 +49,9 @@ HEADERS += \
     p_combine_firings.h \
     p_fit_stage.h \
     p_bandpass_filter.h \
-    p_whiten.h
+    p_whiten.h \
+    p_extract_segment_timeseries.h \
+    p_apply_timestamp_offset.h
 
 INCLUDEPATH += ../../../mountainsort/src/isosplit5
 VPATH += ../../../mountainsort/src/isosplit5

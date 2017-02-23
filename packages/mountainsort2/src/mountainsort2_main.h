@@ -20,15 +20,16 @@ struct ProcessorSpecFile {
 struct ProcessorSpecParam {
     QString name;
     QString description;
-    bool optional=false;
+    bool optional = false;
 
     QJsonObject get_spec();
 };
 
 struct ProcessorSpec {
-    ProcessorSpec(QString name,QString version_in) {
-        processor_name=name;
-        version=version_in;
+    ProcessorSpec(QString name, QString version_in)
+    {
+        processor_name = name;
+        version = version_in;
     }
 
     QString processor_name;
@@ -38,18 +39,17 @@ struct ProcessorSpec {
     QList<ProcessorSpecFile> outputs;
     QList<ProcessorSpecParam> parameters;
 
-    void addInputs(QString name1,QString name2="",QString name3="",QString name4="",QString name5="");
-    void addOutputs(QString name1,QString name2="",QString name3="",QString name4="",QString name5="");
-    void addRequiredParameters(QString name1,QString name2="",QString name3="",QString name4="",QString name5="");
-    void addOptionalParameters(QString name1,QString name2="",QString name3="",QString name4="",QString name5="");
+    void addInputs(QString name1, QString name2 = "", QString name3 = "", QString name4 = "", QString name5 = "");
+    void addOutputs(QString name1, QString name2 = "", QString name3 = "", QString name4 = "", QString name5 = "");
+    void addRequiredParameters(QString name1, QString name2 = "", QString name3 = "", QString name4 = "", QString name5 = "");
+    void addOptionalParameters(QString name1, QString name2 = "", QString name3 = "", QString name4 = "", QString name5 = "");
 
-    void addInput(QString name,QString description="");
-    void addOutput(QString name,QString description="");
-    void addRequiredParameter(QString name,QString description="");
-    void addOptionalParameter(QString name,QString description="");
+    void addInput(QString name, QString description = "");
+    void addOutput(QString name, QString description = "");
+    void addRequiredParameter(QString name, QString description = "");
+    void addOptionalParameter(QString name, QString description = "");
 
     QJsonObject get_spec();
 };
-
 
 #endif // MOUNTAINSORT2_MAIN_H
