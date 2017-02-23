@@ -45,7 +45,7 @@ void ClusterMetricsPlugin::initialize(MVMainWindow* mw)
 {
     mw->registerViewFactory(new ClusterMetricsFactory(mw));
     mw->registerViewFactory(new ClusterPairMetricsFactory(mw));
-    compute_basic_metrics(mw->mvContext());
+    //compute_basic_metrics(mw->mvContext());
 }
 
 ClusterMetricsFactory::ClusterMetricsFactory(MVMainWindow* mw, QObject* parent)

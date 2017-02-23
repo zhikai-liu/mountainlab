@@ -14,7 +14,7 @@ namespace P_link_segments {
 QMap<long, long> get_label_map(const QVector<double>& times, const QVector<long>& labels, const QVector<double>& times_prev, const QVector<long>& labels_prev);
 }
 
-bool p_link_segments(QString firings_path, QString firings_prev_path, QString Kmax_prev_path, QString firings_out_path, QString Kmax_out_path, double t1, double t2, double t1_prev, double t2_prev)
+bool p_link_segments(QString firings_path, QString firings_prev_path, QString Kmax_prev_path, QString firings_out_path, QString firings_subset_out_path, QString Kmax_out_path, double t1, double t2, double t1_prev, double t2_prev)
 {
     Mda firings(firings_path);
     Mda firings_prev(firings_prev_path);
@@ -60,15 +60,15 @@ bool p_link_segments(QString firings_path, QString firings_prev_path, QString Km
         }
     }
 
-    QVector<long> inds_out;
+    QVector<long> inds_subset;
     QVector<long> labels_out;
     for (long i = 0; i < firings.N2(); i++) {
         double t0 = firings.value(1, i);
         if (t0 > t2_prev) {
-            inds_out << i;
-            long label0 = firings.value(2, i);
-            labels_out << label_map.value(label0);
+            inds_subset << i;
         }
+        long label0 = firings.value(2, i);
+        labels_out << label_map.value(label0);
     }
 
     Mda Kmax_out(1, 1);
@@ -76,14 +76,25 @@ bool p_link_segments(QString firings_path, QString firings_prev_path, QString Km
     if (!Kmax_out.write64(Kmax_out_path))
         return false;
 
-    Mda firings_out(firings.N1(), inds_out.count());
-    for (long j = 0; j < inds_out.count(); j++) {
+    Mda firings_out(firings.N1(), firings.N2());
+    for (long j = 0; j < firings.N2(); j++) {
         for (int r = 0; r < firings.N1(); r++) {
-            firings_out.setValue(firings.value(r, inds_out[j]), r, j);
+            firings_out.setValue(firings.value(r, j), r, j);
         }
         firings_out.setValue(labels_out[j], 2, j);
     }
-    return firings_out.write64(firings_out_path);
+    if (!firings_out.write64(firings_out_path)) return false;
+
+    Mda firings_subset_out(firings.N1(), inds_subset.count());
+    for (long j = 0; j < inds_subset.count(); j++) {
+        for (int r = 0; r < firings.N1(); r++) {
+            firings_subset_out.setValue(firings.value(r, inds_subset[j]), r, j);
+        }
+        firings_subset_out.setValue(labels_out[inds_subset[j]], 2, j);
+    }
+    if (!firings_subset_out.write64(firings_subset_out_path)) return false;
+
+    return true;
 }
 
 namespace P_link_segments {
@@ -125,6 +136,18 @@ void sort_times_labels(QVector<double>& times, QVector<long>& labels)
 
 bool should_link(const Mda& CM, const QVector<long>& counts1, const QVector<long>& counts2, int i1, int i2, double link_threshold)
 {
+    int best_i1=0;
+    for (int j1=0; j1<CM.N1(); j1++) {
+        if (CM.value(j1,i2)>CM.value(best_i1,i2))
+            best_i1=j1;
+    }
+    int best_i2=0;
+    for (int j2=0; j2<CM.N2(); j2++) {
+        if (CM.value(i1,j2)>CM.value(i1,best_i2))
+            best_i2=j2;
+    }
+    if (best_i1!=i1) return false;
+    if (best_i2!=i2) return false;
     if (CM.value(i1, i2) < link_threshold * counts1[i1])
         return false;
     if (CM.value(i1, i2) < link_threshold * counts2[i2])

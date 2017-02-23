@@ -128,7 +128,7 @@ public:
     ElectrodeGeometry electrodeGeometry() const;
     void setElectrodeGeometry(const ElectrodeGeometry& geom);
 
-    void loadClusterMetricsFromFile(QString csv_file_path);
+    void loadClusterMetricsFromFile(QString csv_or_json_file_path);
     void loadClusterPairMetricsFromFile(QString csv_file_path);
 
     /////////////////////////////////////////////////

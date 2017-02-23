@@ -741,24 +741,46 @@ void MVContext::setElectrodeGeometry(const ElectrodeGeometry& geom)
     emit this->electrodeGeometryChanged();
 }
 
-void MVContext::loadClusterMetricsFromFile(QString csv_file_path)
+void MVContext::loadClusterMetricsFromFile(QString csv_or_json_file_path)
 {
-    QStringList lines = TextFile::read(csv_file_path).split("\n", QString::SkipEmptyParts);
-    if (lines.isEmpty())
-        return;
-    QStringList metric_names = lines[0].split(",", QString::SkipEmptyParts);
-    for (int i = 1; i < lines.count(); i++) {
-        QStringList vals = lines[i].split(",", QString::SkipEmptyParts);
-        bool ok;
-        int k = vals.value(0).toInt(&ok);
-        if (ok) {
-            QJsonObject obj = this->clusterAttributes(k);
-            QJsonObject metrics = obj["metrics"].toObject();
-            for (int j = 1; j < metric_names.count(); j++) {
-                metrics[metric_names[j]] = vals.value(j).toDouble();
+    if (csv_or_json_file_path.endsWith(".csv")) {
+        QStringList lines = TextFile::read(csv_or_json_file_path).split("\n", QString::SkipEmptyParts);
+        if (lines.isEmpty())
+            return;
+        QStringList metric_names = lines[0].split(",", QString::SkipEmptyParts);
+        for (int i = 1; i < lines.count(); i++) {
+            QStringList vals = lines[i].split(",", QString::SkipEmptyParts);
+            bool ok;
+            int k = vals.value(0).toInt(&ok);
+            if (ok) {
+                QJsonObject obj = this->clusterAttributes(k);
+                QJsonObject metrics = obj["metrics"].toObject();
+                for (int j = 1; j < metric_names.count(); j++) {
+                    metrics[metric_names[j]] = vals.value(j).toDouble();
+                }
+                obj["metrics"] = metrics;
+                this->setClusterAttributes(k, obj);
             }
-            obj["metrics"] = metrics;
-            this->setClusterAttributes(k, obj);
+        }
+    }
+    else {
+        QString json=TextFile::read(csv_or_json_file_path);
+        QJsonObject X=QJsonDocument::fromJson(json.toUtf8()).object();
+        QJsonArray clusters=X["clusters"].toArray();
+        for (int j=0; j<clusters.count(); j++) {
+            QJsonObject C=clusters[j].toObject();
+            long k=C["label"].toDouble();
+            QJsonObject C_metrics=C["metrics"].toObject();
+            if (k>0) {
+                QJsonObject obj=this->clusterAttributes(k);
+                QJsonObject metrics = obj["metrics"].toObject();
+                QStringList keys=C_metrics.keys();
+                foreach (QString key,keys) {
+                    metrics[key]=C_metrics[key];
+                }
+                obj["metrics"] = metrics;
+                this->setClusterAttributes(k, obj);
+            }
         }
     }
 }

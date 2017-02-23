@@ -47,9 +47,11 @@ exports.run=function(opts,callback) {
 				var timeseries0=mktmp('timeseries_segment_'+iseg+'.mda');
 				var firings0=mktmp('firings_segment_'+iseg+'.mda');
 				var firings1=mktmp('firings1_segment_'+iseg+'.mda'); //timestamp offset
+				var firings1_linked=mktmp('firings1_linked_segment_'+iseg+'.mda'); //timestamp offset
 				var firings2=mktmp('firings2_segment_'+iseg+'.mda'); //linked!!
 				var Kmax=mktmp('Kmax_segment_'+iseg+'.mda'); //linked!!
 				segments[iseg].firings1=firings1;
+				segments[iseg].firings1_linked=firings1_linked;
 				segments[iseg].firings2=firings2;
 				segments[iseg].Kmax=Kmax;
 				all_segment_firings.push(firings2);
@@ -60,13 +62,14 @@ exports.run=function(opts,callback) {
 					opts2.firings_out=firings0;
 					opts2.pre_out=null;
 					opts2.filt_out=null;
+					opts2.cluster_metrics_out='';
 					opts2._temp_prefix=(opts._temp_prefix||'00')+'-segment_'+iseg;
 					console.log('>>>>>>>>>>>> Running basic sort for segment '+iseg+'...\n');
 					basic_sort.run(opts2,function() {
 						apply_timestamp_offset(firings0,firings1,segment.t1,function() {
 							var seg_prev={};
 							if (iseg>0) seg_prev=segments[iseg-1];
-							link_segments(firings1,seg_prev.firings2||'',seg_prev.Kmax||'',firings2,Kmax,segment,seg_prev,function() {
+							link_segments(firings1,seg_prev.firings1_linked||'',seg_prev.Kmax||'',firings1_linked,firings2,Kmax,segment,seg_prev,function() {
 								cb();	
 							});
 						});
@@ -105,23 +108,44 @@ exports.run=function(opts,callback) {
 			);
 		}
 
-		function link_segments(firings1,firings2_prev,Kmax_prev,firings2,Kmax,seg,seg_prev,callback) {
+		function link_segments(firings1,firings2_prev,Kmax_prev,firings_out,firings_subset_out,Kmax,seg,seg_prev,callback) {
 			if (firings2_prev) {
 				common.mp_exec_process('mountainsort.link_segments',
 					{firings:firings1,firings_prev:firings2_prev,Kmax_prev:Kmax_prev},
-					{firings_out:firings2,Kmax_out:Kmax},
+					{firings_out:firings_out,firings_subset_out:firings_subset_out,Kmax_out:Kmax},
 					{t1:seg.t1,t2:seg.t2,t1_prev:seg_prev.t1,t2_prev:seg_prev.t2},
 					callback
 				);
 			}
 			else {
-				common.copy_file(firings1,firings2,function() {
-					common.make_system_call('mda',['create',Kmax,'--dtype=float64','--size=1x1'],{},function() {
-						callback();
+				common.copy_file(firings1,firings_out,function() {
+					common.copy_file(firings1,firings_subset_out,function() {
+						common.make_system_call('mda',['create',Kmax,'--dtype=float64','--size=1x1'],{},function() {
+							callback();
+						});
 					});
 				});
 			}
 			
+		}
+
+		function cluster_metrics(callback) {
+			////////////////////////////////////////////////////////
+			//cluster metrics
+			if (opts.cluster_metrics_out) {
+				console.log ('>>>>> Cluster metrics -> '+opts.cluster_metrics_out);
+				common.mp_exec_process('mountainsort.cluster_metrics',
+						{timeseries:opts.timeseries,firings:opts.firings_out},
+						{cluster_metrics_out:opts.cluster_metrics_out},
+						{samplerate:opts.samplerate},
+						function() {
+							cleanup(callback);
+						}
+				);
+			}
+			else {
+				cleanup(callback);
+			}
 		}
 
 		function combine_firings() {
@@ -133,24 +157,26 @@ exports.run=function(opts,callback) {
 					{increment_labels:'false'},
 					function() {
 						common.copy_file(firings_combined,opts.firings_out,function() {
-							cleanup(function() {
-								if ((opts.pre_out)||(opts.filt_out)) {
-									var opts2=common.clone(opts);
-									opts2.central_channel=0;
-									opts2.timeseries=opts.timeseries;
-									opts2.firings_out=''; //preprocess only
-									opts2.pre_out=opts.pre_out;
-									opts2.filt_out=opts.filt_out;
-									opts2._temp_prefix=(opts._temp_prefix||'00')+'-preprocess';
-									console.log('>>>>>>>>>>>> Running basic preprocessing for output of filt.mda and/or pre.mda...\n');
-									basic_sort.run(opts2,function() {
+							if ((opts.pre_out)||(opts.filt_out)) {
+								var opts2=common.clone(opts);
+								opts2.central_channel=0;
+								opts2.timeseries=opts.timeseries;
+								opts2.firings_out=''; //preprocess only
+								opts2.pre_out=opts.pre_out;
+								opts2.filt_out=opts.filt_out;
+								opts2._temp_prefix=(opts._temp_prefix||'00')+'-preprocess';
+								console.log('>>>>>>>>>>>> Running basic preprocessing for output of filt.mda and/or pre.mda...\n');
+								basic_sort.run(opts2,function() {
+									cluster_metrics(function() {
 										//done
-									});
-								}
-								else {
+									})
+								});
+							}
+							else {
+								cluster_metrics(function() {
 									//done
-								}
-							});
+								});
+							}
 						});
 					}
 			)	
@@ -202,8 +228,12 @@ function create_segments(N,segment_size,shift_size) {
 			t2=N-1
 			t1=t2-segment_size+1;
 			if (t1<0) t1=0;
+			ret.push({t1:t1,t2:t2});
+			break;
 		}
-		ret.push({t1:t1,t2:t2});
+		else {
+			ret.push({t1:t1,t2:t2});
+		}
 	}
 	return ret;
 }

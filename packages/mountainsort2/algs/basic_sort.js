@@ -13,7 +13,8 @@ exports.spec=function() {
 	    outputs: [
 	        {name:"firings_out",description:"The labeled events (3 x L)"},
 	        {name:"filt_out",description:"",optional:true},
-	        {name:"pre_out",description:"",optional:true}
+	        {name:"pre_out",description:"",optional:true},
+	        {name:"cluster_metrics_out",description:"",optional:true}
 	    ],
 	    parameters: [
 	        {name:"samplerate",description:"sample rate for timeseries"},
@@ -147,6 +148,20 @@ exports.run=function(opts,callback) {
 			console.log ('>>>>> Copying file '+firings2+' -> '+opts.firings_out);
 			common.copy_file(firings2,opts.firings_out,cb);
 		});
+
+		////////////////////////////////////////////////////////
+		//cluster metrics
+		if (opts.cluster_metrics_out) {
+			steps.push(function(cb) {
+				console.log ('>>>>> Cluster metrics -> '+opts.cluster_metrics_out);
+				common.mp_exec_process('mountainsort.cluster_metrics',
+						{timeseries:opts.timeseries,firings:opts.firings_out},
+						{cluster_metrics_out:opts.cluster_metrics_out},
+						{samplerate:opts.samplerate},
+						callback
+				);
+			});
+		}
 	}
 
 	////////////////////////////////////////////////////////

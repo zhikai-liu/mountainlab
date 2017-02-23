@@ -23,6 +23,7 @@
 #include "p_whiten.h"
 #include "p_apply_timestamp_offset.h"
 #include "p_link_segments.h"
+#include "p_cluster_metrics.h"
 
 QJsonObject get_spec()
 {
@@ -117,7 +118,15 @@ QJsonObject get_spec()
         ProcessorSpec X("mountainsort.link_segments", "0.1");
         X.addInputs("firings", "firings_prev", "Kmax_prev");
         X.addOutputs("firings_out", "Kmax_out");
+        X.addOutputs("firings_subset_out", "Kmax_out");
         X.addRequiredParameters("t1", "t2", "t1_prev", "t2_prev");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.cluster_metrics", "0.1");
+        X.addInputs("timeseries","firings");
+        X.addOutputs("cluster_metrics_out");
+        X.addRequiredParameters("samplerate");
         processors.push_back(X.get_spec());
     }
 
@@ -237,13 +246,22 @@ int main(int argc, char* argv[])
         QString Kmax_prev = CLP.named_parameters["Kmax_prev"].toString();
 
         QString firings_out = CLP.named_parameters["firings_out"].toString();
+        QString firings_subset_out = CLP.named_parameters["firings_subset_out"].toString();
         QString Kmax_out = CLP.named_parameters["Kmax_out"].toString();
 
         double t1 = CLP.named_parameters["t1"].toDouble();
         double t2 = CLP.named_parameters["t2"].toDouble();
         double t1_prev = CLP.named_parameters["t1_prev"].toDouble();
         double t2_prev = CLP.named_parameters["t2_prev"].toDouble();
-        ret = p_link_segments(firings, firings_prev, Kmax_prev, firings_out, Kmax_out, t1, t2, t1_prev, t2_prev);
+        ret = p_link_segments(firings, firings_prev, Kmax_prev, firings_out, firings_subset_out, Kmax_out, t1, t2, t1_prev, t2_prev);
+    }
+    else if (arg1 == "mountainsort.cluster_metrics") {
+        QString timeseries = CLP.named_parameters["timeseries"].toString();
+        QString firings = CLP.named_parameters["firings"].toString();
+        QString cluster_metrics_out = CLP.named_parameters["cluster_metrics_out"].toString();
+        Cluster_metrics_opts opts;
+        opts.samplerate=CLP.named_parameters["samplerate"].toDouble();
+        ret = p_cluster_metrics(timeseries, firings, cluster_metrics_out, opts);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;
