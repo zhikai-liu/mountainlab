@@ -3,7 +3,7 @@
 var common=require('./common.js');
 
 exports.spec=function() {
-	return {
+	var spec0={
 	    name: "mountainsort.basic_sort",
 	    version: "0.1",
 	    description: "",
@@ -25,6 +25,7 @@ exports.spec=function() {
 	        {name:"_temp_prefix",optional:true} //internal
 	    ]
 	};
+	return common.clone(spec0);
 };
 
 exports.run=function(opts,callback) {
@@ -81,70 +82,72 @@ exports.run=function(opts,callback) {
 		pre=filt;
 	}
 
-	////////////////////////////////////////////////////////
-	//detect
-	event_times=mktmp('event_times.mda');
-	steps.push(function(cb) {
-		console.log ('>>>>> Detect');
-		detect_events(pre,event_times,cb);
-	});
-
-	////////////////////////////////////////////////////////
-	//extract clips
-	steps.push(function(cb) {
-		console.log ('>>>>> Extract clips');
-		clips=mktmp('clips.mda');
-		extract_clips(pre,event_times,clips,cb);
-	});
-
-	////////////////////////////////////////////////////////
-	//sort clips
-	labels=mktmp('labels.mda');
-	steps.push(function(cb) {
-		console.log ('>>>>> Sort clips');
-		sort_clips(clips,labels,cb);
-	});
-
-	////////////////////////////////////////////////////////
-	//consolidate clusters
-	if (opts.consolidate_clusters) {
-		labels2=mktmp('labels2.mda');
+	if (opts.firings_out) {
+		////////////////////////////////////////////////////////
+		//detect
+		event_times=mktmp('event_times.mda');
 		steps.push(function(cb) {
-			console.log ('>>>>> Consolidate clusters');
-			consolidate_clusters(clips,labels,labels2,cb);
+			console.log ('>>>>> Detect');
+			detect_events(pre,event_times,cb);
+		});
+
+		////////////////////////////////////////////////////////
+		//extract clips
+		steps.push(function(cb) {
+			console.log ('>>>>> Extract clips');
+			clips=mktmp('clips.mda');
+			extract_clips(pre,event_times,clips,cb);
+		});
+
+		////////////////////////////////////////////////////////
+		//sort clips
+		labels=mktmp('labels.mda');
+		steps.push(function(cb) {
+			console.log ('>>>>> Sort clips');
+			sort_clips(clips,labels,cb);
+		});
+
+		////////////////////////////////////////////////////////
+		//consolidate clusters
+		if (opts.consolidate_clusters) {
+			labels2=mktmp('labels2.mda');
+			steps.push(function(cb) {
+				console.log ('>>>>> Consolidate clusters');
+				consolidate_clusters(clips,labels,labels2,cb);
+			});
+		}
+		else {
+			labels2=labels;
+		}
+
+		////////////////////////////////////////////////////////
+		//create firings
+		firings=mktmp('firings.mda');
+		steps.push(function(cb) {
+			console.log ('>>>>> Create firings');
+			create_firings(event_times,labels2,firings,cb);
+		});
+
+		////////////////////////////////////////////////////////
+		//fit stage
+		if (opts.fit_stage) {
+			firings2=mktmp('firings2.mda');
+			steps.push(function(cb) {
+				console.log ('>>>>> Fit stage');
+				fit_stage(pre,firings,firings2,cb);
+			});
+		}
+		else {
+			firings2=firings;
+		}
+
+		////////////////////////////////////////////////////////
+		//copy to firings_out
+		steps.push(function(cb) {
+			console.log ('>>>>> Copying file '+firings2+' -> '+opts.firings_out);
+			common.copy_file(firings2,opts.firings_out,cb);
 		});
 	}
-	else {
-		labels2=labels;
-	}
-
-	////////////////////////////////////////////////////////
-	//create firings
-	firings=mktmp('firings.mda');
-	steps.push(function(cb) {
-		console.log ('>>>>> Create firings');
-		create_firings(event_times,labels2,firings,cb);
-	});
-
-	////////////////////////////////////////////////////////
-	//fit stage
-	if (opts.fit_stage) {
-		firings2=mktmp('firings2.mda');
-		steps.push(function(cb) {
-			console.log ('>>>>> Fit stage');
-			fit_stage(pre,firings,firings2,cb);
-		});
-	}
-	else {
-		firings2=firings;
-	}
-
-	////////////////////////////////////////////////////////
-	//copy to firings_out
-	steps.push(function(cb) {
-		console.log ('>>>>> Copying file '+firings2+' -> '+opts.firings_out);
-		common.copy_file(firings2,opts.firings_out,cb);
-	});
 
 	////////////////////////////////////////////////////////
 	//copy to filt_out
@@ -227,7 +230,7 @@ exports.run=function(opts,callback) {
 			{timeseries:timeseries},
 			{event_times_out:event_times_out},
 			{
-				central_channel:opts.central_channel, //in the neighborhood, the central channel is always the first
+				central_channel:opts.central_channel,
 				detect_threshold:opts.detect_threshold,
 				detect_interval:detect_interval,
 				sign:opts.detect_sign
