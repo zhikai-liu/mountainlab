@@ -115,9 +115,9 @@ QJsonObject get_spec()
     }
     {
         ProcessorSpec X("mountainsort.link_segments", "0.1");
-        X.addInputs("firings","firings_prev","Kmax_prev");
-        X.addOutputs("firings_out","Kmax_out");
-        X.addRequiredParameters("t1","t2","t1_prev","t2_prev");
+        X.addInputs("firings", "firings_prev", "Kmax_prev");
+        X.addOutputs("firings_out", "Kmax_out");
+        X.addRequiredParameters("t1", "t2", "t1_prev", "t2_prev");
         processors.push_back(X.get_spec());
     }
 
