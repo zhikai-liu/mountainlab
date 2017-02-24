@@ -49,6 +49,10 @@ if (file_exists(outfolder+'/cluster_metrics.csv')) {
 	args+=' --cluster_metrics='+outfolder+'/cluster_metrics.csv';
 }
 
+if (file_exists(outfolder+'/cluster_metrics.json')) {
+	args+=' --cluster_metrics='+outfolder+'/cluster_metrics.json';
+}
+
 if (file_exists(outfolder+'/cluster_pair_metrics.csv')) {
 	args+=' --cluster_pair_metrics='+outfolder+'/cluster_pair_metrics.csv';
 }
