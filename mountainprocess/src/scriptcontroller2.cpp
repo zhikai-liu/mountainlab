@@ -181,11 +181,13 @@ QString ScriptController2::addProcess(QString processor_name, QString inputs_jso
     node.processor_name = processor_name;
     node.inputs = QJsonDocument::fromJson(inputs_json.toLatin1()).object().toVariantMap();
     node.parameters = QJsonDocument::fromJson(parameters_json.toLatin1()).object().toVariantMap();
+    qDebug() << "................................" << outputs_json;
     if (!outputs_json.isEmpty()) {
         node.outputs = QJsonDocument::fromJson(outputs_json.toLatin1()).object().toVariantMap();
         /// TODO: check to see if outputs are consistent with PP_outputs
     }
-    {
+
+    if (outputs_json.isEmpty()) {
         // any outputs that have not been specified will be marked as an empty string
         // later we will handle these cases by creating temporary files, and then returning this info from the function call
         QStringList output_pnames = PP_outputs.keys();
@@ -397,6 +399,16 @@ QString ScriptController2::createPrvObject(const QString& path)
 bool ScriptController2::writeTextFile(const QString& path, const QString& text)
 {
     return TextFile::write(path, text);
+}
+
+bool ScriptController2::fileExists(const QString &path)
+{
+    return QFile::exists(path);
+}
+
+void ScriptController2::removeFile(const QString &path)
+{
+    QFile::remove(path);
 }
 
 QProcess* ScriptController2Private::queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, QString process_output_fname, int request_num_threads)

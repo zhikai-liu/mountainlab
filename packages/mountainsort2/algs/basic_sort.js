@@ -195,7 +195,7 @@ exports.run=function(opts,callback) {
 	//Run all steps
 	common.foreach(steps,{},function(ii,step,cb) {
 		console.log('');
-		console.log('--------------------------- STEP '+(ii+1)+' of '+steps.length +' -----------');
+		console.log('--------------------------- BASIC SORT STEP '+(ii+1)+' of '+steps.length +' -----------');
 		var timer=new Date();
 		step(function() {
 			console.log ('Elapsed time (sec): '+get_elapsed_sec(timer));

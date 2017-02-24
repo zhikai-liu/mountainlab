@@ -3,3 +3,4 @@ example2 examples/example2 --_iff=examples
 example3 examples/example3 --_iff=examples
 example4 examples/example4 --_iff=examples
 example5 examples/example5 --_iff=examples
+multi multisession_example --_iff=examples

@@ -12,28 +12,67 @@ function main(params) {
 		segment_duration_sec:3600, //duration of a single time segment (drift scale)
 		shift_duration_sec:1800, //shift duration for the sliding window
 		num_time_segment_threads:1, //number of time segments to process in parallel
-		num_basic_sort_threads:0 // 0 means do the default, based on choice for num_time_segment_threads
+		num_basic_sort_threads:0, // 0 means do the default, based on choice for num_time_segment_threads
+		generate_filt:0,generate_pre:0 //whether to generate/save the filtered and/or preprocess data as output
 	});
 
 	var inpath=params.inpath;
 	var outpath=params.outpath;
 
 	var raw=inpath+'/raw.mda.prv';
+	if (!file_exists(raw)) {
+		raw=[];
+		var dir0=dir(inpath);
+		console.log(JSON.stringify(dir0));
+		var session_folders=dir0.folders;
+		for (var i in session_folders) {
+			var fname=inpath+'/'+session_folders[i].name+'/raw.mda.prv'
+			if (file_exists(fname))
+				raw.push(fname);
+		}
+	}
+	if (raw.length==0) {
+		console.error('No raw files found.');
+		return;
+	}
+	console.log(JSON.stringify(raw));
 
 	var params2=clone(params);
-	var output=Process('mountainsort.drift_sort',
+	var outputs={firings_out:'',cluster_metrics_out:''}; //generate temporary output files for these
+	if (params.generate_filt) outputs.filt_out='';
+	if (params.generate_pre) outputs.pre_out='';
+	var results=Process('mountainsort.drift_sort',
 			{timeseries:raw},
-			params2);
-	var firings=output.firings_out;
-	var cluster_metrics=output.cluster_metrics_out;
-	var filt=output.filt_out;
-	var pre=output.pre_out;
+			params2,
+			outputs
+	);
+	var firings=results.firings_out;
+	var cluster_metrics=results.cluster_metrics_out;
 
 	// Write the output
-	write_prv(raw,params.outpath+'/raw.mda.prv');
-	write_prv(filt,params.outpath+'/filt.mda.prv');
-	write_prv(pre,params.outpath+'/pre.mda.prv');
-	write_file(firings,params.outpath+'/firings.mda');
+	write_file(firings,params.outpath+'/firings.mda');	
+	write_file(cluster_metrics,params.outpath+'/cluster_metrics.json');
+	if (typeof(raw)=='string') {
+		write_prv(raw,params.outpath+'/raw.mda.prv');
+	}
+	else {
+		remove_file(params.outpath+'/raw.mda.prv');
+	}
+	if (params.generate_filt) {
+		var filt=results.filt_out;
+		write_prv(filt,params.outpath+'/filt.mda.prv');
+	}
+	else {
+		remove_file(params.outpath+'/filt.mda.prv');
+	}
+	if (params.generate_pre) {
+		var pre=results.pre_out;
+		write_prv(pre,params.outpath+'/pre.mda.prv');
+	}
+	else {
+		remove_file(params.outpath+'/pre.mda.prv');
+	}
+	
 
 	run_pipeline();
 }
@@ -42,13 +81,14 @@ function run_pipeline() {
 	_MP2.runPipeline();
 }
 
-function Process(processor_name,inputs,parameters) {
+function Process(processor_name,inputs,parameters,outputs) {
 	if (!parameters) parameters={};
+	if (!outputs) outputs=''; // empty outputs means that they will be created as temporary files and the return object will contain the paths to these temporary files
 	var ret=_MP2.addProcess(
 		processor_name,
 		JSON.stringify(inputs),
 		JSON.stringify(parameters),
-		'' // empty outputs means that they will be created as temporary files and the return object will contain the paths to these temporary files
+		JSON.stringify(outputs)
 	);
 	return JSON.parse(ret);
 }
@@ -73,6 +113,10 @@ function write_prv(input,output) {
 	_MP2.addPrv(input,output);
 }
 
+function remove_file(path) {
+	_MP2.removeFile(path);
+}
+
 function clone(obj) {
 	return JSON.parse(JSON.stringify(obj));
 }
@@ -87,4 +131,13 @@ function set_default_parameters(params,defaults) {
 			params[pname]=defaults[pname];
 		}
 	}
+}
+
+
+function file_exists(path) {
+	return _MP2.fileExists(path);
+}
+
+function dir(path) {
+	return JSON.parse(_MP2.dir(path));
 }
