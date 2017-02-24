@@ -22,6 +22,7 @@ cd examples/003_kron_mountainsort
 
 # Start the processing daemon
 mp-daemon-start magland
+mp-daemon-start magland
 
 # run the processing
 kron-run ms2 example1
