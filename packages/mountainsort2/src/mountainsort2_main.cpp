@@ -24,6 +24,7 @@
 #include "p_apply_timestamp_offset.h"
 #include "p_link_segments.h"
 #include "p_cluster_metrics.h"
+#include "p_split_firings.h"
 #include "omp.h"
 
 QJsonObject get_spec()
@@ -128,6 +129,13 @@ QJsonObject get_spec()
         X.addInputs("timeseries", "firings");
         X.addOutputs("cluster_metrics_out");
         X.addRequiredParameters("samplerate");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.split_firings", "0.13");
+        X.addInputs("timeseries_list", "firings");
+        X.addOutputs("firings_out_list");
+        //X.addRequiredParameters();
         processors.push_back(X.get_spec());
     }
 
@@ -274,6 +282,12 @@ int main(int argc, char* argv[])
         Cluster_metrics_opts opts;
         opts.samplerate = CLP.named_parameters["samplerate"].toDouble();
         ret = p_cluster_metrics(timeseries, firings, cluster_metrics_out, opts);
+    }
+    else if (arg1 == "mountainsort.split_firings") {
+        QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);
+        QString firings = CLP.named_parameters["firings"].toString();
+        QStringList firings_out_list = MLUtil::toStringList(CLP.named_parameters["firings_out_list"]);
+        ret = p_split_firings(timeseries_list, firings, firings_out_list);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

@@ -1,4 +1,6 @@
 ./001_generate_synthetic_data.sh
 
 kron-run m2drift ds1
-kron-view results m2drift ds1
+kron-view results m2drift ds1 session_1
+
+replace session_1 by session_2 and session_3

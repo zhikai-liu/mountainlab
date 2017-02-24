@@ -20,19 +20,24 @@ function main(params) {
 	var outpath=params.outpath;
 
 	var raw=inpath+'/raw.mda.prv';
+	var sessions=[];
 	if (!file_exists(raw)) {
+		sessions=find_all_sessions(inpath);
+		console.log('sessions:');
+		console.log(JSON.stringify(sessions));
 		raw=[];
-		var dir0=dir(inpath);
-		console.log(JSON.stringify(dir0));
-		var session_folders=dir0.folders;
-		for (var i in session_folders) {
-			var fname=inpath+'/'+session_folders[i].name+'/raw.mda.prv'
-			if (file_exists(fname))
+		for (var i in sessions) {
+			var session_path=sessions[i].path;
+			var fname=session_path+'/raw.mda.prv'
+			if (file_exists(fname)) {
 				raw.push(fname);
+				console.log('mkdir: '+sessions[i].relpath);
+				mkdir(outpath+'/'+sessions[i].relpath);
+			}
 		}
 	}
 	if (raw.length==0) {
-		console.error('No raw files found.');
+		console.error('No raw files or sessions found.');
 		return;
 	}
 	console.log(JSON.stringify(raw));
@@ -72,9 +77,43 @@ function main(params) {
 	else {
 		remove_file(params.outpath+'/pre.mda.prv');
 	}
-	
+
+
+	if (sessions.length>0) {
+		var firings_out_list=[];
+		for (var i in sessions) {
+			write_prv(sessions[i].path+'/raw.mda.prv',params.outpath+'/'+sessions[i].relpath+'/raw.mda.prv');
+			write_file(cluster_metrics,params.outpath+'/'+sessions[i].relpath+'/cluster_metrics.json');
+			var tmp=outpath+'/'+sessions[i].relpath+'/firings.mda';
+			firings_out_list.push(tmp);
+		}
+		Process('mountainsort.split_firings',
+				{timeseries_list:raw,firings:params.outpath+'/firings.mda'},
+				{},
+				{firings_out_list:firings_out_list}
+			);
+	}
 
 	run_pipeline();
+}
+
+function find_all_sessions(inpath,relpath) {
+	if (!relpath) relpath='';
+	var ret=[];
+	var dir0=dir(inpath);
+	var folders0=dir0.folders||[];
+	for (var i in folders0) {
+		var fname=inpath+'/'+folders0[i].name+'/raw.mda.prv';
+		if (file_exists(fname)) {
+			ret.push({path:inpath+'/'+folders0[i].name,relpath:relpath+'/'+folders0[i].name});
+		}
+		else {
+			var ret0=find_all_sessions(inpath+'/'+folders0[i].name,relpath+'/'+folders0[i].name);
+			for (var j in ret0)
+				ret.push(ret0[j]);
+		}
+	}
+	return ret;
 }
 
 function run_pipeline() {
@@ -140,4 +179,8 @@ function file_exists(path) {
 
 function dir(path) {
 	return JSON.parse(_MP2.dir(path));
+}
+
+function mkdir(path) {
+	_MP2.mkdir(path);
 }

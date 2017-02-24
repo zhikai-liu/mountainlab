@@ -7,7 +7,7 @@ TEMPLATE = subdirs
 #COMPONENTS = mdaconvert  mountainprocess mountainview prv prv-gui
 
 isEmpty(COMPONENTS) {
-    COMPONENTS = mda mdaconvert mountainprocess mountainsort mountainview mountaincompare prv prv-gui
+    COMPONENTS = mda mdaconvert mountainprocess mountainsort mountainview mountaincompare prv prv-gui mountainsort2
 }
 
 CONFIG += ordered
@@ -32,5 +32,6 @@ SUBDIRS += $$ifcomponent(mountaincompare,mountaincompare/src/mountaincompare.pro
 SUBDIRS += $$ifcomponent(prv,prv/src/prv.pro)
 SUBDIRS += $$ifcomponent(prv-gui,prv-gui/src/prv-gui.pro)
 SUBDIRS += $$ifcomponent(mountainview-eeg,packages/mountainlab-eeg/mountainview-eeg/src/mountainview-eeg.pro)
+SUBDIRS += $$ifcomponent(mountainsort2,packages/mountainsort2/src/mountainsort2.pro)
 
 CONFIG(debug, debug|release) { SUBDIRS += tests }
