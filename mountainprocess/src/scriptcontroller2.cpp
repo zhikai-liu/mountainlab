@@ -401,12 +401,12 @@ bool ScriptController2::writeTextFile(const QString& path, const QString& text)
     return TextFile::write(path, text);
 }
 
-bool ScriptController2::fileExists(const QString &path)
+bool ScriptController2::fileExists(const QString& path)
 {
     return QFile::exists(path);
 }
 
-void ScriptController2::removeFile(const QString &path)
+void ScriptController2::removeFile(const QString& path)
 {
     QFile::remove(path);
 }
