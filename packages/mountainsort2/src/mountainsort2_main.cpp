@@ -25,6 +25,8 @@
 #include "p_link_segments.h"
 #include "p_cluster_metrics.h"
 #include "p_split_firings.h"
+#include "p_concat_timeseries.h"
+#include "p_concat_firings.h"
 #include "omp.h"
 
 QJsonObject get_spec()
@@ -135,6 +137,22 @@ QJsonObject get_spec()
         ProcessorSpec X("mountainsort.split_firings", "0.13");
         X.addInputs("timeseries_list", "firings");
         X.addOutputs("firings_out_list");
+        //X.addRequiredParameters();
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.concat_timeseries", "0.1");
+        X.addInputs("timeseries_list");
+        X.addOutputs("timeseries_out");
+        //X.addRequiredParameters();
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.concat_firings", "0.1");
+        X.addInputs("timeseries_list");
+        X.addInputs("firings_list");
+        X.addOutputs("timeseries_out");
+        X.addOutputs("firings_out");
         //X.addRequiredParameters();
         processors.push_back(X.get_spec());
     }
@@ -288,6 +306,18 @@ int main(int argc, char* argv[])
         QString firings = CLP.named_parameters["firings"].toString();
         QStringList firings_out_list = MLUtil::toStringList(CLP.named_parameters["firings_out_list"]);
         ret = p_split_firings(timeseries_list, firings, firings_out_list);
+    }
+    else if (arg1 == "mountainsort.concat_timeseries") {
+        QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);
+        QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
+        ret = p_concat_timeseries(timeseries_list,timeseries_out);
+    }
+    else if (arg1 == "mountainsort.concat_firings") {
+        QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);
+        QStringList firings_list = MLUtil::toStringList(CLP.named_parameters["firings_list"]);
+        QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
+        QString firings_out = CLP.named_parameters["firings_out"].toString();
+        ret = p_concat_firings(timeseries_list,firings_list,timeseries_out,firings_out);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

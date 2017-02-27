@@ -39,7 +39,9 @@ SOURCES += \
     p_apply_timestamp_offset.cpp \
     p_link_segments.cpp \
     p_cluster_metrics.cpp \
-    p_split_firings.cpp
+    p_split_firings.cpp \
+    p_concat_timeseries.cpp \
+    p_concat_firings.cpp
 
 HEADERS += \
     p_extract_clips.h \
@@ -57,7 +59,9 @@ HEADERS += \
     p_apply_timestamp_offset.h \
     p_link_segments.h \
     p_cluster_metrics.h \
-    p_split_firings.h
+    p_split_firings.h \
+    p_concat_timeseries.h \
+    p_concat_firings.h
 
 INCLUDEPATH += ../../../mountainsort/src/isosplit5
 VPATH += ../../../mountainsort/src/isosplit5
