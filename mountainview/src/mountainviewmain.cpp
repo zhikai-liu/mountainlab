@@ -132,6 +132,7 @@ QList<QColor> generate_colors_old(const QColor& bg, const QColor& fg, int noColo
 #include "mvabstractcontrol.h"
 #include "mvopenviewscontrol.h"
 #include "mvgeneralcontrol.h"
+#include "mvtimeseriescontrol.h"
 #include "mvprefscontrol.h"
 #include "mvclustervisibilitycontrol.h"
 #include "mvexportcontrol.h"
@@ -446,6 +447,7 @@ int main(int argc, char* argv[])
         setup_main_window(W);
         printf("Adding controls to main window...\n");
         W->addControl(new MVOpenViewsControl(context, W), true);
+        W->addControl(new MVTimeseriesControl(context, W), true);
         W->addControl(new MVGeneralControl(context, W), false);
         W->addControl(new MVExportControl(context, W), true);
         W->addControl(new MVClusterVisibilityControl(context, W), false);

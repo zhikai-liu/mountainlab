@@ -22,6 +22,7 @@ public:
     QMap<QString, QLineEdit*> m_double_controls;
     QMap<QString, QComboBox*> m_choices_controls;
     QMap<QString, QCheckBox*> m_checkbox_controls;
+    QMap<QString, QRadioButton*> m_radio_button_controls;
     QMap<QString, QToolButton*> m_toolbutton_controls;
 
     QMap<QString, QWidget*> all_control_widgets();
@@ -67,6 +68,9 @@ QVariant MVAbstractControl::controlValue(QString name) const
     if (d->m_checkbox_controls.contains(name)) {
         return d->m_checkbox_controls[name]->isChecked();
     }
+    if (d->m_radio_button_controls.contains(name)) {
+        return d->m_radio_button_controls[name]->isChecked();
+    }
     return QVariant();
 }
 
@@ -92,6 +96,9 @@ void MVAbstractControl::setControlValue(QString name, QVariant val)
     }
     if (d->m_checkbox_controls.contains(name)) {
         d->m_checkbox_controls[name]->setChecked(val.toBool());
+    }
+    if (d->m_radio_button_controls.contains(name)) {
+        d->m_radio_button_controls[name]->setChecked(val.toBool());
     }
 }
 
@@ -134,6 +141,15 @@ QCheckBox* MVAbstractControl::createCheckBoxControl(QString name, QString label)
 {
     QCheckBox* X = new QCheckBox;
     d->m_checkbox_controls[name] = X;
+    X->setText(label);
+    QObject::connect(X, SIGNAL(clicked(bool)), this, SLOT(updateContext()));
+    return X;
+}
+
+QRadioButton* MVAbstractControl::createRadioButtonControl(QString name, QString label)
+{
+    QRadioButton* X = new QRadioButton;
+    d->m_radio_button_controls[name] = X;
     X->setText(label);
     QObject::connect(X, SIGNAL(clicked(bool)), this, SLOT(updateContext()));
     return X;
@@ -216,6 +232,14 @@ void add_to(QMap<QString, QWidget*>& A, QMap<QString, QToolButton*>& B)
     }
 }
 
+void add_to(QMap<QString, QWidget*>& A, QMap<QString, QRadioButton*>& B)
+{
+    QStringList keys = B.keys();
+    foreach (QString key, keys) {
+        A[key] = B[key];
+    }
+}
+
 QMap<QString, QWidget*> MVAbstractControlPrivate::all_control_widgets()
 {
     QMap<QString, QWidget*> ret;
@@ -225,5 +249,6 @@ QMap<QString, QWidget*> MVAbstractControlPrivate::all_control_widgets()
     add_to(ret, m_choices_controls);
     add_to(ret, m_checkbox_controls);
     add_to(ret, m_toolbutton_controls);
+    add_to(ret, m_radio_button_controls);
     return ret;
 }

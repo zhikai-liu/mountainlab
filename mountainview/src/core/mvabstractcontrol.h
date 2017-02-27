@@ -9,6 +9,7 @@
 
 #include <QCheckBox>
 #include <QComboBox>
+#include <QRadioButton>
 #include <QToolButton>
 
 #include "mvabstractcontext.h"
@@ -40,6 +41,7 @@ protected:
     QWidget* createDoubleControl(QString name);
     QComboBox* createChoicesControl(QString name);
     QCheckBox* createCheckBoxControl(QString name, QString label);
+    QRadioButton* createRadioButtonControl(QString name, QString label);
     QToolButton* createToolButtonControl(QString name, QString label, QObject* receiver = 0, const char* signal_or_slot = 0);
 
     void updateControlsOn(QObject* sender, const char* signal);

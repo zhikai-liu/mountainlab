@@ -22,14 +22,6 @@ for (var i in clusters) {
 	}
 }
 
-console.log('\nfiring_rate');
-for (var i in clusters) {	
-	if (clusters[i].metric('firing_rate')<0.1) {
-		console.log('REJECT: '+clusters[i].k());
-		clusters[i].addTag('rejected');
-	}
-}
-
 console.log('\nIsolation');
 for (var i in clusterPairs) {
 	var CP=clusterPairs[i];

@@ -38,7 +38,8 @@ HEADERS += clusterdetailplugin.h clusterdetailview.h \
     views/mvgridviewpropertiesdialog.h \
     misc/renderablewidget.h \
     misc/jscounter.h \
-    core/mvabstractcontext.h
+    core/mvabstractcontext.h \
+    controlwidgets/createtimeseriesdialog.h
 SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
     clusterdetailviewpropertiesdialog.cpp \
     msv/views/matrixview.cpp \
@@ -54,8 +55,10 @@ SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
     views/mvgridviewpropertiesdialog.cpp \
     misc/renderablewidget.cpp \
     misc/jscounter.cpp \
-    core/mvabstractcontext.cpp
-FORMS += clusterdetailviewpropertiesdialog.ui
+    core/mvabstractcontext.cpp \
+    controlwidgets/createtimeseriesdialog.cpp
+FORMS += clusterdetailviewpropertiesdialog.ui \
+    controlwidgets/createtimeseriesdialog.ui
 
 INCLUDEPATH += ../../prv-gui/src
 HEADERS += ../../prv-gui/src/prvgui.h
@@ -147,10 +150,10 @@ INCLUDEPATH += controlwidgets
 VPATH += controlwidgets
 HEADERS += \
 mvclustervisibilitycontrol.h \
-mvexportcontrol.h mvgeneralcontrol.h mvopenviewscontrol.h mvclusterordercontrol.h
+mvexportcontrol.h mvgeneralcontrol.h mvtimeseriescontrol.h mvopenviewscontrol.h mvclusterordercontrol.h
 SOURCES += \
 mvclustervisibilitycontrol.cpp \
-mvexportcontrol.cpp mvgeneralcontrol.cpp mvopenviewscontrol.cpp mvclusterordercontrol.cpp
+mvexportcontrol.cpp mvgeneralcontrol.cpp mvtimeseriescontrol.cpp mvopenviewscontrol.cpp mvclusterordercontrol.cpp
 
 INCLUDEPATH += guides
 VPATH += guides
