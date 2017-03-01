@@ -861,6 +861,7 @@ bool MountainProcessServer::launch_pript(QString pript_id)
             args << "--_process_output=" + S->output_fname;
         if (S->preserve_tempdir)
             args << "--_preserve_tempdir";
+        args << QString("--_parent_pid=%1").arg(S->parent_pid);
         QStringList pkeys = S->parameters.keys();
         foreach (QString pkey, pkeys) {
             QStringList list = MLUtil::toStringList(S->parameters[pkey]);
