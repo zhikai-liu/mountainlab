@@ -429,7 +429,7 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
             args << QString("--%1=%2").arg(pkey).arg(val);
         }
     }
-    args << QString("--_parent_pid=%1").arg(QCoreApplication::applicationPid());
+    //args << QString("--_parent_pid=%1").arg(QCoreApplication::applicationPid());
     if (force_run) {
         args << "--_force_run";
     }
@@ -439,7 +439,8 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
     QProcess* P1 = new QProcess;
     P1->setReadChannelMode(QProcess::MergedChannels);
     qDebug() << exe + " " + args.join(" ");
-    P1->start(exe, args);
+    //P1->start(exe, args);
+    MPDaemon::start_bash_command_and_kill_when_pid_is_gone(P1,exe,args,QCoreApplication::applicationPid());
     if (!P1->waitForStarted()) {
         qWarning() << "Error waiting for process to start: " + processor_name;
         delete P1;

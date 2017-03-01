@@ -94,13 +94,18 @@ MPDaemon::MPDaemon()
 }
 #endif
 
-void kill_process_and_children(QProcess* P)
+void kill_process_and_children(long pid)
 {
     /// Witold, do we need to worry about making this cross-platform?
-    int pid = P->processId();
     QString cmd = QString("CPIDS=$(pgrep -P %1); (sleep 33 && kill -KILL $CPIDS &); kill -TERM $CPIDS").arg(pid);
     int ret = system(cmd.toUtf8().data());
     Q_UNUSED(ret);
+}
+
+
+void kill_process_and_children(QProcess* P)
+{
+    kill_process_and_children(P->processId());
 }
 
 #include "signal.h"
@@ -635,8 +640,14 @@ bool MountainProcessServer::stop_or_remove_pript(const QString& key)
         if (PP->qprocess) {
             qWarning() << "Terminating qprocess: " + key;
             //PP->qprocess->terminate(); // I think it's okay to terminate a process. It won't cause this program to crash.
-            kill_process_and_children(PP->qprocess);
-            delete PP->qprocess;
+            if (PP->parent_pid) {
+                //if we can, kill the parent pid instead so that the qprocess will exit gracefully when it discovers it has no parent
+                kill_process_and_children(PP->parent_pid);
+            }
+            else {
+                kill_process_and_children(PP->qprocess);
+                delete PP->qprocess;
+            }
         }
         finish_and_finalize(*PP);
         m_pripts.remove(key);
@@ -904,7 +915,12 @@ bool MountainProcessServer::launch_pript(QString pript_id)
 
     debug_log(__FUNCTION__, __FILE__, __LINE__);
 
-    qprocess->start(exe, args);
+    if (S->parent_pid) {
+        MPDaemon::start_bash_command_and_kill_when_pid_is_gone(qprocess,exe,args,S->parent_pid);
+    }
+    else {
+        qprocess->start(exe, args);
+    }
     if (qprocess->waitForStarted()) {
         if (S->prtype == ScriptType) {
             writeLogRecord("started-script", "pript_id", pript_id, "pid", (long long)qprocess->processId());
@@ -1286,4 +1302,23 @@ bool MPDaemon::waitForFinishedAndWriteOutput(QProcess* P, long parent_pid)
 bool MPDaemon::pidExists(qint64 pid)
 {
     return (kill(pid, 0) == 0);
+}
+
+void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess *qprocess, QString exe_command, long pid)
+{
+    QString bash_script_fname = CacheManager::globalInstance()->makeLocalFile();
+
+    QString script;
+    script+="#!/bin/bash\n\n";
+    script+="cmdpid=$BASHPID;\n";
+    script+=QString("(while kill -0 %1 >/dev/null 2>&1; do sleep 1; done ; kill $cmdpid) & (%2)\n").arg(pid).arg(exe_command);
+
+    TextFile::write(bash_script_fname,  script);
+    qprocess->start("/bin/bash", QStringList(bash_script_fname));
+}
+
+void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess *qprocess, QString exe, QStringList args, long pid)
+{
+    QString exe_command=exe+" "+args.join(" ");
+    start_bash_command_and_kill_when_pid_is_gone(qprocess,exe_command,pid);
 }

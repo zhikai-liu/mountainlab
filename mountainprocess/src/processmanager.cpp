@@ -288,10 +288,8 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     PP.info.start_time = QDateTime::currentDateTime();
 
     // Do it this way so that special characters are handled exactly like a system call
-    QString bash_script_fname = CacheManager::globalInstance()->makeLocalFile();
-    TextFile::write(bash_script_fname, "#!/bin/bash\n" + PP.info.exe_command);
-    PP.qprocess->start("/bin/bash", QStringList(bash_script_fname));
-    //PP.qprocess->start(PP.info.exe_command);
+    MPDaemon::start_bash_command_and_kill_when_pid_is_gone(PP.qprocess,PP.info.exe_command,QCoreApplication::applicationPid());
+    //PP.qprocess->start(PP.info.exe_command); //not this way
 
     PP.qprocess->setProperty("pp_id", id);
     if (!PP.qprocess->waitForStarted(2000)) {
