@@ -77,6 +77,7 @@ common.mp_exec_process=function(processor_name,inputs,outputs,params,callback) {
 			console.error('Subprocess '+processor_name+' returned with a non-zero exit code.');
 			process.exit(-1);
 		}
+		aa.processor_name=processor_name;
 		callback(aa);
 	});
 };

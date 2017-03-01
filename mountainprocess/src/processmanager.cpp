@@ -288,7 +288,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     PP.info.start_time = QDateTime::currentDateTime();
 
     // Do it this way so that special characters are handled exactly like a system call
-    MPDaemon::start_bash_command_and_kill_when_pid_is_gone(PP.qprocess,PP.info.exe_command,QCoreApplication::applicationPid());
+    MPDaemon::start_bash_command_and_kill_when_pid_is_gone(PP.qprocess, PP.info.exe_command, QCoreApplication::applicationPid());
     //PP.qprocess->start(PP.info.exe_command); //not this way
 
     PP.qprocess->setProperty("pp_id", id);
@@ -438,7 +438,7 @@ void ProcessManager::slot_process_finished()
     }
     QString id = qprocess->property("pp_id").toString();
     if (!d->m_processes.contains(id)) {
-        qWarning() << "Process not found in slot_process_finished. It was probably cleared beforehand: "+id;
+        qWarning() << "Process not found in slot_process_finished. It was probably cleared beforehand: " + id;
         return;
     }
     d->update_process_info(id);

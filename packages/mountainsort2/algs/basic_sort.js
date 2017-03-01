@@ -199,8 +199,8 @@ exports.run=function(opts,callback) {
 		console.log('');
 		console.log('****** '+console_prefix+'BASIC SORT STEP '+(ii+1)+' of '+steps.length +' ******');
 		var timer=new Date();
-		step(function() {
-			console.log ('Elapsed time (sec): '+get_elapsed_sec(timer));
+		step(function(result) {
+			console.log ('Elapsed time ['+(result.processor_name||'')+'] (sec): '+get_elapsed_sec(timer));
 			cb();
 		});
 	},function() {

@@ -102,7 +102,6 @@ void kill_process_and_children(long pid)
     Q_UNUSED(ret);
 }
 
-
 void kill_process_and_children(QProcess* P)
 {
     kill_process_and_children(P->processId());
@@ -916,7 +915,7 @@ bool MountainProcessServer::launch_pript(QString pript_id)
     debug_log(__FUNCTION__, __FILE__, __LINE__);
 
     if (S->parent_pid) {
-        MPDaemon::start_bash_command_and_kill_when_pid_is_gone(qprocess,exe,args,S->parent_pid);
+        MPDaemon::start_bash_command_and_kill_when_pid_is_gone(qprocess, exe, args, S->parent_pid);
     }
     else {
         qprocess->start(exe, args);
@@ -1304,21 +1303,21 @@ bool MPDaemon::pidExists(qint64 pid)
     return (kill(pid, 0) == 0);
 }
 
-void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess *qprocess, QString exe_command, long pid)
+void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe_command, long pid)
 {
     QString bash_script_fname = CacheManager::globalInstance()->makeLocalFile();
 
     QString script;
-    script+="#!/bin/bash\n\n";
-    script+="cmdpid=$BASHPID;\n";
-    script+=QString("(while kill -0 %1 >/dev/null 2>&1; do sleep 1; done ; kill $cmdpid) & (%2)\n").arg(pid).arg(exe_command);
+    script += "#!/bin/bash\n\n";
+    script += "cmdpid=$BASHPID;\n";
+    script += QString("(while kill -0 %1 >/dev/null 2>&1; do sleep 1; done ; kill $cmdpid) & (%2)\n").arg(pid).arg(exe_command);
 
-    TextFile::write(bash_script_fname,  script);
+    TextFile::write(bash_script_fname, script);
     qprocess->start("/bin/bash", QStringList(bash_script_fname));
 }
 
-void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess *qprocess, QString exe, QStringList args, long pid)
+void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, long pid)
 {
-    QString exe_command=exe+" "+args.join(" ");
-    start_bash_command_and_kill_when_pid_is_gone(qprocess,exe_command,pid);
+    QString exe_command = exe + " " + args.join(" ");
+    start_bash_command_and_kill_when_pid_is_gone(qprocess, exe_command, pid);
 }

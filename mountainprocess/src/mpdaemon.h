@@ -38,8 +38,8 @@ bool waitForFileToAppear(QString fname, qint64 timeout_ms = -1, bool remove_on_a
 void wait(qint64 msec);
 bool waitForFinishedAndWriteOutput(QProcess* P, long parent_pid);
 bool pidExists(qint64 pid);
-void start_bash_command_and_kill_when_pid_is_gone(QProcess *qprocess,QString exe_command,long pid);
-void start_bash_command_and_kill_when_pid_is_gone(QProcess *qprocess,QString exe,QStringList args,long pid);
+void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe_command, long pid);
+void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, long pid);
 }
 
 #if 0

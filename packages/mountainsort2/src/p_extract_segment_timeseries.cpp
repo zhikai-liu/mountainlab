@@ -25,10 +25,17 @@ bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, lo
     DiskWriteMda Y;
     Y.open(X.mdaioHeader().data_type, timeseries_out, M, N2);
 
-    Mda32 chunk;
-    X.readChunk(chunk, 0, t1, M, N2);
-    Y.writeChunk(chunk, 0, 0);
-    Y.close();
+    //conserve memory as of 3/1/17 -- jfm
+    long chunk_size = 10000; //conserve memory!
+    for (long t = 0; t < N2; t += chunk_size) {
+        long sz = chunk_size;
+        if (t + sz > N2)
+            sz = N2 - t;
+        Mda32 chunk;
+        X.readChunk(chunk, 0, t1 + t, M, sz);
+        Y.writeChunk(chunk, 0, t);
+        Y.close();
+    }
 
     return true;
 }
