@@ -37,7 +37,7 @@ function main(params) {
 		}
 	}
 	if (raw.length==0) {
-		console.error('No raw files or sessions found.');
+		console.err('No raw files or sessions found.');
 		return;
 	}
 	console.log(JSON.stringify(raw));
