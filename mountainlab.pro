@@ -33,5 +33,6 @@ SUBDIRS += $$ifcomponent(prv,prv/src/prv.pro)
 SUBDIRS += $$ifcomponent(prv-gui,prv-gui/src/prv-gui.pro)
 SUBDIRS += $$ifcomponent(mountainview-eeg,packages/mountainlab-eeg/mountainview-eeg/src/mountainview-eeg.pro)
 SUBDIRS += $$ifcomponent(mountainsort2,packages/mountainsort2/src/mountainsort2.pro)
+SUBDIRS += $$ifcomponent(sslongview,packages/sslongview/src/sslongview.pro)
 
 CONFIG(debug, debug|release) { SUBDIRS += tests }

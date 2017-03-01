@@ -390,21 +390,37 @@ void TimeSpanImageCalculator::run()
 
     QJsonArray clusters = cluster_metrics["clusters"].toArray();
 
+    QMap<int,int> cluster_index_lookup;
+    for (int i=0; i<clusters.count(); i++) {
+        QJsonObject cluster = clusters.at(i).toObject();
+        int label=cluster["label"].toInt();
+        cluster_index_lookup[label]=i;
+    }
+
     for (int i = 0; i < clusters_to_show.count(); i++) {
         int k = clusters_to_show[i];
-        QJsonObject cluster = clusters.at(k).toObject();
-        QJsonObject metrics = cluster["metrics"].toObject();
-        double t1_sec = metrics["t1_sec"].toDouble();
-        double t2_sec = metrics["t2_sec"].toDouble();
-        double t1 = t1_sec * samplerate;
-        double t2 = t2_sec * samplerate;
-        double xpix1 = time2xpix(t1);
-        double xpix2 = time2xpix(t2);
-        double ypix1 = val2ypix(i - 0.4);
-        double ypix2 = val2ypix(i + 0.4);
-        QRectF R(xpix1, ypix1, xpix2 - xpix1, ypix2 - ypix1);
-        QColor col = cluster_colors.value(k % cluster_colors.count());
-        painter.fillRect(R, col);
+        if (cluster_index_lookup.contains(k)) {
+            int jj=cluster_index_lookup.value(k);
+            QJsonObject cluster = clusters.at(jj).toObject();
+            QJsonObject metrics = cluster["metrics"].toObject();
+            double t1_sec = metrics["t1_sec"].toDouble();
+            double t2_sec = metrics["t2_sec"].toDouble();
+            double t1 = t1_sec * samplerate;
+            double t2 = t2_sec * samplerate;
+            double xpix1 = time2xpix(t1);
+            double xpix2 = time2xpix(t2);
+            double ypix0=val2ypix(i);
+            double ypix1 = val2ypix(i - 0.4);
+            double ypix2 = val2ypix(i + 0.4);
+            qDebug() << t1_sec << t2_sec << t1 << t2 << xpix1 << xpix2;
+            if (ypix2-ypix1<=2) {
+                ypix1=ypix0-1;
+                ypix2=ypix0+1;
+            }
+            QRectF R(xpix1, ypix1, xpix2 - xpix1, ypix2 - ypix1);
+            QColor col = cluster_colors.value(k % cluster_colors.count());
+            painter.fillRect(R, col);
+        }
     }
 
     /*
@@ -448,8 +464,8 @@ double TimeSpanImageCalculator::time2xpix(double t)
         return 0;
 
     double xpct = (t - view_t1) / (view_t2 - view_t1);
-    if ((xpct < 0) || (xpct > 1))
-        return -1;
+    //if ((xpct < 0) || (xpct > 1))
+    //    return -1;
     double px = content_geometry.x() + xpct * content_geometry.width();
     return px;
 }
