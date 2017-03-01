@@ -268,7 +268,7 @@ int main(int argc, char* argv[])
         int ret = 0;
         QString error_message;
         MLProcessInfo info;
-        int parent_pid = CLP.named_parameters.value("_parent_pid", 0).toInt();
+        long parent_pid = CLP.named_parameters.value("_parent_pid", 0).toLongLong();
 
         bool preserve_tempdir = CLP.named_parameters.contains("_preserve_tempdir");
 

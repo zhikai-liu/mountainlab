@@ -1251,7 +1251,7 @@ QString MPDaemon::daemonPath()
     return ret;
 }
 
-bool MPDaemon::waitForFinishedAndWriteOutput(QProcess* P, int parent_pid)
+bool MPDaemon::waitForFinishedAndWriteOutput(QProcess* P, long parent_pid)
 {
     debug_log(__FUNCTION__, __FILE__, __LINE__);
 
