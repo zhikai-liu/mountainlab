@@ -25,7 +25,7 @@ public:
 
     /////////////////////////////////////////////////
     QJsonObject clusterMetrics() const;
-    void setClusterMetrics(const QJsonObject &obj);
+    void setClusterMetrics(const QJsonObject& obj);
 
     /////////////////////////////////////////////////
     double currentTimepoint() const;
@@ -52,6 +52,8 @@ public:
     void setClusterColors(const QList<QColor>& colors);
     void setChannelColors(const QList<QColor>& colors);
     void setColors(const QMap<QString, QColor>& colors);
+
+    double maxTimepoint() const;
 
     void setFromMV2FileObject(QJsonObject obj) Q_DECL_OVERRIDE;
     QJsonObject toMV2FileObject() const Q_DECL_OVERRIDE;

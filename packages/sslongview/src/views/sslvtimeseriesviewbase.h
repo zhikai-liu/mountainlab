@@ -62,8 +62,6 @@ public:
     MVRange timeRange();
     void setSelectedTimeRange(MVRange range);
 
-    double amplitudeFactor() const;
-
 protected:
     void resizeEvent(QResizeEvent* evt);
     void paintEvent(QPaintEvent* evt);

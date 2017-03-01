@@ -16,12 +16,16 @@ public:
     double m_sample_rate = 0;
     QJsonObject m_cluster_metrics;
 
-    int m_current_cluster=-1;
+    int m_current_cluster = -1;
     QList<int> m_selected_clusters;
+
+    double m_max_timepoint = 0;
 
     QList<QColor> m_cluster_colors;
     QList<QColor> m_channel_colors;
-    QMap<QString,QColor> m_colors;
+    QMap<QString, QColor> m_colors;
+
+    double compute_max_timepoint();
 };
 
 SSLVContext::SSLVContext()
@@ -56,14 +60,18 @@ void SSLVContext::setFromMV2FileObject(QJsonObject X)
 {
     this->clear();
     d->m_original_object = X; // to preserve unused fields
-    d->m_timeseries=DiskReadMda(X["timeseries"].toObject());
+    d->m_timeseries = DiskReadMda(X["timeseries"].toObject());
 
     d->m_sample_rate = X["samplerate"].toDouble();
     if (X.contains("options")) {
         this->setOptions(X["options"].toObject().toVariantMap());
     }
 
-    d->m_cluster_metrics=X["cluster_metrics"].toObject();
+    d->m_cluster_metrics = X["cluster_metrics"].toObject();
+
+    d->m_max_timepoint = d->compute_max_timepoint();
+
+    this->setCurrentTimeRange(MVRange(0, d->m_max_timepoint));
 
     emit this->timeseriesChanged();
     emit this->currentTimepointChanged();
@@ -74,11 +82,11 @@ void SSLVContext::setFromMV2FileObject(QJsonObject X)
 QJsonObject SSLVContext::toMV2FileObject() const
 {
     QJsonObject X = d->m_original_object;
-    if (d->m_timeseries.N2()>1)
+    if (d->m_timeseries.N2() > 1)
         X["timeseries"] = d->m_timeseries.toPrvObject();
     X["samplerate"] = d->m_sample_rate;
     X["options"] = QJsonObject::fromVariantMap(this->options());
-    X["cluster_metrics"]=d->m_cluster_metrics;
+    X["cluster_metrics"] = d->m_cluster_metrics;
     return X;
 }
 
@@ -92,15 +100,17 @@ QJsonObject SSLVContext::clusterMetrics() const
     return d->m_cluster_metrics;
 }
 
-void SSLVContext::setClusterMetrics(const QJsonObject &obj)
+void SSLVContext::setClusterMetrics(const QJsonObject& obj)
 {
-    d->m_cluster_metrics=obj;
+    d->m_cluster_metrics = obj;
+    d->m_max_timepoint = d->compute_max_timepoint();
     emit this->clusterMetricsChanged();
 }
 
 void SSLVContext::setTimeseries(DiskReadMda timeseries)
 {
-    d->m_timeseries=timeseries;
+    d->m_timeseries = timeseries;
+    d->m_max_timepoint = d->compute_max_timepoint();
     emit this->timeseriesChanged();
 }
 
@@ -108,8 +118,8 @@ void SSLVContext::setCurrentTimepoint(double tp)
 {
     if (tp < 0)
         tp = 0;
-    if (tp >= this->timeseries().N2())
-        tp = this->timeseries().N2() - 1;
+    if (tp > d->m_max_timepoint)
+        tp = d->m_max_timepoint;
     if (d->m_current_timepoint == tp)
         return;
     d->m_current_timepoint = tp;
@@ -119,8 +129,8 @@ void SSLVContext::setCurrentTimepoint(double tp)
 void SSLVContext::setCurrentTimeRange(const MVRange& range_in)
 {
     MVRange range = range_in;
-    if (range.max >= this->timeseries().N2()) {
-        range = range + (this->timeseries().N2() - 1 - range.max);
+    if (range.max > d->m_max_timepoint) {
+        range = range + (d->m_max_timepoint - range.max);
     }
     if (range.min < 0) {
         range = range + (0 - range.min);
@@ -128,9 +138,9 @@ void SSLVContext::setCurrentTimeRange(const MVRange& range_in)
     if (range.max - range.min < 150) { //don't allow range to be too small
         range.max = range.min + 150;
     }
-    if ((range.max >= this->timeseries().N2()) && (range.min == 0)) { //second condition important
+    if ((range.max > d->m_max_timepoint) && (range.min == 0)) { //second condition important
         //don't allow it to extend too far
-        range.max = this->timeseries().N2() - 1;
+        range.max = d->m_max_timepoint;
     }
     if (d->m_current_time_range == range)
         return;
@@ -150,12 +160,13 @@ QList<int> SSLVContext::selectedClusters() const
 
 void SSLVContext::setCurrentCluster(int k)
 {
-    if (k==d->m_current_cluster) return;
-    d->m_current_cluster=k;
+    if (k == d->m_current_cluster)
+        return;
+    d->m_current_cluster = k;
     emit this->currentClusterChanged();
 }
 
-void SSLVContext::setSelectedClusters(const QList<int> &ks)
+void SSLVContext::setSelectedClusters(const QList<int>& ks)
 {
     QList<int> ks2 = QList<int>::fromSet(ks.toSet()); //remove duplicates and -1
     ks2.removeAll(-1);
@@ -201,10 +212,10 @@ bool SSLVContext::clusterIsVisible(int k)
 QList<int> SSLVContext::getAllClusterNumbers() const
 {
     QList<int> ret;
-    QJsonArray clusters=d->m_cluster_metrics["clusters"].toArray();
-    for (int i=0; i<clusters.count(); i++) {
-        QJsonObject cluster=clusters[i].toObject();
-        int k=cluster["label"].toInt();
+    QJsonArray clusters = d->m_cluster_metrics["clusters"].toArray();
+    for (int i = 0; i < clusters.count(); i++) {
+        QJsonObject cluster = clusters[i].toObject();
+        int k = cluster["label"].toInt();
         ret << k;
     }
     qSort(ret);
@@ -219,7 +230,7 @@ double SSLVContext::currentTimepoint() const
 MVRange SSLVContext::currentTimeRange() const
 {
     if ((d->m_current_time_range.min <= 0) && (d->m_current_time_range.max <= 0)) {
-        return MVRange(0, qMax(0L, this->timeseries().N2() - 1));
+        return MVRange(0, qMax(0.0, d->m_max_timepoint));
     }
     return d->m_current_time_range;
 }
@@ -238,6 +249,11 @@ void SSLVContext::setChannelColors(const QList<QColor>& colors)
 void SSLVContext::setColors(const QMap<QString, QColor>& colors)
 {
     d->m_colors = colors;
+}
+
+double SSLVContext::maxTimepoint() const
+{
+    return d->m_max_timepoint;
 }
 
 QList<QColor> SSLVContext::channelColors() const
@@ -286,4 +302,18 @@ QColor SSLVContext::color(QString name, QColor default_color) const
 QMap<QString, QColor> SSLVContext::colors() const
 {
     return d->m_colors;
+}
+
+double SSLVContextPrivate::compute_max_timepoint()
+{
+    double ret = m_timeseries.N2() - 1;
+    QJsonArray clusters = m_cluster_metrics["clusters"].toArray();
+    for (int i = 0; i < clusters.count(); i++) {
+        QJsonObject cluster = clusters[i].toObject();
+        QJsonObject metrics = cluster["metrics"].toObject();
+        double t2 = metrics["t2_sec"].toDouble() * m_sample_rate;
+        if (t2 > ret)
+            ret = t2;
+    }
+    return ret;
 }

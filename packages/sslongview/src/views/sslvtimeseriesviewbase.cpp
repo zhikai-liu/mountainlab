@@ -364,6 +364,7 @@ void SSLVTimeSeriesViewBase::mouseReleaseEvent(QMouseEvent* evt)
     if (evt->button() == Qt::LeftButton) {
         if (!d->m_left_click_dragging) {
             double t0 = d->xpix2time(evt->pos().x());
+            qDebug() << "setting current timepoint: " << t0 << evt->pos().x() << c->maxTimepoint() << c->currentTimeRange().min << c->currentTimeRange().max;
             c->setCurrentTimepoint(t0);
         }
         d->m_left_click_dragging = false;

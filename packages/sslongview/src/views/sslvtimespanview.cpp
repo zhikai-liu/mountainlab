@@ -43,7 +43,7 @@ public:
     void paint(QPainter* painter) Q_DECL_OVERRIDE;
 
     QRectF content_geometry;
-    MVRange amplitude_range;
+    //MVRange amplitude_range;
 };
 
 class TimeSpanContentLayer;
@@ -59,6 +59,8 @@ public:
     QSize window_size;
     MVRange time_range;
     QList<int> clusters_to_show;
+    QJsonObject cluster_metrics;
+    double samplerate;
 
     //output
     QImage image;
@@ -120,6 +122,8 @@ SSLVTimeSpanView::SSLVTimeSpanView(MVAbstractContext* context)
     this->setPrefs(p);
 
     connect(c, SIGNAL(currentTimeRangeChanged()), SLOT(slot_update_image()));
+
+    this->setNumTimepoints(c->maxTimepoint() + 1);
 
     //this->recalculateOn(c, SIGNAL(clusterMergeChanged()));
     //this->recalculateOn(c, SIGNAL(firingsChanged()), false);
@@ -237,6 +241,8 @@ void SSLVTimeSpanView::slot_update_image()
     d->m_content_layer->calculator->window_size = this->size();
     d->m_content_layer->calculator->time_range = c->currentTimeRange();
     d->m_content_layer->calculator->clusters_to_show = d->m_clusters_to_show;
+    d->m_content_layer->calculator->cluster_metrics = c->clusterMetrics();
+    d->m_content_layer->calculator->samplerate = c->sampleRate();
     d->m_content_layer->calculator->start();
 }
 
@@ -274,7 +280,7 @@ void SSLVTimeSpanView::paintContent(QPainter* painter)
 
 double SSLVTimeSpanViewPrivate::val2ypix(double val)
 {
-    double pcty = (val+0.5)/m_clusters_to_show.count();
+    double pcty = (val + 0.5) / m_clusters_to_show.count();
 
     return q->contentGeometry().top() + pcty * q->contentGeometry().height();
 }
@@ -282,7 +288,7 @@ double SSLVTimeSpanViewPrivate::val2ypix(double val)
 double SSLVTimeSpanViewPrivate::ypix2val(double ypix)
 {
     double pcty = 1 - (ypix - q->contentGeometry().top()) / q->contentGeometry().height();
-    double val=pcty*m_clusters_to_show.count()-0.5;
+    double val = pcty * m_clusters_to_show.count() - 0.5;
     return val;
 }
 
@@ -319,8 +325,9 @@ void MVTimeSpanViewCalculator::compute()
 void TimeSpanAxisLayer::paint(QPainter* painter)
 {
     draw_axis_opts opts;
-    opts.minval = amplitude_range.min;
-    opts.maxval = amplitude_range.max;
+    opts.minval = opts.maxval = 0;
+    //opts.minval = amplitude_range.min;
+    //opts.maxval = amplitude_range.max;
     opts.orientation = Qt::Vertical;
     opts.pt1 = content_geometry.bottomLeft() + QPointF(-3, 0);
     opts.pt2 = content_geometry.topLeft() + QPointF(-3, 0);
@@ -380,6 +387,26 @@ void TimeSpanImageCalculator::run()
     QColor transparent(0, 0, 0, 0);
     image.fill(transparent);
     QPainter painter(&image);
+
+    QJsonArray clusters = cluster_metrics["clusters"].toArray();
+
+    for (int i = 0; i < clusters_to_show.count(); i++) {
+        int k = clusters_to_show[i];
+        QJsonObject cluster = clusters.at(k).toObject();
+        QJsonObject metrics = cluster["metrics"].toObject();
+        double t1_sec = metrics["t1_sec"].toDouble();
+        double t2_sec = metrics["t2_sec"].toDouble();
+        double t1 = t1_sec * samplerate;
+        double t2 = t2_sec * samplerate;
+        double xpix1 = time2xpix(t1);
+        double xpix2 = time2xpix(t2);
+        double ypix1 = val2ypix(i - 0.4);
+        double ypix2 = val2ypix(i + 0.4);
+        QRectF R(xpix1, ypix1, xpix2 - xpix1, ypix2 - ypix1);
+        QColor col = cluster_colors.value(k % cluster_colors.count());
+        painter.fillRect(R, col);
+    }
+
     /*
     double alpha_pct = 0.7;
     for (long i = 0; i < times.count(); i++) {
@@ -429,7 +456,7 @@ double TimeSpanImageCalculator::time2xpix(double t)
 
 double TimeSpanImageCalculator::val2ypix(double val)
 {
-    double pcty = (val+0.5) / clusters_to_show.count();
+    double pcty = (val + 0.5) / clusters_to_show.count();
 
     return content_geometry.top() + pcty * content_geometry.height();
 }

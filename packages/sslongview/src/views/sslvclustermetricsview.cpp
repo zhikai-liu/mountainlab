@@ -184,11 +184,11 @@ void SSLVClusterMetricsViewPrivate::refresh_tree()
 
     QJsonObject obj = c->clusterMetrics();
 
-    QJsonArray clusters=obj["clusters"].toArray();
+    QJsonArray clusters = obj["clusters"].toArray();
 
     QSet<QString> metric_names_set;
     for (int ii = 0; ii < clusters.count(); ii++) {
-        QJsonObject cluster=clusters[ii].toObject();
+        QJsonObject cluster = clusters[ii].toObject();
         QJsonObject metrics = cluster["metrics"].toObject();
         QStringList nnn = metrics.keys();
         foreach (QString name, nnn) {
@@ -205,7 +205,7 @@ void SSLVClusterMetricsViewPrivate::refresh_tree()
     m_tree->setHeaderLabels(headers);
 
     for (int ii = 0; ii < clusters.count(); ii++) {
-        QJsonObject cluster=clusters[ii].toObject();
+        QJsonObject cluster = clusters[ii].toObject();
         QJsonObject metrics = cluster["metrics"].toObject();
         int k = cluster["label"].toInt();
         if (c->clusterIsVisible(k)) {

@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
             }
             if (CLP.named_parameters.contains("cluster_metrics")) {
                 QString cluster_metrics_path = CLP.named_parameters["cluster_metrics"].toString();
-                QJsonObject obj=QJsonDocument::fromJson(TextFile::read(cluster_metrics_path).toUtf8()).object();
+                QJsonObject obj = QJsonDocument::fromJson(TextFile::read(cluster_metrics_path).toUtf8()).object();
                 dc.setClusterMetrics(obj);
             }
 
@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
         a.processEvents();
 
         W->setCurrentContainerName("north");
-        //W->openView("open-cluster-details");
+        W->openView("open-time-span");
         W->setCurrentContainerName("south");
         W->openView("open-cluster-metrics");
 
