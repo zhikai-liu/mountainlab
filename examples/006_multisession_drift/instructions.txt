@@ -5,8 +5,9 @@ kron-view results m2drift ds1 session_1
 
 replace session_1 by session_2 and session_3
 
+Then you can combine one or more sessions using the following:
 
-Then
-./example_combine_output.sh
-mountainview --samplerate=30000 --raw=ts_combined.mda --firings=firings_combined.mda
+combine-session-outputs m2drift ds1 combined session_1 session_2 session_3
+kron-view results m2drift ds1 combined
+
 
