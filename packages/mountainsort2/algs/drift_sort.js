@@ -138,6 +138,7 @@ exports.run=function(opts,callback) {
 					opts2.cluster_metrics_out='';
 					opts2._temp_prefix=(opts._temp_prefix||'00')+'-segment_'+iseg;
 					opts2._request_num_threads=opts.num_basic_sort_threads;
+					opts2.console_prefix='SEGMENT '+(iseg+1)+'/'+segments.length+' --- ';
 					console.log('>>>>>>>>>>>> Running basic sort for segment '+(iseg+1)+'...\n');
 					basic_sort.run(opts2,function() {
 						apply_timestamp_offset(firings0,firings1,segment.t1,function() {
@@ -237,6 +238,7 @@ exports.run=function(opts,callback) {
 				opts2.firings_out=''; //preprocess only
 				opts2.pre_out=opts.pre_out;
 				opts2.filt_out=opts.filt_out;
+				opts2.console_prefix='Preprocessing for visualization -- ';
 				opts2._temp_prefix=(opts._temp_prefix||'00')+'-preprocess';
 				opts2._request_num_threads=os.cpus().length; //use all the threads for this part (user has requested something potentially time-consuming)
 				if (typeof(opts2.timeseries)=='object') {

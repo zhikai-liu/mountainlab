@@ -29,7 +29,9 @@ exports.spec=function() {
 	return common.clone(spec0);
 };
 
+var console_prefix='';
 exports.run=function(opts,callback) {
+	console_prefix=opts.console_prefix||'';
 	if (!opts._tempdir) {
 		console.error('opts._tempdir is empty');
 		process.exit(-1);
@@ -195,7 +197,7 @@ exports.run=function(opts,callback) {
 	//Run all steps
 	common.foreach(steps,{},function(ii,step,cb) {
 		console.log('');
-		console.log('--------------------------- BASIC SORT STEP '+(ii+1)+' of '+steps.length +' -----------');
+		console.log('****** '+console_prefix+'BASIC SORT STEP '+(ii+1)+' of '+steps.length +' ******');
 		var timer=new Date();
 		step(function() {
 			console.log ('Elapsed time (sec): '+get_elapsed_sec(timer));

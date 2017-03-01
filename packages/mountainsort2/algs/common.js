@@ -52,6 +52,7 @@ common.foreach=function(array,opts,step_function,end_function) {
 common.mp_exec_process=function(processor_name,inputs,outputs,params,callback) {
 	var exe='mountainprocess';
 	var args=['exec-process',processor_name];
+	args.push('--_parent_pid='+process.pid);
 	var all_params=[];
 	for (var key in inputs) {
 		all_params[key]=inputs[key];
@@ -127,11 +128,33 @@ common.read_mda_header=function(path,callback) {
 	});
 };
 
+/*
+//this does not seem to be working as intended
+var _all_spawned=[];
+function kill_spawned_processes() {
+	console.log('Killing '+_all_spawned.length+' spawned processes');
+	for (var i in _all_spawned) {
+		console.log('Terminating process with pid = '+pp.pid);
+		var pp=_all_spawned[i];
+		process.kill(pp.pid, 'SIGTERM');
+	}
+}
+process.on('SIGINT', function() {
+	kill_spawned_processes();
+	process.exit();
+});
+process.on('SIGTERM', function() {
+	kill_spawned_processes();
+	process.exit();
+});
+*/
+
 common.make_system_call=function(cmd,args,opts,callback) {
 	var num_tries=opts.num_tries||1;
 	var child_process=require('child_process');
 	console.log ('Calling: '+cmd+' '+args.join(' '));
 	var pp=child_process.spawn(cmd,args);
+	_all_spawned=[];
 	pp.stdout.setEncoding('utf8');
 	pp.stderr.setEncoding('utf8');
 	var done=false;

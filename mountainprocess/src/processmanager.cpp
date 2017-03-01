@@ -390,8 +390,7 @@ void ProcessManager::clearProcess(const QString& id)
     QProcess* qprocess = d->m_processes[id].qprocess;
     d->m_processes.remove(id);
     if (qprocess->state() == QProcess::Running) {
-        d->m_processes[id].qprocess->kill();
-        ;
+        qprocess->kill();
     }
     delete qprocess;
 }
@@ -441,7 +440,7 @@ void ProcessManager::slot_process_finished()
     }
     QString id = qprocess->property("pp_id").toString();
     if (!d->m_processes.contains(id)) {
-        qCritical() << "Unexpected problem in slot_process_finished. id not found in m_processes: " + id;
+        qWarning() << "Process not found in slot_process_finished. It was probably cleared beforehand: "+id;
         return;
     }
     d->update_process_info(id);

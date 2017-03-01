@@ -1265,8 +1265,9 @@ bool MPDaemon::waitForFinishedAndWriteOutput(QProcess* P, long parent_pid)
         qApp->processEvents();
         if (parent_pid) {
             if (!pidExists(parent_pid)) {
-                qWarning() << "Parent pid does not exist. Terminating process.";
-                P->terminate();
+                qWarning() << "Parent pid does not exist. Terminating process...." << P->pid();
+                kill_process_and_children(P);
+                qWarning() << "Process killed.";
                 return false;
             }
         }
