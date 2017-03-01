@@ -310,14 +310,14 @@ int main(int argc, char* argv[])
     else if (arg1 == "mountainsort.concat_timeseries") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
-        ret = p_concat_timeseries(timeseries_list,timeseries_out);
+        ret = p_concat_timeseries(timeseries_list, timeseries_out);
     }
     else if (arg1 == "mountainsort.concat_firings") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);
         QStringList firings_list = MLUtil::toStringList(CLP.named_parameters["firings_list"]);
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
         QString firings_out = CLP.named_parameters["firings_out"].toString();
-        ret = p_concat_firings(timeseries_list,firings_list,timeseries_out,firings_out);
+        ret = p_concat_firings(timeseries_list, firings_list, timeseries_out, firings_out);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

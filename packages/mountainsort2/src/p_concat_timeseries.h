@@ -4,6 +4,6 @@
 #include <QString>
 #include <QStringList>
 
-bool p_concat_timeseries(QStringList timeseries_list,QString timeseries_out);
+bool p_concat_timeseries(QStringList timeseries_list, QString timeseries_out);
 
 #endif // P_CONCAT_TIMESERIES_H

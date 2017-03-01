@@ -1251,7 +1251,7 @@ QString MPDaemon::daemonPath()
     return ret;
 }
 
-bool MPDaemon::waitForFinishedAndWriteOutput(QProcess* P)
+bool MPDaemon::waitForFinishedAndWriteOutput(QProcess* P, int parent_pid)
 {
     debug_log(__FUNCTION__, __FILE__, __LINE__);
 
@@ -1263,6 +1263,13 @@ bool MPDaemon::waitForFinishedAndWriteOutput(QProcess* P)
             printf("%s", str.data());
         }
         qApp->processEvents();
+        if (parent_pid) {
+            if (!pidExists(parent_pid)) {
+                qWarning() << "Parent pid does not exist. Terminating process.";
+                P->terminate();
+                return false;
+            }
+        }
     }
     {
         P->waitForReadyRead();

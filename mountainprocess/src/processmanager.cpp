@@ -304,12 +304,12 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     return id;
 }
 
-bool ProcessManager::waitForFinished(const QString& process_id)
+bool ProcessManager::waitForFinished(const QString& process_id, int parent_pid)
 {
     if (!d->m_processes.contains(process_id))
         return false;
     QProcess* qprocess = d->m_processes[process_id].qprocess;
-    return MPDaemon::waitForFinishedAndWriteOutput(qprocess);
+    return MPDaemon::waitForFinishedAndWriteOutput(qprocess, parent_pid);
 }
 
 bool ProcessManager::checkParameters(const QString& processor_name, const QVariantMap& parameters)

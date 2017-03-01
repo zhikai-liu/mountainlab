@@ -268,6 +268,7 @@ int main(int argc, char* argv[])
         int ret = 0;
         QString error_message;
         MLProcessInfo info;
+        int parent_pid = CLP.named_parameters.value("_parent_pid", 0).toInt();
 
         bool preserve_tempdir = CLP.named_parameters.contains("_preserve_tempdir");
 
@@ -293,7 +294,7 @@ int main(int argc, char* argv[])
                     error_message = "Problem starting process: " + processor_name;
                     ret = -1;
                 }
-                if (!PM->waitForFinished(id)) { //wait for the process to finish
+                if (!PM->waitForFinished(id, parent_pid)) { //wait for the process to finish
                     error_message = "Problem waiting for process to finish: " + processor_name;
                     ret = -1;
                 }
