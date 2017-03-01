@@ -61,6 +61,7 @@ public:
     QList<int> clusters_to_show;
     QJsonObject cluster_metrics;
     double samplerate;
+    int current_cluster = 0;
 
     //output
     QImage image;
@@ -122,6 +123,7 @@ SSLVTimeSpanView::SSLVTimeSpanView(MVAbstractContext* context)
     this->setPrefs(p);
 
     connect(c, SIGNAL(currentTimeRangeChanged()), SLOT(slot_update_image()));
+    connect(c, SIGNAL(currentClusterChanged()), SLOT(slot_update_image()));
 
     this->setNumTimepoints(c->maxTimepoint() + 1);
 
@@ -243,6 +245,7 @@ void SSLVTimeSpanView::slot_update_image()
     d->m_content_layer->calculator->clusters_to_show = d->m_clusters_to_show;
     d->m_content_layer->calculator->cluster_metrics = c->clusterMetrics();
     d->m_content_layer->calculator->samplerate = c->sampleRate();
+    d->m_content_layer->calculator->current_cluster = c->currentCluster();
     d->m_content_layer->calculator->start();
 }
 
@@ -390,36 +393,48 @@ void TimeSpanImageCalculator::run()
 
     QJsonArray clusters = cluster_metrics["clusters"].toArray();
 
-    QMap<int,int> cluster_index_lookup;
-    for (int i=0; i<clusters.count(); i++) {
+    QMap<int, int> cluster_index_lookup;
+    for (int i = 0; i < clusters.count(); i++) {
         QJsonObject cluster = clusters.at(i).toObject();
-        int label=cluster["label"].toInt();
-        cluster_index_lookup[label]=i;
+        int label = cluster["label"].toInt();
+        cluster_index_lookup[label] = i;
     }
 
-    for (int i = 0; i < clusters_to_show.count(); i++) {
-        int k = clusters_to_show[i];
-        if (cluster_index_lookup.contains(k)) {
-            int jj=cluster_index_lookup.value(k);
-            QJsonObject cluster = clusters.at(jj).toObject();
-            QJsonObject metrics = cluster["metrics"].toObject();
-            double t1_sec = metrics["t1_sec"].toDouble();
-            double t2_sec = metrics["t2_sec"].toDouble();
-            double t1 = t1_sec * samplerate;
-            double t2 = t2_sec * samplerate;
-            double xpix1 = time2xpix(t1);
-            double xpix2 = time2xpix(t2);
-            double ypix0=val2ypix(i);
-            double ypix1 = val2ypix(i - 0.4);
-            double ypix2 = val2ypix(i + 0.4);
-            qDebug() << t1_sec << t2_sec << t1 << t2 << xpix1 << xpix2;
-            if (ypix2-ypix1<=2) {
-                ypix1=ypix0-1;
-                ypix2=ypix0+1;
+    for (int pass = 1; pass <= 2; pass++) {
+        for (int i = 0; i < clusters_to_show.count(); i++) {
+            int k = clusters_to_show[i];
+            if (cluster_index_lookup.contains(k)) {
+                int jj = cluster_index_lookup.value(k);
+                QJsonObject cluster = clusters.at(jj).toObject();
+                QJsonObject metrics = cluster["metrics"].toObject();
+                double t1_sec = metrics["t1_sec"].toDouble();
+                double t2_sec = metrics["t2_sec"].toDouble();
+                double t1 = t1_sec * samplerate;
+                double t2 = t2_sec * samplerate;
+                double xpix1 = time2xpix(t1);
+                double xpix2 = time2xpix(t2);
+                double ypix0 = val2ypix(i);
+                double ypix1 = val2ypix(i - 0.4);
+                double ypix2 = val2ypix(i + 0.4);
+                if (ypix2 - ypix1 <= 2) {
+                    ypix1 = ypix0 - 1;
+                    ypix2 = ypix0 + 1;
+                }
+                QRectF R(xpix1, ypix1, xpix2 - xpix1, ypix2 - ypix1);
+                QColor col = cluster_colors.value(k % cluster_colors.count());
+
+                if (pass == 1) {
+                    painter.fillRect(R, col);
+                }
+                if ((k == current_cluster) && (pass == 2)) {
+                    QRectF R2 = R;
+                    R2.adjust(-4, -4, 4, 4);
+                    //painter.setPen(Qt::white);
+                    //painter.drawRect(R);
+                    painter.fillRect(R2, Qt::white);
+                    painter.fillRect(R, col);
+                }
             }
-            QRectF R(xpix1, ypix1, xpix2 - xpix1, ypix2 - ypix1);
-            QColor col = cluster_colors.value(k % cluster_colors.count());
-            painter.fillRect(R, col);
         }
     }
 
