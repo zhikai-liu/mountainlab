@@ -30,6 +30,9 @@ public:
     long m_current_internal_chunk_index;
     Mda32 m_memory_mda;
     bool m_use_memory_mda;
+    bool m_use_concat=false;
+    int m_concat_dimension=2;
+    QList<DiskReadMda32> m_concat_list;
 
     QString m_path;
     QJsonObject m_prv_object;
@@ -94,10 +97,26 @@ DiskReadMda32::DiskReadMda32(const QJsonObject& prv_object)
     //QString path0 = resolve_prv_object(prv_object, allow_downloads, allow_processing);
     QString path0 = locate_prv(prv_object);
     if (path0.isEmpty()) {
-        qWarning() << "Unable to construct DiskReadMda from prv_object. Unable to resolve. Original path = " << prv_object["original_path"].toString();
+        qWarning() << "Unable to construct DiskReadMda32 from prv_object. Unable to resolve. Original path = " << prv_object["original_path"].toString();
         return;
     }
     this->setPath(path0);
+}
+
+DiskReadMda32::DiskReadMda32(int concat_dimension, const QList<DiskReadMda32> &arrays)
+{
+    d = new DiskReadMda32Private;
+    d->q = this;
+    d->construct_and_clear();
+
+    if (concat_dimension!=0) {
+        qCritical() << "For now concat_dimension must be 2!";
+        return;
+    }
+
+    d->m_use_concat=true;
+    d->m_concat_dimension=concat_dimension;
+    d->m_concat_list=arrays;
 }
 
 DiskReadMda32::~DiskReadMda32()
@@ -146,6 +165,18 @@ void DiskReadMda32::setPath(const QString& file_path)
             return;
         }
     }
+    else if (file_path.startsWith("\"")) {
+        QStringList list=file_path.split(";");
+        for (int i=0; i<list.count(); i++) {
+            list[i]=list[i].mid(1,list[i].count()-2); //remove quotes
+        }
+        if (list.count()==1) {
+            d->m_path=list[0];
+        }
+        else {
+            setConcatPaths(2,list);
+        }
+    }
     else {
         d->m_path = file_path;
     }
@@ -154,6 +185,20 @@ void DiskReadMda32::setPath(const QString& file_path)
 void DiskReadMda32::setPrvObject(const QJsonObject& prv_object)
 {
     d->m_prv_object = prv_object;
+}
+
+void DiskReadMda32::setConcatPaths(int concat_dimension, const QStringList &paths)
+{
+    if (concat_dimension!=2) {
+        qWarning() << "For now, the concat_dimension must be 2";
+        return;
+    }
+    d->m_use_concat=true;
+    d->m_concat_dimension=concat_dimension;
+    d->m_concat_list.clear();
+    foreach (QString path0,paths) {
+        d->m_concat_list << DiskReadMda32(path0);
+    }
 }
 
 QString compute_memory_checksum32(long nbytes, void* ptr)
@@ -183,15 +228,31 @@ QString DiskReadMda32::makePath() const
         QString fname = CacheManager::globalInstance()->makeLocalFile(checksum + ".makePath.mda", CacheManager::ShortTerm);
         if (QFile::exists(fname))
             return fname;
-        if (d->m_memory_mda.write32(fname + ".tmp")) {
+        if (d->m_memory_mda.write64(fname + ".tmp")) {
             if (QFile::rename(fname + ".tmp", fname)) {
                 return fname;
             }
+            else {
+                QFile::remove(fname + ".tmp");
+                return "";
+            }
         }
-        QFile::remove(fname);
-        QFile::remove(fname + ".tmp");
+        else {
+            QFile::remove(fname);
+            QFile::remove(fname + ".tmp");
+            return "";
+        }
     }
-    return d->m_path;
+    else if (d->m_use_concat) {
+        QStringList list;
+        for (int i=0; i<d->m_concat_list.count(); i++) {
+            list << "\""+d->m_concat_list[i].makePath()+"\"";
+        }
+        return list.join(";");
+    }
+    else {
+        return d->m_path;
+    }
 }
 
 QJsonObject DiskReadMda32::toPrvObject() const
@@ -267,6 +328,7 @@ long DiskReadMda32::N6() const
 
 long DiskReadMda32::N(int dim) const
 {
+    d->read_header_if_needed();
     if (dim == 0)
         return 0; //should be 1-based
     if (dim == 1)
@@ -287,11 +349,13 @@ long DiskReadMda32::N(int dim) const
 
 long DiskReadMda32::totalSize() const
 {
+    d->read_header_if_needed();
     return d->total_size();
 }
 
 MDAIO_HEADER DiskReadMda32::mdaioHeader() const
 {
+    d->read_header_if_needed();
     return d->m_header;
 }
 
@@ -335,11 +399,88 @@ DiskReadMda32 DiskReadMda32::reshaped(long N1b, long N2b, long N3b, long N4b, lo
     return ret;
 }
 
+bool read_chunk_from_concat_list(Mda32 &chunk,const QList<DiskReadMda32> &list,long i0,long size0,int concat_dimension) {
+    if (list.count()==0) {
+        qWarning() << "Problem in read_chunk_from concat_list: list is empty";
+        return false;
+    }
+    long N1=list[0].N1();
+    if ((concat_dimension!=2)||(i0%N1!=0)||(size0%N1!=0)) {
+        qWarning() << "For now the concat_dimension must be 2 and the i and size in readChunk must be a multiples of N1";
+        return false;
+    }
+    long pos1=i0/N1;
+    long pos2=pos1+size0/N1-1;
+
+    QVector<long> sizes;
+    for (int j=0; j<list.count(); j++) {
+        if (list[j].totalSize()%N1!=0) {
+            qWarning() << "For now the concat_dimension must be 2 and the individual arrays must have total size a multiple of N1" << N1 << list[j].totalSize();
+            return false;
+        }
+        sizes << list[j].totalSize()/N1;
+    }
+    QVector<long> start_points, end_points;
+    start_points << 0;
+    end_points << sizes.value(0) - 1;
+    for (int i = 1; i < sizes.count(); i++) {
+        start_points << end_points[i - 1] + 1;
+        end_points << start_points[i] + sizes[i] - 1;
+    }
+
+    long ii1 = 0;
+    while ((ii1 < list.count()) && (pos1 > end_points[ii1])) {
+        ii1++;
+    }
+    long ii2 = ii1;
+    while ((ii2 + 1 < list.count()) && (start_points[ii2 + 1] <= pos2)) {
+        ii2++;
+    }
+
+    chunk.allocate(1, N1*(pos2 - pos1 + 1));
+    for (int ii = ii1; ii <= ii2; ii++) {
+        Mda32 chunk_ii;
+
+        //ttA,ttB, the range to read from Y
+        //ssA, the position to write it in "out"
+        long ttA, ttB, ssA;
+        if (ii == ii1) {
+            long offset = pos1 - start_points[ii];
+            ssA = 0;
+            if (ii1 < ii2) {
+                ttA = offset;
+                ttB = sizes[ii] - 1;
+            }
+            else {
+                ttA = offset;
+                ttB = ttA + (pos2 - pos1 + 1) - 1;
+            }
+        }
+        else if (ii == ii2) {
+            ttA = 0;
+            ttB = pos2 - start_points[ii];
+            ssA = start_points[ii] - pos1;
+        }
+        else {
+            ttA = 0;
+            ttB = sizes[ii] - 1;
+            ssA = start_points[ii] - pos1;
+        }
+
+        list[ii].readChunk(chunk_ii, N1*ttA, N1*(ttB - ttA + 1));
+        chunk.setChunk(chunk_ii, N1*ssA);
+    }
+    return true;
+}
+
 bool DiskReadMda32::readChunk(Mda32& X, long i, long size) const
 {
     if (d->m_use_memory_mda) {
         d->m_memory_mda.getChunk(X, i, size);
         return true;
+    }
+    else if (d->m_use_concat) {
+        return read_chunk_from_concat_list(X,d->m_concat_list,i,size,d->m_concat_dimension);
     }
     if (!d->open_file_if_needed())
         return false;
@@ -353,7 +494,7 @@ bool DiskReadMda32::readChunk(Mda32& X, long i, long size) const
         if (d->bytesReadCounter)
             d->bytesReadCounter->add(bytes_read);
         if (bytes_read != size_to_read) {
-            printf("Warning problem reading chunk in diskreadmda: %ld<>%ld\n", bytes_read, size_to_read);
+            printf("Warning problem reading chunk in DiskReadMda32: %ld<>%ld\n", bytes_read, size_to_read);
             return false;
         }
     }
@@ -369,6 +510,11 @@ bool DiskReadMda32::readChunk(Mda32& X, long i1, long i2, long size1, long size2
         d->m_memory_mda.getChunk(X, i1, i2, size1, size2);
         return true;
     }
+    else if (d->m_use_concat) {
+        if (!readChunk(X,i1+N1()*i2,size1*size2))
+            return false;
+        return X.reshape(size1,size2);
+    }
     if (!d->open_file_if_needed())
         return false;
     if ((size1 == N1()) && (i1 == 0)) {
@@ -383,14 +529,14 @@ bool DiskReadMda32::readChunk(Mda32& X, long i1, long i2, long size1, long size2
             if (d->bytesReadCounter)
                 d->bytesReadCounter->add(bytes_read);
             if (bytes_read != size1 * size2_to_read) {
-                printf("Warning problem reading 2d chunk in diskreadmda: %ld<>%ld\n", bytes_read, size1 * size2);
+                printf("Warning problem reading 2d chunk in DiskReadMda32: %ld<>%ld\n", bytes_read, size1 * size2);
                 return false;
             }
         }
         return true;
     }
     else {
-        printf("Warning: This case not yet supported (diskreadmda::readchunk 2d).\n");
+        printf("Warning: This case not yet supported (DiskReadMda32::readchunk 2d).\n");
         return false;
     }
 }
@@ -409,6 +555,11 @@ bool DiskReadMda32::readChunk(Mda32& X, long i1, long i2, long i3, long size1, l
         d->m_memory_mda.getChunk(X, i1, i2, i3, size1, size2, size3);
         return true;
     }
+    else if (d->m_use_concat) {
+        if (!readChunk(X,i1+N1()*i2+N1()*N2()*i3,size1*size2*size3))
+            return false;
+        return X.reshape(size1,size2,size3);
+    }
     if (!d->open_file_if_needed())
         return false;
     if ((size1 == N1()) && (size2 == N2())) {
@@ -423,14 +574,14 @@ bool DiskReadMda32::readChunk(Mda32& X, long i1, long i2, long i3, long size1, l
             if (d->bytesReadCounter)
                 d->bytesReadCounter->add(bytes_read);
             if (bytes_read != size1 * size2 * size3_to_read) {
-                printf("Warning problem reading 3d chunk in diskreadmda: %ld<>%ld\n", bytes_read, size1 * size2 * size3_to_read);
+                printf("Warning problem reading 3d chunk in DiskReadMda32: %ld<>%ld\n", bytes_read, size1 * size2 * size3_to_read);
                 return false;
             }
         }
         return true;
     }
     else {
-        printf("Warning: This case not yet supported (diskreadmda::readchunk 3d).\n");
+        printf("Warning: This case not yet supported (DiskReadMda32::readchunk 3d).\n");
         return false;
     }
 }
@@ -485,6 +636,7 @@ void DiskReadMda32Private::construct_and_clear()
     m_file = 0;
     m_current_internal_chunk_index = -1;
     m_use_memory_mda = false;
+    m_use_concat = false;
     m_header_read = false;
     m_reshaped = false;
     this->m_internal_chunk = Mda32();
@@ -499,6 +651,35 @@ bool DiskReadMda32Private::read_header_if_needed()
         return true;
     if (m_use_memory_mda) {
         m_header_read = true;
+        return true;
+    }
+    else if (m_use_concat) {
+        m_header_read=true;
+        if (m_concat_list.count()==0) {
+            qWarning() << "Cannot read header of concat array because list is empty";
+            return false;
+        }
+        m_header=m_concat_list[0].mdaioHeader();
+        long N2=0;
+        for (int i=0; i<m_concat_list.count(); i++) {
+            if (m_concat_list[i].N1()!=m_concat_list[0].N1()) {
+                qWarning() << "dimension mismatch in concat list";
+                return false;
+            }
+            if (m_concat_list[i].N3()!=m_concat_list[0].N3()) {
+                qWarning() << "dimension mismatch in concat list";
+                return false;
+            }
+            if (m_concat_list[i].N4()!=m_concat_list[0].N4()) {
+                qWarning() << "dimension mismatch in concat list";
+                return false;
+            }
+            N2+=m_concat_list[i].N2();
+        }
+        m_header.dims[1]=N2;
+        m_mda_header_total_size = 1;
+        for (int i = 0; i < MDAIO_MAX_DIMS; i++)
+            m_mda_header_total_size *= m_header.dims[i];
         return true;
     }
     bool file_was_open = (m_file != 0); //so we can restore to previous state (we don't want too many files open unnecessarily)
@@ -517,6 +698,10 @@ bool DiskReadMda32Private::open_file_if_needed()
 {
     if (m_use_memory_mda)
         return true;
+    if (m_use_concat) {
+        read_header_if_needed();
+        return true;
+    }
     if (m_file)
         return true;
     if (m_file_open_failed)
@@ -535,7 +720,13 @@ bool DiskReadMda32Private::open_file_if_needed()
         }
     }
     else {
-        qWarning() << ":::: Failed to open diskreadmda32 file: " + m_path;
+        qWarning() << ":::: Failed to open DiskReadMda32 file: " + m_path;
+        if (QFile::exists(m_path)) {
+            printf("Even though this file does exist.\n");
+        }
+        else {
+            qWarning() << "File does not exist: " + m_path;
+        }
         m_file_open_failed = true; //we don't want to try this more than once
         return false;
     }
@@ -565,6 +756,9 @@ void DiskReadMda32Private::copy_from(const DiskReadMda32& other)
     this->m_prv_object = other.d->m_prv_object;
     this->m_reshaped = other.d->m_reshaped;
     this->m_use_memory_mda = other.d->m_use_memory_mda;
+    this->m_use_concat = other.d->m_use_concat;
+    this->m_concat_dimension = other.d->m_concat_dimension;
+    this->m_concat_list = other.d->m_concat_list;
 }
 
 long DiskReadMda32Private::total_size()

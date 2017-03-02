@@ -167,7 +167,7 @@ void MVDiscrimHistViewGuideComputer::compute()
     MPR.runProcess();
 
     DiskReadMda output(output_path);
-    output.setRemoteDataType("float32");
+    //output.setRemoteDataType("float32");
 
     QMap<QString, DiscrimHistogram*> hist_lookup;
 

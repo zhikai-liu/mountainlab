@@ -543,7 +543,7 @@ void MVClusterWidgetComputer::compute()
     }
 
     DiskReadMda features(features_path);
-    features.setRemoteDataType("float32");
+    //features.setRemoteDataType("float32");
     features.readChunk(data, 0, 0, features.N1(), features.N2());
 }
 
@@ -661,8 +661,8 @@ bool MVChannelFeaturesFactory::isEnabled(MVAbstractContext* context) const
 #include "extract_clips.h"
 void ClipsViewThread::run()
 {
-    timeseries.setRemoteDataType("float32");
+    //timeseries.setRemoteDataType("float32");
     //use a small chunk size so we don't end up downloading too much extra
-    timeseries.setDownloadChunkSize(clip_size * timeseries.N1() * 4 * 3);
+    //timeseries.setDownloadChunkSize(clip_size * timeseries.N1() * 4 * 3);
     clips = extract_clips(timeseries, times, clip_size);
 }

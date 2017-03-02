@@ -355,7 +355,7 @@ bool RemoteReadMda::readChunk32(Mda32& X, long i, long size) const
                 Mda32 tmp;
                 A.readChunk(tmp, 0, d->m_download_chunk_size); //read the entire chunk, because we'll use it all
                 dtype32* tmp_ptr = tmp.dataPtr();
-                const long b = jj * d->m_download_chunk_size - ii1; //we start writing at the offset between the start index of the chunk and the start index
+                //const long b = jj * d->m_download_chunk_size - ii1; //we start writing at the offset between the start index of the chunk and the start index
                 std::copy(tmp_ptr, tmp_ptr + d->m_download_chunk_size, Xptr);
                 //                for (long a = 0; a < d->m_download_chunk_size; a++) {
                 //                    Xptr[b] = tmp_ptr[a];

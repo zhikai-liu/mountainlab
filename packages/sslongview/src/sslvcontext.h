@@ -24,10 +24,6 @@ public:
     void setTimeseries(DiskReadMda X);
 
     /////////////////////////////////////////////////
-    DiskReadMda timeseries() const;
-    void setTimeseries(DiskReadMda X);
-
-    /////////////////////////////////////////////////
     QJsonObject clusterMetrics() const;
     void setClusterMetrics(const QJsonObject& obj);
 

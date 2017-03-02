@@ -321,7 +321,7 @@ void compute_cluster_channel_matrix_thread::run()
 
     X.runProcess();
     templates_out.setPath(templates_fname);
-    templates_out.setRemoteDataType("float32_q8");
+    //templates_out.setRemoteDataType("float32_q8");
 
     int M = templates_out.N1();
     int T = templates_out.N2();

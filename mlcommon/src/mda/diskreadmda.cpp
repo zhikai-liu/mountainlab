@@ -29,7 +29,10 @@ public:
     Mda m_internal_chunk;
     long m_current_internal_chunk_index;
     Mda m_memory_mda;
-    bool m_use_memory_mda;
+    bool m_use_memory_mda=false;
+    bool m_use_concat=false;
+    int m_concat_dimension=2;
+    QList<DiskReadMda> m_concat_list;
 
     QString m_path;
     QJsonObject m_prv_object;
@@ -100,6 +103,22 @@ DiskReadMda::DiskReadMda(const QJsonObject& prv_object)
     this->setPath(path0);
 }
 
+DiskReadMda::DiskReadMda(int concat_dimension, const QList<DiskReadMda> &arrays)
+{
+    d = new DiskReadMdaPrivate;
+    d->q = this;
+    d->construct_and_clear();
+
+    if (concat_dimension!=0) {
+        qCritical() << "For now concat_dimension must be 2!";
+        return;
+    }
+
+    d->m_use_concat=true;
+    d->m_concat_dimension=concat_dimension;
+    d->m_concat_list=arrays;
+}
+
 DiskReadMda::~DiskReadMda()
 {
     if (d->m_file) {
@@ -127,7 +146,6 @@ void DiskReadMda::setPath(const QString& file_path)
         return;
     }
     else if (file_path.endsWith(".prv")) {
-
         //do not allow downloads or processing because now this is handled in a separate gui, as it should!!!
         //bool allow_downloads = false;
         //bool allow_processing = false;
@@ -147,6 +165,18 @@ void DiskReadMda::setPath(const QString& file_path)
             return;
         }
     }
+    else if (file_path.startsWith("\"")) {
+        QStringList list=file_path.split(";");
+        for (int i=0; i<list.count(); i++) {
+            list[i]=list[i].mid(1,list[i].count()-2); //remove quotes
+        }
+        if (list.count()==1) {
+            d->m_path=list[0];
+        }
+        else {
+            setConcatPaths(2,list);
+        }
+    }
     else {
         d->m_path = file_path;
     }
@@ -155,6 +185,20 @@ void DiskReadMda::setPath(const QString& file_path)
 void DiskReadMda::setPrvObject(const QJsonObject& prv_object)
 {
     d->m_prv_object = prv_object;
+}
+
+void DiskReadMda::setConcatPaths(int concat_dimension, const QStringList &paths)
+{
+    if (concat_dimension!=2) {
+        qWarning() << "For now, the concat_dimension must be 2";
+        return;
+    }
+    d->m_use_concat=true;
+    d->m_concat_dimension=concat_dimension;
+    d->m_concat_list.clear();
+    foreach (QString path0,paths) {
+        d->m_concat_list << DiskReadMda(path0);
+    }
 }
 
 QString compute_memory_checksum(long nbytes, void* ptr)
@@ -188,11 +232,27 @@ QString DiskReadMda::makePath() const
             if (QFile::rename(fname + ".tmp", fname)) {
                 return fname;
             }
+            else {
+                QFile::remove(fname + ".tmp");
+                return "";
+            }
         }
-        QFile::remove(fname);
-        QFile::remove(fname + ".tmp");
+        else {
+            QFile::remove(fname);
+            QFile::remove(fname + ".tmp");
+            return "";
+        }
     }
-    return d->m_path;
+    else if (d->m_use_concat) {
+        QStringList list;
+        for (int i=0; i<d->m_concat_list.count(); i++) {
+            list << "\""+d->m_concat_list[i].makePath()+"\"";
+        }
+        return list.join(";");
+    }
+    else {
+        return d->m_path;
+    }
 }
 
 QJsonObject DiskReadMda::toPrvObject() const
@@ -201,8 +261,8 @@ QJsonObject DiskReadMda::toPrvObject() const
         QJsonObject ret;
         QString path0 = this->makePath();
         ret["original_size"] = QFileInfo(path0).size();
-        ret["original_checksum"] = MLUtil::computeSha1SumOfFile(d->m_path);
-        ret["original_fcs"] = "head1000-" + MLUtil::computeSha1SumOfFileHead(d->m_path, 1000);
+        ret["original_checksum"] = MLUtil::computeSha1SumOfFile(path0);
+        ret["original_fcs"] = "head1000-" + MLUtil::computeSha1SumOfFileHead(path0, 1000);
         ret["original_path"] = path0;
         return ret;
     }
@@ -339,11 +399,88 @@ DiskReadMda DiskReadMda::reshaped(long N1b, long N2b, long N3b, long N4b, long N
     return ret;
 }
 
+bool read_chunk_from_concat_list(Mda &chunk,const QList<DiskReadMda> &list,long i0,long size0,int concat_dimension) {
+    if (list.count()==0) {
+        qWarning() << "Problem in read_chunk_from concat_list: list is empty";
+        return false;
+    }
+    long N1=list[0].N1();
+    if ((concat_dimension!=2)||(i0%N1!=0)||(size0%N1!=0)) {
+        qWarning() << "For now the concat_dimension must be 2 and the i and size in readChunk must be a multiples of N1";
+        return false;
+    }
+    long pos1=i0/N1;
+    long pos2=pos1+size0/N1-1;
+
+    QVector<long> sizes;
+    for (int j=0; j<list.count(); j++) {
+        if (list[j].totalSize()%N1!=0) {
+            qWarning() << "For now the concat_dimension must be 2 and the individual arrays must have total size a multiple of N1" << N1 << list[j].totalSize();
+            return false;
+        }
+        sizes << list[j].totalSize()/N1;
+    }
+    QVector<long> start_points, end_points;
+    start_points << 0;
+    end_points << sizes.value(0) - 1;
+    for (int i = 1; i < sizes.count(); i++) {
+        start_points << end_points[i - 1] + 1;
+        end_points << start_points[i] + sizes[i] - 1;
+    }
+
+    long ii1 = 0;
+    while ((ii1 < list.count()) && (pos1 > end_points[ii1])) {
+        ii1++;
+    }
+    long ii2 = ii1;
+    while ((ii2 + 1 < list.count()) && (start_points[ii2 + 1] <= pos2)) {
+        ii2++;
+    }
+
+    chunk.allocate(1, N1*(pos2 - pos1 + 1));
+    for (int ii = ii1; ii <= ii2; ii++) {
+        Mda chunk_ii;
+
+        //ttA,ttB, the range to read from Y
+        //ssA, the position to write it in "out"
+        long ttA, ttB, ssA;
+        if (ii == ii1) {
+            long offset = pos1 - start_points[ii];
+            ssA = 0;
+            if (ii1 < ii2) {
+                ttA = offset;
+                ttB = sizes[ii] - 1;
+            }
+            else {
+                ttA = offset;
+                ttB = ttA + (pos2 - pos1 + 1) - 1;
+            }
+        }
+        else if (ii == ii2) {
+            ttA = 0;
+            ttB = pos2 - start_points[ii];
+            ssA = start_points[ii] - pos1;
+        }
+        else {
+            ttA = 0;
+            ttB = sizes[ii] - 1;
+            ssA = start_points[ii] - pos1;
+        }
+
+        list[ii].readChunk(chunk_ii, N1*ttA, N1*(ttB - ttA + 1));
+        chunk.setChunk(chunk_ii, N1*ssA);
+    }
+    return true;
+}
+
 bool DiskReadMda::readChunk(Mda& X, long i, long size) const
 {
     if (d->m_use_memory_mda) {
         d->m_memory_mda.getChunk(X, i, size);
         return true;
+    }
+    else if (d->m_use_concat) {
+        return read_chunk_from_concat_list(X,d->m_concat_list,i,size,d->m_concat_dimension);
     }
     if (!d->open_file_if_needed())
         return false;
@@ -372,6 +509,11 @@ bool DiskReadMda::readChunk(Mda& X, long i1, long i2, long size1, long size2) co
     if (d->m_use_memory_mda) {
         d->m_memory_mda.getChunk(X, i1, i2, size1, size2);
         return true;
+    }
+    else if (d->m_use_concat) {
+        if (!readChunk(X,i1+N1()*i2,size1*size2))
+            return false;
+        return X.reshape(size1,size2);
     }
     if (!d->open_file_if_needed())
         return false;
@@ -412,6 +554,11 @@ bool DiskReadMda::readChunk(Mda& X, long i1, long i2, long i3, long size1, long 
     if (d->m_use_memory_mda) {
         d->m_memory_mda.getChunk(X, i1, i2, i3, size1, size2, size3);
         return true;
+    }
+    else if (d->m_use_concat) {
+        if (!readChunk(X,i1+N1()*i2+N1()*N2()*i3,size1*size2*size3))
+            return false;
+        return X.reshape(size1,size2,size3);
     }
     if (!d->open_file_if_needed())
         return false;
@@ -489,6 +636,7 @@ void DiskReadMdaPrivate::construct_and_clear()
     m_file = 0;
     m_current_internal_chunk_index = -1;
     m_use_memory_mda = false;
+    m_use_concat = false;
     m_header_read = false;
     m_reshaped = false;
     this->m_internal_chunk = Mda();
@@ -503,6 +651,35 @@ bool DiskReadMdaPrivate::read_header_if_needed()
         return true;
     if (m_use_memory_mda) {
         m_header_read = true;
+        return true;
+    }
+    else if (m_use_concat) {
+        m_header_read=true;
+        if (m_concat_list.count()==0) {
+            qWarning() << "Cannot read header of concat array because list is empty";
+            return false;
+        }
+        m_header=m_concat_list[0].mdaioHeader();
+        long N2=0;
+        for (int i=0; i<m_concat_list.count(); i++) {
+            if (m_concat_list[i].N1()!=m_concat_list[0].N1()) {
+                qWarning() << "dimension mismatch in concat list";
+                return false;
+            }
+            if (m_concat_list[i].N3()!=m_concat_list[0].N3()) {
+                qWarning() << "dimension mismatch in concat list";
+                return false;
+            }
+            if (m_concat_list[i].N4()!=m_concat_list[0].N4()) {
+                qWarning() << "dimension mismatch in concat list";
+                return false;
+            }
+            N2+=m_concat_list[i].N2();
+        }
+        m_header.dims[1]=N2;
+        m_mda_header_total_size = 1;
+        for (int i = 0; i < MDAIO_MAX_DIMS; i++)
+            m_mda_header_total_size *= m_header.dims[i];
         return true;
     }
     bool file_was_open = (m_file != 0); //so we can restore to previous state (we don't want too many files open unnecessarily)
@@ -521,6 +698,10 @@ bool DiskReadMdaPrivate::open_file_if_needed()
 {
     if (m_use_memory_mda)
         return true;
+    if (m_use_concat) {
+        read_header_if_needed();
+        return true;
+    }
     if (m_file)
         return true;
     if (m_file_open_failed)
@@ -575,6 +756,9 @@ void DiskReadMdaPrivate::copy_from(const DiskReadMda& other)
     this->m_prv_object = other.d->m_prv_object;
     this->m_reshaped = other.d->m_reshaped;
     this->m_use_memory_mda = other.d->m_use_memory_mda;
+    this->m_use_concat = other.d->m_use_concat;
+    this->m_concat_dimension = other.d->m_concat_dimension;
+    this->m_concat_list = other.d->m_concat_list;
 }
 
 long DiskReadMdaPrivate::total_size()

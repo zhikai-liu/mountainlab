@@ -290,8 +290,8 @@ void MVTemplatesView2Calculator::mv_compute_templates_stdevs(DiskReadMda& templa
     templates_out.setPath(templates_fname);
     stdevs_out.setPath(stdevs_fname);
 
-    templates_out.setRemoteDataType("float32_q8");
-    stdevs_out.setRemoteDataType("float32_q8");
+    //templates_out.setRemoteDataType("float32_q8");
+    //stdevs_out.setRemoteDataType("float32_q8");
 }
 
 void MVTemplatesView2Calculator::compute()

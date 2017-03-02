@@ -1344,7 +1344,7 @@ DiskReadMda mp_compute_templates(const QString& mlproxy_url, const QString& time
     task.log("Returning DiskReadMda: " + templates_fname);
     DiskReadMda ret(templates_fname);
     //ret.setRemoteDataType("float32");
-    ret.setRemoteDataType("float32_q8"); //to save download time!
+    //ret.setRemoteDataType("float32_q8"); //to save download time!
     return ret;
 }
 
@@ -1372,8 +1372,8 @@ void mp_compute_templates_stdevs(DiskReadMda32& templates_out, DiskReadMda32& st
     templates_out.setPath(templates_fname);
     stdevs_out.setPath(stdevs_fname);
 
-    templates_out.setRemoteDataType("float32_q8");
-    stdevs_out.setRemoteDataType("float32_q8");
+    //templates_out.setRemoteDataType("float32_q8");
+    //stdevs_out.setRemoteDataType("float32_q8");
 }
 
 void ClusterDetailViewCalculator::compute()

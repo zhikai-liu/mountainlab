@@ -206,7 +206,7 @@ void MVClipsWidgetComputer::compute()
     }
     task.log("Reading: " + clips_path);
     DiskReadMda CC(clips_path);
-    CC.setRemoteDataType("float32_q8"); //to save download time
+    //CC.setRemoteDataType("float32_q8"); //to save download time
     task.log(QString("CC: %1 x %2 x %3, clip_size=%4").arg(CC.N1()).arg(CC.N2()).arg(CC.N3()).arg(clip_size));
     clips = CC;
     /*

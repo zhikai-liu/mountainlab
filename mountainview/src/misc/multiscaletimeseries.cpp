@@ -215,7 +215,7 @@ bool MultiScaleTimeSeriesPrivate::get_data(Mda& min, Mda& max, long t1, long t2,
             return false;
         }
 
-        m_multiscale_data.setRemoteDataType(m_remote_data_type);
+        //m_multiscale_data.setRemoteDataType(m_remote_data_type);
 
         long t_offset_min = 0;
         long ds_factor_0 = 3;
