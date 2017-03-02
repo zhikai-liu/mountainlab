@@ -30,10 +30,6 @@ public:
     void setPath(const QString& file_path);
     void setPrvObject(const QJsonObject& prv_object);
 
-    void setRemoteDataType(const QString& dtype);
-    void setDownloadChunkSize(long size);
-    long downloadChunkSize();
-
     QString makePath() const; //not capturing the reshaping
     QJsonObject toPrvObject() const;
 
