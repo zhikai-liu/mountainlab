@@ -1437,8 +1437,8 @@ void ClusterDetailViewCalculator::compute()
     }
 
     task.setLabel("Setting cluster data");
-    task.setProgress(0.75);
     for (int k = 1; k <= K; k++) {
+        task.setProgress(k*1.0/K);
         if (MLUtil::threadInterruptRequested()) {
             task.error("Halted ***");
             return;
