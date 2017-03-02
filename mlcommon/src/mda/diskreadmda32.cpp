@@ -8,9 +8,6 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include "cachemanager.h"
-#ifdef USE_REMOTE_READ_MDA
-#include "remotereadmda.h"
-#endif
 #include "mlcommon.h"
 #include <icounter.h>
 #include <objectregistry.h>
@@ -33,11 +30,6 @@ public:
     long m_current_internal_chunk_index;
     Mda32 m_memory_mda;
     bool m_use_memory_mda;
-
-#ifdef USE_REMOTE_READ_MDA
-    bool m_use_remote_mda;
-    RemoteReadMda m_remote_mda;
-#endif
 
     QString m_path;
     QJsonObject m_prv_object;
@@ -129,13 +121,7 @@ void DiskReadMda32::setPath(const QString& file_path)
     }
     d->construct_and_clear();
 
-    if (file_path.startsWith("http://")) {
-#ifdef USE_REMOTE_READ_MDA
-        d->m_use_remote_mda = true;
-        d->m_remote_mda.setPath(file_path);
-#endif
-    }
-    else if ((file_path.endsWith(".txt")) || (file_path.endsWith(".csv"))) {
+    if ((file_path.endsWith(".txt")) || (file_path.endsWith(".csv"))) {
         Mda32 X(file_path);
         (*this) = X;
         return;
@@ -168,33 +154,6 @@ void DiskReadMda32::setPath(const QString& file_path)
 void DiskReadMda32::setPrvObject(const QJsonObject& prv_object)
 {
     d->m_prv_object = prv_object;
-}
-
-void DiskReadMda32::setRemoteDataType(const QString& dtype)
-{
-#ifdef USE_REMOTE_READ_MDA
-    d->m_remote_mda.setRemoteDataType(dtype);
-#else
-    Q_UNUSED(dtype)
-#endif
-}
-
-void DiskReadMda32::setDownloadChunkSize(long size)
-{
-#ifdef USE_REMOTE_READ_MDA
-    d->m_remote_mda.setDownloadChunkSize(size);
-#else
-    Q_UNUSED(size)
-#endif
-}
-
-long DiskReadMda32::downloadChunkSize()
-{
-#ifdef USE_REMOTE_READ_MDA
-    return d->m_remote_mda.downloadChunkSize();
-#else
-    return 0;
-#endif
 }
 
 QString compute_memory_checksum32(long nbytes, void* ptr)
@@ -232,11 +191,6 @@ QString DiskReadMda32::makePath() const
         QFile::remove(fname);
         QFile::remove(fname + ".tmp");
     }
-#ifdef USE_REMOTE_READ_MDA
-    if (d->m_use_remote_mda) {
-        return d->m_remote_mda.makePath();
-    }
-#endif
     return d->m_path;
 }
 
@@ -260,11 +214,6 @@ long DiskReadMda32::N1() const
     if (d->m_use_memory_mda) {
         return d->m_memory_mda.N1();
     }
-#ifdef USE_REMOTE_READ_MDA
-    if (d->m_use_remote_mda) {
-        return d->m_remote_mda.N1();
-    }
-#endif
     if (!d->read_header_if_needed()) {
         return 0;
     }
@@ -275,10 +224,6 @@ long DiskReadMda32::N2() const
 {
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N2();
-#ifdef USE_REMOTE_READ_MDA
-    if (d->m_use_remote_mda)
-        return d->m_remote_mda.N2();
-#endif
     if (!d->read_header_if_needed())
         return 0;
     return d->m_header.dims[1];
@@ -288,10 +233,6 @@ long DiskReadMda32::N3() const
 {
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N3();
-#ifdef USE_REMOTE_READ_MDA
-    if (d->m_use_remote_mda)
-        return d->m_remote_mda.N3();
-#endif
     if (!d->read_header_if_needed())
         return 0;
     return d->m_header.dims[2];
@@ -301,10 +242,6 @@ long DiskReadMda32::N4() const
 {
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N4();
-#ifdef USE_REMOTE_READ_MDA
-    if (d->m_use_remote_mda)
-        return 1;
-#endif
     if (!d->read_header_if_needed())
         return 0;
     return d->m_header.dims[3];
@@ -314,10 +251,6 @@ long DiskReadMda32::N5() const
 {
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N5();
-#ifdef USE_REMOTE_READ_MDA
-    if (d->m_use_remote_mda)
-        return 1;
-#endif
     if (!d->read_header_if_needed())
         return 0;
     return d->m_header.dims[4];
@@ -327,10 +260,6 @@ long DiskReadMda32::N6() const
 {
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N6();
-#ifdef USE_REMOTE_READ_MDA
-    if (d->m_use_remote_mda)
-        return 1;
-#endif
     if (!d->read_header_if_needed())
         return 0;
     return d->m_header.dims[5];
@@ -381,20 +310,6 @@ bool DiskReadMda32::reshape(long N1b, long N2b, long N3b, long N4b, long N5b, lo
         else
             return false;
     }
-#ifdef USE_REMOTE_READ_MDA
-    if (d->m_use_remote_mda) {
-        if ((N4b != 1) || (N5b != 1) || (N6b != 1)) {
-            qWarning() << "Cannot reshape... remote mda can only have 3 dimensions, at this time.";
-            return false;
-        }
-        if (d->m_remote_mda.reshape(N1b, N2b, N3b)) {
-            d->m_reshaped = true;
-            return true;
-        }
-        else
-            return false;
-    }
-#endif
     if (!d->read_header_if_needed()) {
         return false;
     }
@@ -426,11 +341,6 @@ bool DiskReadMda32::readChunk(Mda32& X, long i, long size) const
         d->m_memory_mda.getChunk(X, i, size);
         return true;
     }
-#ifdef USE_REMOTE_READ_MDA
-    if (d->m_use_remote_mda) {
-        return d->m_remote_mda.readChunk32(X, i, size);
-    }
-#endif
     if (!d->open_file_if_needed())
         return false;
     X.allocate(size, 1);
@@ -459,24 +369,6 @@ bool DiskReadMda32::readChunk(Mda32& X, long i1, long i2, long size1, long size2
         d->m_memory_mda.getChunk(X, i1, i2, size1, size2);
         return true;
     }
-#ifdef USE_REMOTE_READ_MDA
-    if (d->m_use_remote_mda) {
-        if ((size1 != N1()) || (i1 != 0)) {
-            qWarning() << "Cannot handle this case yet.";
-            return false;
-        }
-        Mda32 tmp;
-        if (!d->m_remote_mda.readChunk32(tmp, i2 * size1, size1 * size2))
-            return false;
-        X.allocate(size1, size2);
-        dtype32* Xptr = X.dataPtr();
-        dtype32* tmp_ptr = tmp.dataPtr();
-        for (long i = 0; i < size1 * size2; i++) {
-            Xptr[i] = tmp_ptr[i];
-        }
-        return true;
-    }
-#endif
     if (!d->open_file_if_needed())
         return false;
     if ((size1 == N1()) && (i1 == 0)) {
@@ -517,25 +409,6 @@ bool DiskReadMda32::readChunk(Mda32& X, long i1, long i2, long i3, long size1, l
         d->m_memory_mda.getChunk(X, i1, i2, i3, size1, size2, size3);
         return true;
     }
-#ifdef USE_REMOTE_READ_MDA
-    if (d->m_use_remote_mda) {
-        if ((size1 != N1()) || (i1 != 0) || (size2 != N2()) || (i2 != 0)) {
-            qWarning() << "Cannot handle this case yet **." << size1 << N1() << i1 << size2 << N2() << i2 << this->d->m_path;
-            return false;
-        }
-
-        Mda32 tmp;
-        if (!d->m_remote_mda.readChunk32(tmp, i3 * size1 * size2, size1 * size2 * size3))
-            return false;
-        X.allocate(size1, size2, size3);
-        dtype32* Xptr = X.dataPtr();
-        dtype32* tmp_ptr = tmp.dataPtr();
-        for (long i = 0; i < size1 * size2 * size3; i++) {
-            Xptr[i] = tmp_ptr[i];
-        }
-        return true;
-    }
-#endif
     if (!d->open_file_if_needed())
         return false;
     if ((size1 == N1()) && (size2 == N2())) {
@@ -614,28 +487,16 @@ void DiskReadMda32Private::construct_and_clear()
     m_use_memory_mda = false;
     m_header_read = false;
     m_reshaped = false;
-#ifdef USE_REMOTE_READ_MDA
-    m_use_remote_mda = false;
-#endif
     this->m_internal_chunk = Mda32();
     this->m_mda_header_total_size = 0;
     this->m_memory_mda = Mda32();
     this->m_path = "";
-#ifdef USE_REMOTE_READ_MDA
-    this->m_remote_mda = RemoteReadMda();
-#endif
 }
 
 bool DiskReadMda32Private::read_header_if_needed()
 {
     if (m_header_read)
         return true;
-#ifdef USE_REMOTE_READ_MDA
-    if (m_use_remote_mda) {
-        m_header_read = true;
-        return true;
-    }
-#endif
     if (m_use_memory_mda) {
         m_header_read = true;
         return true;
@@ -654,10 +515,6 @@ bool DiskReadMda32Private::read_header_if_needed()
 
 bool DiskReadMda32Private::open_file_if_needed()
 {
-#ifdef USE_REMOTE_READ_MDA
-    if (m_use_remote_mda)
-        return true;
-#endif
     if (m_use_memory_mda)
         return true;
     if (m_file)
@@ -706,24 +563,14 @@ void DiskReadMda32Private::copy_from(const DiskReadMda32& other)
     this->m_memory_mda = other.d->m_memory_mda;
     this->m_path = other.d->m_path;
     this->m_prv_object = other.d->m_prv_object;
-#ifdef USE_REMOTE_READ_MDA
-    this->m_remote_mda = other.d->m_remote_mda;
-#endif
     this->m_reshaped = other.d->m_reshaped;
     this->m_use_memory_mda = other.d->m_use_memory_mda;
-#ifdef USE_REMOTE_READ_MDA
-    this->m_use_remote_mda = other.d->m_use_remote_mda;
-#endif
 }
 
 long DiskReadMda32Private::total_size()
 {
     if (m_use_memory_mda)
         return m_memory_mda.totalSize();
-#ifdef USE_REMOTE_READ_MDA
-    if (m_use_remote_mda)
-        return m_remote_mda.N1() * m_remote_mda.N2() * m_remote_mda.N3();
-#endif
     if (!read_header_if_needed())
         return 0;
     return m_mda_header_total_size;
