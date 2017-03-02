@@ -22,11 +22,11 @@ public:
 
     /////////////////////////////////////////////////
     DiskReadMda32 timeseries() const;
-    void setTimeseries(const DiskReadMda32 &X);
+    void setTimeseries(const DiskReadMda32& X);
 
     /////////////////////////////////////////////////
     DiskReadMda firings() const;
-    void setFirings(const DiskReadMda &X);
+    void setFirings(const DiskReadMda& X);
 
     /////////////////////////////////////////////////
     QJsonObject clusterMetrics() const;

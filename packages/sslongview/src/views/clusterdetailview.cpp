@@ -62,6 +62,7 @@ public:
     DiskReadMda32 timeseries;
     DiskReadMda firings;
     int clip_size;
+    QList<int> clusters_to_view;
 
     //output
     QList<ClusterData> cluster_data;
@@ -137,6 +138,7 @@ public:
     bool m_stdev_shading;
     bool m_zoomed_out_once;
     ClusterDetailViewProperties m_properties;
+    QList<int> m_clusters_to_view;
 
     QComboBox* m_sort_order_chooser;
 
@@ -249,6 +251,11 @@ ClusterDetailView::~ClusterDetailView()
     delete d;
 }
 
+void ClusterDetailView::setClustersToView(const QList<int>& list)
+{
+    d->m_clusters_to_view = list;
+}
+
 void ClusterDetailView::prepareCalculation()
 {
     SSLVContext* c = qobject_cast<SSLVContext*>(mvContext());
@@ -260,11 +267,17 @@ void ClusterDetailView::prepareCalculation()
     d->m_calculator.timeseries = c->timeseries();
     d->m_calculator.firings = c->firings();
     d->m_calculator.clip_size = c->option("clip_size", 100).toInt();
+    d->m_calculator.clusters_to_view = d->m_clusters_to_view;
     update();
 }
 
 void ClusterDetailView::runCalculation()
 {
+    if (d->m_calculator.clusters_to_view.isEmpty()) {
+        TaskProgress task;
+        task.error() << "No clusters selected in cluster detail view";
+        return;
+    }
     d->m_calculator.compute();
 }
 
@@ -769,7 +782,7 @@ QString ClusterDetailViewPrivate::group_label_for_k(int k)
     //    return QString("%1").arg(c->clusterMerge().clusterLabelText(k));
     //}
     //else {
-        return QString("%1").arg(k);
+    return QString("%1").arg(k);
     //}
 }
 
@@ -1013,7 +1026,7 @@ void ClusterDetailViewPrivate::do_paint(QPainter& painter, int W_in, int H_in, b
     //    cluster_data_merged = merge_cluster_data(c->clusterMerge(), m_cluster_data);
     //}
     //else {
-        cluster_data_merged = m_cluster_data;
+    cluster_data_merged = m_cluster_data;
     //}
 
     sort_cluster_data(cluster_data_merged);
@@ -1382,17 +1395,31 @@ void ClusterDetailViewCalculator::compute()
     int L = firings.N2();
     int T = clip_size;
 
+    QMap<int, int> label_map;
+    for (int i = 0; i < clusters_to_view.count(); i++) {
+        label_map[clusters_to_view[i]] = i + 1;
+    }
+
     QVector<double> times;
-    QVector<int> channels, labels;
-    QVector<double> peaks;
+    QVector<long> labels;
+    QVector<int> peak_channels;
 
     task.log("Setting up times/channels/labels/peaks");
-    task.setProgress(0.2);
     for (int i = 0; i < L; i++) {
-        times << firings.value(1, i) - 1; //convert to 0-based indexing
-        channels << (int)firings.value(0, i) - 1; //convert to 0-based indexing
-        labels << (int)firings.value(2, i);
-        peaks << firings.value(3, i);
+        task.setProgress(i * 1.0 / L);
+        int label0 = firings.value(2, i);
+        if (label_map.contains(label0)) {
+            times << firings.value(1, i);
+            labels << label_map[label0];
+            peak_channels << firings.value(0, i);
+        }
+    }
+
+    Mda firings0(3, times.count());
+    for (long i = 0; i < times.count(); i++) {
+        firings0.setValue(peak_channels[i], 0, i);
+        firings0.setValue(times[i], 1, i);
+        firings0.setValue(labels[i], 2, i);
     }
 
     if (MLUtil::threadInterruptRequested()) {
@@ -1402,15 +1429,9 @@ void ClusterDetailViewCalculator::compute()
     task.log("Clearing data");
     cluster_data.clear();
 
-    task.setLabel("Computing templates");
-    task.setProgress(0.4);
-    int K = 0;
-    for (int i = 0; i < L; i++)
-        if (labels[i] > K)
-            K = labels[i];
-
     QString timeseries_path = timeseries.makePath();
-    QString firings_path = firings.makePath();
+    QString firings_path = DiskReadMda(firings0).makePath();
+
     /*
     this->setStatus("", "mscmd_compute_templates: "+mscmdserver_url+" timeseries_path="+timeseries_path+" firings_path="+firings_path, 0.6);
     DiskReadMda templates0 = mscmd_compute_templates(mscmdserver_url, timeseries_path, firings_path, T);
@@ -1429,25 +1450,25 @@ void ClusterDetailViewCalculator::compute()
     */
 
     task.log("compute_templates: timeseries_path=" + timeseries_path + " firings_path=" + firings_path);
-    task.setProgress(0.6);
-    DiskReadMda32 templates0=mp_compute_templates(timeseries_path,firings_path,T);
+    task.setProgress(0.25);
+    DiskReadMda32 templates0 = mp_compute_templates(timeseries_path, firings_path, T);
     if (MLUtil::threadInterruptRequested()) {
         task.error("Halted **");
         return;
     }
 
     task.setLabel("Setting cluster data");
-    for (int k = 1; k <= K; k++) {
-        task.setProgress(k*1.0/K);
+    for (int aa = 0; aa < clusters_to_view.count(); aa++) {
+        task.setProgress((aa + 1) * 1.0 / clusters_to_view.count());
         if (MLUtil::threadInterruptRequested()) {
             task.error("Halted ***");
             return;
         }
         ClusterData CD;
-        CD.k = k;
+        CD.k = clusters_to_view[aa];
         CD.channel = 0;
         for (int i = 0; i < L; i++) {
-            if (labels[i] == k) {
+            if (labels[i] == aa + 1) {
                 CD.num_events++;
             }
         }
@@ -1455,7 +1476,7 @@ void ClusterDetailViewCalculator::compute()
             task.error("Halted ****");
             return;
         }
-        templates0.readChunk(CD.template0, 0, 0, k - 1, M, T, 1);
+        templates0.readChunk(CD.template0, 0, 0, aa, M, T, 1);
         //stdevs0.readChunk(CD.stdev0, 0, 0, k - 1, M, T, 1);
         if (!MLUtil::threadInterruptRequested()) {
             if (CD.num_events > 0) {

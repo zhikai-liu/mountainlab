@@ -422,7 +422,7 @@ void TimeSpanImageCalculator::run()
                 }
                 QRectF R(xpix1, ypix1, xpix2 - xpix1, ypix2 - ypix1);
                 //QColor col = cluster_colors.value(k % cluster_colors.count());
-                QColor col=QColor(100,100,255);
+                QColor col = QColor(100, 100, 255);
 
                 if (pass == 1) {
                     painter.fillRect(R, col);

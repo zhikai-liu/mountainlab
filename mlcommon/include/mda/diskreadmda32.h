@@ -23,15 +23,15 @@ public:
     DiskReadMda32(const DiskReadMda32& other); ///Copy constructor
     DiskReadMda32(const Mda32& X); ///Constructor based on an in-memory array. This enables passing an Mda32 into a function that expects a DiskReadMda32.
     DiskReadMda32(const QJsonObject& prv_object);
-    DiskReadMda32(int concat_dimension,const QList<DiskReadMda32> &arrays); //concatenation of arrays. For now concat_dimension must be 2
-    DiskReadMda32(int concat_dimension,const QStringList &array_paths); //concatenation of arrays. For now concat_dimension must be 2
+    DiskReadMda32(int concat_dimension, const QList<DiskReadMda32>& arrays); //concatenation of arrays. For now concat_dimension must be 2
+    DiskReadMda32(int concat_dimension, const QStringList& array_paths); //concatenation of arrays. For now concat_dimension must be 2
     virtual ~DiskReadMda32();
     void operator=(const DiskReadMda32& other);
 
     ///Set the path (file name) of the .mda file to read.
     void setPath(const QString& file_path);
     void setPrvObject(const QJsonObject& prv_object);
-    void setConcatPaths(int concat_dimension,const QStringList &paths);
+    void setConcatPaths(int concat_dimension, const QStringList& paths);
 
     QString makePath() const; //not capturing the reshaping
     QJsonObject toPrvObject() const;

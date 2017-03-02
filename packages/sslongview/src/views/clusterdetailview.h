@@ -27,6 +27,8 @@ public:
     ClusterDetailView(MVAbstractContext* context);
     virtual ~ClusterDetailView();
 
+    void setClustersToView(const QList<int>& list);
+
     void prepareCalculation() Q_DECL_OVERRIDE;
     void runCalculation() Q_DECL_OVERRIDE;
     void onCalculationFinished() Q_DECL_OVERRIDE;

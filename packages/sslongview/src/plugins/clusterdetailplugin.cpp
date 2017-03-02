@@ -8,6 +8,7 @@
 
 #include <clusterdetailview.h>
 #include <sslvcontext.h>
+#include <QMessageBox>
 
 class ClusterDetailPluginPrivate {
 public:
@@ -63,6 +64,11 @@ QString ClusterDetailFactory::title() const
 MVAbstractView* ClusterDetailFactory::createView(MVAbstractContext* context)
 {
     ClusterDetailView* X = new ClusterDetailView(context);
-    SSLVContext *c=qobject_cast<SSLVContext*>(context);
+    SSLVContext* c = qobject_cast<SSLVContext*>(context);
+    if (c->selectedClusters().isEmpty()) {
+        QMessageBox::information(0, "Cluster detail view", "You must first select some clusters");
+        return 0;
+    }
+    X->setClustersToView(c->selectedClusters());
     return X;
 }

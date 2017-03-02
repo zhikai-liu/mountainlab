@@ -35,6 +35,21 @@ SSLVContext::SSLVContext()
     d->q = this;
 
     //this->setOption("spectrogram_time_resolution", 32);
+
+    // default colors
+    d->m_colors["background"] = QColor(240, 240, 240);
+    d->m_colors["frame1"] = QColor(245, 245, 245);
+    d->m_colors["info_text"] = QColor(80, 80, 80);
+    d->m_colors["view_background"] = QColor(243, 243, 247);
+    d->m_colors["view_background_highlighted"] = QColor(210, 230, 250);
+    d->m_colors["view_background_selected"] = QColor(220, 240, 250);
+    d->m_colors["view_background_hovered"] = QColor(243, 243, 237);
+    d->m_colors["view_frame"] = QColor(200, 190, 190);
+    d->m_colors["view_frame_selected"] = QColor(100, 80, 80);
+    d->m_colors["divider_line"] = QColor(255, 100, 150);
+    d->m_colors["calculation-in-progress"] = QColor(130, 130, 140, 50);
+    d->m_colors["cluster_label"] = Qt::darkGray;
+    d->m_colors["firing_rate_disk"] = Qt::lightGray;
 }
 
 SSLVContext::~SSLVContext()
@@ -88,7 +103,7 @@ QJsonObject SSLVContext::toMV2FileObject() const
     QJsonObject X = d->m_original_object;
     if (d->m_timeseries.N2() > 1)
         X["timeseries"] = d->m_timeseries.toPrvObject();
-    if (d->m_firings.N1()>1)
+    if (d->m_firings.N1() > 1)
         X["firings"] = d->m_firings.toPrvObject();
     X["samplerate"] = d->m_sample_rate;
     X["options"] = QJsonObject::fromVariantMap(this->options());
@@ -113,7 +128,7 @@ void SSLVContext::setClusterMetrics(const QJsonObject& obj)
     emit this->clusterMetricsChanged();
 }
 
-void SSLVContext::setTimeseries(const DiskReadMda32 &timeseries)
+void SSLVContext::setTimeseries(const DiskReadMda32& timeseries)
 {
     d->m_timeseries = timeseries;
     d->m_max_timepoint = d->compute_max_timepoint();
@@ -125,9 +140,9 @@ DiskReadMda SSLVContext::firings() const
     return d->m_firings;
 }
 
-void SSLVContext::setFirings(const DiskReadMda &X)
+void SSLVContext::setFirings(const DiskReadMda& X)
 {
-    d->m_firings=X;
+    d->m_firings = X;
     emit this->firingsChanged();
 }
 

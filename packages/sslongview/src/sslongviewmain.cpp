@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
             }
             if (CLP.named_parameters.contains("raw")) {
                 QStringList raw_path = MLUtil::toStringList(CLP.named_parameters["raw"]);
-                DiskReadMda32 ts(2,raw_path);
+                DiskReadMda32 ts(2, raw_path);
                 dc.setTimeseries(ts);
             }
             if (CLP.named_parameters.contains("firings")) {

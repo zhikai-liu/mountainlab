@@ -10,7 +10,7 @@
 
 bool p_extract_clips(QStringList timeseries_list, QString event_times, QString clips_out, const QVariantMap& params)
 {
-    DiskReadMda32 X(2,timeseries_list);
+    DiskReadMda32 X(2, timeseries_list);
     DiskReadMda ET(event_times);
 
     int M = X.N1();

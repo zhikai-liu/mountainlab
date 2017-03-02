@@ -279,7 +279,7 @@ CLParams::CLParams(int argc, char* argv[])
                 else {
                     list.append(tmp);
                 }
-                if (val2.type()==QVariant::List)
+                if (val2.type() == QVariant::List)
                     list.append(val2.toList());
                 else
                     list.append(val2);
@@ -324,19 +324,18 @@ QVariant clp_string_to_variant(const QString& str)
         return str.toInt();
     if (clp_is_float(str))
         return str.toFloat();
-    if ((str.startsWith("["))&&(str.endsWith("]"))) {
-        QString str2=str.mid(1,str.count()-2);
-        QStringList list=str2.split("][");
-        if (list.count()==1) {
+    if ((str.startsWith("[")) && (str.endsWith("]"))) {
+        QString str2 = str.mid(1, str.count() - 2);
+        QStringList list = str2.split("][");
+        if (list.count() == 1) {
             return list[0];
         }
         else {
             QVariantList ret;
-            foreach (QString tmp,list)
+            foreach (QString tmp, list)
                 ret.append(tmp);
             return ret;
         }
-
     }
     return str;
 }
@@ -896,7 +895,7 @@ QStringList MLUtil::toStringList(const QVariant& val)
         }
     }
     else if (val.type() == QVariant::StringList) {
-        ret=val.toStringList();
+        ret = val.toStringList();
     }
     else {
         ret << val.toString();
