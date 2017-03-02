@@ -289,6 +289,7 @@ void define_kernel(int N, double* kernel, double samplefreq, double freq_min, do
 
 Mda32 bandpass_filter_kernel(Mda32& X, double samplerate, double freq_min, double freq_max, double freq_wid)
 {
+    QTime timer; timer.start();
     long M = X.N1();
     long N = X.N2();
     long MN = M * N;
@@ -308,6 +309,10 @@ Mda32 bandpass_filter_kernel(Mda32& X, double samplerate, double freq_min, doubl
 
     free(kernel0);
     free(Xhat);
+
+    double sec=timer.elapsed()*1.0/1000;
+    double rate=X.totalSize()/sec;
+    printf("bandpass filter rate: %g numbers/sec\n",rate);
 
     return Y;
 }

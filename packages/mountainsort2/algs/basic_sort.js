@@ -200,6 +200,7 @@ exports.run=function(opts,callback) {
 		console.log('****** '+console_prefix+'BASIC SORT STEP '+(ii+1)+' of '+steps.length +' ******');
 		var timer=new Date();
 		step(function(result) {
+			if (!result) result={};
 			console.log ('Elapsed time ['+(result.processor_name||'')+'] (sec): '+get_elapsed_sec(timer));
 			cb();
 		});
