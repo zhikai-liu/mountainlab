@@ -140,20 +140,20 @@ wid = 100;               % PS smoothing in Hz
 figure; subplot(2,1,1);
 showpowerspectrum(X,o.samplerate,wid); hold on;
 o.freq_min = 300;        % high-pass only
-Y = ms_bandpass_filter(X,o);
+tic; Y = ms_bandpass_filter(X,o); toc
 Yc = run_mscmd(X,o);
 fprintf('max diff btw matlab and C: %.3g\n',max(max(abs(Y-Yc))))
 pad = 2e3;   % empirical # timepts
 fprintf('max diff btw matlab and C ignoring end bits: %.3g\n',max(max(abs(Y(:,pad:end-pad)-Yc(:,pad:end-pad)))))
 showpowerspectrum(Y,o.samplerate,wid,'r-');
 o.freq_max = 6000;       % band-pass
-Y = ms_bandpass_filter(X,o);
+tic; Y = ms_bandpass_filter(X,o); toc
 Yc = run_mscmd(X,o);
 fprintf('max diff btw matlab and C ignoring end bits: %.3g\n',max(max(abs(Y(:,pad:end-pad)-Yc(:,pad:end-pad)))))
 showpowerspectrum(Y,o.samplerate,wid,'k-');
 vline([o.freq_min,o.freq_max]);                      % check the -3dB pts
 o.freq_min = [];         % low-pass only
-Y = ms_bandpass_filter(X,o);
+tic; Y = ms_bandpass_filter(X,o); toc
 Yc = run_mscmd(X,o);
 fprintf('max diff btw matlab and C ignoring end bits: %.3g\n',max(max(abs(Y(:,pad:end-pad)-Yc(:,pad:end-pad)))))
 showpowerspectrum(Y,o.samplerate,wid,'g-');
