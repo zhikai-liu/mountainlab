@@ -27,6 +27,7 @@
 #include "p_split_firings.h"
 #include "p_concat_timeseries.h"
 #include "p_concat_firings.h"
+#include "p_compute_templates.h"
 #include "omp.h"
 
 QJsonObject get_spec()
@@ -72,6 +73,13 @@ QJsonObject get_spec()
         ProcessorSpec X("mountainsort.extract_clips", "0.1");
         X.addInputs("timeseries", "event_times");
         X.addOutputs("clips_out");
+        X.addRequiredParameters("clip_size");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.compute_templates", "0.1");
+        X.addInputs("timeseries", "firings");
+        X.addOutputs("templates_out");
         X.addRequiredParameters("clip_size");
         processors.push_back(X.get_spec());
     }
@@ -230,10 +238,17 @@ int main(int argc, char* argv[])
         ret = p_detect_events(timeseries, event_times_out, central_channel, detect_threshold, detect_interval, sign);
     }
     else if (arg1 == "mountainsort.extract_clips") {
-        QString timeseries = CLP.named_parameters["timeseries"].toString();
+        QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries"]);
         QString event_times = CLP.named_parameters["event_times"].toString();
         QString clips_out = CLP.named_parameters["clips_out"].toString();
-        ret = p_extract_clips(timeseries, event_times, clips_out, CLP.named_parameters);
+        ret = p_extract_clips(timeseries_list, event_times, clips_out, CLP.named_parameters);
+    }
+    else if (arg1 == "mountainsort.compute_templates") {
+        QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries"]);
+        QString firings = CLP.named_parameters["firings"].toString();
+        QString templates_out = CLP.named_parameters["templates_out"].toString();
+        int clip_size = CLP.named_parameters["clip_size"].toInt();
+        ret = p_compute_templates(timeseries_list, firings, templates_out, clip_size);
     }
     else if (arg1 == "mountainsort.sort_clips") {
         QString clips = CLP.named_parameters["clips"].toString();

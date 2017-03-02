@@ -8,9 +8,9 @@
 #include "diskreadmda32.h"
 #include "diskreadmda.h"
 
-bool p_extract_clips(QString timeseries, QString event_times, QString clips_out, const QVariantMap& params)
+bool p_extract_clips(QStringList timeseries_list, QString event_times, QString clips_out, const QVariantMap& params)
 {
-    DiskReadMda32 X(timeseries);
+    DiskReadMda32 X(2,timeseries_list);
     DiskReadMda ET(event_times);
 
     int M = X.N1();
@@ -29,11 +29,9 @@ bool p_extract_clips(QString timeseries, QString event_times, QString clips_out,
     for (int i = 0; i < L; i++) {
         int t1 = ET.value(i) - Tmid;
         int t2 = t1 + T - 1;
-        if ((t1 >= 0) && (t2 < N)) {
-            Mda32 tmp;
-            X.readChunk(tmp, 0, t1, M, T);
-            clips.setChunk(tmp, 0, 0, i);
-        }
+        Mda32 tmp;
+        X.readChunk(tmp, 0, t1, M, T);
+        clips.setChunk(tmp, 0, 0, i);
     }
 
     return clips.write32(clips_out);

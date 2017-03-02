@@ -24,6 +24,7 @@ public:
     DiskReadMda(const Mda& X); ///Constructor based on an in-memory array. This enables passing an Mda into a function that expects a DiskReadMda.
     DiskReadMda(const QJsonObject& prv_object);
     DiskReadMda(int concat_dimension,const QList<DiskReadMda> &arrays); //concatenation of arrays. For now concat_dimension must be 2
+    DiskReadMda(int concat_dimension,const QStringList &array_paths); //concatenation of arrays. For now concat_dimension must be 2
     virtual ~DiskReadMda();
     void operator=(const DiskReadMda& other);
 

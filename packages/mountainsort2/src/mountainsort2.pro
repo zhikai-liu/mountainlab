@@ -41,7 +41,8 @@ SOURCES += \
     p_cluster_metrics.cpp \
     p_split_firings.cpp \
     p_concat_timeseries.cpp \
-    p_concat_firings.cpp
+    p_concat_firings.cpp \
+    p_compute_templates.cpp
 
 HEADERS += \
     p_extract_clips.h \
@@ -61,7 +62,8 @@ HEADERS += \
     p_cluster_metrics.h \
     p_split_firings.h \
     p_concat_timeseries.h \
-    p_concat_firings.h
+    p_concat_firings.h \
+    p_compute_templates.h
 
 INCLUDEPATH += ../../../mountainsort/src/isosplit5
 VPATH += ../../../mountainsort/src/isosplit5

@@ -672,7 +672,6 @@ QVector<int> cluster_in_neighborhood(const DiskReadMda32& X, const QVector<int>&
             QMap<int, double> agreement_scores;
             printf("Assessing agreements for segment %d of %d\n", i + 1, segments.count());
             assess_cluster_agreements(agreement_map, agreement_scores, S->labels1, Sprev->labels2);
-            qDebug() << agreement_scores << agreement_map;
             for (int jj = 0; jj < S->indices1.count(); jj++) {
                 int label0 = S->labels1[jj];
                 if ((agreement_map.contains(label0)) && (agreement_scores[label0] > agreement_threshold)) {

@@ -9,6 +9,7 @@
 #include <QJsonDocument>
 #include "cachemanager.h"
 #include "mlcommon.h"
+#include <QJsonArray>
 #include <icounter.h>
 #include <objectregistry.h>
 
@@ -29,7 +30,7 @@ public:
     Mda32 m_internal_chunk;
     long m_current_internal_chunk_index;
     Mda32 m_memory_mda;
-    bool m_use_memory_mda;
+    bool m_use_memory_mda=false;
     bool m_use_concat=false;
     int m_concat_dimension=2;
     QList<DiskReadMda32> m_concat_list;
@@ -95,12 +96,29 @@ DiskReadMda32::DiskReadMda32(const QJsonObject& prv_object)
 
     this->setPrvObject(prv_object); //important to do this anyway (even if resolve fails) so we can retrieve it later with toPrvObject()
     //QString path0 = resolve_prv_object(prv_object, allow_downloads, allow_processing);
-    QString path0 = locate_prv(prv_object);
-    if (path0.isEmpty()) {
-        qWarning() << "Unable to construct DiskReadMda32 from prv_object. Unable to resolve. Original path = " << prv_object["original_path"].toString();
-        return;
+    if (prv_object.value("use_concat").toBool()) {
+        QJsonArray concat_list=prv_object["concat_list"].toArray();
+        int concat_dimension=prv_object["concat_dimension"].toInt();
+        QStringList paths;
+        for (int i=0; i<concat_list.count(); i++) {
+            QJsonObject prv_object0=concat_list[i].toObject();
+            QString path0=locate_prv(prv_object0);
+            if (path0.isEmpty()) {
+                qWarning() << "Unable to construct DiskReadMda32 from prv_object list. Unable to resolve. Original path = " << prv_object0["original_path"].toString();
+                return;
+            }
+            paths << path0;
+        }
+        this->setConcatPaths(concat_dimension,paths);
     }
-    this->setPath(path0);
+    else {
+        QString path0 = locate_prv(prv_object);
+        if (path0.isEmpty()) {
+            qWarning() << "Unable to construct DiskReadMda32 from prv_object. Unable to resolve. Original path = " << prv_object["original_path"].toString();
+            return;
+        }
+        this->setPath(path0);
+    }
 }
 
 DiskReadMda32::DiskReadMda32(int concat_dimension, const QList<DiskReadMda32> &arrays)
@@ -109,7 +127,32 @@ DiskReadMda32::DiskReadMda32(int concat_dimension, const QList<DiskReadMda32> &a
     d->q = this;
     d->construct_and_clear();
 
-    if (concat_dimension!=0) {
+    if (concat_dimension!=2) {
+        qCritical() << "For now concat_dimension must be 2!";
+        return;
+    }
+
+    d->m_use_concat=true;
+    d->m_concat_dimension=concat_dimension;
+    d->m_concat_list=arrays;
+}
+
+DiskReadMda32::DiskReadMda32(int concat_dimension, const QStringList &array_paths)
+{
+    d = new DiskReadMda32Private;
+    d->q = this;
+    d->construct_and_clear();
+
+    if (array_paths.count()==1) {
+        this->setPath(array_paths[0]);
+        return;
+    }
+    QList<DiskReadMda32> arrays;
+    foreach (QString path,array_paths) {
+        arrays << DiskReadMda32(path);
+    }
+
+    if (concat_dimension!=2) {
         qCritical() << "For now concat_dimension must be 2!";
         return;
     }
@@ -161,15 +204,14 @@ void DiskReadMda32::setPath(const QString& file_path)
             return;
         }
         else {
+            qDebug().noquote() << QJsonDocument(obj).toJson();
             qWarning() << "Unable to load DiskReadMda32 because .prv file could not be resolved.";
             return;
         }
     }
-    else if (file_path.startsWith("\"")) {
-        QStringList list=file_path.split(";");
-        for (int i=0; i<list.count(); i++) {
-            list[i]=list[i].mid(1,list[i].count()-2); //remove quotes
-        }
+    else if ((file_path.startsWith("["))&&(file_path.endsWith("]"))) {
+        QString fp=file_path.mid(1,file_path.count()-2);
+        QStringList list=fp.split("][");
         if (list.count()==1) {
             d->m_path=list[0];
         }
@@ -245,10 +287,16 @@ QString DiskReadMda32::makePath() const
     }
     else if (d->m_use_concat) {
         QStringList list;
-        for (int i=0; i<d->m_concat_list.count(); i++) {
-            list << "\""+d->m_concat_list[i].makePath()+"\"";
+        if (d->m_concat_list.count()>0) {
+            for (int i=0; i<d->m_concat_list.count(); i++) {
+                list << "["+d->m_concat_list[i].makePath()+"]";
+            }
+            return list.join("");
         }
-        return list.join(";");
+        else {
+            return "[]";
+        }
+
     }
     else {
         return d->m_path;
@@ -258,13 +306,27 @@ QString DiskReadMda32::makePath() const
 QJsonObject DiskReadMda32::toPrvObject() const
 {
     if (d->m_prv_object.isEmpty()) {
-        QJsonObject ret;
-        QString path0 = this->makePath();
-        ret["original_size"] = QFileInfo(path0).size();
-        ret["original_checksum"] = MLUtil::computeSha1SumOfFile(d->m_path);
-        ret["original_fcs"] = "head1000-" + MLUtil::computeSha1SumOfFileHead(d->m_path, 1000);
-        ret["original_path"] = path0;
-        return ret;
+        if (d->m_use_concat) {
+            QJsonArray concat_list;
+            for (int i=0; i<d->m_concat_list.count(); i++) {
+                QJsonObject obj=d->m_concat_list[i].toPrvObject();
+                concat_list.push_back(obj);
+            }
+            QJsonObject ret;
+            ret["concat_list"]=concat_list;
+            ret["concat_dimension"]=d->m_concat_dimension;
+            ret["use_concat"]=true;
+            return ret;
+        }
+        else {
+            QJsonObject ret;
+            QString path0 = this->makePath();
+            ret["original_size"] = QFileInfo(path0).size();
+            ret["original_checksum"] = MLUtil::computeSha1SumOfFile(d->m_path);
+            ret["original_fcs"] = "head1000-" + MLUtil::computeSha1SumOfFileHead(d->m_path, 1000);
+            ret["original_path"] = path0;
+            return ret;
+        }
     }
     else
         return d->m_prv_object;

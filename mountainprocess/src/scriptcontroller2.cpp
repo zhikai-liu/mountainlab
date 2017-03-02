@@ -181,7 +181,6 @@ QString ScriptController2::addProcess(QString processor_name, QString inputs_jso
     node.processor_name = processor_name;
     node.inputs = QJsonDocument::fromJson(inputs_json.toLatin1()).object().toVariantMap();
     node.parameters = QJsonDocument::fromJson(parameters_json.toLatin1()).object().toVariantMap();
-    qDebug() << "................................" << outputs_json;
     if (!outputs_json.isEmpty()) {
         node.outputs = QJsonDocument::fromJson(outputs_json.toLatin1()).object().toVariantMap();
         /// TODO: check to see if outputs are consistent with PP_outputs
@@ -438,7 +437,6 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
         args << QString("--_request_num_threads=%1").arg(request_num_threads);
     QProcess* P1 = new QProcess;
     P1->setReadChannelMode(QProcess::MergedChannels);
-    qDebug() << exe + " " + args.join(" ");
     //P1->start(exe, args);
     MPDaemon::start_bash_command_and_kill_when_pid_is_gone(P1, exe, args, QCoreApplication::applicationPid());
     if (!P1->waitForStarted()) {

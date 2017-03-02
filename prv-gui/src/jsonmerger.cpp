@@ -47,7 +47,7 @@ QJsonDocument JsonMerger::parseJson(const QString& contents)
     QJsonParseError err;
     QJsonDocument doc = QJsonDocument::fromJson(contents.toUtf8(), &err);
     if (err.error != QJsonParseError::NoError) {
-        qDebug() << "Error while parsing JSON: " << err.errorString();
+        qWarning() << "Error while parsing JSON: " << err.errorString();
         emit parsingFailed(err.errorString());
         return QJsonDocument();
     }
