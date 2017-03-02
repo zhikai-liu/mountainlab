@@ -35,6 +35,7 @@
 //#include <sslvclustermetricsview.h>
 #include <sslvclustermetricsplugin.h>
 #include <sslvtimespanplugin.h>
+#include <clusterdetailplugin.h>
 
 #include "sslvprefscontrol.h"
 
@@ -60,7 +61,6 @@ void try_to_automatically_download_and_regenerate_prv_objects(QList<PrvRecord> p
 
 int main(int argc, char* argv[])
 {
-    printf("test\n");
     QApplication a(argc, argv);
     ObjectRegistry registry;
     CounterManager* counterManager = new CounterManager;
@@ -135,16 +135,20 @@ int main(int argc, char* argv[])
             if (CLP.named_parameters.contains("samplerate")) {
                 dc.setSampleRate(CLP.named_parameters.value("samplerate", 0).toDouble());
             }
-            /*
             if (CLP.named_parameters.contains("firings")) {
                 QString firings_path = CLP.named_parameters["firings"].toString();
                 dc.setFirings(DiskReadMda(firings_path));
                 W->setWindowTitle(firings_path);
             }
-            */
             if (CLP.named_parameters.contains("raw")) {
-                QString raw_path = CLP.named_parameters["raw"].toString();
-                dc.setTimeseries(raw_path);
+                QStringList raw_path = MLUtil::toStringList(CLP.named_parameters["raw"]);
+                DiskReadMda32 ts(2,raw_path);
+                dc.setTimeseries(ts);
+            }
+            if (CLP.named_parameters.contains("firings")) {
+                QString firings_path = CLP.named_parameters["firings"].toString();
+                DiskReadMda firings0(firings_path);
+                dc.setFirings(firings0);
             }
             if (CLP.named_parameters.contains("window_title")) {
                 QString window_title = CLP.named_parameters["window_title"].toString();
@@ -572,6 +576,7 @@ void setup_main_window(MVMainWindow* W)
 {
     W->loadPlugin(new SSLVClusterMetricsPlugin);
     W->loadPlugin(new SSLVTimeSpanPlugin);
+    W->loadPlugin(new ClusterDetailPlugin);
     //W->loadPlugin(new TimeseriesPlugin);
     //W->loadPlugin(new SpectrogramPlugin);
 

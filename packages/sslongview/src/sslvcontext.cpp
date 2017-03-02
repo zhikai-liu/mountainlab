@@ -8,7 +8,8 @@ public:
 
     QJsonObject m_original_object; //to preserve unused fields
 
-    DiskReadMda m_timeseries;
+    DiskReadMda32 m_timeseries;
+    DiskReadMda m_firings;
 
     MVRange m_current_time_range = MVRange(0, 0); //(0,0) triggers automatic calculation
     double m_current_timepoint = 0;
@@ -60,7 +61,10 @@ void SSLVContext::setFromMV2FileObject(QJsonObject X)
 {
     this->clear();
     d->m_original_object = X; // to preserve unused fields
-    d->m_timeseries = DiskReadMda(X["timeseries"].toObject());
+    if (X.contains("timeseries"))
+        d->m_timeseries = DiskReadMda32(X["timeseries"].toObject());
+    if (X.contains("firings"))
+        d->m_firings = DiskReadMda(X["firings"].toObject());
 
     d->m_sample_rate = X["samplerate"].toDouble();
     if (X.contains("options")) {
@@ -84,13 +88,15 @@ QJsonObject SSLVContext::toMV2FileObject() const
     QJsonObject X = d->m_original_object;
     if (d->m_timeseries.N2() > 1)
         X["timeseries"] = d->m_timeseries.toPrvObject();
+    if (d->m_firings.N1()>1)
+        X["firings"] = d->m_firings.toPrvObject();
     X["samplerate"] = d->m_sample_rate;
     X["options"] = QJsonObject::fromVariantMap(this->options());
     X["cluster_metrics"] = d->m_cluster_metrics;
     return X;
 }
 
-DiskReadMda SSLVContext::timeseries() const
+DiskReadMda32 SSLVContext::timeseries() const
 {
     return d->m_timeseries;
 }
@@ -107,11 +113,22 @@ void SSLVContext::setClusterMetrics(const QJsonObject& obj)
     emit this->clusterMetricsChanged();
 }
 
-void SSLVContext::setTimeseries(DiskReadMda timeseries)
+void SSLVContext::setTimeseries(const DiskReadMda32 &timeseries)
 {
     d->m_timeseries = timeseries;
     d->m_max_timepoint = d->compute_max_timepoint();
     emit this->timeseriesChanged();
+}
+
+DiskReadMda SSLVContext::firings() const
+{
+    return d->m_firings;
+}
+
+void SSLVContext::setFirings(const DiskReadMda &X)
+{
+    d->m_firings=X;
+    emit this->firingsChanged();
 }
 
 void SSLVContext::setCurrentTimepoint(double tp)

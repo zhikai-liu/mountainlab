@@ -5,6 +5,7 @@
 
 #include <QColor>
 #include <diskreadmda.h>
+#include <diskreadmda32.h>
 
 class SSLVContextPrivate;
 class SSLVContext : public MVAbstractContext {
@@ -20,8 +21,12 @@ public:
     double sampleRate() const;
 
     /////////////////////////////////////////////////
-    DiskReadMda timeseries() const;
-    void setTimeseries(DiskReadMda X);
+    DiskReadMda32 timeseries() const;
+    void setTimeseries(const DiskReadMda32 &X);
+
+    /////////////////////////////////////////////////
+    DiskReadMda firings() const;
+    void setFirings(const DiskReadMda &X);
 
     /////////////////////////////////////////////////
     QJsonObject clusterMetrics() const;
@@ -60,6 +65,7 @@ public:
 
 signals:
     void timeseriesChanged();
+    void firingsChanged();
     void currentTimepointChanged();
     void currentTimeRangeChanged();
     void clusterMetricsChanged();

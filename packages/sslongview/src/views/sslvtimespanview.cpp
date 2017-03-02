@@ -421,18 +421,19 @@ void TimeSpanImageCalculator::run()
                     ypix2 = ypix0 + 1;
                 }
                 QRectF R(xpix1, ypix1, xpix2 - xpix1, ypix2 - ypix1);
-                QColor col = cluster_colors.value(k % cluster_colors.count());
+                //QColor col = cluster_colors.value(k % cluster_colors.count());
+                QColor col=QColor(100,100,255);
 
                 if (pass == 1) {
                     painter.fillRect(R, col);
                 }
                 if ((k == current_cluster) && (pass == 2)) {
                     QRectF R2 = R;
-                    R2.adjust(-4, -4, 4, 4);
+                    R2.adjust(-1, -1, 1, 1);
                     //painter.setPen(Qt::white);
                     //painter.drawRect(R);
-                    painter.fillRect(R2, Qt::white);
                     painter.fillRect(R, col);
+                    painter.fillRect(R2, Qt::white);
                 }
             }
         }

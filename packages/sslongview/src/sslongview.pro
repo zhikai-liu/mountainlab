@@ -39,6 +39,10 @@ SOURCES += sslvclustermetricsplugin.cpp sslvclustermetricsview.cpp
 HEADERS += sslvtimeseriesviewbase.h sslvtimespanview.h sslvtimespanplugin.h
 SOURCES += sslvtimeseriesviewbase.cpp sslvtimespanview.cpp sslvtimespanplugin.cpp
 
+HEADERS += clusterdetailplugin.h clusterdetailview.h clusterdetailviewpropertiesdialog.h
+SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp clusterdetailviewpropertiesdialog.cpp
+FORMS += clusterdetailviewpropertiesdialog.ui
+
 INCLUDEPATH += ../../../mountainview/src/core
 VPATH += ../../../mountainview/src/core
 HEADERS += \
