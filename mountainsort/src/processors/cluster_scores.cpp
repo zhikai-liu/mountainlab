@@ -17,7 +17,7 @@
 
 namespace ClusterScores {
 QVector<double> compute_cluster_scores(const DiskReadMda32& timeseries, const Mda32& clips, cluster_scores_opts opts);
-double compute_distance(long N, float* ptr1, float* ptr2);
+double compute_distance(int N, float* ptr1, float* ptr2);
 bool is_zero(const Mda& X);
 
 bool cluster_scores(QString timeseries, QString firings, QString cluster_scores_path, QString cluster_pair_scores_path, cluster_scores_opts opts)
@@ -27,7 +27,7 @@ bool cluster_scores(QString timeseries, QString firings, QString cluster_scores_
 
     QVector<double> times;
     QVector<int> labels;
-    for (long i = 0; i < F.N2(); i++) {
+    for (int i = 0; i < F.N2(); i++) {
         times << F.value(1, i);
         labels << (int)F.value(2, i);
     }
@@ -43,7 +43,7 @@ bool cluster_scores(QString timeseries, QString firings, QString cluster_scores_
         int k = opts.cluster_numbers[i];
         printf("k=%d\n", k);
         QVector<double> times_k;
-        for (long j = 0; j < labels.count(); j++) {
+        for (int j = 0; j < labels.count(); j++) {
             if (labels[j] == k)
                 times_k << times[j];
         }
@@ -67,14 +67,14 @@ bool cluster_scores(QString timeseries, QString firings, QString cluster_scores_
             printf("k1/k2 = %d/%d\n", k1, k2);
 
             QVector<double> times_k1;
-            for (long j = 0; j < labels.count(); j++) {
+            for (int j = 0; j < labels.count(); j++) {
                 if (labels[j] == k1)
                     times_k1 << times[j];
             }
             Mda32 clips_k1 = extract_clips(X, times_k1, opts.clip_size);
 
             QVector<double> times_k2;
-            for (long j = 0; j < labels.count(); j++) {
+            for (int j = 0; j < labels.count(); j++) {
                 if (labels[j] == k2)
                     times_k2 << times[j];
             }
@@ -103,15 +103,15 @@ Mda32 add_self_noise_to_clips(const DiskReadMda32& timeseries, const Mda32& clip
     Mda32 ret = clips;
     int M = clips.N1();
     int T = clips.N2();
-    QList<long> rand_inds;
-    for (long i = 0; i < clips.N3(); i++) {
+    QList<int> rand_inds;
+    for (int i = 0; i < clips.N3(); i++) {
         rand_inds << T + (qrand() % timeseries.N2() - T * 2);
     }
     qSort(rand_inds); //good to do this so we don't random access the timeseries too much
     //could this add a bad bias?? don't really know.
     //one way around this is to randomize the order these are applied to the clips
-    for (long i = 0; i < clips.N3(); i++) {
-        long ind0 = rand_inds[i];
+    for (int i = 0; i < clips.N3(); i++) {
+        int ind0 = rand_inds[i];
         Mda32 chunk;
         timeseries.readChunk(chunk, 0, ind0, M, T);
         for (int t = 0; t < T; t++) {
@@ -129,7 +129,7 @@ Mda32 add_noise_to(const Mda32& X, double noise_level)
     generate_randn(noise.totalSize(), noise.dataPtr());
 
     Mda32 ret(X.N1(), X.N2(), X.N3());
-    for (long i = 0; i < ret.totalSize(); i++) {
+    for (int i = 0; i < ret.totalSize(); i++) {
         ret.set(noise.get(i) * noise_level + X.value(i), i);
     }
     return ret;
@@ -157,22 +157,22 @@ QVector<double> compute_cluster_scores(const DiskReadMda32& timeseries, const Md
     }
     //Mda32 clips_noise = add_noise_to(clips, opts.add_noise_level);
     Mda32 clips_noise = add_self_noise_to_clips(timeseries, clips, opts.add_noise_level);
-    long num_err = 0;
-    for (long i = 0; i < clips_noise.N3(); i++) {
+    int num_err = 0;
+    for (int i = 0; i < clips_noise.N3(); i++) {
         double val = sign * clips_noise.value(ind_m_of_peak, ind_t_of_peak, i);
         if (val < opts.detect_threshold)
             num_err++;
     }
     QVector<double> ret;
     ret << num_err * 1.0 / clips.N3();
-    printf("%ld/%ld (%g%%)\n", num_err, clips.N3(), num_err * 1.0 / clips.N3() * 100);
+    printf("%d/%lld (%g%%)\n", num_err, clips.N3(), num_err * 1.0 / clips.N3() * 100);
     return ret;
 }
 
-double compute_distance(long N, float* ptr1, float* ptr2)
+double compute_distance(int N, float* ptr1, float* ptr2)
 {
     double sumsqr = 0;
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         double tmp = ptr1[i] - ptr2[i];
         sumsqr += tmp * tmp;
     }
@@ -191,7 +191,7 @@ void find_pairs_to_compare(QList<int>& k1s, QList<int>& k2s, const DiskReadMda32
 
     QVector<double> times;
     QVector<int> labels;
-    for (long i = 0; i < firings.N2(); i++) {
+    for (int i = 0; i < firings.N2(); i++) {
         times << firings.value(1, i);
         labels << (int)firings.value(2, i);
     }
@@ -240,8 +240,8 @@ void find_pairs_to_compare(QList<int>& k1s, QList<int>& k2s, const DiskReadMda32
 }
 QVector<double> compute_cluster_pair_scores(DiskReadMda32 timeseries, const Mda32& clips1, const Mda32& clips2, cluster_scores_opts opts, QVector<double>* out_proj_data1, QVector<double>* out_proj_data2)
 {
-    long L1 = clips1.N3();
-    long L2 = clips2.N3();
+    int L1 = clips1.N3();
+    int L2 = clips2.N3();
     if (!L1)
         return QVector<double>();
     if (!L2)
@@ -254,7 +254,7 @@ QVector<double> compute_cluster_pair_scores(DiskReadMda32 timeseries, const Mda3
 
     Mda32 X(M * T, L1 + L2);
     QVector<int> labels;
-    for (long i = 0; i < L1; i++) {
+    for (int i = 0; i < L1; i++) {
         for (int t = 0; t < T; t++) {
             for (int m = 0; m < M; m++) {
                 X.setValue(clips1.value(m, t, i), m + M * t, i);
@@ -262,7 +262,7 @@ QVector<double> compute_cluster_pair_scores(DiskReadMda32 timeseries, const Mda3
         }
         labels << 1;
     }
-    for (long i = 0; i < L2; i++) {
+    for (int i = 0; i < L2; i++) {
         for (int t = 0; t < T; t++) {
             for (int m = 0; m < M; m++) {
                 X.setValue(clips2.value(m, t, i), m + M * t, i + L1);
@@ -275,8 +275,8 @@ QVector<double> compute_cluster_pair_scores(DiskReadMda32 timeseries, const Mda3
     QVector<double> direction_00;
     get_svm_discrim_direction(cutoff_00, direction_00, X, labels);
 
-    long num_err = 0;
-    for (long i = 0; i < L1; i++) {
+    int num_err = 0;
+    for (int i = 0; i < L1; i++) {
         {
             QVector<double> tmp;
             for (int t = 0; t < T; t++) {
@@ -299,7 +299,7 @@ QVector<double> compute_cluster_pair_scores(DiskReadMda32 timeseries, const Mda3
             *out_proj_data1 << val;
         }
     }
-    for (long i = 0; i < L2; i++) {
+    for (int i = 0; i < L2; i++) {
         {
             QVector<double> tmp;
             for (int t = 0; t < T; t++) {
@@ -323,7 +323,7 @@ QVector<double> compute_cluster_pair_scores(DiskReadMda32 timeseries, const Mda3
         }
     }
 
-    printf("%ld/%ld (%g%%)    cutoff=%g\n", num_err, L1 + L2, num_err * 1.0 / (L1 + L2) * 100, cutoff_00);
+    printf("%d/%d (%g%%)    cutoff=%g\n", num_err, L1 + L2, num_err * 1.0 / (L1 + L2) * 100, cutoff_00);
     QVector<double> ret;
     ret << num_err * 1.0 / (L1 + L2);
     return ret;

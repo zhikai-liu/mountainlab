@@ -87,7 +87,7 @@ void SpikeSpyWidget::addView(const SpikeSpyViewData& data)
     W->setTimeseries(data.timeseries);
     QVector<double> times;
     QVector<int> labels;
-    for (long i = 0; i < data.firings.N2(); i++) {
+    for (int i = 0; i < data.firings.N2(); i++) {
         times << data.firings.value(1, i);
         labels << (int)data.firings.value(2, i);
     }

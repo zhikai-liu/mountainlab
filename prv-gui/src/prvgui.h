@@ -29,7 +29,7 @@ struct PrvRecord {
     QString label; //not really part of prv, but very useful for display
 
     QString checksum;
-    long size = 0;
+    int size = 0;
     QString fcs;
     QString original_path;
 

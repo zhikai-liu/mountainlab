@@ -7,20 +7,20 @@
 #include <QTime>
 
 /*
-bool get_pca_features(long M, long N, int num_features, double* features_out, double* X_in, long num_representatives)
+bool get_pca_features(int M, int N, int num_features, double* features_out, double* X_in, int num_representatives)
 {
-    long increment = 1;
+    int increment = 1;
     if (num_representatives)
         increment = qMax(1L, N / num_representatives);
     QTime timer;
     timer.start();
     Mda XXt(M, M);
     double* XXt_ptr = XXt.dataPtr();
-    for (long i = 0; i < N; i += increment) {
+    for (int i = 0; i < N; i += increment) {
         double* tmp = &X_in[i * M];
-        long aa = 0;
-        for (long m2 = 0; m2 < M; m2++) {
-            for (long m1 = 0; m1 < M; m1++) {
+        int aa = 0;
+        for (int m2 = 0; m2 < M; m2++) {
+            for (int m1 = 0; m1 < M; m1++) {
                 XXt_ptr[aa] += tmp[m1] * tmp[m2];
                 aa++;
             }
@@ -33,17 +33,17 @@ bool get_pca_features(long M, long N, int num_features, double* features_out, do
     QVector<double> eigenvals;
     for (int i = 0; i < S.totalSize(); i++)
         eigenvals << S.get(i);
-    QList<long> inds = get_sort_indices(eigenvals);
+    QList<int> inds = get_sort_indices(eigenvals);
 
     Mda FF(num_features, N);
-    long aa = 0;
-    for (long i = 0; i < N; i++) {
+    int aa = 0;
+    for (int i = 0; i < N; i++) {
         double* tmp = &X_in[i * M];
         for (int j = 0; j < num_features; j++) {
             if (inds.count() - 1 - j >= 0) {
-                long k = inds.value(inds.count() - 1 - j);
+                int k = inds.value(inds.count() - 1 - j);
                 double val = 0;
-                for (long m = 0; m < M; m++) {
+                for (int m = 0; m < M; m++) {
                     val += U.get(m, k) * tmp[m];
                 }
                 FF.set(val, aa);
@@ -52,27 +52,27 @@ bool get_pca_features(long M, long N, int num_features, double* features_out, do
         }
     }
 
-    for (long i = 0; i < FF.totalSize(); i++) {
+    for (int i = 0; i < FF.totalSize(); i++) {
         features_out[i] = FF.get(i);
     }
 
     return true;
 }
 
-bool pca_denoise(long M, long N, int num_features, double* X_out, double* X_in, long num_representatives)
+bool pca_denoise(int M, int N, int num_features, double* X_out, double* X_in, int num_representatives)
 {
-    long increment = 1;
+    int increment = 1;
     if (num_representatives)
         increment = qMax(1L, N / num_representatives);
     QTime timer;
     timer.start();
     Mda XXt(M, M);
     double* XXt_ptr = XXt.dataPtr();
-    for (long i = 0; i < N; i += increment) {
+    for (int i = 0; i < N; i += increment) {
         double* tmp = &X_in[i * M];
-        long aa = 0;
-        for (long m2 = 0; m2 < M; m2++) {
-            for (long m1 = 0; m1 < M; m1++) {
+        int aa = 0;
+        for (int m2 = 0; m2 < M; m2++) {
+            for (int m1 = 0; m1 < M; m1++) {
                 XXt_ptr[aa] += tmp[m1] * tmp[m2];
                 aa++;
             }
@@ -85,21 +85,21 @@ bool pca_denoise(long M, long N, int num_features, double* X_out, double* X_in, 
     QVector<double> eigenvals;
     for (int i = 0; i < S.totalSize(); i++)
         eigenvals << S.get(i);
-    QList<long> inds = get_sort_indices(eigenvals);
+    QList<int> inds = get_sort_indices(eigenvals);
 
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         double* tmp_in = &X_in[i * M];
         double* tmp_out = &X_out[i * M];
         for (int m = 0; m < M; m++)
             tmp_out[m] = 0;
         for (int j = 0; j < num_features; j++) {
             if (inds.count() - 1 - j >= 0) {
-                long k = inds.value(inds.count() - 1 - j);
+                int k = inds.value(inds.count() - 1 - j);
                 double val = 0;
-                for (long m = 0; m < M; m++) {
+                for (int m = 0; m < M; m++) {
                     val += U.get(m, k) * tmp_in[m];
                 }
-                for (long m = 0; m < M; m++) {
+                for (int m = 0; m < M; m++) {
                     tmp_out[m] += U.get(m, k) * val;
                 }
             }

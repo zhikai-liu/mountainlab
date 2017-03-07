@@ -81,8 +81,8 @@ bool remove_noise_clusters_Processor::run(const QMap<QString, QVariant>& params)
             k_map << 0;
     }
 
-    QVector<long> inds_to_use;
-    for (long i = 0; i < firings.N2(); i++) {
+    QVector<int> inds_to_use;
+    for (int i = 0; i < firings.N2(); i++) {
         int label = firings.value(2, i);
         if (k_map.value(label - 1, 0) > 0) {
             inds_to_use << i;
@@ -90,7 +90,7 @@ bool remove_noise_clusters_Processor::run(const QMap<QString, QVariant>& params)
     }
 
     Mda firings_out(firings.N1(), inds_to_use.count());
-    for (long i = 0; i < inds_to_use.count(); i++) {
+    for (int i = 0; i < inds_to_use.count(); i++) {
         int label = firings.value(2, inds_to_use[i]);
         int label2 = k_map.value(label - 1, 0);
         for (int j = 0; j < firings.N1(); j++) {
@@ -99,7 +99,7 @@ bool remove_noise_clusters_Processor::run(const QMap<QString, QVariant>& params)
         firings_out.setValue(label2, 2, i);
     }
 
-    printf("Using %d of %d clusters and %ld of %ld events.\n", num_clusters_to_use, K, firings_out.N2(), firings.N2());
+    printf("Using %d of %d clusters and %lld of %lld events.\n", num_clusters_to_use, K, firings_out.N2(), firings.N2());
 
     return firings_out.write64(firings_out_path);
 }

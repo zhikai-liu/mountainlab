@@ -6,9 +6,9 @@
 #include "diskreadmda.h"
 #include "diskwritemda.h"
 
-long smallest_power_of_3_larger_than(long N);
-bool downsample_min(const DiskReadMda& X, QString out_fname, long N);
-bool downsample_max(const DiskReadMda& X, QString out_fname, long N);
+int smallest_power_of_3_larger_than(int N);
+bool downsample_min(const DiskReadMda& X, QString out_fname, int N);
+bool downsample_max(const DiskReadMda& X, QString out_fname, int N);
 bool write_concatenation(QStringList input_fnames, QString output_fname);
 
 bool create_multiscale_timeseries(QString path_in, QString path_out)
@@ -16,13 +16,13 @@ bool create_multiscale_timeseries(QString path_in, QString path_out)
     DiskReadMda X(path_in);
     X.reshape(X.N1(), X.N2() * X.N3()); //to handle the case of clips (3D array)
 
-    long N = smallest_power_of_3_larger_than(X.N2());
+    int N = smallest_power_of_3_larger_than(X.N2());
 
     QStringList file_names;
     QString prev_min_fname;
     QString prev_max_fname;
-    for (long ds_factor = 3; ds_factor <= N; ds_factor *= 3) {
-        printf("ds_factor = %ld / %ld\n", ds_factor, N);
+    for (int ds_factor = 3; ds_factor <= N; ds_factor *= 3) {
+        printf("ds_factor = %d / %d\n", ds_factor, N);
         QString min_fname = CacheManager::globalInstance()->makeLocalFile("", CacheManager::ShortTerm);
         QString max_fname = CacheManager::globalInstance()->makeLocalFile("", CacheManager::ShortTerm);
         if (ds_factor == 3) {
@@ -63,16 +63,16 @@ bool create_multiscale_timeseries(QString path_in, QString path_out)
     return true;
 }
 
-long smallest_power_of_3_larger_than(long N)
+int smallest_power_of_3_larger_than(int N)
 {
-    long ret = 1;
+    int ret = 1;
     while (ret < N) {
         ret *= 3;
     }
     return ret;
 }
 
-bool downsample_min(const DiskReadMda& X, QString out_fname, long N)
+bool downsample_min(const DiskReadMda& X, QString out_fname, int N)
 {
     DiskWriteMda Y;
     if (!Y.open(MDAIO_TYPE_FLOAT32, out_fname, X.N1(), N / 3)) {
@@ -81,20 +81,20 @@ bool downsample_min(const DiskReadMda& X, QString out_fname, long N)
     }
 
     /// TODO choose chunk_size sensibly
-    long chunk_size = 3 * 5000;
+    int chunk_size = 3 * 5000;
     QTime timer;
     timer.start();
-    for (long ii = 0; ii < N; ii += chunk_size) {
+    for (int ii = 0; ii < N; ii += chunk_size) {
         if (timer.elapsed() > 5000) {
-            printf("downsample_min %ld/%ld (%d%%)\n", ii, N, (int)(ii * 1.0 / N * 100));
+            printf("downsample_min %d/%d (%d%%)\n", ii, N, (int)(ii * 1.0 / N * 100));
             timer.restart();
         }
-        long size0 = qMin(chunk_size, N - ii);
+        int size0 = qMin(chunk_size, N - ii);
         Mda A;
         X.readChunk(A, 0, ii, X.N1(), size0);
         Mda B(X.N1(), size0 / 3);
-        for (long jj = 0; jj < size0 / 3; jj++) {
-            for (long m = 0; m < X.N1(); m++) {
+        for (int jj = 0; jj < size0 / 3; jj++) {
+            for (int m = 0; m < X.N1(); m++) {
                 double val1 = A.value(m, jj * 3);
                 double val2 = A.value(m, jj * 3 + 1);
                 double val3 = A.value(m, jj * 3 + 2);
@@ -108,7 +108,7 @@ bool downsample_min(const DiskReadMda& X, QString out_fname, long N)
     return true;
 }
 
-bool downsample_max(const DiskReadMda& X, QString out_fname, long N)
+bool downsample_max(const DiskReadMda& X, QString out_fname, int N)
 {
     DiskWriteMda Y;
     if (!Y.open(MDAIO_TYPE_FLOAT32, out_fname, X.N1(), N / 3)) {
@@ -117,20 +117,20 @@ bool downsample_max(const DiskReadMda& X, QString out_fname, long N)
     }
 
     /// TODO choose chunk_size sensibly
-    long chunk_size = 3 * 5000;
+    int chunk_size = 3 * 5000;
     QTime timer;
     timer.start();
-    for (long ii = 0; ii < N; ii += chunk_size) {
+    for (int ii = 0; ii < N; ii += chunk_size) {
         if (timer.elapsed() > 5000) {
-            printf("downsample_max %ld/%ld (%d%%)\n", ii, N, (int)(ii * 1.0 / N * 100));
+            printf("downsample_max %d/%d (%d%%)\n", ii, N, (int)(ii * 1.0 / N * 100));
             timer.restart();
         }
-        long size0 = qMin(chunk_size, N - ii);
+        int size0 = qMin(chunk_size, N - ii);
         Mda A;
         X.readChunk(A, 0, ii, X.N1(), size0);
         Mda B(X.N1(), size0 / 3);
-        for (long jj = 0; jj < size0 / 3; jj++) {
-            for (long m = 0; m < X.N1(); m++) {
+        for (int jj = 0; jj < size0 / 3; jj++) {
+            for (int m = 0; m < X.N1(); m++) {
                 double val1 = A.value(m, jj * 3);
                 double val2 = A.value(m, jj * 3 + 1);
                 double val3 = A.value(m, jj * 3 + 2);
@@ -146,7 +146,7 @@ bool downsample_max(const DiskReadMda& X, QString out_fname, long N)
 
 bool write_concatenation(QStringList input_fnames, QString output_fname)
 {
-    long M = 1, N = 0;
+    int M = 1, N = 0;
     foreach (QString fname, input_fnames) {
         DiskReadMda X(fname);
         M = X.N1();
@@ -157,14 +157,14 @@ bool write_concatenation(QStringList input_fnames, QString output_fname)
         qWarning() << "Unable to open output file: " + output_fname;
         return false;
     }
-    long offset = 0;
+    int offset = 0;
     foreach (QString fname, input_fnames) {
         DiskReadMda X(fname);
 
         /// TODO choose chunk_size sensibly
-        long chunk_size = 10000;
-        for (long ii = 0; ii < X.N2(); ii += chunk_size) {
-            long size0 = qMin(chunk_size, X.N2() - ii);
+        int chunk_size = 10000;
+        for (int ii = 0; ii < X.N2(); ii += chunk_size) {
+            int size0 = qMin((int)chunk_size, (int)(X.N2() - ii));
             Mda tmp;
             X.readChunk(tmp, 0, ii, M, size0);
             Y.writeChunk(tmp, 0, offset);

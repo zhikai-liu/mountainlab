@@ -33,7 +33,7 @@ bool mda2txt_Processor::check(const QMap<QString, QVariant>& params)
 
 QString format_number(double num)
 {
-    if (num == (long)num) {
+    if (num == (int)num) {
         return QString::number(num, 'f', 0);
     }
     else {
@@ -46,8 +46,8 @@ bool mda2txt_Processor::run(const QMap<QString, QVariant>& params)
     QString mda_path = params["mda_file"].toString();
     QString txt_path = params["txt_file"].toString();
     int transpose = params.value("transpose", 1).toInt();
-    long max_rows = (long)params.value("max_rows", 1e9).toDouble();
-    long max_cols = (long)params.value("max_cols", 2000).toDouble();
+    int max_rows = (int)params.value("max_rows", 1e9).toDouble();
+    int max_cols = (int)params.value("max_cols", 2000).toDouble();
     QString delimiter = params.value("delimeter", "tab").toString();
 
     if (delimiter == "tab")
@@ -60,11 +60,11 @@ bool mda2txt_Processor::run(const QMap<QString, QVariant>& params)
     QString txt;
     if (transpose) {
         if (X.N1() > max_cols) {
-            printf("Too many columns::: %ld>%ld\n", (long)X.N1(), max_cols);
+            printf("Too many columns::: %d>%d\n", (int)X.N1(), max_cols);
             return false;
         }
         if (X.N2() > max_rows) {
-            printf("Too many rows::: %ld>%ld\n", (long)X.N2(), max_rows);
+            printf("Too many rows::: %d>%d\n", (int)X.N2(), max_rows);
             return false;
         }
         for (int i = 0; i < X.N2(); i++) {
@@ -79,11 +79,11 @@ bool mda2txt_Processor::run(const QMap<QString, QVariant>& params)
     }
     else {
         if (X.N1() > max_rows) {
-            printf("Too many rows: %ld\n", (long)X.N1());
+            printf("Too many rows: %d\n", (int)X.N1());
             return false;
         }
         if (X.N2() > max_cols) {
-            printf("Too many columns: %ld\n", (long)X.N2());
+            printf("Too many columns: %d\n", (int)X.N2());
             return false;
         }
         for (int i = 0; i < X.N1(); i++) {

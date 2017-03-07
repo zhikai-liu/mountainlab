@@ -4,7 +4,7 @@
 
 bool get_svm_discrim_direction(double& cutoff, QVector<double>& direction, const Mda32& X, const QVector<int>& labels)
 {
-    long num_points = X.N2();
+    int num_points = X.N2();
     int num_dims = X.N1();
 
     svm_parameter param;
@@ -31,7 +31,7 @@ bool get_svm_discrim_direction(double& cutoff, QVector<double>& direction, const
     svm_node* x_space = new svm_node[(num_dims + 1) * num_points];
     prob.x = new svm_node* [num_points];
 
-    for (long i = 0; i < num_points; i++) {
+    for (int i = 0; i < num_points; i++) {
         for (int d = 0; d < num_dims; d++) {
             x_space[(num_dims + 1) * i + d].index = d;
             x_space[(num_dims + 1) * i + d].value = X.value(d, i);
@@ -46,10 +46,10 @@ bool get_svm_discrim_direction(double& cutoff, QVector<double>& direction, const
     svm_model* model = svm_train(&prob, &param);
 
     direction.clear();
-    for (long d = 0; d < num_dims; d++)
+    for (int d = 0; d < num_dims; d++)
         direction << 0;
-    for (long i = 0; i < model->l; i++) {
-        for (long d = 0; d < num_dims; d++) {
+    for (int i = 0; i < model->l; i++) {
+        for (int d = 0; d < num_dims; d++) {
             direction[d] += model->sv_coef[0][i] * model->SV[i][d].value;
         }
     }

@@ -6,7 +6,7 @@
 #include "mlcommon.h"
 
 namespace P_sort_clips {
-QVector<int> sort_clips_subset(const Mda32& clips, const QVector<long>& indices, Sort_clips_opts opts);
+QVector<int> sort_clips_subset(const Mda32& clips, const QVector<int>& indices, Sort_clips_opts opts);
 }
 
 bool p_sort_clips(QString clips_path, QString labels_out, Sort_clips_opts opts)
@@ -14,17 +14,17 @@ bool p_sort_clips(QString clips_path, QString labels_out, Sort_clips_opts opts)
     Mda32 clips(clips_path);
     //int M=clips.N1();
     //int T=clips.N2();
-    long L = clips.N3();
+    int L = clips.N3();
 
-    QVector<long> indices(L);
-    for (long i = 0; i < L; i++) {
+    QVector<int> indices(L);
+    for (int i = 0; i < L; i++) {
         indices[i] = i;
     }
 
     QVector<int> labels = P_sort_clips::sort_clips_subset(clips, indices, opts);
 
     Mda ret(1, L);
-    for (long i = 0; i < L; i++) {
+    for (int i = 0; i < L; i++) {
         ret.setValue(labels[i], i);
     }
 
@@ -33,18 +33,18 @@ bool p_sort_clips(QString clips_path, QString labels_out, Sort_clips_opts opts)
 
 namespace P_sort_clips {
 
-QVector<int> sort_clips_subset(const Mda32& clips, const QVector<long>& indices, Sort_clips_opts opts)
+QVector<int> sort_clips_subset(const Mda32& clips, const QVector<int>& indices, Sort_clips_opts opts)
 {
     int M = clips.N1();
     int T = clips.N2();
-    long L0 = indices.count();
+    int L0 = indices.count();
 
     Mda32 FF;
     {
         // do this inside a code block so memory gets released
         Mda32 clips_reshaped(M * T, L0);
-        long iii = 0;
-        for (long ii = 0; ii < L0; ii++) {
+        int iii = 0;
+        for (int ii = 0; ii < L0; ii++) {
             for (int t = 0; t < T; t++) {
                 for (int m = 0; m < M; m++) {
                     clips_reshaped.set(clips.value(m, t, indices[ii]), iii);
@@ -74,8 +74,8 @@ QVector<int> sort_clips_subset(const Mda32& clips, const QVector<long>& indices,
         QVector<int> labels_new(L0);
         int k_offset = 0;
         for (int k = 1; k <= K0; k++) {
-            QVector<long> indices2, indices2b;
-            for (long a = 0; a < L0; a++) {
+            QVector<int> indices2, indices2b;
+            for (int a = 0; a < L0; a++) {
                 if (labels0[a] == k) {
                     indices2 << indices[a];
                     indices2b << a;

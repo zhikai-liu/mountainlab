@@ -196,7 +196,7 @@ QVariantMap PrvGuiTreeWidget::currentItemDetails() const
     return ret;
 }
 
-void PrvGuiTreeWidget::searchAgain(QString checksum, long size, QString original_path, QString server)
+void PrvGuiTreeWidget::searchAgain(QString checksum, int size, QString original_path, QString server)
 {
     d->m_locate_manager.startSearchForPrv(checksum, size, original_path, server);
     slot_update_tree_data();
@@ -215,19 +215,19 @@ void PrvGuiTreeWidget::slot_update_tree_data()
     }
 }
 
-QString format_file_size(long file_size)
+QString format_file_size(int file_size)
 {
     if (file_size < 1e3) {
         return QString("%1 bytes").arg(file_size);
     }
     else if (file_size < 1e6) {
-        return QString("%1K").arg(((long)(file_size * 1.0 / 1e3 * 10)) / 10.0);
+        return QString("%1K").arg(((int)(file_size * 1.0 / 1e3 * 10)) / 10.0);
     }
     else if (file_size < 1e9) {
-        return QString("%1M").arg(((long)(file_size * 1.0 / 1e6 * 10)) / 10.0);
+        return QString("%1M").arg(((int)(file_size * 1.0 / 1e6 * 10)) / 10.0);
     }
     else {
-        return QString("%1G").arg(((long)(file_size * 1.0 / 1e9 * 10)) / 10.0);
+        return QString("%1G").arg(((int)(file_size * 1.0 / 1e9 * 10)) / 10.0);
     }
 }
 

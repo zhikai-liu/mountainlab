@@ -30,14 +30,14 @@ MdaTest::MdaTest()
 
 void MdaTest::mda_constructor()
 {
-    QFETCH(long, N1);
-    QFETCH(long, N2);
-    QFETCH(long, N3);
-    QFETCH(long, N4);
-    QFETCH(long, N5);
-    QFETCH(long, N6);
+    QFETCH(int, N1);
+    QFETCH(int, N2);
+    QFETCH(int, N3);
+    QFETCH(int, N4);
+    QFETCH(int, N5);
+    QFETCH(int, N6);
     QFETCH(int, ndims);
-    QFETCH(long, totalSize);
+    QFETCH(int, totalSize);
 
     Mda mda(N1, N2, N3, N4, N5, N6);
 
@@ -69,14 +69,14 @@ void MdaTest::mda_constructor()
 
 void MdaTest::mda_constructor_data()
 {
-    QTest::addColumn<long>("N1");
-    QTest::addColumn<long>("N2");
-    QTest::addColumn<long>("N3");
-    QTest::addColumn<long>("N4");
-    QTest::addColumn<long>("N5");
-    QTest::addColumn<long>("N6");
+    QTest::addColumn<int>("N1");
+    QTest::addColumn<int>("N2");
+    QTest::addColumn<int>("N3");
+    QTest::addColumn<int>("N4");
+    QTest::addColumn<int>("N5");
+    QTest::addColumn<int>("N6");
     QTest::addColumn<int>("ndims");
-    QTest::addColumn<long>("totalSize");
+    QTest::addColumn<int>("totalSize");
 
     QTest::newRow("111111")
         << 1L << 1L << 1L << 1L << 1L << 1L
@@ -117,14 +117,14 @@ void MdaTest::allocate()
 
     // reallocate a different configuration
 
-    QFETCH(long, N1);
-    QFETCH(long, N2);
-    QFETCH(long, N3);
-    QFETCH(long, N4);
-    QFETCH(long, N5);
-    QFETCH(long, N6);
+    QFETCH(int, N1);
+    QFETCH(int, N2);
+    QFETCH(int, N3);
+    QFETCH(int, N4);
+    QFETCH(int, N5);
+    QFETCH(int, N6);
     QFETCH(int, ndims);
-    QFETCH(long, totalSize);
+    QFETCH(int, totalSize);
 
     QCOMPARE(mda.allocate(N1, N2, N3, N4, N5, N6), true);
 
@@ -157,14 +157,14 @@ void MdaTest::allocate()
 
 void MdaTest::allocate_data()
 {
-    QTest::addColumn<long>("N1");
-    QTest::addColumn<long>("N2");
-    QTest::addColumn<long>("N3");
-    QTest::addColumn<long>("N4");
-    QTest::addColumn<long>("N5");
-    QTest::addColumn<long>("N6");
+    QTest::addColumn<int>("N1");
+    QTest::addColumn<int>("N2");
+    QTest::addColumn<int>("N3");
+    QTest::addColumn<int>("N4");
+    QTest::addColumn<int>("N5");
+    QTest::addColumn<int>("N6");
     QTest::addColumn<int>("ndims");
-    QTest::addColumn<long>("totalSize");
+    QTest::addColumn<int>("totalSize");
 
     //    QTest::newRow("111111")
     //            << 1L << 1L << 1L << 1L << 1L << 1L

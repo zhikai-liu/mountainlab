@@ -21,18 +21,18 @@ public:
 
     void setPath(const QString& path);
 
-    long N1() const;
-    long N2() const;
-    long N3() const;
-    long N4() const;
-    long N5() const;
-    long N6() const;
-    long totalSize() const;
-    long size(long dim) const;
-    double value(long i1, long i2);
-    double value(long i1, long i2, long i3, long i4 = 0, long i5 = 0, long i6 = 0);
-    double value1(long ii);
-    void reshape(long N1, long N2, long N3 = 1, long N4 = 1, long N5 = 1, long N6 = 1);
+    int N1() const;
+    int N2() const;
+    int N3() const;
+    int N4() const;
+    int N5() const;
+    int N6() const;
+    int totalSize() const;
+    int size(int dim) const;
+    double value(int i1, int i2);
+    double value(int i1, int i2, int i3, int i4 = 0, int i5 = 0, int i6 = 0);
+    double value1(int ii);
+    void reshape(int N1, int N2, int N3 = 1, int N4 = 1, int N5 = 1, int N6 = 1);
     void write(const QString& path);
 
 private:

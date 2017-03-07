@@ -143,7 +143,7 @@ DiskReadMda compute_firings_features(DiskReadMda timeseries, DiskReadMda firings
 QVector<int> extract_labels(DiskReadMda firings, int labels_row_num)
 {
     QVector<int> ret(firings.N2());
-    for (long i = 0; i < firings.N2(); i++) {
+    for (int i = 0; i < firings.N2(); i++) {
         ret[i] = firings.value(labels_row_num, i);
     }
     return ret;

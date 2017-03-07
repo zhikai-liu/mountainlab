@@ -13,6 +13,7 @@
 #include <QDebug>
 #include <QAbstractItemModel>
 #include <QReadWriteLock>
+#include "mlcommon.h"
 
 struct TaskProgressLogMessage {
     enum Type {

@@ -2,9 +2,9 @@
 
 #include <QVector>
 
-QList<long> get_sort_indices(const QList<long>& X)
+QList<int> get_sort_indices(const QList<int>& X)
 {
-    QList<long> result;
+    QList<int> result;
     result.reserve(X.size());
     for (int i = 0; i < X.size(); ++i)
         result << i;
@@ -13,9 +13,9 @@ QList<long> get_sort_indices(const QList<long>& X)
     return result;
 }
 
-QVector<long> get_sort_indices(const QVector<long>& X)
+QVector<int> get_sort_indices(const QVector<int>& X)
 {
-    QVector<long> result(X.size());
+    QVector<int> result(X.size());
     for (int i = 0; i < X.size(); ++i)
         result << i;
     std::stable_sort(result.begin(), result.end(),
@@ -23,9 +23,9 @@ QVector<long> get_sort_indices(const QVector<long>& X)
     return result;
 }
 
-QList<long> get_sort_indices(const QVector<double>& X)
+QList<int> get_sort_indices(const QVector<double>& X)
 {
-    QList<long> result;
+    QList<int> result;
     result.reserve(X.size());
     for (int i = 0; i < X.size(); ++i)
         result << i;

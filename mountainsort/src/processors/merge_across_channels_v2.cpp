@@ -17,7 +17,7 @@
 bool peaks_are_within_range_to_consider(double p1, double p2, merge_across_channels_v2_opts opts);
 bool peaks_are_within_range_to_consider(double p11, double p12, double p21, double p22, merge_across_channels_v2_opts opts);
 bool cluster_is_already_being_used(const QVector<double>& times_in, const QVector<double>& other_times_in, merge_across_channels_v2_opts opts);
-QList<long> reverse_order(const QList<long>& inds);
+QList<int> reverse_order(const QList<int>& inds);
 
 bool merge_across_channels_v2(const QString& timeseries_path, const QString& firings_path, const QString& firings_out_path, const merge_across_channels_v2_opts& opts)
 {
@@ -31,13 +31,13 @@ bool merge_across_channels_v2(const QString& timeseries_path, const QString& fir
 
     int M = X.N1();
     int T = opts.clip_size;
-    long L = firings.N2();
+    int L = firings.N2();
 
     //setup arrays for peakchans, times, labels (the info from firings.mda)
     QVector<int> peakchans;
     QVector<double> times;
     QVector<int> labels;
-    for (long j = 0; j < L; j++) {
+    for (int j = 0; j < L; j++) {
         peakchans << (int)firings.value(0, j);
         times << firings.value(1, j);
         labels << (int)firings.value(2, j);
@@ -64,11 +64,11 @@ bool merge_across_channels_v2(const QString& timeseries_path, const QString& fir
     //find the candidate pairs for merging
     Mda candidate_pairs(K, K);
     for (int k1 = 0; k1 < K; k1++) {
-        QVector<long> inds1 = find_label_inds(labels, k1 + 1);
+        QVector<int> inds1 = find_label_inds(labels, k1 + 1);
         if (!inds1.isEmpty()) {
 
             for (int k2 = 0; k2 < K; k2++) {
-                QVector<long> inds2 = find_label_inds(labels, k2 + 1);
+                QVector<int> inds2 = find_label_inds(labels, k2 + 1);
                 if (!inds2.isEmpty()) {
                     int peakchan1 = peakchans[inds1[0]]; //the peak channel should be the same for all events with this labels, so we just need to look at the first one
                     int peakchan2 = peakchans[inds2[0]];
@@ -92,7 +92,7 @@ bool merge_across_channels_v2(const QString& timeseries_path, const QString& fir
     for (int k = 0; k < K; k++) {
         abs_peaks_on_own_channels << channel_peaks.value(peakchans[k] - 1, k);
     }
-    QList<long> inds1 = get_sort_indices(abs_peaks_on_own_channels);
+    QList<int> inds1 = get_sort_indices(abs_peaks_on_own_channels);
     inds1 = reverse_order(inds1);
 
     int num_removed = 0;
@@ -101,9 +101,9 @@ bool merge_across_channels_v2(const QString& timeseries_path, const QString& fir
         clusters_to_use << false;
     for (int ii = 0; ii < inds1.count(); ii++) {
         int ik = inds1[ii];
-        QVector<long> inds_k = find_label_inds(labels, ik + 1);
+        QVector<int> inds_k = find_label_inds(labels, ik + 1);
         QVector<double> times_k;
-        for (long a = 0; a < inds_k.count(); a++) {
+        for (int a = 0; a < inds_k.count(); a++) {
             times_k << times[inds_k[a]];
         }
         QVector<double> other_times;
@@ -111,8 +111,8 @@ bool merge_across_channels_v2(const QString& timeseries_path, const QString& fir
             if (candidate_pairs.value(ik, ik2)) {
                 printf("Merge candidate pair: %d,%d\n", ik + 1, ik2 + 1);
                 if (clusters_to_use[ik2]) { //we are already using the other one
-                    QVector<long> inds_k2 = find_label_inds(labels, ik2 + 1);
-                    for (long a = 0; a < inds_k2.count(); a++) {
+                    QVector<int> inds_k2 = find_label_inds(labels, ik2 + 1);
+                    for (int a = 0; a < inds_k2.count(); a++) {
                         other_times << times[inds_k2[a]];
                     }
                 }
@@ -128,8 +128,8 @@ bool merge_across_channels_v2(const QString& timeseries_path, const QString& fir
     }
 
     //now we eliminate the clusters not to use
-    QVector<long> inds_to_use;
-    for (long ii = 0; ii < L; ii++) {
+    QVector<int> inds_to_use;
+    for (int ii = 0; ii < L; ii++) {
         int ik = labels[ii] - 1;
         if (clusters_to_use[ik]) {
             inds_to_use << ii;
@@ -138,13 +138,13 @@ bool merge_across_channels_v2(const QString& timeseries_path, const QString& fir
 
     //set the output
     Mda firings_out(firings.N1(), inds_to_use.count());
-    for (long i = 0; i < inds_to_use.count(); i++) {
+    for (int i = 0; i < inds_to_use.count(); i++) {
         for (int j = 0; j < firings.N1(); j++) {
             firings_out.setValue(firings.value(j, inds_to_use[i]), j, i);
         }
     }
 
-    printf("Using %ld of %ld events after %d redundant clusters removed\n", firings_out.N2(), firings.N2(), num_removed);
+    printf("Using %lld of %lld events after %d redundant clusters removed\n", firings_out.N2(), firings.N2(), num_removed);
 
     firings_out.write64(firings_out_path);
 
@@ -184,13 +184,13 @@ bool cluster_is_already_being_used(const QVector<double>& times_in, const QVecto
     for (int a = 0; a < 2 * T + 1; a++) {
         counts << 0;
     }
-    long ii_other = 0;
-    for (long ii = 0; ii < times.count(); ii++) {
+    int ii_other = 0;
+    for (int ii = 0; ii < times.count(); ii++) {
         double t0 = times[ii];
         while ((ii_other + 1 < other_times.count()) && (other_times[ii_other] < t0 - T))
             ii_other++;
         while ((ii_other < other_times.count()) && (other_times[ii_other] <= t0 + T)) {
-            long diff = (long)(other_times[ii_other] - t0);
+            int diff = (int)(other_times[ii_other] - t0);
             if ((-T <= diff) && (diff <= T)) {
                 counts[diff + T]++;
             }
@@ -202,7 +202,7 @@ bool cluster_is_already_being_used(const QVector<double>& times_in, const QVecto
     double best_frac = 0;
     int best_t = 0;
     for (int t = max_dt; t + max_dt < 2 * T + 1; t++) {
-        long count0 = 0;
+        int count0 = 0;
         for (int t2 = t - max_dt; t2 <= t + max_dt; t2++) {
             count0 += counts[t2];
         }
@@ -220,10 +220,10 @@ bool cluster_is_already_being_used(const QVector<double>& times_in, const QVecto
     return false;
 }
 
-QList<long> reverse_order(const QList<long>& inds)
+QList<int> reverse_order(const QList<int>& inds)
 {
-    QList<long> ret;
-    for (long i = 0; i < inds.count(); i++) {
+    QList<int> ret;
+    for (int i = 0; i < inds.count(); i++) {
         ret << inds[inds.count() - 1 - i];
     }
     return ret;

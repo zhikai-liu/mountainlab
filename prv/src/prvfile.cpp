@@ -35,9 +35,9 @@ public:
     static void println(QString str);
     static QByteArray read_binary_file(const QString& fname);
     static bool write_binary_file(const QString& fname, const QByteArray& data);
-    QString find_file(long size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts);
-    QString find_remote_file(long size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts);
-    QString find_local_file(long size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts);
+    QString find_file(int size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts);
+    QString find_remote_file(int size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts);
+    QString find_local_file(int size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts);
     void copy_from(const PrvFile& other);
 };
 
@@ -271,7 +271,7 @@ QString PrvFile::locate(const PrvFileLocateOptions& opts)
     }
     QString checksum = obj["original_checksum"].toString();
     QString fcs = obj["original_fcs"].toString();
-    long original_size = obj["original_size"].toVariant().toLongLong();
+    int original_size = obj["original_size"].toVariant().toLongLong();
     QString fname_or_url = d->find_file(original_size, checksum, fcs, opts);
     if ((fname_or_url.isEmpty()) && (opts.search_locally)) {
         QString original_path = obj["original_path"].toString();
@@ -303,7 +303,7 @@ QString PrvFile::fcs() const
     return d->m_object["original_fcs"].toString();
 }
 
-long PrvFile::size() const
+int PrvFile::size() const
 {
     return d->m_object["original_size"].toVariant().toLongLong();
 }
@@ -317,7 +317,7 @@ bool PrvFile::recoverFile(const QString& dst_file_path, const PrvFileRecoverOpti
 {
     QString checksum = d->m_object["original_checksum"].toString();
     QString fcs = d->m_object["original_fcs"].toString();
-    long original_size = d->m_object["original_size"].toVariant().toLongLong();
+    int original_size = d->m_object["original_size"].toVariant().toLongLong();
     QString fname_or_url = d->find_file(original_size, checksum, fcs, opts.locate_opts);
     if (fname_or_url.isEmpty()) {
         d->println("Unable to find file: size=" + QString::number(original_size) + " checksum=" + checksum + " fcs=" + fcs);
@@ -443,7 +443,7 @@ bool PrvFilePrivate::write_binary_file(const QString& fname, const QByteArray& d
     return ret;
 }
 
-QString PrvFilePrivate::find_remote_file(long size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts)
+QString PrvFilePrivate::find_remote_file(int size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts)
 {
     QJsonArray remote_servers = opts.remote_servers;
     for (int i = 0; i < remote_servers.count(); i++) {
@@ -469,7 +469,7 @@ QString PrvFilePrivate::find_remote_file(long size, const QString& checksum, con
     return "";
 }
 
-QString PrvFilePrivate::find_file(long size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts)
+QString PrvFilePrivate::find_file(int size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts)
 {
     if (opts.search_locally) {
         if (opts.verbose)
@@ -498,7 +498,7 @@ QString PrvFilePrivate::find_file(long size, const QString& checksum, const QStr
     return "";
 }
 
-QString find_file_2(QString directory, QString checksum, QString fcs_optional, long size, bool recursive, bool verbose)
+QString find_file_2(QString directory, QString checksum, QString fcs_optional, int size, bool recursive, bool verbose)
 {
     QStringList files = QDir(directory).entryList(QStringList("*"), QDir::Files);
     foreach (QString file, files) {
@@ -547,7 +547,7 @@ QString find_file_2(QString directory, QString checksum, QString fcs_optional, l
     return "";
 }
 
-QString PrvFilePrivate::find_local_file(long size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts)
+QString PrvFilePrivate::find_local_file(int size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts)
 {
     QStringList local_search_paths = opts.local_search_paths;
     for (int i = 0; i < local_search_paths.count(); i++) {

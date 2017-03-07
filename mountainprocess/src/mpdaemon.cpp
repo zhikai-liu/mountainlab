@@ -94,7 +94,7 @@ MPDaemon::MPDaemon()
 }
 #endif
 
-void kill_process_and_children(long pid)
+void kill_process_and_children(int pid)
 {
     /// Witold, do we need to worry about making this cross-platform?
     QString cmd = QString("CPIDS=$(pgrep -P %1); (sleep 33 && kill -KILL $CPIDS &); kill -TERM $CPIDS").arg(pid);
@@ -922,10 +922,10 @@ bool MountainProcessServer::launch_pript(QString pript_id)
     }
     if (qprocess->waitForStarted()) {
         if (S->prtype == ScriptType) {
-            writeLogRecord("started-script", "pript_id", pript_id, "pid", (long long)qprocess->processId());
+            writeLogRecord("started-script", "pript_id", pript_id, "pid", (int)qprocess->processId());
         }
         else {
-            writeLogRecord("started-process", "pript_id", pript_id, "pid", (long long)qprocess->processId());
+            writeLogRecord("started-process", "pript_id", pript_id, "pid", (int)qprocess->processId());
         }
         S->qprocess = qprocess;
         if (!S->stdout_fname.isEmpty()) {
@@ -1267,7 +1267,7 @@ QString MPDaemon::daemonPath()
     return ret;
 }
 
-bool MPDaemon::waitForFinishedAndWriteOutput(QProcess* P, long parent_pid)
+bool MPDaemon::waitForFinishedAndWriteOutput(QProcess* P, int parent_pid)
 {
     debug_log(__FUNCTION__, __FILE__, __LINE__);
 
@@ -1303,7 +1303,7 @@ bool MPDaemon::pidExists(qint64 pid)
     return (kill(pid, 0) == 0);
 }
 
-void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe_command, long pid)
+void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe_command, int pid)
 {
     QString bash_script_fname = CacheManager::globalInstance()->makeLocalFile();
 
@@ -1316,7 +1316,7 @@ void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, 
     qprocess->start("/bin/bash", QStringList(bash_script_fname));
 }
 
-void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, long pid)
+void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, int pid)
 {
     QString exe_command = exe + " " + args.join(" ");
     start_bash_command_and_kill_when_pid_is_gone(qprocess, exe_command, pid);

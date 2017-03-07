@@ -4,7 +4,7 @@
 
 int expfilter(FILE* infile, FILE* outfile, int lowpass, float tau)
 {
-    long i, j, i1;
+    int i, j, i1;
 
     struct MDAIO_HEADER HH;
     mda_read_header(&HH, infile);
@@ -32,7 +32,7 @@ int expfilter(FILE* infile, FILE* outfile, int lowpass, float tau)
     float* buffer_in = (float*)malloc(sizeof(float) * chunk_size * M);
     float* buffer_out = (float*)malloc(sizeof(float) * chunk_size * M);
     for (i = 0; i < N; i += chunk_size) {
-        printf("i = %ld / %d (%d percent)\n", i, N, (int)((i * 1.0 / N) * 100));
+        printf("i = %d / %d (%d percent)\n", i, N, (int)((i * 1.0 / N) * 100));
 
         int K = chunk_size;
         if (i + K > N)

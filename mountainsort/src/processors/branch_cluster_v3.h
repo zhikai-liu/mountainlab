@@ -13,7 +13,7 @@ struct Branch_Cluster_V3_Opts {
     int num_features = 10;
     int num_features2 = 0;
     int detect_interval = 10; //timepoints
-    long num_pca_representatives; //??
+    int num_pca_representatives; //??
     double consolidation_factor = 0.9;
     bool split_clusters_at_end = true; //??
     double isocut_threshold = 1.5; //For Hartigan test

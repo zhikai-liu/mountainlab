@@ -16,22 +16,22 @@ class DiskWriteMda {
 public:
     friend class DiskWriteMdaPrivate;
     DiskWriteMda();
-    DiskWriteMda(int data_type, const QString& path, long N1, long N2, long N3 = 1, long N4 = 1, long N5 = 1, long N6 = 1);
+    DiskWriteMda(int data_type, const QString& path, int N1, int N2, int N3 = 1, int N4 = 1, int N5 = 1, int N6 = 1);
     virtual ~DiskWriteMda();
-    bool open(int data_type, const QString& path, long N1, long N2, long N3 = 1, long N4 = 1, long N5 = 1, long N6 = 1);
+    bool open(int data_type, const QString& path, int N1, int N2, int N3 = 1, int N4 = 1, int N5 = 1, int N6 = 1);
     void close();
 
-    long N1();
-    long N2();
-    long N3();
-    long N4();
-    long N5();
-    long N6();
-    long totalSize();
+    int N1();
+    int N2();
+    int N3();
+    int N4();
+    int N5();
+    int N6();
+    int totalSize();
 
-    void writeChunk(Mda& X, long i);
-    void writeChunk(Mda& X, long i1, long i2);
-    void writeChunk(Mda& X, long i1, long i2, long i3);
+    void writeChunk(Mda& X, int i);
+    void writeChunk(Mda& X, int i1, int i2);
+    void writeChunk(Mda& X, int i1, int i2, int i3);
 
 private:
     DiskWriteMdaPrivate* d;

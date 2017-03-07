@@ -136,7 +136,7 @@ QString CacheManager::localTempPath()
 
 struct CMFileRec {
     QString path;
-    long elapsed_sec;
+    int elapsed_sec;
     double size_gb;
 };
 
@@ -191,7 +191,7 @@ void CacheManager::cleanUp()
     for (int i = 0; i < records.count(); i++) {
         total_size_gb += records[i].size_gb;
     }
-    long num_files_removed = 0;
+    int num_files_removed = 0;
     double amount_removed = 0;
     if (total_size_gb > max_gb) {
         double amount_to_remove = total_size_gb - 0.75 * max_gb; //let's get it down to 75% of the max allowed
@@ -237,8 +237,8 @@ void CacheManager::slot_remove_on_delete()
 QString CacheManagerPrivate::create_random_file_name()
 {
 
-    long num1 = QDateTime::currentMSecsSinceEpoch();
+    int num1 = QDateTime::currentMSecsSinceEpoch();
     long num2 = (long)QThread::currentThreadId();
-    long num3 = qrand();
+    int num3 = qrand();
     return QString("ms.%1.%2.%3.tmp").arg(num1).arg(num2).arg(num3);
 }

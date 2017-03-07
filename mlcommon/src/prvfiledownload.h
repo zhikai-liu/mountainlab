@@ -18,7 +18,7 @@ public:
     //input
     QString source_url;
     QString destination_file_name;
-    long size = 0; //optional, if known
+    int size = 0; //optional, if known
 
     //output
     bool success = false;
@@ -26,11 +26,11 @@ public:
 
     void run();
     double elapsed_msec();
-    long num_bytes_downloaded();
+    int num_bytes_downloaded();
 
 private:
     QMutex m_mutex;
-    long m_num_bytes_downloaded = 0;
+    int m_num_bytes_downloaded = 0;
     QTime m_timer;
 };
 
@@ -39,7 +39,7 @@ public:
     //input
     QString source_url; //must be prv protocol
     QString destination_file_name;
-    long size = 0; //mandatory
+    int size = 0; //mandatory
     int num_threads = 10;
 
     //output
@@ -48,12 +48,12 @@ public:
 
     void run();
     double elapsed_msec();
-    long num_bytes_downloaded();
+    int num_bytes_downloaded();
 
 private:
     QMutex m_mutex;
     QTime m_timer;
-    long m_num_bytes_downloaded = 0;
+    int m_num_bytes_downloaded = 0;
 };
 }
 

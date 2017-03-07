@@ -10,6 +10,7 @@ CONFIG -= app_bundle #Please apple, don't make a bundle today
 include(../../../mlcommon/mlcommon.pri)
 include(../../../mlcommon/mda.pri)
 include(../../../mlcommon/taskprogress.pri)
+include(../../../controlwidgets/prvmanagerdialog/prvmanagerdialog.pri)
 
 QT += widgets
 QT += concurrent
@@ -74,11 +75,8 @@ VPATH += ../../../prv-gui/src
 HEADERS += prvgui.h
 SOURCES += prvgui.cpp
 
-INCLUDEPATH += ../../../mountainview/src/controlwidgets
-VPATH += ../../../mountainview/src/controlwidgets
-HEADERS += resolveprvsdialog.h
-SOURCES += resolveprvsdialog.cpp
-FORMS += resolveprvsdialog.ui
+INCLUDEPATH += .
+VPATH += ../../../mountainview/src
 
 INCLUDEPATH += ../../../mountainview/src/3rdparty/qaccordion/include
 VPATH += ../../../mountainview/src/3rdparty/qaccordion/include

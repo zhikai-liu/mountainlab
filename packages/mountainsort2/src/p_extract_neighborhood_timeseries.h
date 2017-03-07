@@ -7,6 +7,7 @@
 #define P_EXTRACT_NEIGHBORHOOD_TIMESERIES_H
 
 #include <QString>
+#include "mlcommon.h"
 
 bool p_extract_neighborhood_timeseries(QString timeseries, QString timeseries_out, QList<int> channels);
 

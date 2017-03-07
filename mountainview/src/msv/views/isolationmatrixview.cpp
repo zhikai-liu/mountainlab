@@ -408,7 +408,7 @@ void IsolationMatrixViewPrivate::update_permutations()
                 diag_entries[m] = 0;
             }
         }
-        QList<long> sort_inds = get_sort_indices(diag_entries);
+        QList<int> sort_inds = get_sort_indices(diag_entries);
         perm_rows.fill(-1, M);
         perm_cols.fill(-1, N);
 
@@ -446,7 +446,7 @@ void IsolationMatrixViewPrivate::update_permutations()
                 diag_entries[n] = 0;
             }
         }
-        QList<long> sort_inds = get_sort_indices(diag_entries);
+        QList<int> sort_inds = get_sort_indices(diag_entries);
         perm_rows.fill(-1, M);
         perm_cols.fill(-1, N);
 

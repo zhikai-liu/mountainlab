@@ -10,6 +10,7 @@ CONFIG -= app_bundle #Please apple, don't make a bundle today
 include(../../mlcommon/mlcommon.pri)
 include(../../mlcommon/mda.pri)
 include(../../mlcommon/taskprogress.pri)
+include(../../controlwidgets/prvmanagerdialog/prvmanagerdialog.pri)
 
 QT += widgets
 QT+=concurrent
@@ -33,7 +34,6 @@ HEADERS += clusterdetailplugin.h clusterdetailview.h \
     msv/views/curationprogramview.h \
     msv/plugins/curationprogramplugin.h \
     msv/views/curationprogramcontroller.h \
-    core/resolveprvsdialog.h \
     views/mvgridview.h \
     views/mvgridviewpropertiesdialog.h \
     misc/renderablewidget.h \
@@ -50,7 +50,6 @@ SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
     msv/views/curationprogramview.cpp \
     msv/plugins/curationprogramplugin.cpp \
     msv/views/curationprogramcontroller.cpp \
-    core/resolveprvsdialog.cpp \
     views/mvgridview.cpp \
     views/mvgridviewpropertiesdialog.cpp \
     misc/renderablewidget.cpp \
@@ -201,8 +200,6 @@ RESOURCES += mountainview.qrc \
 #-std=c++11   # AHB removed since not in GNU gcc 4.6.3
 
 FORMS += \
-    controlwidgets/prvmanagerdialog.ui \
-    controlwidgets/resolveprvsdialog.ui \
     views/mvgridviewpropertiesdialog.ui
 
 DISTFILES += \

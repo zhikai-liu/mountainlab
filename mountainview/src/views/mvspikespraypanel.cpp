@@ -213,7 +213,7 @@ QColor brighten(QColor col, double factor)
 /*!
  * \brief MVSSRenderer::render starts the rendering operation.
  *
- * \warning This method can run for a long period of times.
+ * \warning This method can run for a int period of times.
  */
 void MVSSRenderer::render()
 {
@@ -233,14 +233,14 @@ void MVSSRenderer::render()
     // do the actual allocation (and copy). Bail out if interruption is requested.
     clips = allocator.allocate([this]() { return isInterruptionRequested(); });
 
-    const long L = clips.N3();
+    const int L = clips.N3();
     if (L != colors.count()) {
         qWarning() << "Unexpected sizes: " << colors.count() << L;
         return;
     }
     QTime timer;
     timer.start();
-    for (long i = 0; i < L; i++) {
+    for (int i = 0; i < L; i++) {
         if (timer.elapsed() > 300) { // each 300ms report an intermediate result
             replaceImage(image);
             emit imageUpdated(100 * i / L);
@@ -259,18 +259,18 @@ void MVSSRenderer::render()
  * \brief MVSSRenderer::render_clip performs rendering of a single clip
  *
  */
-void MVSSRenderer::render_clip(QPainter* painter, long i) const
+void MVSSRenderer::render_clip(QPainter* painter, int i) const
 {
     QColor col = colors[i];
-    const long M = clips.N1();
-    const long T = clips.N2();
+    const int M = clips.N1();
+    const int T = clips.N2();
     const double* ptr = clips.constDataPtr() + (M * T * i);
     QPen pen = painter->pen();
     pen.setColor(col); // set proper color
     painter->setPen(pen);
-    for (long m = 0; m < M; m++) {
+    for (int m = 0; m < M; m++) {
         QPainterPath path; // we're setting up a painter path
-        for (long t = 0; t < T; t++) {
+        for (int t = 0; t < T; t++) {
             double val = ptr[m + M * t];
             QPointF pt = coord2pix(m, t, val);
             if (t == 0) {
@@ -286,7 +286,7 @@ void MVSSRenderer::render_clip(QPainter* painter, long i) const
 
 QPointF MVSSRenderer::coord2pix(int m, double t, double val) const
 {
-    long M = clips.N1();
+    int M = clips.N1();
     int clip_size = clips.N2();
     double margin_left = 20, margin_right = 20;
     double margin_top = 20, margin_bottom = 20;
@@ -554,8 +554,8 @@ void MVSpikeSprayPanelControl::rerender()
         return; // nothing to render
     }
     QVector<int> counts(K + 1, 0);
-    QList<long> inds;
-    for (long i = 0; i < d->renderLabels.count(); i++) {
+    QList<int> inds;
+    for (int i = 0; i < d->renderLabels.count(); i++) {
         int label0 = d->renderLabels[i];
         if (label0 >= 0) {
             if (this->d->labels.contains(label0)) {
@@ -584,8 +584,8 @@ void MVSpikeSprayPanelControl::rerender()
     if (!d->renderThread->isRunning())
         d->renderThread->start(); // start the thread if not already started
 
-    long M = d->clipsToRender->N1();
-    long T = d->clipsToRender->N2();
+    int M = d->clipsToRender->N1();
+    int T = d->clipsToRender->N2();
     // defer copying data until we're in a worker thread to keep GUI responsive
     d->renderer->allocator = { d->clipsToRender, M, T, inds };
     d->renderer->allocator.progressFunction = [this](int progress) {
@@ -593,7 +593,7 @@ void MVSpikeSprayPanelControl::rerender()
     };
 
     d->renderer->colors.clear();
-    for (long j = 0; j < inds.count(); j++) {
+    for (int j = 0; j < inds.count(); j++) {
         int label0 = d->renderLabels[inds[j]];
         QColor col = d->labelColors[label0];
         col = brighten(col, brightness());
@@ -667,7 +667,7 @@ MVSSRenderer::ClipsAllocator::ClipsAllocator() {}
  * \param _T 2nd dim
  * \param _inds 3rd dim
  */
-MVSSRenderer::ClipsAllocator::ClipsAllocator(Mda* src, long _M, long _T, const QList<long>& _inds)
+MVSSRenderer::ClipsAllocator::ClipsAllocator(Mda* src, int _M, int _T, const QList<int>& _inds)
     : source(src)
     , M(_M)
     , T(_T)
@@ -678,9 +678,9 @@ MVSSRenderer::ClipsAllocator::ClipsAllocator(Mda* src, long _M, long _T, const Q
 Mda MVSSRenderer::ClipsAllocator::allocate(const std::function<bool()>& breakFunc)
 {
     Mda result(M, T, inds.count());
-    for (long j = 0; j < inds.count(); j++) {
-        for (long t = 0; t < T; t++) {
-            for (long m = 0; m < M; m++) {
+    for (int j = 0; j < inds.count(); j++) {
+        for (int t = 0; t < T; t++) {
+            for (int m = 0; m < M; m++) {
                 result.setValue(source->value(m, t, inds[j]), m, t, j);
             }
         }

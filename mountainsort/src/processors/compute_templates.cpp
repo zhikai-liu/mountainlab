@@ -13,7 +13,7 @@ bool compute_templates(const QString& timeseries_path, const QString& firings_pa
     DiskReadMda firings(firings_path);
     QVector<double> times;
     QVector<int> labels;
-    for (long i = 0; i < firings.N2(); i++) {
+    for (int i = 0; i < firings.N2(); i++) {
         times << firings.value(1, i);
         labels << (int)firings.value(2, i);
     }

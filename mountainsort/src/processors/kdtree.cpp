@@ -6,19 +6,19 @@ class KdTreePrivate {
 public:
     KdTree* q;
 
-    QList<long> m_leaf_indices;
+    QList<int> m_leaf_indices;
     KdTree* m_left_tree = 0;
     KdTree* m_center_tree = 0;
     KdTree* m_right_tree = 0;
     float m_cutoff_1 = 0;
     float m_cutoff_2 = 0;
     QVector<float> m_projection_direction;
-    long m_num_datapoints = 0;
+    int m_num_datapoints = 0;
 
-    void create(const Mda32& X, const QList<long>& indices);
+    void create(const Mda32& X, const QList<int>& indices);
     static QVector<float> get_projection_direction(const Mda32& X);
     static double compute_distsqr(int M, const float* x, const float* y);
-    static QList<long> find_closest_K_candidates(const Mda32& X, const QVector<float>& p, int K, const QList<long>& indices);
+    static QList<int> find_closest_K_candidates(const Mda32& X, const QVector<float>& p, int K, const QList<int>& indices);
 };
 
 KdTree::KdTree()
@@ -40,20 +40,20 @@ KdTree::~KdTree()
 
 void KdTree::create(const Mda32& X)
 {
-    QList<long> indices;
-    for (long i = 0; i < X.N2(); i++)
+    QList<int> indices;
+    for (int i = 0; i < X.N2(); i++)
         indices << i;
     d->create(X, indices);
 }
 
-QList<long> KdTree::allIndices() const
+QList<int> KdTree::allIndices() const
 {
     if ((!d->m_left_tree) && (!d->m_center_tree) && (!d->m_right_tree)) {
         //leaf node
         return d->m_leaf_indices;
     }
     else {
-        QList<long> ret;
+        QList<int> ret;
         if (d->m_left_tree)
             ret.append(d->m_left_tree->allIndices());
         if (d->m_center_tree)
@@ -64,7 +64,7 @@ QList<long> KdTree::allIndices() const
     }
 }
 
-void KdTreePrivate::create(const Mda32& X, const QList<long>& indices)
+void KdTreePrivate::create(const Mda32& X, const QList<int>& indices)
 {
     if (indices.isEmpty())
         return;
@@ -77,7 +77,7 @@ void KdTreePrivate::create(const Mda32& X, const QList<long>& indices)
     //compute the inner product of the points with the projection direction
     const float* ptr = X.constDataPtr();
     QVector<float> vals(indices.count());
-    for (long i = 0; i < indices.count(); i++) {
+    for (int i = 0; i < indices.count(); i++) {
         vals[i] = MLCompute::dotProduct(M, m_projection_direction.data(), &ptr[indices[i] * M]);
     }
     //sort the values and create the cutoff as the median value
@@ -86,10 +86,10 @@ void KdTreePrivate::create(const Mda32& X, const QList<long>& indices)
     m_cutoff_1 = vals_sorted.value(vals_sorted.count() * 3 / 7);
     m_cutoff_2 = vals_sorted.value(vals_sorted.count() * 4 / 7);
     //decide which points go to the left and right
-    QList<long> indices_left;
-    QList<long> indices_center;
-    QList<long> indices_right;
-    for (long i = 0; i < indices.count(); i++) {
+    QList<int> indices_left;
+    QList<int> indices_center;
+    QList<int> indices_right;
+    for (int i = 0; i < indices.count(); i++) {
         if (vals.value(i) < m_cutoff_1)
             indices_left << indices[i];
         else if (vals.value(i) < m_cutoff_2)
@@ -111,35 +111,35 @@ void KdTreePrivate::create(const Mda32& X, const QList<long>& indices)
     m_right_tree->d->create(X, indices_right);
 }
 
-QList<long> KdTreePrivate::find_closest_K_candidates(const Mda32& X, const QVector<float>& p, int K, const QList<long>& indices)
+QList<int> KdTreePrivate::find_closest_K_candidates(const Mda32& X, const QVector<float>& p, int K, const QList<int>& indices)
 {
     int M = X.N1();
     const float* ptr = X.constDataPtr();
-    long num = indices.count(); //should be same as m_num_datapoints
+    int num = indices.count(); //should be same as m_num_datapoints
     QVector<double> distsqrs(num);
-    for (long i = 0; i < num; i++) {
+    for (int i = 0; i < num; i++) {
         distsqrs[i] = compute_distsqr(M, p.data(), &ptr[indices[i] * M]);
     }
-    QList<long> inds = get_sort_indices(distsqrs);
-    QList<long> ret;
+    QList<int> inds = get_sort_indices(distsqrs);
+    QList<int> ret;
     for (int i = 0; (i < inds.count()) && (i < K); i++) {
         ret << indices[inds[i]];
     }
     return ret;
 }
 
-QList<long> KdTree::findApproxKNearestNeighbors(const Mda32& X, const QVector<float>& p, int K, int exhaustive_search_num) const
+QList<int> KdTree::findApproxKNearestNeighbors(const Mda32& X, const QVector<float>& p, int K, int exhaustive_search_num) const
 {
     int M = X.N1();
     //const float *ptr=X.constDataPtr();
     if ((d->m_num_datapoints <= exhaustive_search_num) || (!d->m_left_tree) || (!d->m_right_tree) || (!d->m_center_tree)) {
         //we are now going to do an exaustive search
-        QList<long> indices = allIndices();
+        QList<int> indices = allIndices();
         return d->find_closest_K_candidates(X, p, K, indices);
     }
     else {
         float val = MLCompute::dotProduct(M, p.data(), d->m_projection_direction.data());
-        QList<long> candidates;
+        QList<int> candidates;
         if (val < d->m_cutoff_1) {
             candidates.append(d->m_left_tree->findApproxKNearestNeighbors(X, p, K, exhaustive_search_num));
             candidates.append(d->m_center_tree->findApproxKNearestNeighbors(X, p, K, exhaustive_search_num));

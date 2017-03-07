@@ -27,7 +27,7 @@ class Runner : public QObject {
 public:
     virtual void start() = 0;
     bool isFinished();
-    bool waitForFinished(long msec);
+    bool waitForFinished(int msec);
     void requestStop();
     bool stopRequested() const;
 signals:
@@ -49,7 +49,7 @@ public:
     //input
     QString source_url;
     QString destination_file_name;
-    long size = 0; //optional, if known
+    int size = 0; //optional, if known
 
     //output
     bool success = false;
@@ -57,7 +57,7 @@ public:
 
     void start();
     double elapsed_msec();
-    long num_bytes_downloaded();
+    int num_bytes_downloaded();
 signals:
     void progress();
 private slots:
@@ -66,7 +66,7 @@ private slots:
     void slot_reply_finished();
 
 private:
-    long m_num_bytes_downloaded = 0;
+    int m_num_bytes_downloaded = 0;
     QTime m_timer;
     TaskProgress m_task; // WW: This dependency shouldn't be here. We can emit signals instead.
     QNetworkReply* m_reply = 0;
@@ -82,7 +82,7 @@ public:
     //input
     QString source_url; //must be prv protocol
     QString destination_file_name;
-    long size = 0; //mandatory
+    int size = 0; //mandatory
     int num_threads = 10;
 
     //output
@@ -91,7 +91,7 @@ public:
 
     void start();
     double elapsed_msec();
-    long num_bytes_downloaded();
+    int num_bytes_downloaded();
 private slots:
     void slot_downloader_progress();
     void slot_downloader_finished();
@@ -100,7 +100,7 @@ private slots:
 private:
     QMutex m_mutex;
     QTime m_timer;
-    long m_num_bytes_downloaded = 0;
+    int m_num_bytes_downloaded = 0;
 
     TaskProgress m_task;
     QList<Downloader*> m_downloaders;
@@ -114,8 +114,8 @@ public:
     //input
     QString source_file_name;
     QString destination_url;
-    long start_byte = -1;
-    long end_byte = -1;
+    int start_byte = -1;
+    int end_byte = -1;
 
     //output
     bool success = false;
@@ -124,13 +124,13 @@ public:
 
     void start();
     double elapsed_msec();
-    long num_bytes_uploaded();
+    int num_bytes_uploaded();
 signals:
     void progress();
 
 private:
     QMutex m_mutex;
-    long m_num_bytes_uploaded = 0;
+    int m_num_bytes_uploaded = 0;
     QTime m_timer;
 
     QNetworkReply* m_reply = 0;
@@ -155,15 +155,15 @@ public:
 
     void start();
     double elapsed_msec();
-    long num_bytes_uploaded();
+    int num_bytes_uploaded();
 private slots:
     void slot_uploader_progress();
     void slot_uploader_finished();
     void slot_concat_upload_finished();
 
 private:
-    long m_size = 0;
-    long m_num_bytes_uploaded = 0;
+    int m_size = 0;
+    int m_num_bytes_uploaded = 0;
     QTime m_timer;
     TaskProgress m_task;
 

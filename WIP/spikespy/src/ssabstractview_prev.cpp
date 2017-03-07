@@ -692,7 +692,7 @@ QString SSAbstractView::getTimeLabelForX(double x)
     return make_time_tick_label(getTimepointForX(x) * 1000 / d->m_sampling_freq);
 }
 
-long SSAbstractView::getTimepointForX(int x)
+int SSAbstractView::getTimepointForX(int x)
 {
     if (d->m_timepoint_mapping.totalSize() > 1) {
         if ((0 <= x) && (x < d->m_timepoint_mapping.totalSize())) {

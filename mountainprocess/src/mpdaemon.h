@@ -36,10 +36,10 @@ namespace MPDaemon {
 QString daemonPath();
 bool waitForFileToAppear(QString fname, qint64 timeout_ms = -1, bool remove_on_appear = false, qint64 parent_pid = 0, QString stdout_fname = "");
 void wait(qint64 msec);
-bool waitForFinishedAndWriteOutput(QProcess* P, long parent_pid);
+bool waitForFinishedAndWriteOutput(QProcess* P, int parent_pid);
 bool pidExists(qint64 pid);
-void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe_command, long pid);
-void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, long pid);
+void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe_command, int pid);
+void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, int pid);
 }
 
 #if 0

@@ -86,8 +86,8 @@ PrvGuiMainWindow::~PrvGuiMainWindow()
     delete d;
 }
 
-void replace_prv(QJsonObject& prv_object, QString original_path, QString new_checksum, long new_size, QString new_fcs);
-void replace_prv(QJsonArray& prv_array, QString original_path, QString new_checksum, long new_size, QString new_fcs)
+void replace_prv(QJsonObject& prv_object, QString original_path, QString new_checksum, int new_size, QString new_fcs);
+void replace_prv(QJsonArray& prv_array, QString original_path, QString new_checksum, int new_size, QString new_fcs)
 {
     for (int i = 0; i < prv_array.count(); i++) {
         if (prv_array[i].isArray()) {
@@ -103,12 +103,12 @@ void replace_prv(QJsonArray& prv_array, QString original_path, QString new_check
     }
 }
 
-void replace_prv(QJsonObject& prv_object, QString original_path, QString new_checksum, long new_size, QString new_fcs)
+void replace_prv(QJsonObject& prv_object, QString original_path, QString new_checksum, int new_size, QString new_fcs)
 {
     if ((prv_object.contains("original_checksum")) && (prv_object.contains("original_size")) && (prv_object.contains("original_path"))) {
         if (prv_object.value("original_path").toString() == original_path) {
             prv_object["original_checksum"] = new_checksum;
-            prv_object["original_size"] = (long long)new_size;
+            prv_object["original_size"] = (int)new_size;
             prv_object["original_fcs"] = new_fcs;
         }
     }
@@ -162,7 +162,7 @@ void PrvGuiMainWindow::setPrvFileName(QString fname)
     emit prvFileNameChanged();
 }
 
-void PrvGuiMainWindow::searchAgain(QString checksum, long size, QString original_path, QString server)
+void PrvGuiMainWindow::searchAgain(QString checksum, int size, QString original_path, QString server)
 {
     d->m_tree->searchAgain(checksum, size, original_path, server);
 }

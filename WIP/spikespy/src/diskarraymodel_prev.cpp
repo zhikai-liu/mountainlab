@@ -16,21 +16,21 @@ class DiskArrayModelPrivate {
 public:
     DiskArrayModel* q;
     QString m_path;
-    long m_scale_factor;
-    long m_chunk_size;
-    long m_num_channels;
-    long m_num_timepoints;
-    long m_dim3;
-    //long m_data_type;
+    int m_scale_factor;
+    int m_chunk_size;
+    int m_num_channels;
+    int m_num_timepoints;
+    int m_dim3;
+    //int m_data_type;
     QMap<QString, Mda*> m_loaded_chunks;
     Mda m_mda;
     bool m_set_from_mda;
     void read_header();
-    Mda* load_chunk(long scale, long chunk_ind);
-    Mda* load_chunk_from_file(QString path, long scale, long chunk_ind);
-    QVector<double> load_data_from_mda(QString path, long n, long i1, long i2, long i3);
-    QString get_code(long scale, long chunk_size, long chunk_ind);
-    QString get_multiscale_file_name(long scale);
+    Mda* load_chunk(int scale, int chunk_ind);
+    Mda* load_chunk_from_file(QString path, int scale, int chunk_ind);
+    QVector<double> load_data_from_mda(QString path, int n, int i1, int i2, int i3);
+    QString get_code(int scale, int chunk_size, int chunk_ind);
+    QString get_multiscale_file_name(int scale);
     bool file_exists(QString path);
     void clean_up_file_hierarchies_in_path(const QString& path);
 };
@@ -65,7 +65,7 @@ void DiskArrayModel::setPath(QString path)
 
     d->clean_up_file_hierarchies_in_path(QFileInfo(d->m_path).path());
 
-    d->m_chunk_size = (long)qMax(10000.0 / d->m_num_channels, 1000.0);
+    d->m_chunk_size = (int)qMax(10000.0 / d->m_num_channels, 1000.0);
 }
 
 void DiskArrayModel::setFromMda(const Mda& X)
@@ -82,7 +82,7 @@ QString DiskArrayModel::path()
     return d->m_path;
 }
 
-double safe_value1(Mda& X, long ii)
+double safe_value1(Mda& X, int ii)
 {
     if (ii < X.totalSize())
         return X.value(ii);
@@ -90,32 +90,32 @@ double safe_value1(Mda& X, long ii)
         return 0;
 }
 
-Mda DiskArrayModel::loadData(long scale, long t1, long t2)
+Mda DiskArrayModel::loadData(int scale, int t1, int t2)
 {
     QTime timer;
     timer.start();
 
     Mda X;
-    long d3 = 2;
+    int d3 = 2;
     X.allocate(d->m_num_channels, t2 - t1 + 1, d3);
 
     if (d->m_set_from_mda) {
-        long M = d->m_mda.N1();
+        int M = d->m_mda.N1();
 
         if (scale == 1) {
-            for (long tt = t1; tt <= t2; tt++) {
-                for (long mm = 0; mm < d->m_num_channels; mm++) {
+            for (int tt = t1; tt <= t2; tt++) {
+                for (int mm = 0; mm < d->m_num_channels; mm++) {
                     X.setValue(safe_value1(d->m_mda, mm + tt * M), mm, tt - t1, 0);
                     X.setValue(safe_value1(d->m_mda, mm + tt * M), mm, tt - t1, 1);
                 }
             }
         }
         else {
-            for (long tt = t1; tt <= t2; tt++) {
-                for (long mm = 0; mm < d->m_num_channels; mm++) {
+            for (int tt = t1; tt <= t2; tt++) {
+                for (int mm = 0; mm < d->m_num_channels; mm++) {
                     double minval = safe_value1(d->m_mda, mm + tt * scale * M);
                     double maxval = safe_value1(d->m_mda, mm + tt * scale * M);
-                    for (long dt = 0; dt < scale; dt++) {
+                    for (int dt = 0; dt < scale; dt++) {
                         double tmpval = safe_value1(d->m_mda, mm + (tt * scale + dt) * M);
                         if (tmpval < minval)
                             minval = tmpval;
@@ -133,10 +133,10 @@ Mda DiskArrayModel::loadData(long scale, long t1, long t2)
         return X;
     }
 
-    long chunk_ind = t1 / d->m_chunk_size;
-    for (long i = chunk_ind; i * d->m_chunk_size <= t2; i++) {
-        long tA1, tB1;
-        long tA2, tB2;
+    int chunk_ind = t1 / d->m_chunk_size;
+    for (int i = chunk_ind; i * d->m_chunk_size <= t2; i++) {
+        int tA1, tB1;
+        int tA2, tB2;
         if (i > chunk_ind) {
             tA1 = 0; //where it's coming from
         }
@@ -155,9 +155,9 @@ Mda DiskArrayModel::loadData(long scale, long t1, long t2)
         Mda* C = d->load_chunk(scale, i);
         if (!C)
             return X;
-        for (long dd = 0; dd < d3; dd++) {
-            for (long tt = tA2; tt <= tB2; tt++) {
-                for (long ch = 0; ch < d->m_num_channels; ch++) {
+        for (int dd = 0; dd < d3; dd++) {
+            for (int tt = tA2; tt <= tB2; tt++) {
+                for (int ch = 0; ch < d->m_num_channels; ch++) {
                     X.setValue(C->value(ch, tt - tA2 + tA1, dd), ch, tt, dd);
                 }
             }
@@ -167,10 +167,10 @@ Mda DiskArrayModel::loadData(long scale, long t1, long t2)
     return X;
 }
 
-double DiskArrayModel::value(long ch, long t)
+double DiskArrayModel::value(int ch, int t)
 {
     if (d->m_set_from_mda) {
-        long M = d->m_mda.N1();
+        int M = d->m_mda.N1();
         return safe_value1(d->m_mda, ch + t * M);
     }
     Mda tmp = loadData(1, t, t);
@@ -182,14 +182,14 @@ bool DiskArrayModel::fileHierarchyExists()
     if (d->m_set_from_mda) {
         return true;
     }
-    long scale0 = 1;
+    int scale0 = 1;
     while (d->m_num_timepoints / (scale0 * MULTISCALE_FACTOR) > 1)
         scale0 *= MULTISCALE_FACTOR;
     QString path0 = d->get_multiscale_file_name(scale0);
     return (d->file_exists(path0));
 }
 
-bool do_minmax_downsample(QString path1, QString path2, long factor, QProgressDialog* dlg, bool first)
+bool do_minmax_downsample(QString path1, QString path2, int factor, QProgressDialog* dlg, bool first)
 {
     FILE* inf = jfopen(path1.toLatin1().data(), "rb");
     if (!inf) {
@@ -205,21 +205,21 @@ bool do_minmax_downsample(QString path1, QString path2, long factor, QProgressDi
 
     MDAIO_HEADER HH;
     mda_read_header(&HH, inf);
-    long dim1 = HH.dims[0];
-    long dim2 = HH.dims[1];
-    long dim3 = HH.dims[2];
+    int dim1 = HH.dims[0];
+    int dim2 = HH.dims[1];
+    int dim3 = HH.dims[2];
     if (first) {
         dim2 = dim2 * dim3;
         dim3 = 1; //I know, it's a hack
     }
-    long header_size = HH.header_size;
-    long data_type = HH.data_type;
+    int header_size = HH.header_size;
+    int data_type = HH.data_type;
 
-    long dim1b = dim1;
-    long dim2b = dim2 / factor; //if (dim2b*factor<dim2) dim2b++;
-    long remainder = dim2 - dim2b * factor;
-    long dim3b = 2;
-    long num_dimsb = 3;
+    int dim1b = dim1;
+    int dim2b = dim2 / factor; //if (dim2b*factor<dim2) dim2b++;
+    int remainder = dim2 - dim2b * factor;
+    int dim3b = 2;
+    int num_dimsb = 3;
 
     HH.dims[0] = dim1b;
     HH.dims[1] = dim2b;
@@ -232,11 +232,11 @@ bool do_minmax_downsample(QString path1, QString path2, long factor, QProgressDi
 
     if (data_type == MDAIO_TYPE_BYTE) {
         unsigned char* buf = (unsigned char*)jmalloc(sizeof(unsigned char) * factor * dim1);
-        for (long kk = 0; kk < 2; kk++) { //determines min or max
+        for (int kk = 0; kk < 2; kk++) { //determines min or max
             if (dim3 == 1) {
                 fseek(inf, header_size, SEEK_SET); //need to go back to first part in this case
             }
-            for (long i = 0; i < dim2b; i++) {
+            for (int i = 0; i < dim2b; i++) {
                 if ((i % 100 == 0) && (timer.elapsed() >= 500)) {
                     timer.start();
                     if (dlg->wasCanceled()) {
@@ -246,17 +246,17 @@ bool do_minmax_downsample(QString path1, QString path2, long factor, QProgressDi
                     dlg->setValue((i * 50) / dim2b + 50 * kk);
                     qApp->processEvents();
                 }
-                long numread = mda_read_byte(buf, &HH, factor * dim1, inf);
-                //long numread=fread(buf,sizeof(unsigned char),factor*dim1,inf);
+                int numread = mda_read_byte(buf, &HH, factor * dim1, inf);
+                //int numread=fread(buf,sizeof(unsigned char),factor*dim1,inf);
                 unsigned char vals[dim1];
-                for (long a = 0; a < dim1; a++)
+                for (int a = 0; a < dim1; a++)
                     vals[a] = 0;
                 if (numread < factor * dim1) {
                     qWarning() << "Warning, unexpected problem in do_minmax_downsample" << kk << i << numread << factor << dim1;
                 }
-                for (long ch = 0; ch < dim1; ch++) {
+                for (int ch = 0; ch < dim1; ch++) {
                     vals[ch] = buf[0 * dim1 + ch];
-                    for (long j = 0; j < numread / dim1; j++) {
+                    for (int j = 0; j < numread / dim1; j++) {
                         if (kk == 0)
                             vals[ch] = qMin(vals[ch], buf[j * dim1 + ch]);
                         else if (kk == 1)
@@ -267,8 +267,8 @@ bool do_minmax_downsample(QString path1, QString path2, long factor, QProgressDi
                 //fwrite(vals,sizeof(unsigned char),dim1,outf);
             }
             if (remainder > 0) {
-                long numread = mda_read_byte(buf, &HH, remainder * dim1, inf);
-                //long b0=fread(buf,sizeof(unsigned char),remainder*dim1,inf);
+                int numread = mda_read_byte(buf, &HH, remainder * dim1, inf);
+                //int b0=fread(buf,sizeof(unsigned char),remainder*dim1,inf);
                 Q_UNUSED(numread);
             }
         }
@@ -280,7 +280,7 @@ bool do_minmax_downsample(QString path1, QString path2, long factor, QProgressDi
             if (dim3 == 1) {
                 fseek(inf, header_size, SEEK_SET); //need to go back to first part in this case
             }
-            for (long i = 0; i < dim2b; i++) {
+            for (int i = 0; i < dim2b; i++) {
                 if ((i % 100 == 0) && (timer.elapsed() >= 500)) {
                     timer.start();
                     if (dlg->wasCanceled()) {
@@ -324,7 +324,7 @@ bool do_minmax_downsample(QString path1, QString path2, long factor, QProgressDi
             if (dim3 == 1) {
                 fseek(inf, header_size, SEEK_SET); //need to go back to first part in this case
             }
-            for (long i = 0; i < dim2b; i++) {
+            for (int i = 0; i < dim2b; i++) {
                 if ((i % 100 == 0) && (timer.elapsed() >= 500)) {
                     timer.start();
                     if (dlg->wasCanceled()) {
@@ -368,7 +368,7 @@ bool do_minmax_downsample(QString path1, QString path2, long factor, QProgressDi
             if (dim3 == 1) {
                 fseek(inf, header_size, SEEK_SET); //need to go back to first part in this case
             }
-            for (long i = 0; i < dim2b; i++) {
+            for (int i = 0; i < dim2b; i++) {
                 if ((i % 100 == 0) && (timer.elapsed() >= 500)) {
                     timer.start();
                     if (dlg->wasCanceled()) {
@@ -412,7 +412,7 @@ bool do_minmax_downsample(QString path1, QString path2, long factor, QProgressDi
             if (dim3 == 1) {
                 fseek(inf, header_size, SEEK_SET); //need to go back to first part in this case
             }
-            for (long i = 0; i < dim2b; i++) {
+            for (int i = 0; i < dim2b; i++) {
                 if ((i % 100 == 0) && (timer.elapsed() >= 500)) {
                     timer.start();
                     if (dlg->wasCanceled()) {
@@ -456,7 +456,7 @@ bool do_minmax_downsample(QString path1, QString path2, long factor, QProgressDi
             if (dim3 == 1) {
                 fseek(inf, header_size, SEEK_SET); //need to go back to first part in this case
             }
-            for (long i = 0; i < dim2b; i++) {
+            for (int i = 0; i < dim2b; i++) {
                 if ((i % 100 == 0) && (timer.elapsed() >= 500)) {
                     timer.start();
                     if (dlg->wasCanceled()) {
@@ -516,7 +516,7 @@ void DiskArrayModel::createFileHierarchyIfNeeded()
     qApp->processEvents();
 
     QString last_path = d->m_path;
-    long scale0 = MULTISCALE_FACTOR;
+    int scale0 = MULTISCALE_FACTOR;
     while (d->m_num_timepoints / scale0 > 1) {
         dlg.setLabelText(QString("Creating file hierarchy %1").arg(d->m_num_timepoints / scale0));
         qApp->processEvents();
@@ -574,10 +574,10 @@ void DiskArrayModelPrivate::read_header()
 
     MDAIO_HEADER HH;
     mda_read_header(&HH, inf);
-    long dim1 = HH.dims[0];
-    long dim2 = HH.dims[1];
-    long dim3 = HH.dims[2];
-    //long data_type=HH.data_type;
+    int dim1 = HH.dims[0];
+    int dim2 = HH.dims[1];
+    int dim3 = HH.dims[2];
+    //int data_type=HH.data_type;
 
     jfclose(inf);
 
@@ -586,12 +586,12 @@ void DiskArrayModelPrivate::read_header()
     m_num_timepoints = dim2 * dim3;
     m_dim3 = dim3;
 }
-QString DiskArrayModelPrivate::get_code(long scale, long chunk_size, long chunk_ind)
+QString DiskArrayModelPrivate::get_code(int scale, int chunk_size, int chunk_ind)
 {
     return QString("%1-%2-%3").arg(scale).arg(chunk_size).arg(chunk_ind);
 }
 
-Mda* DiskArrayModelPrivate::load_chunk(long scale, long chunk_ind)
+Mda* DiskArrayModelPrivate::load_chunk(int scale, int chunk_ind)
 {
     QString code = get_code(scale, m_chunk_size, chunk_ind);
     if (m_loaded_chunks.contains(code)) {
@@ -607,7 +607,7 @@ Mda* DiskArrayModelPrivate::load_chunk(long scale, long chunk_ind)
     return X;
 }
 
-Mda* DiskArrayModelPrivate::load_chunk_from_file(QString path, long scale, long chunk_ind)
+Mda* DiskArrayModelPrivate::load_chunk_from_file(QString path, int scale, int chunk_ind)
 {
     if (scale == 1) {
         QVector<double> d0 = load_data_from_mda(path, m_num_channels * m_chunk_size, 0, chunk_ind * m_chunk_size, 0);
@@ -616,9 +616,9 @@ Mda* DiskArrayModelPrivate::load_chunk_from_file(QString path, long scale, long 
         Mda* ret = new Mda();
         //ret->setDataType(m_data_type);
         ret->allocate(m_num_channels, m_chunk_size, 2);
-        long ct = 0;
-        for (long tt = 0; tt < m_chunk_size; tt++) {
-            for (long ch = 0; ch < m_num_channels; ch++) {
+        int ct = 0;
+        for (int tt = 0; tt < m_chunk_size; tt++) {
+            for (int ch = 0; ch < m_num_channels; ch++) {
                 double val = 0;
                 if (ct < d0.count())
                     val = d0[ct];
@@ -638,9 +638,9 @@ Mda* DiskArrayModelPrivate::load_chunk_from_file(QString path, long scale, long 
         Mda* ret = new Mda();
         //ret->setDataType(m_data_type);
         ret->allocate(m_num_channels, m_chunk_size, 2);
-        long ct = 0;
-        for (long tt = 0; tt < m_chunk_size; tt++) {
-            for (long ch = 0; ch < m_num_channels; ch++) {
+        int ct = 0;
+        for (int tt = 0; tt < m_chunk_size; tt++) {
+            for (int ch = 0; ch < m_num_channels; ch++) {
                 double val0 = 0, val1 = 0;
                 if (ct < d0.count())
                     val0 = d0[ct];
@@ -657,7 +657,7 @@ Mda* DiskArrayModelPrivate::load_chunk_from_file(QString path, long scale, long 
     }
 }
 
-QVector<double> DiskArrayModelPrivate::load_data_from_mda(QString path, long n, long i1, long i2, long i3)
+QVector<double> DiskArrayModelPrivate::load_data_from_mda(QString path, int n, int i1, int i2, int i3)
 {
     QVector<double> ret;
     FILE* inf = jfopen(path.toLatin1().data(), "rb");
@@ -668,21 +668,21 @@ QVector<double> DiskArrayModelPrivate::load_data_from_mda(QString path, long n, 
 
     MDAIO_HEADER HH;
     mda_read_header(&HH, inf);
-    long dim1 = HH.dims[0];
-    long dim2 = HH.dims[1];
-    long header_size = HH.header_size;
-    long data_type = HH.data_type;
-    long num_bytes = HH.num_bytes_per_entry;
+    int dim1 = HH.dims[0];
+    int dim2 = HH.dims[1];
+    int header_size = HH.header_size;
+    int data_type = HH.data_type;
+    int num_bytes = HH.num_bytes_per_entry;
 
-    long i0 = i1 + i2 * dim1 + i3 * dim1 * dim2;
+    int i0 = i1 + i2 * dim1 + i3 * dim1 * dim2;
     fseek(inf, header_size + num_bytes * i0, SEEK_SET);
     ret.resize(n);
     if (data_type == MDAIO_TYPE_BYTE) {
         unsigned char* X = (unsigned char*)jmalloc(sizeof(unsigned char) * n);
-        long b0 = mda_read_byte(X, &HH, n, inf);
-        //long b0=fread(X,sizeof(unsigned char),n,inf);
+        int b0 = mda_read_byte(X, &HH, n, inf);
+        //int b0=fread(X,sizeof(unsigned char),n,inf);
         Q_UNUSED(b0)
-        for (long i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) {
             ret[i] = (double)X[i];
         }
         jfree(X);
@@ -745,7 +745,7 @@ QVector<double> DiskArrayModelPrivate::load_data_from_mda(QString path, long n, 
     jfclose(inf);
     return ret;
 }
-long DiskArrayModel::size(long dim)
+int DiskArrayModel::size(int dim)
 {
     if (dim == 0)
         return d->m_num_channels;
@@ -755,7 +755,7 @@ long DiskArrayModel::size(long dim)
         return 1;
 }
 
-long DiskArrayModel::dim3()
+int DiskArrayModel::dim3()
 {
     return d->m_dim3;
 }
@@ -765,7 +765,7 @@ QString get_timestamp(QDateTime time)
     return time.toString("yyyy-mm-dd-hh-mm-ss");
 }
 
-QString DiskArrayModelPrivate::get_multiscale_file_name(long scale)
+QString DiskArrayModelPrivate::get_multiscale_file_name(int scale)
 {
     QString str = QString(".%1").arg(scale);
     QDateTime time = QFileInfo(m_path).lastModified();
@@ -805,8 +805,8 @@ void DiskArrayModelPrivate::clean_up_file_hierarchies_in_path(const QString& pat
 {
     QStringList list = QDir(path).entryList(QStringList("spikespy.*"));
     foreach (QString dirname, list) {
-        long ind1 = dirname.indexOf(".");
-        long ind2 = dirname.lastIndexOf(".");
+        int ind1 = dirname.indexOf(".");
+        int ind2 = dirname.lastIndexOf(".");
         if ((ind1 > 0) && (ind2 > ind1)) {
             QString base_name = dirname.mid(ind1 + 1, ind2 - ind1 - 1);
             QString timestamp0 = dirname.mid(ind2 + 1);

@@ -321,7 +321,7 @@ void MVExportControl::slot_export_curated_firings()
     DiskReadMda F = c->firings();
 
     QVector<int> labels;
-    for (long i = 0; i < F.N2(); i++) {
+    for (int i = 0; i < F.N2(); i++) {
         int label = F.value(2, i);
         labels << label;
     }
@@ -337,8 +337,8 @@ void MVExportControl::slot_export_curated_firings()
         }
     }
 
-    QVector<long> inds_to_use;
-    for (long i = 0; i < F.N2(); i++) {
+    QVector<int> inds_to_use;
+    for (int i = 0; i < F.N2(); i++) {
         int label = F.value(2, i);
         if (accepted_clusters.contains(label)) {
             inds_to_use << i;
@@ -346,8 +346,8 @@ void MVExportControl::slot_export_curated_firings()
     }
 
     Mda F2(F.N1(), inds_to_use.count());
-    for (long j = 0; j < inds_to_use.count(); j++) {
-        long i = inds_to_use[j];
+    for (int j = 0; j < inds_to_use.count(); j++) {
+        int i = inds_to_use[j];
         for (int a = 0; a < F.N1(); a++) {
             F2.set(F.value(a, i), a, j);
         }

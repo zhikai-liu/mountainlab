@@ -18,10 +18,10 @@ struct isocluster_v2_opts {
     bool split_clusters_at_end = false;
     double isocut_threshold = 1.5;
     int K_init = 200;
-    long time_segment_size = 0;
+    int time_segment_size = 0;
 
-    long _internal_time_segment_t1 = 0;
-    long _internal_time_segment_t2 = 0;
+    int _internal_time_segment_t1 = 0;
+    int _internal_time_segment_t2 = 0;
     bool _internal_verbose = true;
 };
 

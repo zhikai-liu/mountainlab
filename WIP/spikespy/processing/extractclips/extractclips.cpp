@@ -66,7 +66,7 @@ int extractclips(FILE* infile, FILE* infile_TL, FILE* outfile, FILE* outfile_TL,
         return 0;
     qint32* buffer_TL = (qint32*)malloc(sizeof(qint32) * N2 * 2);
     mda_read_int32(buffer_TL, &HH_TL, N2 * 2, infile_TL);
-    for (long i = 0; i < N2; i++) {
+    for (int i = 0; i < N2; i++) {
         int t0 = buffer_TL[i * 2];
         int l0 = buffer_TL[i * 2 + 1];
         if (!time_labels.contains(l0))

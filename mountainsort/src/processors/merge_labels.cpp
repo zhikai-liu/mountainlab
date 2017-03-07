@@ -20,7 +20,7 @@ bool merge_labels(QString timeseries_path, QString firings_path, QString firings
 
     QVector<double> times;
     QVector<int> labels;
-    for (long i = 0; i < F.N2(); i++) {
+    for (int i = 0; i < F.N2(); i++) {
         times << F.value(1, i);
         labels << (int)F.value(2, i);
     }
@@ -99,13 +99,13 @@ bool merge_labels(QString timeseries_path, QString firings_path, QString firings
 
     printf("Using %d of %d clusters.\n", k0, K);
 
-    for (long i = 0; i < labels.count(); i++) {
+    for (int i = 0; i < labels.count(); i++) {
         int new_label = merge_map2[merge_map[labels[i] - 1]] + 1;
         labels[i] = new_label;
     }
 
     Mda firings_out(F.N1(), F.N2());
-    for (long i = 0; i < F.N2(); i++) {
+    for (int i = 0; i < F.N2(); i++) {
         for (int j = 0; j < F.N1(); j++) {
             firings_out.setValue(F.value(j, i), j, i);
         }

@@ -72,6 +72,7 @@ static void info(const char* fmt, ...)
 #else
 static void info(const char* fmt, ...)
 {
+    (void)fmt;
 }
 #endif
 
@@ -83,7 +84,7 @@ static void info(const char* fmt, ...)
 //
 class Cache {
 public:
-    Cache(int l, long int size);
+    Cache(int l, int size);
     ~Cache();
 
     // request data [0,len)
@@ -94,7 +95,7 @@ public:
 
 private:
     int l;
-    long int size;
+    int size;
     struct head_t {
         head_t* prev, *next; // a circular list
         Qfloat* data;
@@ -107,14 +108,14 @@ private:
     void lru_insert(head_t* h);
 };
 
-Cache::Cache(int l_, long int size_)
+Cache::Cache(int l_, int size_)
     : l(l_)
     , size(size_)
 {
     head = (head_t*)calloc(l, sizeof(head_t)); // initialized to 0
     size /= sizeof(Qfloat);
     size -= l * sizeof(head_t) / sizeof(Qfloat);
-    size = max(size, 2 * (long int)l); // cache must be large enough for two columns
+    size = max(size, 2 * (int)l); // cache must be large enough for two columns
     lru_head.next = lru_head.prev = &lru_head;
 }
 
@@ -1198,7 +1199,7 @@ public:
         : Kernel(prob.l, prob.x, param)
     {
         clone(y, y_, prob.l);
-        cache = new Cache(prob.l, (long int)(param.cache_size * (1 << 20)));
+        cache = new Cache(prob.l, (int)(param.cache_size * (1 << 20)));
         QD = new double[prob.l];
         for (int i = 0; i < prob.l; i++)
             QD[i] = (this->*kernel_function)(i, i);
@@ -1246,7 +1247,7 @@ public:
     ONE_CLASS_Q(const svm_problem& prob, const svm_parameter& param)
         : Kernel(prob.l, prob.x, param)
     {
-        cache = new Cache(prob.l, (long int)(param.cache_size * (1 << 20)));
+        cache = new Cache(prob.l, (int)(param.cache_size * (1 << 20)));
         QD = new double[prob.l];
         for (int i = 0; i < prob.l; i++)
             QD[i] = (this->*kernel_function)(i, i);
@@ -1292,7 +1293,7 @@ public:
         : Kernel(prob.l, prob.x, param)
     {
         l = prob.l;
-        cache = new Cache(l, (long int)(param.cache_size * (1 << 20)));
+        cache = new Cache(l, (int)(param.cache_size * (1 << 20)));
         QD = new double[2 * l];
         sign = new schar[2 * l];
         index = new int[2 * l];
@@ -2741,7 +2742,7 @@ svm_model* svm_load_model(const char* model_file_name)
     // read sv_coef and SV
 
     int elements = 0;
-    long pos = ftell(fp);
+    int pos = ftell(fp);
 
     max_line_len = 1024;
     line = Malloc(char, max_line_len);

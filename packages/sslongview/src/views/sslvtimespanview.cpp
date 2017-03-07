@@ -302,11 +302,11 @@ void MVTimeSpanViewCalculator::compute()
 
     DiskReadMda firings2 = compute_amplitudes(timeseries, firings, mlproxy_url);
 
-    long L = firings2.N2();
+    int L = firings2.N2();
     times.clear();
     labels.clear();
     amplitudes.clear();
-    for (long i = 0; i < L; i++) {
+    for (int i = 0; i < L; i++) {
         if (i % 100 == 0) {
             if (MLUtil::threadInterruptRequested()) {
                 task.error("Halted");
@@ -441,7 +441,7 @@ void TimeSpanImageCalculator::run()
 
     /*
     double alpha_pct = 0.7;
-    for (long i = 0; i < times.count(); i++) {
+    for (int i = 0; i < times.count(); i++) {
         if (this->isInterruptionRequested())
             return;
         double t0 = times.value(i);

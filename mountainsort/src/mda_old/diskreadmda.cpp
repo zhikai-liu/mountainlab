@@ -17,9 +17,9 @@ public:
     FILE* m_file;
     bool m_file_open_failed;
     MDAIO_HEADER m_header;
-    long m_mda_header_total_size;
+    int m_mda_header_total_size;
     Mda m_internal_chunk;
-    long m_current_internal_chunk_index;
+    int m_current_internal_chunk_index;
     Mda m_memory_mda;
     bool m_use_memory_mda;
     bool m_use_remote_mda;
@@ -29,7 +29,7 @@ public:
     void do_construct();
     bool open_file_if_needed();
     void copy_from(const DiskReadMda& other);
-    long total_size();
+    int total_size();
 };
 
 DiskReadMda::DiskReadMda(const QString& path)
@@ -100,7 +100,7 @@ QString DiskReadMda::path()
     return d->m_path;
 }
 
-QString compute_memory_checksum(long nbytes, void* ptr)
+QString compute_memory_checksum(int nbytes, void* ptr)
 {
     QByteArray X((char*)ptr, nbytes);
     QCryptographicHash hash(QCryptographicHash::Sha1);
@@ -142,7 +142,7 @@ QString DiskReadMda::makePath()
     return "";
 }
 
-long DiskReadMda::N1() const
+int DiskReadMda::N1() const
 {
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N1();
@@ -154,7 +154,7 @@ long DiskReadMda::N1() const
     return d->m_header.dims[0];
 }
 
-long DiskReadMda::N2() const
+int DiskReadMda::N2() const
 {
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N2();
@@ -165,7 +165,7 @@ long DiskReadMda::N2() const
     return d->m_header.dims[1];
 }
 
-long DiskReadMda::N3() const
+int DiskReadMda::N3() const
 {
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N3();
@@ -176,7 +176,7 @@ long DiskReadMda::N3() const
     return d->m_header.dims[2];
 }
 
-long DiskReadMda::N4() const
+int DiskReadMda::N4() const
 {
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N4();
@@ -187,7 +187,7 @@ long DiskReadMda::N4() const
     return d->m_header.dims[3];
 }
 
-long DiskReadMda::N5() const
+int DiskReadMda::N5() const
 {
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N5();
@@ -198,7 +198,7 @@ long DiskReadMda::N5() const
     return d->m_header.dims[4];
 }
 
-long DiskReadMda::N6() const
+int DiskReadMda::N6() const
 {
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N6();
@@ -209,12 +209,12 @@ long DiskReadMda::N6() const
     return d->m_header.dims[5];
 }
 
-long DiskReadMda::totalSize() const
+int DiskReadMda::totalSize() const
 {
     return d->total_size();
 }
 
-bool DiskReadMda::readChunk(Mda& X, long i, long size) const
+bool DiskReadMda::readChunk(Mda& X, int i, int size) const
 {
     if (d->m_use_memory_mda) {
         d->m_memory_mda.getChunk(X, i, size);
@@ -226,21 +226,21 @@ bool DiskReadMda::readChunk(Mda& X, long i, long size) const
     if (!d->open_file_if_needed())
         return false;
     X.allocate(size, 1);
-    long jA = qMax(i, 0L);
-    long jB = qMin(i + size - 1, d->total_size() - 1);
-    long size_to_read = jB - jA + 1;
+    int jA = qMax(i, 0L);
+    int jB = qMin(i + size - 1, d->total_size() - 1);
+    int size_to_read = jB - jA + 1;
     if (size_to_read > 0) {
         fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (jA), SEEK_SET);
-        long bytes_read = mda_read_float64(&X.dataPtr()[jA - i], &d->m_header, size_to_read, d->m_file);
+        int bytes_read = mda_read_float64(&X.dataPtr()[jA - i], &d->m_header, size_to_read, d->m_file);
         if (bytes_read != size_to_read) {
-            printf("Warning problem reading chunk in diskreadmda: %ld<>%ld\n", bytes_read, size_to_read);
+            printf("Warning problem reading chunk in diskreadmda: %d<>%d\n", bytes_read, size_to_read);
             return false;
         }
     }
     return true;
 }
 
-bool DiskReadMda::readChunk(Mda& X, long i1, long i2, long size1, long size2) const
+bool DiskReadMda::readChunk(Mda& X, int i1, int i2, int size1, int size2) const
 {
     if (size2 == 0) {
         return readChunk(X, i1, size1);
@@ -260,7 +260,7 @@ bool DiskReadMda::readChunk(Mda& X, long i1, long i2, long size1, long size2) co
         X.allocate(size1, size2);
         double* Xptr = X.dataPtr();
         double* tmp_ptr = tmp.dataPtr();
-        for (long i = 0; i < size1 * size2; i++) {
+        for (int i = 0; i < size1 * size2; i++) {
             Xptr[i] = tmp_ptr[i];
         }
         return true;
@@ -270,14 +270,14 @@ bool DiskReadMda::readChunk(Mda& X, long i1, long i2, long size1, long size2) co
     if ((size1 == N1()) && (i1 == 0)) {
         //easy case
         X.allocate(size1, size2);
-        long jA = qMax(i2, 0L);
-        long jB = qMin(i2 + size2 - 1, N2() - 1);
-        long size2_to_read = jB - jA + 1;
+        int jA = qMax(i2, 0L);
+        int jB = qMin(i2 + size2 - 1, N2() - 1);
+        int size2_to_read = jB - jA + 1;
         if (size2_to_read > 0) {
             fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (i1 + N1() * jA), SEEK_SET);
-            long bytes_read = mda_read_float64(&X.dataPtr()[(jA - i2) * size1], &d->m_header, size1 * size2_to_read, d->m_file);
+            int bytes_read = mda_read_float64(&X.dataPtr()[(jA - i2) * size1], &d->m_header, size1 * size2_to_read, d->m_file);
             if (bytes_read != size1 * size2_to_read) {
-                printf("Warning problem reading 2d chunk in diskreadmda: %ld<>%ld\n", bytes_read, size1 * size2);
+                printf("Warning problem reading 2d chunk in diskreadmda: %d<>%d\n", bytes_read, size1 * size2);
                 return false;
             }
         }
@@ -289,7 +289,7 @@ bool DiskReadMda::readChunk(Mda& X, long i1, long i2, long size1, long size2) co
     }
 }
 
-bool DiskReadMda::readChunk(Mda& X, long i1, long i2, long i3, long size1, long size2, long size3) const
+bool DiskReadMda::readChunk(Mda& X, int i1, int i2, int i3, int size1, int size2, int size3) const
 {
     if (size3 == 0) {
         if (size2 == 0) {
@@ -315,7 +315,7 @@ bool DiskReadMda::readChunk(Mda& X, long i1, long i2, long i3, long size1, long 
         X.allocate(size1, size2, size3);
         double* Xptr = X.dataPtr();
         double* tmp_ptr = tmp.dataPtr();
-        for (long i = 0; i < size1 * size2 * size3; i++) {
+        for (int i = 0; i < size1 * size2 * size3; i++) {
             Xptr[i] = tmp_ptr[i];
         }
         return true;
@@ -325,14 +325,14 @@ bool DiskReadMda::readChunk(Mda& X, long i1, long i2, long i3, long size1, long 
     if ((size1 == N1()) && (size2 == N2())) {
         //easy case
         X.allocate(size1, size2, size3);
-        long jA = qMax(i3, 0L);
-        long jB = qMin(i3 + size3 - 1, N3() - 1);
-        long size3_to_read = jB - jA + 1;
+        int jA = qMax(i3, 0L);
+        int jB = qMin(i3 + size3 - 1, N3() - 1);
+        int size3_to_read = jB - jA + 1;
         if (size3_to_read > 0) {
             fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (i1 + N1() * i2 + N1() * N2() * jA), SEEK_SET);
-            long bytes_read = mda_read_float64(&X.dataPtr()[(jA - i3) * size1 * size2], &d->m_header, size1 * size2 * size3_to_read, d->m_file);
+            int bytes_read = mda_read_float64(&X.dataPtr()[(jA - i3) * size1 * size2], &d->m_header, size1 * size2 * size3_to_read, d->m_file);
             if (bytes_read != size1 * size2 * size3_to_read) {
-                printf("Warning problem reading 3d chunk in diskreadmda: %ld<>%ld\n", bytes_read, size1 * size2 * size3_to_read);
+                printf("Warning problem reading 3d chunk in diskreadmda: %d<>%d\n", bytes_read, size1 * size2 * size3_to_read);
                 return false;
             }
         }
@@ -344,16 +344,16 @@ bool DiskReadMda::readChunk(Mda& X, long i1, long i2, long i3, long size1, long 
     }
 }
 
-double DiskReadMda::value(long i) const
+double DiskReadMda::value(int i) const
 {
     if (d->m_use_memory_mda)
         return d->m_memory_mda.value(i);
     if ((i < 0) || (i >= d->total_size()))
         return 0;
-    long chunk_index = i / DEFAULT_CHUNK_SIZE;
-    long offset = i - DEFAULT_CHUNK_SIZE * chunk_index;
+    int chunk_index = i / DEFAULT_CHUNK_SIZE;
+    int offset = i - DEFAULT_CHUNK_SIZE * chunk_index;
     if (d->m_current_internal_chunk_index != chunk_index) {
-        long size_to_read = DEFAULT_CHUNK_SIZE;
+        int size_to_read = DEFAULT_CHUNK_SIZE;
         if (chunk_index * DEFAULT_CHUNK_SIZE + size_to_read > d->total_size())
             size_to_read = d->total_size() - chunk_index * DEFAULT_CHUNK_SIZE;
         if (size_to_read) {
@@ -364,7 +364,7 @@ double DiskReadMda::value(long i) const
     return d->m_internal_chunk.value(offset);
 }
 
-double DiskReadMda::value(long i1, long i2) const
+double DiskReadMda::value(int i1, int i2) const
 {
     if (d->m_use_memory_mda)
         return d->m_memory_mda.value(i1, i2);
@@ -375,7 +375,7 @@ double DiskReadMda::value(long i1, long i2) const
     return value(i1 + N1() * i2);
 }
 
-double DiskReadMda::value(long i1, long i2, long i3) const
+double DiskReadMda::value(int i1, int i2, int i3) const
 {
     if (d->m_use_memory_mda)
         return d->m_memory_mda.value(i1, i2, i3);
@@ -436,7 +436,7 @@ void DiskReadMdaPrivate::copy_from(const DiskReadMda& other)
     q->setPath(other.d->m_path);
 }
 
-long DiskReadMdaPrivate::total_size()
+int DiskReadMdaPrivate::total_size()
 {
     if (m_use_memory_mda)
         return m_memory_mda.totalSize();

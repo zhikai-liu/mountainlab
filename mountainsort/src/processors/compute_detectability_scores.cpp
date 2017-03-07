@@ -53,7 +53,7 @@ bool compute_detectability_scores(QString timeseries_path, QString firings_path,
         int count1 = 0;
         int count2 = 0;
 
-        QVector<long> inds_k;
+        QVector<int> inds_k;
 #pragma omp critical
         inds_k = find_label_inds(labels, k); //find the indices corresonding to this cluster
 
@@ -65,7 +65,7 @@ bool compute_detectability_scores(QString timeseries_path, QString firings_path,
             {
                 printf("k=%d/%d\n", k, K);
                 QVector<double> times_k;
-                for (long i = 0; i < inds_k.count(); i++) {
+                for (int i = 0; i < inds_k.count(); i++) {
                     times_k << times[inds_k[i]];
                 }
                 channel = channels[inds_k[0]]; //the channel should be the same for all events in the cluster
@@ -80,7 +80,7 @@ bool compute_detectability_scores(QString timeseries_path, QString firings_path,
             {
                 for (int ii = 0; ii < subclusters0.count(); ii++) {
                     Subcluster SC = subclusters0[ii];
-                    QList<long> new_inds; //we want the inds to correspond to the original inds
+                    QList<int> new_inds; //we want the inds to correspond to the original inds
                     for (int j = 0; j < SC.inds.count(); j++) {
                         new_inds << inds_k[SC.inds[j]];
                     }
@@ -112,7 +112,7 @@ bool compute_detectability_scores(QString timeseries_path, QString firings_path,
     }
 
     for (int ii = 0; ii < num_subclusters; ii++) {
-        QList<long> inds0 = subclusters[ii].inds;
+        QList<int> inds0 = subclusters[ii].inds;
         double score = subclusters[ii].detectability_score;
         for (int jj = 0; jj < inds0.count(); jj++) {
             scores[inds0[jj]] = score;
@@ -120,9 +120,9 @@ bool compute_detectability_scores(QString timeseries_path, QString firings_path,
     }
 
     Mda firings_out;
-    int N1_new = qMax(firings.N1(), 6L);
+    int N1_new = qMax(firings.N1(), 6LL);
     firings_out.allocate(N1_new, firings.N2());
-    for (long j = 0; j < firings.N2(); j++) {
+    for (int j = 0; j < firings.N2(); j++) {
         for (int i = 0; i < firings.N1(); i++) {
             firings_out.setValue(firings.value(i, j), i, j);
         }
@@ -134,9 +134,9 @@ bool compute_detectability_scores(QString timeseries_path, QString firings_path,
     return true;
 }
 
-QVector<long> find_label_inds(const QVector<int>& labels, int k)
+QVector<int> find_label_inds(const QVector<int>& labels, int k)
 {
-    QVector<long> ret;
+    QVector<int> ret;
     for (int i = 0; i < labels.count(); i++) {
         if (labels[i] == k)
             ret << i;
@@ -144,7 +144,7 @@ QVector<long> find_label_inds(const QVector<int>& labels, int k)
     return ret;
 }
 
-Mda get_subclips(Mda& clips, const QList<long>& inds)
+Mda get_subclips(Mda& clips, const QList<int>& inds)
 {
     int M = clips.N1();
     int T = clips.N2();
@@ -173,7 +173,7 @@ QList<Shell> define_shells(const QVector<double>& peaks, const Define_Shells_Opt
 
     //negatives and positives
     if (MLCompute::min(peaks) < 0) {
-        QList<long> inds_neg, inds_pos;
+        QList<int> inds_neg, inds_pos;
         for (int i = 0; i < peaks.count(); i++) {
             if (peaks[i] < 0)
                 inds_neg << i;
@@ -190,7 +190,7 @@ QList<Shell> define_shells(const QVector<double>& peaks, const Define_Shells_Opt
         QList<Shell> shells_pos = define_shells(peaks_pos, opts);
         for (int i = shells_neg.count() - 1; i >= 0; i--) {
             Shell SS = shells_neg[i];
-            QList<long> new_inds;
+            QList<int> new_inds;
             for (int i = 0; i < SS.inds.count(); i++)
                 new_inds << inds_neg[SS.inds[i]];
             SS.inds = new_inds;
@@ -198,7 +198,7 @@ QList<Shell> define_shells(const QVector<double>& peaks, const Define_Shells_Opt
         }
         for (int i = 0; i < shells_pos.count(); i++) {
             Shell SS = shells_pos[i];
-            QList<long> new_inds;
+            QList<int> new_inds;
             for (int i = 0; i < SS.inds.count(); i++)
                 new_inds << inds_pos[SS.inds[i]];
             SS.inds = new_inds;
@@ -212,8 +212,8 @@ QList<Shell> define_shells(const QVector<double>& peaks, const Define_Shells_Opt
     double peak_lower = 0;
     double peak_upper = peak_lower + opts.shell_increment;
     while (peak_lower <= max_peak) {
-        QList<long> inds1;
-        QList<long> inds2;
+        QList<int> inds1;
+        QList<int> inds2;
         for (int i = 0; i < peaks.count(); i++) {
             if ((peak_lower <= peaks[i]) && (peaks[i] < peak_upper)) {
                 inds1 << i;
@@ -244,7 +244,7 @@ QList<Shell> define_shells(const QVector<double>& peaks, const Define_Shells_Opt
     return shells;
 }
 
-QVector<double> randsample_with_replacement(long N, long K)
+QVector<double> randsample_with_replacement(int N, int K)
 {
     QVector<double> ret;
     for (int i = 0; i < K; i++) {
@@ -318,8 +318,8 @@ Mda compute_features(Mda& clips, int num_features)
     int L = clips.N3();
 
     Mda clips_reshaped(M * T, L);
-    long NNN = M * T * L;
-    for (long iii = 0; iii < NNN; iii++) {
+    int NNN = M * T * L;
+    for (int iii = 0; iii < NNN; iii++) {
         clips_reshaped.set(clips.get(iii), iii);
     }
 
@@ -417,7 +417,7 @@ Mda compute_geometric_median_template(Mda& clips)
     QVector<double> sorted_dists = dists;
     qSort(sorted_dists);
     double dist_cutoff = sorted_dists[(int)(sorted_dists.count() * 0.3)];
-    QList<long> inds;
+    QList<int> inds;
     for (int i = 0; i < dists.count(); i++) {
         if (dists[i] <= dist_cutoff)
             inds << i;
@@ -461,7 +461,7 @@ QList<Subcluster> compute_subcluster_detectability_scores(Mda& noise_shape, Mda&
 
     QList<Subcluster> subclusters;
     for (int s = 0; s < shells.count(); s++) {
-        QList<long> inds_s = shells[s].inds;
+        QList<int> inds_s = shells[s].inds;
         Mda clips_s = get_subclips(clips, inds_s);
         //Mda subtemplate=compute_geometric_median_template(clips_s);
         Mda subtemplate = compute_mean_clip(clips_s);

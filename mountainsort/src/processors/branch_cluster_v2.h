@@ -16,7 +16,7 @@ struct Branch_Cluster_V2_Opts {
     int num_features;
     int num_features2 = 0;
     int detect_interval;
-    long num_pca_representatives;
+    int num_pca_representatives;
     double consolidation_factor;
     bool split_clusters_at_end = true;
     double isocut_threshold = 1.5;

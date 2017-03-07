@@ -35,7 +35,7 @@ void Downloader::run()
     QEventLoop loop;
     QFile temp(tmp_fname);
 
-    long num_bytes = 0;
+    int num_bytes = 0;
     QTime timer;
     timer.start();
 
@@ -85,7 +85,7 @@ double Downloader::elapsed_msec()
     return m_timer.elapsed();
 }
 
-long Downloader::num_bytes_downloaded()
+int Downloader::num_bytes_downloaded()
 {
     QMutexLocker locker(&m_mutex);
     return m_num_bytes_downloaded;
@@ -137,15 +137,15 @@ void PrvParallelDownloader::run()
         url += "&";
 
     //get the start and end bytes
-    QList<long> start_bytes;
-    QList<long> end_bytes;
-    long incr = (long)(1 + size * 1.0 / num_threads);
+    QList<int> start_bytes;
+    QList<int> end_bytes;
+    int incr = (int)(1 + size * 1.0 / num_threads);
     if (incr < 1000)
         incr = 1000; //let's be a bit reasonable
-    long sum = 0;
+    int sum = 0;
     for (int i = 0; i < num_threads; i++) {
         if (sum < size) {
-            long val = qMin(incr, size - sum);
+            int val = qMin(incr, size - sum);
             start_bytes << sum;
             end_bytes << sum + val - 1;
             sum += val;
@@ -195,7 +195,7 @@ void PrvParallelDownloader::run()
                 done = false;
             }
         }
-        long num_bytes = 0;
+        int num_bytes = 0;
         for (int i = 0; i < downloaders.count(); i++) {
             num_bytes += downloaders[i]->num_bytes_downloaded();
         }
@@ -237,7 +237,7 @@ double PrvParallelDownloader::elapsed_msec()
     return m_timer.elapsed();
 }
 
-long PrvParallelDownloader::num_bytes_downloaded()
+int PrvParallelDownloader::num_bytes_downloaded()
 {
     QMutexLocker locker(&m_mutex);
     return m_num_bytes_downloaded;

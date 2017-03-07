@@ -21,7 +21,7 @@ struct mdaconvert_opts {
     QString output_dtype; // uint16, float32, ...
     QString output_format; // mda, raw, ...
 
-    QList<long> dims;
+    QList<int> dims;
 
     bool check_input_file_size = true;
 };

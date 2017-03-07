@@ -2,6 +2,7 @@
 #define P_SORT_CLIPS_H
 
 #include <QString>
+#include "mlcommon.h"
 
 struct Sort_clips_opts {
     int num_features = 10;

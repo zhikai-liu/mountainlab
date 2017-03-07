@@ -506,10 +506,10 @@ int main(int argc, char* argv[])
         V->setData(DAM, true);
         Mda firings;
         firings.read(firings_path);
-        QList<long> times, labels;
+        QList<int> times, labels;
         for (int i = 0; i < firings.N2(); i++) {
-            times << (long)firings.value(1, i);
-            labels << (long)firings.value(2, i);
+            times << (int)firings.value(1, i);
+            labels << (int)firings.value(2, i);
         }
         V->setTimesLabels(times, labels);
         W->addView(V);

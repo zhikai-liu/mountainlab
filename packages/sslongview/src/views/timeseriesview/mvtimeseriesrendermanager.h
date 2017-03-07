@@ -46,13 +46,13 @@ class MVTimeSeriesRenderManagerThread : public QThread {
 public:
     //input
     double amp_factor;
-    long ds_factor;
-    long panel_width;
-    long panel_num_points;
-    long index;
+    int ds_factor;
+    int panel_width;
+    int panel_num_points;
+    int index;
     QList<QColor> channel_colors;
     MultiScaleTimeSeries ts;
-    QColor get_channel_color(long m);
+    QColor get_channel_color(int m);
 
     //output
     QImage image;

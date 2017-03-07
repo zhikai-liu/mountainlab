@@ -19,15 +19,15 @@ struct kmeans_opts {
     int num_iterations = 0;
 };
 
-int compute_max(long N, int* labels);
-long compute_max(long N, long* inds);
-void kmeans_multistep(int* labels, int M, long N, float* X, int K1, int K2, int K3, kmeans_opts opts);
-void kmeans_maxsize(int* labels, int M, long N, float* X, int maxsize, kmeans_opts opts);
-void compare_clusters(double* dip_score, std::vector<int>* new_labels1, std::vector<int>* new_labels2, int M, long N1, long N2, float* X1, float* X2, float* centroid1, float* centroid2);
-void compute_centroids(float* centroids, int M, long N, int Kmax, float* X, int* labels, std::vector<int>& clusters_to_compute_vec);
-void compute_covmats(float* covmats, int M, long N, int Kmax, float* X, int* labels, float* centroids, std::vector<int>& clusters_to_compute_vec);
+int compute_max(int N, int* labels);
+int compute_max(int N, int* inds);
+void kmeans_multistep(int* labels, int M, int N, float* X, int K1, int K2, int K3, kmeans_opts opts);
+void kmeans_maxsize(int* labels, int M, int N, float* X, int maxsize, kmeans_opts opts);
+void compare_clusters(double* dip_score, std::vector<int>* new_labels1, std::vector<int>* new_labels2, int M, int N1, int N2, float* X1, float* X2, float* centroid1, float* centroid2);
+void compute_centroids(float* centroids, int M, int N, int Kmax, float* X, int* labels, std::vector<int>& clusters_to_compute_vec);
+void compute_covmats(float* covmats, int M, int N, int Kmax, float* X, int* labels, float* centroids, std::vector<int>& clusters_to_compute_vec);
 void get_pairs_to_compare(std::vector<int>* inds1, std::vector<int>* inds2, int M, int K, float* active_centroids, const intarray2d& active_comparisons_made);
-void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_changes, int M, long N, float* X, int* labels, const std::vector<int>& inds1, const std::vector<int>& inds2, const isosplit5_opts& opts, float* centroids, float* covmats); //the labels are updated
+void compare_pairs(std::vector<int>* clusters_changed, int* total_num_label_changes, int M, int N, float* X, int* labels, const std::vector<int>& inds1, const std::vector<int>& inds2, const isosplit5_opts& opts, float* centroids, float* covmats); //the labels are updated
 }
 
 namespace smi {
@@ -38,11 +38,11 @@ void isosplit5_mex(double* labels_out, int M, int N, double* X)
 {
     float* Xf = (float*)malloc(sizeof(float) * M * N);
     int* labelsi = (int*)malloc(sizeof(int) * N);
-    for (long i = 0; i < M * N; i++)
+    for (int i = 0; i < M * N; i++)
         Xf[i] = X[i];
     isosplit5_opts opts;
     isosplit5(labelsi, M, N, Xf, opts);
-    for (long i = 0; i < N; i++)
+    for (int i = 0; i < N; i++)
         labels_out[i] = labelsi[i];
     free(Xf);
     free(labelsi);
@@ -53,7 +53,7 @@ struct parcelate2_opts {
 };
 
 struct p2_parcel {
-    std::vector<long> indices;
+    std::vector<int> indices;
     std::vector<float> centroid;
     double radius;
 };
@@ -69,14 +69,14 @@ void print_matrix(int M, int N, float* A)
     }
 }
 
-std::vector<float> p2_compute_centroid(int M, float* X, const std::vector<long>& indices)
+std::vector<float> p2_compute_centroid(int M, float* X, const std::vector<int>& indices)
 {
     std::vector<double> ret(M);
     double count = 0;
     for (int m = 0; m < M; m++) {
         ret[m] = 0;
     }
-    for (long i = 0; i < (long)indices.size(); i++) {
+    for (int i = 0; i < (int)indices.size(); i++) {
         for (int m = 0; m < M; m++) {
             ret[m] += X[m + M * indices[i]];
         }
@@ -93,10 +93,10 @@ std::vector<float> p2_compute_centroid(int M, float* X, const std::vector<long>&
     return retf;
 }
 
-double p2_compute_max_distance(const std::vector<float>& centroid, int M, float* X, const std::vector<long>& indices)
+double p2_compute_max_distance(const std::vector<float>& centroid, int M, float* X, const std::vector<int>& indices)
 {
     double max_dist = 0;
-    for (long i = 0; i < (long)indices.size(); i++) {
+    for (int i = 0; i < (int)indices.size(); i++) {
         double dist = 0;
         for (int m = 0; m < M; m++) {
             double val = centroid[m] - X[m + M * indices[i]];
@@ -109,29 +109,29 @@ double p2_compute_max_distance(const std::vector<float>& centroid, int M, float*
     return max_dist;
 }
 
-std::vector<long> p2_randsample(long N, long K)
+std::vector<int> p2_randsample(int N, int K)
 {
     (void)N;
     // Not we are not actually randomizing here. There's a reason, I believe.
-    std::vector<long> inds;
+    std::vector<int> inds;
     for (int a = 0; a < K; a++)
         inds.push_back(a);
     return inds;
     /*
-    if (K>N) K=N;std::vector<long> inds;
+    if (K>N) K=N;std::vector<int> inds;
     std::vector<int> used(N);
-    for (long i=0; i<N; i++)
+    for (int i=0; i<N; i++)
         used[i]=0;
-    for (long k=0; k<K; k++)
+    for (int k=0; k<K; k++)
         used[k]=1;
-    for (long k=0; k<K; k++) {
-        long ii=rand()%N;
+    for (int k=0; k<K; k++) {
+        int ii=rand()%N;
         int tmp=used[k];
         used[k]=used[ii];
         used[ii]=tmp;
     }
-    std::vector<long> inds;
-    for (long i=0; i<N; i++) {
+    std::vector<int> inds;
+    for (int i=0; i<N; i++) {
         if (used[i])
             inds.push_back(i);
     }
@@ -139,16 +139,16 @@ std::vector<long> p2_randsample(long N, long K)
     */
 }
 
-void parcelate2(int* labels, int M, long N, float* X, int target_parcel_size, int target_num_parcels, const parcelate2_opts& p2opts)
+void parcelate2(int* labels, int M, int N, float* X, int target_parcel_size, int target_num_parcels, const parcelate2_opts& p2opts)
 {
     std::vector<p2_parcel> parcels;
 
-    for (long i = 0; i < N; i++)
+    for (int i = 0; i < N; i++)
         labels[i] = 1;
 
     p2_parcel P;
     P.indices.resize(N);
-    for (long i = 0; i < N; i++)
+    for (int i = 0; i < N; i++)
         P.indices[i] = i;
     P.centroid = p2_compute_centroid(M, X, P.indices);
     P.radius = p2_compute_max_distance(P.centroid, M, X, P.indices);
@@ -157,10 +157,10 @@ void parcelate2(int* labels, int M, long N, float* X, int target_parcel_size, in
     int split_factor = 3; // split factor around 2.71 is in a sense ideal
 
     double target_radius;
-    while ((long)parcels.size() < target_num_parcels) {
+    while ((int)parcels.size() < target_num_parcels) {
         bool candidate_found = false;
         for (int i = 0; i < (int)parcels.size(); i++) {
-            if ((parcels[i].radius > 0) && (parcels[i].indices.size() > (unsigned long)target_parcel_size))
+            if ((parcels[i].radius > 0) && (parcels[i].indices.size() > (unsigned int)target_parcel_size))
                 candidate_found = true;
         }
         if (!candidate_found) {
@@ -170,7 +170,7 @@ void parcelate2(int* labels, int M, long N, float* X, int target_parcel_size, in
 
         target_radius = 0;
         for (int i = 0; i < (int)parcels.size(); i++) {
-            if ((long)parcels[i].indices.size() > target_parcel_size) {
+            if ((int)parcels[i].indices.size() > target_parcel_size) {
                 double tmp = parcels[i].radius * 0.95;
                 if (tmp > target_radius)
                     target_radius = tmp;
@@ -183,13 +183,13 @@ void parcelate2(int* labels, int M, long N, float* X, int target_parcel_size, in
 
         int p_index = 0;
         while (p_index < (int)parcels.size()) {
-            std::vector<long> inds = parcels[p_index].indices;
+            std::vector<int> inds = parcels[p_index].indices;
             double rad = parcels[p_index].radius;
-            long sz = parcels[p_index].indices.size();
+            int sz = parcels[p_index].indices.size();
             if ((sz > target_parcel_size) && (rad >= target_radius)) {
                 std::vector<int> assignments(inds.size());
-                std::vector<long> iii = p2_randsample(sz, split_factor);
-                for (long i = 0; i < (long)inds.size(); i++) {
+                std::vector<int> iii = p2_randsample(sz, split_factor);
+                for (int i = 0; i < (int)inds.size(); i++) {
                     int best_pt = -1;
                     double best_dist = 0;
                     for (int j = 0; j < (int)iii.size(); j++) {
@@ -207,7 +207,7 @@ void parcelate2(int* labels, int M, long N, float* X, int target_parcel_size, in
                     assignments[i] = best_pt;
                 }
                 parcels[p_index].indices.clear();
-                for (long i = 0; i < (long)inds.size(); i++) {
+                for (int i = 0; i < (int)inds.size(); i++) {
                     if (assignments[i] == 0) {
                         parcels[p_index].indices.push_back(inds[i]);
                         labels[inds[i]] = p_index + 1;
@@ -217,7 +217,7 @@ void parcelate2(int* labels, int M, long N, float* X, int target_parcel_size, in
                 parcels[p_index].radius = p2_compute_max_distance(parcels[p_index].centroid, M, X, parcels[p_index].indices);
                 for (int jj = 1; jj < (int)iii.size(); jj++) {
                     p2_parcel PP;
-                    for (long i = 0; i < (long)inds.size(); i++) {
+                    for (int i = 0; i < (int)inds.size(); i++) {
                         if (assignments[i] == jj) {
                             PP.indices.push_back(inds[i]);
                             labels[inds[i]] = parcels.size() + 1;
@@ -228,9 +228,9 @@ void parcelate2(int* labels, int M, long N, float* X, int target_parcel_size, in
                     if (PP.indices.size() > 0)
                         parcels.push_back(PP);
                     else
-                        printf("Unexpected problem. New parcel has no points -- perhaps dataset contains duplicate points? -- original size = %ld.\n", sz);
+                        printf("Unexpected problem. New parcel has no points -- perhaps dataset contains duplicate points? -- original size = %d.\n", sz);
                 }
-                if ((long)parcels[p_index].indices.size() == sz) {
+                if ((int)parcels[p_index].indices.size() == sz) {
                     printf("Warning: Size did not change after splitting parcel.\n");
                     p_index++;
                 }
@@ -248,7 +248,7 @@ void parcelate2(int* labels, int M, long N, float* X, int target_parcel_size, in
     }
 }
 
-void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
+void isosplit5(int* labels, int M, int N, float* X, isosplit5_opts opts)
 {
 
     // compute the initial clusters
@@ -270,7 +270,7 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
 
     // The active labels are those that are still being used -- for now, everything is active
     int active_labels_vec[Kmax];
-    for (long i = 0; i < Kmax; i++)
+    for (int i = 0; i < Kmax; i++)
         active_labels_vec[i] = 1;
     std::vector<int> active_labels;
     for (int i = 0; i < Kmax; i++)
@@ -335,7 +335,7 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
 
                 // Actually compare the pairs -- in principle this operation could be parallelized
                 std::vector<int> clusters_changed;
-                long total_num_label_changes = 0;
+                int total_num_label_changes = 0;
                 ns_isosplit5::compare_pairs(&clusters_changed, &total_num_label_changes, M, N, X, labels, inds1b, inds2b, opts, centroids, covmats); //the labels are updated
                 for (int i = 0; i < (int)clusters_changed.size(); i++) {
                     clusters_changed_vec_in_pass[clusters_changed[i] - 1] = 1;
@@ -353,12 +353,12 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
                 ns_isosplit5::compute_covmats(covmats, M, N, Kmax, X, labels, centroids, clusters_changed_vec_in_iteration);
 
                 // For diagnostics
-                //printf ("total num label changes = %ld\n",total_num_label_changes);
+                //printf ("total num label changes = %d\n",total_num_label_changes);
 
                 // Determine whether something has merged and update the active labels
                 for (int i = 0; i < Kmax; i++)
                     active_labels_vec[i] = 0;
-                for (long i = 0; i < N; i++)
+                for (int i = 0; i < N; i++)
                     active_labels_vec[labels[i] - 1] = 1;
                 std::vector<int> new_active_labels;
                 for (int i = 0; i < Kmax; i++)
@@ -397,7 +397,7 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
     for (int i = 0; i < (int)active_labels.size(); i++) {
         labels_map[active_labels[i] - 1] = i + 1;
     }
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         labels[i] = labels_map[labels[i] - 1];
     }
 
@@ -411,20 +411,20 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
         opts2.refine_clusters = true; // Maybe we should provide an option on whether to do recursive refinement
         int k_offset = 0;
         for (int k = 1; k <= K; k++) {
-            std::vector<long> inds_k;
-            for (long i = 0; i < N; i++)
+            std::vector<int> inds_k;
+            for (int i = 0; i < N; i++)
                 if (labels[i] == k)
                     inds_k.push_back(i);
             if (inds_k.size() > 0) {
                 float* X_k = (float*)malloc(sizeof(float) * M * inds_k.size()); //Warning: this may cause memory problems -- especially for recursive case
                 int* labels_k = (int*)malloc(sizeof(int) * inds_k.size());
-                for (long i = 0; i < (long)inds_k.size(); i++) {
+                for (int i = 0; i < (int)inds_k.size(); i++) {
                     for (int m = 0; m < M; m++) {
                         X_k[m + M * i] = X[m + M * inds_k[i]];
                     }
                 }
                 isosplit5(labels_k, M, inds_k.size(), X_k, opts2);
-                for (long i = 0; i < (long)inds_k.size(); i++) {
+                for (int i = 0; i < (int)inds_k.size(); i++) {
                     labels_split[inds_k[i]] = k_offset + labels_k[i];
                 }
                 k_offset += ns_isosplit5::compute_max(inds_k.size(), labels_k);
@@ -432,7 +432,7 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
                 free(X_k);
             }
         }
-        for (long i = 0; i < N; i++)
+        for (int i = 0; i < N; i++)
             labels[i] = labels_split[i];
         free(labels_split);
     }
@@ -448,8 +448,8 @@ void isosplit5(int* labels, int M, long N, float* X, isosplit5_opts opts)
 */
 
 /*
-void isosplit5_old(int *labels_out,int M, long N,float *X,isosplit5_opts opts) {
-    for (long i=0; i<N; i++) {
+void isosplit5_old(int *labels_out,int M, int N,float *X,isosplit5_opts opts) {
+    for (int i=0; i<N; i++) {
         labels_out[i]=1;
     }
 
@@ -470,16 +470,16 @@ void isosplit5_old(int *labels_out,int M, long N,float *X,isosplit5_opts opts) {
             break;
         }
 
-        printf ("Number of active labels: %ld\n",DD.get_active_labels().size());
+        printf ("Number of active labels: %d\n",DD.get_active_labels().size());
 
         std::vector<int> k1s,k2s;
         DD.get_pairs_to_compare(&k1s,&k2s);
 
-        printf ("compare %ld pairs\n",k1s.size());
+        printf ("compare %d pairs\n",k1s.size());
         std::vector<int> old_active_labels=DD.get_active_labels();
-        long num_changes=DD.compare_pairs(k1s,k2s,opts.isocut_threshold);
+        int num_changes=DD.compare_pairs(k1s,k2s,opts.isocut_threshold);
         std::vector<int> new_active_labels=DD.get_active_labels();
-        printf ("  %ld changes\n",num_changes);
+        printf ("  %d changes\n",num_changes);
 
         if (new_active_labels.size()==old_active_labels.size())
             num_iterations_without_merges++;
@@ -497,13 +497,13 @@ void isosplit5_old(int *labels_out,int M, long N,float *X,isosplit5_opts opts) {
                 int k1=active_labels[i1];
                 int k2=active_labels[i2];
                 if ((DD.active_labels_vec[k1-1])&&(DD.active_labels_vec[k2-1])) {
-                    printf ("Number of active labels: %ld\n",DD.get_active_labels().size());
+                    printf ("Number of active labels: %d\n",DD.get_active_labels().size());
                     printf ("compare %d/%d (pass %d)\n",k1,k2,pass);
                     std::vector<int> k1s,k2s;
                     k1s.push_back(k1);
                     k2s.push_back(k2);
-                    long num_changes=DD.compare_pairs(k1s,k2s,opts.isocut_threshold);
-                    printf ("  %ld changes\n",num_changes);
+                    int num_changes=DD.compare_pairs(k1s,k2s,opts.isocut_threshold);
+                    printf ("  %d changes\n",num_changes);
                 }
             }
         }
@@ -514,52 +514,54 @@ void isosplit5_old(int *labels_out,int M, long N,float *X,isosplit5_opts opts) {
     for (int i=0; i<(int)active_labels.size(); i++) {
         labels_map[active_labels[i]]=i+1;
     }
-    for (long i=0; i<N; i++) {
+    for (int i=0; i<N; i++) {
         labels_out[i]=labels_map[DD.labels[i]];
     }
 }
 */
 
 namespace ns_isosplit5 {
-int compute_max(long N, int* labels)
+int compute_max(int N, int* labels)
 {
     if (N == 0)
         return 0;
     int ret = labels[0];
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         if (labels[i] > ret)
             ret = labels[i];
     }
     return ret;
 }
 
-long compute_max(long N, long* inds)
+/*
+int compute_max(int N, int* inds)
 {
     if (N == 0)
         return 0;
-    long ret = inds[0];
-    for (long i = 0; i < N; i++) {
+    int ret = inds[0];
+    for (int i = 0; i < N; i++) {
         if (inds[i] > ret)
             ret = inds[i];
     }
     return ret;
 }
+*/
 
-void kmeans_initialize(double* centroids, int M, long N, int K, float* X)
+void kmeans_initialize(double* centroids, int M, int N, int K, float* X)
 {
     std::vector<int> used(N);
-    for (long i = 0; i < N; i++)
+    for (int i = 0; i < N; i++)
         used[i] = 0;
     for (int k = 0; k < K; k++)
         used[k] = 1;
     for (int k = 0; k < K; k++) {
-        long ii = rand() % N;
+        int ii = rand() % N;
         int tmp = used[k];
         used[k] = used[ii];
         used[ii] = tmp;
     }
-    std::vector<long> inds;
-    for (long i = 0; i < N; i++) {
+    std::vector<int> inds;
+    for (int i = 0; i < N; i++) {
         if (used[i])
             inds.push_back(i);
     }
@@ -592,22 +594,22 @@ int kmeans_assign2(int M, int K, float* X0, double* centroids)
     }
     return ret;
 }
-void kmeans_assign(int* labels, int M, long N, int K, float* X, double* centroids)
+void kmeans_assign(int* labels, int M, int N, int K, float* X, double* centroids)
 {
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         labels[i] = kmeans_assign2(M, K, &X[M * i], centroids);
     }
 }
-void kmeans_centroids(double* centroids, int M, long N, int K, float* X, int* labels)
+void kmeans_centroids(double* centroids, int M, int N, int K, float* X, int* labels)
 {
-    std::vector<long> counts(K);
+    std::vector<int> counts(K);
     for (int k = 1; k <= K; k++) {
         counts[k - 1] = 0;
         for (int m = 0; m < M; m++) {
             centroids[m + (k - 1) * M] = 0;
         }
     }
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         int k = labels[i];
         for (int m = 0; m < M; m++) {
             centroids[m + (k - 1) * M] += X[m + i * M];
@@ -623,7 +625,7 @@ void kmeans_centroids(double* centroids, int M, long N, int K, float* X, int* la
     }
 }
 
-void kmeans(int* labels, int M, long N, float* X, int K, kmeans_opts opts)
+void kmeans(int* labels, int M, int N, float* X, int K, kmeans_opts opts)
 {
     if (K > N)
         K = N;
@@ -637,19 +639,19 @@ void kmeans(int* labels, int M, long N, float* X, int K, kmeans_opts opts)
     free(centroids);
 }
 
-void extract_subarray(float* X_sub, int M, float* X, const std::vector<long>& inds)
+void extract_subarray(float* X_sub, int M, float* X, const std::vector<int>& inds)
 {
-    for (long i = 0; i < (long)inds.size(); i++) {
+    for (int i = 0; i < (int)inds.size(); i++) {
         for (int m = 0; m < M; m++) {
             X_sub[m + i * M] = X[m + inds[i] * M];
         }
     }
 }
 
-void kmeans_maxsize(int* labels, int M, long N, float* X, int maxsize, kmeans_opts opts)
+void kmeans_maxsize(int* labels, int M, int N, float* X, int maxsize, kmeans_opts opts)
 {
     if (N <= maxsize) {
-        for (long i = 0; i < N; i++)
+        for (int i = 0; i < N; i++)
             labels[i] = 1;
         return;
     }
@@ -659,8 +661,8 @@ void kmeans_maxsize(int* labels, int M, long N, float* X, int maxsize, kmeans_op
     int L1 = compute_max(N, labels1);
     int current_max_k = 0;
     for (int k = 1; k <= L1; k++) {
-        std::vector<long> inds_k;
-        for (long i = 0; i < N; i++) {
+        std::vector<int> inds_k;
+        for (int i = 0; i < N; i++) {
             if (labels1[i] == k)
                 inds_k.push_back(i);
         }
@@ -669,7 +671,7 @@ void kmeans_maxsize(int* labels, int M, long N, float* X, int maxsize, kmeans_op
             int* labels2 = (int*)malloc(sizeof(int) * inds_k.size());
             extract_subarray(X2, M, X, inds_k);
             kmeans_maxsize(labels2, M, inds_k.size(), X2, maxsize, opts);
-            for (long j = 0; j < (long)inds_k.size(); j++) {
+            for (int j = 0; j < (int)inds_k.size(); j++) {
                 labels[inds_k[j]] = current_max_k + labels2[j];
             }
             current_max_k += compute_max(inds_k.size(), labels2);
@@ -680,18 +682,18 @@ void kmeans_maxsize(int* labels, int M, long N, float* X, int maxsize, kmeans_op
     free(labels1);
 }
 
-void kmeans_multistep(int* labels, int M, long N, float* X, int K1, int K2, int K3, kmeans_opts opts)
+void kmeans_multistep(int* labels, int M, int N, float* X, int K1, int K2, int K3, kmeans_opts opts)
 {
     if (K2 > 1) {
         int* labels1 = (int*)malloc(sizeof(int) * N);
-        for (long i = 0; i < N; i++)
+        for (int i = 0; i < N; i++)
             labels1[i] = 0;
         kmeans_multistep(labels1, M, N, X, K2, K3, 0, opts);
         int L1 = compute_max(N, labels1);
         int current_max_k = 0;
         for (int k = 1; k <= L1; k++) {
-            std::vector<long> inds_k;
-            for (long i = 0; i < N; i++) {
+            std::vector<int> inds_k;
+            for (int i = 0; i < N; i++) {
                 if (labels1[i] == k)
                     inds_k.push_back(i);
             }
@@ -700,7 +702,7 @@ void kmeans_multistep(int* labels, int M, long N, float* X, int K1, int K2, int 
                 int* labels2 = (int*)malloc(sizeof(int) * inds_k.size());
                 extract_subarray(X2, M, X, inds_k);
                 kmeans_multistep(labels2, M, inds_k.size(), X2, K1, 0, 0, opts);
-                for (long j = 0; j < (long)inds_k.size(); j++) {
+                for (int j = 0; j < (int)inds_k.size(); j++) {
                     labels[inds_k[j]] = current_max_k + labels2[j];
                 }
                 current_max_k += compute_max(inds_k.size(), labels2);
@@ -715,10 +717,10 @@ void kmeans_multistep(int* labels, int M, long N, float* X, int K1, int K2, int 
     }
 }
 
-double dot_product(long N, float* X, float* Y)
+double dot_product(int N, float* X, float* Y)
 {
     double ret = 0;
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         ret += X[i] * Y[i];
     }
     return ret;
@@ -729,11 +731,11 @@ void normalize_vector(int N, float* V)
     double norm = sqrt(dot_product(N, V, V));
     if (!norm)
         return;
-    for (long i = 0; i < N; i++)
+    for (int i = 0; i < N; i++)
         V[i] /= norm;
 }
 
-void compare_clusters(double* dip_score, std::vector<int>* new_labels1, std::vector<int>* new_labels2, int M, long N1, long N2, float* X1, float* X2, double* centroid1, double* centroid2)
+void compare_clusters(double* dip_score, std::vector<int>* new_labels1, std::vector<int>* new_labels2, int M, int N1, int N2, float* X1, float* X2, double* centroid1, double* centroid2)
 {
     float* V = (float*)malloc(sizeof(float) * M);
     float* projection = (float*)malloc(sizeof(float) * (N1 + N2));
@@ -741,10 +743,10 @@ void compare_clusters(double* dip_score, std::vector<int>* new_labels1, std::vec
         V[m] = centroid2[m] - centroid1[m];
     }
     normalize_vector(M, V);
-    for (long i = 0; i < N1; i++) {
+    for (int i = 0; i < N1; i++) {
         projection[i] = dot_product(M, V, &X1[M * i]);
     }
-    for (long i = 0; i < N2; i++) {
+    for (int i = 0; i < N2; i++) {
         projection[N1 + i] = dot_product(M, V, &X2[M * i]);
     }
     isocut5_opts icopts;
@@ -753,13 +755,13 @@ void compare_clusters(double* dip_score, std::vector<int>* new_labels1, std::vec
     isocut5(dip_score, &cutpoint, N1 + N2, projection, icopts);
     new_labels1->resize(N1);
     new_labels2->resize(N2);
-    for (long i = 0; i < N1; i++) {
+    for (int i = 0; i < N1; i++) {
         if (projection[i] < cutpoint)
             (*new_labels1)[i] = 1;
         else
             (*new_labels1)[i] = 2;
     }
-    for (long i = 0; i < N2; i++) {
+    for (int i = 0; i < N2; i++) {
         if (projection[N1 + i] < cutpoint)
             (*new_labels2)[i] = 1;
         else
@@ -769,7 +771,7 @@ void compare_clusters(double* dip_score, std::vector<int>* new_labels1, std::vec
     free(V);
 }
 
-void compute_centroids(float* centroids, int M, long N, int Kmax, float* X, int* labels, std::vector<int>& cluster_to_compute_vec)
+void compute_centroids(float* centroids, int M, int N, int Kmax, float* X, int* labels, std::vector<int>& cluster_to_compute_vec)
 {
     std::vector<double> C(M * Kmax);
     for (int jj = 0; jj < M * Kmax; jj++)
@@ -777,7 +779,7 @@ void compute_centroids(float* centroids, int M, long N, int Kmax, float* X, int*
     std::vector<double> counts(Kmax);
     for (int k = 0; k < Kmax; k++)
         counts[k] = 0;
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         int k0 = labels[i];
         int i0 = k0 - 1;
         if (cluster_to_compute_vec[i0]) {
@@ -805,7 +807,7 @@ void compute_centroids(float* centroids, int M, long N, int Kmax, float* X, int*
     }
 }
 
-void compute_covmats(float* covmats, int M, long N, int Kmax, float* X, int* labels, float* centroids, std::vector<int>& clusters_to_compute_vec)
+void compute_covmats(float* covmats, int M, int N, int Kmax, float* X, int* labels, float* centroids, std::vector<int>& clusters_to_compute_vec)
 {
     std::vector<double> C(M * M * Kmax);
     for (int jj = 0; jj < M * M * Kmax; jj++)
@@ -813,7 +815,7 @@ void compute_covmats(float* covmats, int M, long N, int Kmax, float* X, int* lab
     std::vector<double> counts(Kmax);
     for (int k = 0; k < Kmax; k++)
         counts[k] = 0;
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         int i0 = labels[i] - 1;
         if (clusters_to_compute_vec[i0]) {
             for (int m1 = 0; m1 < M; m1++) {
@@ -902,14 +904,14 @@ void get_pairs_to_compare(std::vector<int>* inds1, std::vector<int>* inds2, int 
     //}
 }
 
-std::vector<float> compute_centroid(int M, long N, float* X)
+std::vector<float> compute_centroid(int M, int N, float* X)
 {
     std::vector<double> ret(M);
     double count = 0;
     for (int m = 0; m < M; m++) {
         ret[m] = 0;
     }
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         for (int m = 0; m < M; m++) {
             ret[m] += X[m + M * i];
         }
@@ -945,7 +947,7 @@ void matvec(int M, int N, float* out, float* mat, float* vec)
 double dbg_compute_mean(const std::vector<float>& X)
 {
     double ret = 0;
-    for (long i = 0; i < (long)X.size(); i++)
+    for (int i = 0; i < (int)X.size(); i++)
         ret += X[i];
     return ret / X.size();
 }
@@ -954,15 +956,15 @@ double dbg_compute_var(const std::vector<float>& X)
 {
     double mu = dbg_compute_mean(X);
     double ret = 0;
-    for (long i = 0; i < (long)X.size(); i++)
+    for (int i = 0; i < (int)X.size(); i++)
         ret += (X[i] - mu) * (X[i] - mu);
     return ret / X.size();
 }
 
-bool merge_test(std::vector<int>* L12, int M, long N1, long N2, float* X1, float* X2, const isosplit5_opts& opts, float* centroid1, float* centroid2, float* covmat1, float* covmat2)
+bool merge_test(std::vector<int>* L12, int M, int N1, int N2, float* X1, float* X2, const isosplit5_opts& opts, float* centroid1, float* centroid2, float* covmat1, float* covmat2)
 {
     L12->resize(N1 + N2);
-    for (long i = 0; i < N1 + N2; i++)
+    for (int i = 0; i < N1 + N2; i++)
         (*L12)[i] = 1;
     if ((N1 == 0) || (N2 == 0)) {
         printf("Error in merge test: N1 or N2 is zero.\n");
@@ -1014,14 +1016,14 @@ bool merge_test(std::vector<int>* L12, int M, long N1, long N2, float* X1, float
     }
 
     std::vector<float> projection1(N1), projection2(N2), projection12(N1 + N2);
-    for (long i = 0; i < N1; i++) {
+    for (int i = 0; i < N1; i++) {
         double tmp = 0;
         for (int m = 0; m < M; m++)
             tmp += V[m] * X1[m + i * M];
         projection1[i] = tmp;
         projection12[i] = tmp;
     }
-    for (long i = 0; i < N2; i++) {
+    for (int i = 0; i < N2; i++) {
         double tmp = 0;
         for (int m = 0; m < M; m++)
             tmp += V[m] * X2[m + i * M];
@@ -1041,7 +1043,7 @@ bool merge_test(std::vector<int>* L12, int M, long N1, long N2, float* X1, float
     else {
         do_merge = false;
     }
-    for (long i = 0; i < N1 + N2; i++) {
+    for (int i = 0; i < N1 + N2; i++) {
         if (projection12[i] < cutpoint)
             (*L12)[i] = 1;
         else
@@ -1051,7 +1053,7 @@ bool merge_test(std::vector<int>* L12, int M, long N1, long N2, float* X1, float
     return do_merge;
 }
 
-void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_changes, int M, long N, float* X, int* labels, const std::vector<int>& k1s, const std::vector<int>& k2s, const isosplit5_opts& opts, float* centroids, float* covmats)
+void compare_pairs(std::vector<int>* clusters_changed, int* total_num_label_changes, int M, int N, float* X, int* labels, const std::vector<int>& k1s, const std::vector<int>& k2s, const isosplit5_opts& opts, float* centroids, float* covmats)
 {
     int Kmax = ns_isosplit5::compute_max(N, labels);
     std::vector<int> clusters_changed_vec(Kmax);
@@ -1059,31 +1061,31 @@ void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_cha
         clusters_changed_vec[i] = 0;
     int* new_labels = (int*)malloc(sizeof(int) * N);
     *total_num_label_changes = 0;
-    for (long i = 0; i < N; i++)
+    for (int i = 0; i < N; i++)
         new_labels[i] = labels[i];
     for (int i1 = 0; i1 < (int)k1s.size(); i1++) {
         int k1 = k1s[i1];
         int k2 = k2s[i1];
-        std::vector<long> inds1, inds2;
-        for (long i = 0; i < N; i++) {
+        std::vector<int> inds1, inds2;
+        for (int i = 0; i < N; i++) {
             if (labels[i] == k1)
                 inds1.push_back(i);
             if (labels[i] == k2)
                 inds2.push_back(i);
         }
         if ((inds1.size() > 0) && (inds2.size() > 0)) {
-            std::vector<long> inds12;
+            std::vector<int> inds12;
             inds12.insert(inds12.end(), inds1.begin(), inds1.end());
             inds12.insert(inds12.end(), inds2.begin(), inds2.end());
             std::vector<int> L12_old(inds12.size());
-            for (long i = 0; i < (long)inds1.size(); i++)
+            for (int i = 0; i < (int)inds1.size(); i++)
                 L12_old[i] = 1;
-            for (long i = 0; i < (long)inds2.size(); i++)
+            for (int i = 0; i < (int)inds2.size(); i++)
                 L12_old[inds1.size() + i] = 2;
             std::vector<int> L12(inds12.size());
 
             bool do_merge;
-            if (((long)inds1.size() < opts.min_cluster_size) || ((long)inds2.size() < opts.min_cluster_size)) {
+            if (((int)inds1.size() < opts.min_cluster_size) || ((int)inds2.size() < opts.min_cluster_size)) {
                 do_merge = true;
             }
             else {
@@ -1096,7 +1098,7 @@ void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_cha
                 free(X2);
             }
             if (do_merge) {
-                for (long i = 0; i < (long)inds2.size(); i++) {
+                for (int i = 0; i < (int)inds2.size(); i++) {
                     new_labels[inds2[i]] = k1;
                 }
                 *total_num_label_changes += inds2.size();
@@ -1106,14 +1108,14 @@ void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_cha
             else {
                 //redistribute
                 bool something_was_redistributed = false;
-                for (long i = 0; i < (long)inds1.size(); i++) {
+                for (int i = 0; i < (int)inds1.size(); i++) {
                     if (L12[i] == 2) {
                         new_labels[inds1[i]] = k2;
                         (*total_num_label_changes)++;
                         something_was_redistributed = true;
                     }
                 }
-                for (long i = 0; i < (long)inds2.size(); i++) {
+                for (int i = 0; i < (int)inds2.size(); i++) {
                     if (L12[inds1.size() + i] == 1) {
                         new_labels[inds2[i]] = k1;
                         (*total_num_label_changes)++;
@@ -1131,7 +1133,7 @@ void compare_pairs(std::vector<int>* clusters_changed, long* total_num_label_cha
     for (int k = 0; k < Kmax; k++)
         if (clusters_changed_vec[k])
             clusters_changed->push_back(k + 1);
-    for (long i = 0; i < N; i++)
+    for (int i = 0; i < N; i++)
         labels[i] = new_labels[i];
     free(new_labels);
 }
@@ -1191,7 +1193,7 @@ void get_pairs_to_compare3(std::vector<int>* i1s, std::vector<int>* i2s, int M, 
 void get_pairs_to_compare2(std::vector<int>* i1s, std::vector<int>* i2s, int M, int N, double* centroids)
 {
     float* centroidsf = (float*)malloc(sizeof(float) * M * N);
-    for (long i = 0; i < M * N; i++)
+    for (int i = 0; i < M * N; i++)
         centroidsf[i] = centroids[i];
     int* groups = (int*)malloc(sizeof(int) * N);
     int maxsize = 1000;
@@ -1200,20 +1202,20 @@ void get_pairs_to_compare2(std::vector<int>* i1s, std::vector<int>* i2s, int M, 
     int num_groups = ns_isosplit5::compute_max(N, groups);
 
     for (int group_number = 1; group_number <= num_groups; group_number++) {
-        std::vector<long> inds_group;
-        for (long i = 0; i < N; i++)
+        std::vector<int> inds_group;
+        for (int i = 0; i < N; i++)
             if (groups[i] == group_number)
                 inds_group.push_back(i);
-        long N0 = inds_group.size();
+        int N0 = inds_group.size();
         if (N0 > 0) {
             float* centroids0f = (float*)malloc(sizeof(float) * M * N0);
             double* centroids0 = (double*)malloc(sizeof(double) * M * N0);
             ns_isosplit5::extract_subarray(centroids0f, M, centroidsf, inds_group);
-            for (long i = 0; i < M * N0; i++)
+            for (int i = 0; i < M * N0; i++)
                 centroids0[i] = centroids0f[i];
             std::vector<int> i1s0, i2s0;
             get_pairs_to_compare3(&i1s0, &i2s0, M, N0, centroids0);
-            for (long jj = 0; jj < (long)i1s0.size(); jj++) {
+            for (int jj = 0; jj < (int)i1s0.size(); jj++) {
                 i1s->push_back(inds_group[i1s0[jj]]);
                 i2s->push_back(inds_group[i2s0[jj]]);
             }

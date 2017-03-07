@@ -3,14 +3,14 @@
 #include <mvcontext.h>
 
 struct mvclipsview_coord {
-    mvclipsview_coord(long i, int m, double t0, double v0)
+    mvclipsview_coord(int i, int m, double t0, double v0)
     {
         clip_index = i;
         channel = m;
         t = t0;
         val = v0;
     }
-    long clip_index = 0;
+    int clip_index = 0;
     int channel = 0;
     double t = 0;
     double val = 0;
@@ -65,9 +65,9 @@ void MVClipsView::paintEvent(QPaintEvent* evt)
 
     int M = d->m_clips.N1();
     int T = d->m_clips.N2();
-    long L = d->m_clips.N3();
+    int L = d->m_clips.N3();
 
-    for (long i = 0; i < L; i++) {
+    for (int i = 0; i < L; i++) {
         for (int m = 0; m < M; m++) {
             QColor col = d->m_context->channelColor(m + 1);
             painter.setPen(QPen(QBrush(col), 3));

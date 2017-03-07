@@ -16,8 +16,8 @@ public:
 void Array2DPrivate::copy_from(const Array2D& X)
 {
     allocate(X.width(), X.height());
-    long N = X.width() * X.height();
-    for (long ii = 0; ii < N; ii++)
+    int N = X.width() * X.height();
+    for (int ii = 0; ii < N; ii++)
         m_data[ii] = X.d->m_data[ii];
 }
 void Array2DPrivate::allocate(int w, int h)
@@ -26,8 +26,8 @@ void Array2DPrivate::allocate(int w, int h)
         free(m_data);
     if (w * h > 0) {
         m_data = (float*)malloc(sizeof(float) * w * h);
-        long N = w * h;
-        for (long ii = 0; ii < N; ii++)
+        int N = w * h;
+        for (int ii = 0; ii < N; ii++)
             m_data[ii] = 0;
     }
     else {
@@ -107,8 +107,8 @@ void Array2D::incrementValue(float val, int i, int j)
 }
 void Array2D::setAll(float val)
 {
-    long N = width() * height();
-    for (long ii = 0; ii < N; ii++)
+    int N = width() * height();
+    for (int ii = 0; ii < N; ii++)
         d->m_data[ii] = val;
 }
 void Array2D::operator=(const Array2D& X)
@@ -117,21 +117,21 @@ void Array2D::operator=(const Array2D& X)
 }
 void Array2D::getData(float* ret) const
 {
-    long N = d->m_width * d->m_height;
-    for (long ii = 0; ii < N; ii++)
+    int N = d->m_width * d->m_height;
+    for (int ii = 0; ii < N; ii++)
         ret[ii] = d->m_data[ii];
 }
 void Array2D::setData(float* D)
 {
-    long N = d->m_width * d->m_height;
-    for (long ii = 0; ii < N; ii++)
+    int N = d->m_width * d->m_height;
+    for (int ii = 0; ii < N; ii++)
         d->m_data[ii] = D[ii];
 }
-float Array2D::value1(long i) const
+float Array2D::value1(int i) const
 {
     return d->m_data[i];
 }
-void Array2D::setValue1(float val, long i) const
+void Array2D::setValue1(float val, int i) const
 {
     d->m_data[i] = val;
 }
@@ -194,7 +194,7 @@ void Array2D::setDataY(const QList<float>& X, int x)
 
 void Array2D::scaleBy(float val)
 {
-    long N = d->m_width * d->m_height;
+    int N = d->m_width * d->m_height;
     for (int j = 0; j < N; j++)
         d->m_data[j] *= val;
 }
@@ -228,7 +228,7 @@ float* Array2D::ptrX(int y) const
     return &d->m_data[y * width()];
 }
 
-void copy_array(float* dst, float* src, long N)
+void copy_array(float* dst, float* src, int N)
 {
     memcpy(dst, src, N * sizeof(float));
 }
@@ -237,7 +237,7 @@ public:
     QMutex m_mutex;
     float* X1;
     float* X2;
-    long N;
+    int N;
     double result;
     bool m_finished;
     IpThread()
@@ -252,18 +252,18 @@ public:
         m_mutex.unlock();
     }
 };
-double ip(float* X1, float* X2, long N)
+double ip(float* X1, float* X2, int N)
 {
     double ret = 0;
-    for (long i = 0; i < N; i++)
+    for (int i = 0; i < N; i++)
         ret += X1[i] * X2[i];
     return ret;
 }
-void normalize(float* X, long N)
+void normalize(float* X, int N)
 {
     double norm = sqrt(ip(X, X, N));
     if (norm) {
-        for (long j = 0; j < N; j++)
+        for (int j = 0; j < N; j++)
             X[j] /= norm;
     }
 }
@@ -274,7 +274,7 @@ void normalize(QList<float>& X)
         norm += X[i] * X[i];
     norm = sqrt(norm);
     if (norm) {
-        for (long j = 0; j < X.count(); j++)
+        for (int j = 0; j < X.count(); j++)
             X[j] /= norm;
     }
 }

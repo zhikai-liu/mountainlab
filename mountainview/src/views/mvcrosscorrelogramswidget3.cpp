@@ -308,14 +308,14 @@ void MVCrossCorrelogramsWidget3::slot_export_static_view()
 double pseudorandomnumber(double i)
 {
     double ret = sin(i + cos(i));
-    ret = (ret + 5) - (long)(ret + 5);
+    ret = (ret + 5) - (int)(ret + 5);
     return ret;
 }
 
 QVector<double> pseudorandomsample(const QVector<double>& X, double dsfactor)
 {
     QVector<double> ret;
-    for (long i = 0; i < X.count(); i++) {
+    for (int i = 0; i < X.count(); i++) {
         double randnum = pseudorandomnumber(i);
         if (randnum <= 1 / dsfactor)
             ret << X[i];
@@ -352,11 +352,11 @@ QVector<double> compute_cc_data3(const QVector<double>& times1_in, const QVector
         }
     }
 
-    long i1 = 0;
-    for (long i2 = 0; i2 < times2.count(); i2++) {
+    int i1 = 0;
+    for (int i2 = 0; i2 < times2.count(); i2++) {
         while ((i1 + 1 < times1.count()) && (times1[i1] < times2[i2] - max_dt))
             i1++;
-        long j1 = i1;
+        int j1 = i1;
         while ((j1 < times1.count()) && (times1[j1] <= times2[i2] + max_dt)) {
             bool ok = true;
             if ((exclude_matches) && (j1 == i2) && (times1[j1] == times2[i2]))
@@ -384,11 +384,11 @@ void MVCrossCorrelogramsWidget3Computer::compute()
 
     QVector<double> times;
     QVector<int> labels;
-    long L = firings.N2();
+    int L = firings.N2();
 
     //assemble the times and labels arrays
     task.setProgress(0.2);
-    for (long n = 0; n < L; n++) {
+    for (int n = 0; n < L; n++) {
         times << firings.value(1, n);
         labels << (int)firings.value(2, n);
     }
@@ -398,7 +398,7 @@ void MVCrossCorrelogramsWidget3Computer::compute()
 
     //handle the merge
     QMap<int, int> label_map = cluster_merge.labelMap(K);
-    for (long n = 0; n < L; n++) {
+    for (int n = 0; n < L; n++) {
         labels[n] = label_map[labels[n]];
     }
 
@@ -453,7 +453,7 @@ void MVCrossCorrelogramsWidget3Computer::compute()
     for (int k = 0; k <= K; k++) {
         the_times << DoubleList();
     }
-    for (long ii = 0; ii < labels.count(); ii++) {
+    for (int ii = 0; ii < labels.count(); ii++) {
         int k = labels[ii];
         if (k <= the_times.count()) {
             the_times[k] << times[ii];

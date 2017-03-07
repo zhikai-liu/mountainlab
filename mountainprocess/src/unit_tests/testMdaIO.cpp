@@ -71,10 +71,10 @@ void TestMdaIO::testHeader()
 }
 
 template <typename T>
-std::vector<T> gen_data(const long size)
+std::vector<T> gen_data(const int size)
 {
     std::vector<T> result(size);
-    for (long i = 0; i < size; ++i) {
+    for (int i = 0; i < size; ++i) {
         result[i] = static_cast<T>(qrand() - RAND_MAX / 2);
     }
     return result;
@@ -83,12 +83,12 @@ std::vector<T> gen_data(const long size)
 template <typename T>
 class _mdaiofunc {
 public:
-    typedef long (*func_type)(T*, struct MDAIO_HEADER*, long, FILE*);
+    typedef int (*func_type)(T*, struct MDAIO_HEADER*, int, FILE*);
     _mdaiofunc(func_type f)
         : _f(f)
     {
     }
-    long operator()(T* data, struct MDAIO_HEADER* header, long size, FILE* file)
+    int operator()(T* data, struct MDAIO_HEADER* header, int size, FILE* file)
     {
         return this->_f(data, header, size, file);
     }
@@ -103,8 +103,8 @@ void test_type(const int typeId, _mdaiofunc<T> readFunc, _mdaiofunc<T> writeFunc
     struct MDAIO_HEADER header;
     std::memset(&header, 0, sizeof(header));
     header.data_type = typeId;
-    const long minimumSize = 8;
-    const long size = qrand() % 100 + minimumSize;
+    const int minimumSize = 8;
+    const int size = qrand() % 100 + minimumSize;
     std::vector<T> data = gen_data<T>(size);
     TempFile file;
     QVERIFY(file.isOpen());

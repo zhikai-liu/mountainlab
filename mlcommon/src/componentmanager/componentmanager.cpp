@@ -2,6 +2,7 @@
 #include <QHash>
 #include <QList>
 #include "icomponent.h"
+#include "mlcommon.h"
 
 struct ComponentSpec {
     IComponent* component;

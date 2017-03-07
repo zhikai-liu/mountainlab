@@ -20,11 +20,11 @@ void adjust_detect_times(const QVector<double>& vals, QVector<double>& times, in
 bool detect3(const QString& timeseries_path, const QString& detect_path, const Detect3_Opts& opts)
 {
     DiskReadMda X(timeseries_path);
-    long M = X.N1();
-    long N = X.N2();
+    int M = X.N1();
+    int N = X.N2();
 
-    long chunk_size = PROCESSING_CHUNK_SIZE;
-    long overlap_size = PROCESSING_CHUNK_OVERLAP_SIZE;
+    int chunk_size = PROCESSING_CHUNK_SIZE;
+    int overlap_size = PROCESSING_CHUNK_OVERLAP_SIZE;
     if (N < PROCESSING_CHUNK_SIZE) {
         chunk_size = N;
         overlap_size = 0;
@@ -37,9 +37,9 @@ bool detect3(const QString& timeseries_path, const QString& detect_path, const D
 
         QTime timer;
         timer.start();
-        long num_timepoints_handled = 0;
+        int num_timepoints_handled = 0;
 #pragma omp parallel for
-        for (long timepoint = 0; timepoint < N; timepoint += chunk_size) {
+        for (int timepoint = 0; timepoint < N; timepoint += chunk_size) {
             Mda chunk;
 #pragma omp critical(lock1)
             {
@@ -72,7 +72,7 @@ bool detect3(const QString& timeseries_path, const QString& detect_path, const D
                 channels.append(channels1);
                 num_timepoints_handled += qMin(chunk_size, N - timepoint);
                 if ((timer.elapsed() > 5000) || (num_timepoints_handled == N)) {
-                    printf("%ld/%ld (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
+                    printf("%d/%d (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
                     timer.restart();
                 }
             }
@@ -113,8 +113,8 @@ void adjust_detect_times(const QVector<double>& vals, QVector<double>& times, in
             kernel.setValue(eval_kernel(diff, Tf), b, t + Tf);
         }
     }
-    for (long i = 0; i < times.count(); i++) {
-        long t0 = (long)times[i];
+    for (int i = 0; i < times.count(); i++) {
+        int t0 = (int)times[i];
         if ((t0 - Tf - 5 >= 0) && (t0 + Tf + 5 < vals.count())) {
             double bestval = 0;
             double best_offset = 0;
@@ -131,7 +131,7 @@ void adjust_detect_times(const QVector<double>& vals, QVector<double>& times, in
                     }
                 }
             }
-            printf("best offset is %g, t0=%ld\n", best_offset, t0);
+            printf("best offset is %g, t0=%d\n", best_offset, t0);
             times[i] += best_offset;
         }
         else {

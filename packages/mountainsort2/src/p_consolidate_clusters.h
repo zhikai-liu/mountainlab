@@ -2,6 +2,7 @@
 #define P_CONSOLIDATE_CLUSTERS_H
 
 #include <QString>
+#include "mlcommon.h"
 
 struct Consolidate_clusters_opts {
     int central_channel = 1;

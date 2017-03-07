@@ -37,33 +37,33 @@ public:
     QJsonObject toPrvObject() const;
 
     ///The dimensions of the array
-    long N1() const;
-    long N2() const;
-    long N3() const;
-    long N4() const;
-    long N5() const;
-    long N6() const;
-    long N(int dim) const; // dim is 1-based indexing
-    long totalSize() const; //product of N1..N6
+    bigint N1() const;
+    bigint N2() const;
+    bigint N3() const;
+    bigint N4() const;
+    bigint N5() const;
+    bigint N6() const;
+    bigint N(int dim) const; // dim is 1-based indexing
+    bigint totalSize() const; //product of N1..N6
 
     MDAIO_HEADER mdaioHeader() const;
 
-    bool reshape(long N1b, long N2b, long N3b = 1, long N4b = 1, long N5b = 1, long N6b = 1);
-    DiskReadMda32 reshaped(long N1b, long N2b, long N3b = 1, long N4b = 1, long N5b = 1, long N6b = 1);
+    bool reshape(bigint N1b, bigint N2b, bigint N3b = 1, bigint N4b = 1, bigint N5b = 1, bigint N6b = 1);
+    DiskReadMda32 reshaped(bigint N1b, bigint N2b, bigint N3b = 1, bigint N4b = 1, bigint N5b = 1, bigint N6b = 1);
 
     ///Retrieve a chunk of the vectorized data of size 1xN starting at position i
-    bool readChunk(Mda32& X, long i, long size) const;
+    bool readChunk(Mda32& X, bigint i, bigint size) const;
     ///Retrieve a chunk of the vectorized data of size N1xN2 starting at position (i1,i2)
-    bool readChunk(Mda32& X, long i1, long i2, long size1, long size2) const;
+    bool readChunk(Mda32& X, bigint i1, bigint i2, bigint size1, bigint size2) const;
     ///Retrieve a chunk of the vectorized data of size N1xN2xN3 starting at position (i1,i2,i3)
-    bool readChunk(Mda32& X, long i1, long i2, long i3, long size1, long size2, long size3) const;
+    bool readChunk(Mda32& X, bigint i1, bigint i2, bigint i3, bigint size1, bigint size2, bigint size3) const;
 
     ///A slow method to retrieve the value at location i of the vectorized array for example value(3+4*N1())==value(3,4). Consider using readChunk() instead
-    dtype32 value(long i) const;
+    dtype32 value(bigint i) const;
     ///A slow method to retrieve the value at location (i1,i2) of the array. Consider using readChunk() instead
-    dtype32 value(long i1, long i2) const;
+    dtype32 value(bigint i1, bigint i2) const;
     ///A slow method to retrieve the value at location (i1,i2,i3) of the array. Consider using readChunk() instead
-    dtype32 value(long i1, long i2, long i3) const;
+    dtype32 value(bigint i1, bigint i2, bigint i3) const;
 
 private:
     DiskReadMda32Private* d;

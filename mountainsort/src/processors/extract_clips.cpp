@@ -119,7 +119,7 @@ bool extract_clips(const QString& timeseries_path, const QString& firings_path, 
     }
 
     QVector<double> times;
-    for (long j = 0; j < F.N2(); j++) {
+    for (int j = 0; j < F.N2(); j++) {
         double t0 = F.value(1, j);
         if ((t2 == 0) || ((t1 <= t0) && (t0 <= t2)))
             times << F.value(1, j);
@@ -135,7 +135,7 @@ bool extract_clips_features(const QString& timeseries_path, const QString& firin
     DiskReadMda X(timeseries_path);
     DiskReadMda F(firings_path);
     QVector<double> times;
-    for (long j = 0; j < F.N2(); j++) {
+    for (int j = 0; j < F.N2(); j++) {
         times << F.value(1, j);
     }
     Mda clips = extract_clips(X, times, clip_size);

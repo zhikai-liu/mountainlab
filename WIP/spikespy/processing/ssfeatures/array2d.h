@@ -22,8 +22,8 @@ public:
     int height() const;
     float getValue(int i, int j = 0) const;
     float value(int i, int j = 0) const;
-    float value1(long i) const;
-    void setValue1(float val, long i) const;
+    float value1(int i) const;
+    void setValue1(float val, int i) const;
     void setValue(float val, int i, int j = 0);
     void incrementValue(float val, int i, int j = 0);
     void setAll(float val);
@@ -64,9 +64,9 @@ void read_mda(const QString& fname, QList<float>& data);
 //QList<float> read_float_list(const QString &fname);
 void add(QList<float>& X, const QList<float>& Y);
 
-void copy_array(float* dst, float* src, long N);
-double ip(float* X1, float* X2, long N);
-void normalize(float* X, long N);
+void copy_array(float* dst, float* src, int N);
+double ip(float* X1, float* X2, int N);
+void normalize(float* X, int N);
 void normalize(QList<float>& X);
 
 Array2D matrix_multiply(const Array2D& M1, const Array2D& M2);

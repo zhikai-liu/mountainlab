@@ -2,6 +2,7 @@
 #define P_FIT_STAGE_H
 
 #include <QString>
+#include "mlcommon.h"
 
 struct Fit_stage_opts {
     int clip_size = 50;

@@ -41,16 +41,16 @@ bool mv_subfirings_Processor::check(const QMap<QString, QVariant>& params)
     return true;
 }
 
-QList<bool> evenly_distributed_to_use(long num, long num_to_use)
+QList<bool> evenly_distributed_to_use(int num, int num_to_use)
 {
     QList<bool> ret;
-    for (long i = 0; i < num; i++) {
+    for (int i = 0; i < num; i++) {
         ret << false;
     }
     double stride = num * 1.0 / num_to_use; //will be greater than 1
     double j = 0;
-    for (long i = 0; i < num_to_use; i++) {
-        ret[(long)j] = true;
+    for (int i = 0; i < num_to_use; i++) {
+        ret[(int)j] = true;
         j += stride;
     }
     return ret;
@@ -58,15 +58,15 @@ QList<bool> evenly_distributed_to_use(long num, long num_to_use)
 
 bool mv_subfirings(QString firings_path, QString firings_out_path, QVector<int> labels, int max_per_label)
 {
-    QMap<int, long> counts;
+    QMap<int, int> counts;
     DiskReadMda F(firings_path);
     QSet<int> set;
     foreach (int label, labels) {
         set.insert(label);
     }
-    QList<long> inds;
+    QList<int> inds;
     QList<bool> to_use;
-    for (long j = 0; j < F.N2(); j++) {
+    for (int j = 0; j < F.N2(); j++) {
         int label = (int)F.value(2, j);
         if (set.contains(label)) {
             inds << j;
@@ -80,8 +80,8 @@ bool mv_subfirings(QString firings_path, QString firings_out_path, QVector<int> 
         for (int k = 0; k <= K; k++) {
             if (counts[k] > max_per_label) {
                 QList<bool> to_use_k = evenly_distributed_to_use(counts[k], max_per_label);
-                long jj = 0;
-                for (long i = 0; i < inds.count(); i++) {
+                int jj = 0;
+                for (int i = 0; i < inds.count(); i++) {
                     int label = (int)F.value(2, inds[i]);
                     if (label == k) {
                         to_use[i] = to_use_k[jj];
@@ -92,14 +92,14 @@ bool mv_subfirings(QString firings_path, QString firings_out_path, QVector<int> 
         }
     }
 
-    QList<long> inds2;
-    for (long i = 0; i < inds.count(); i++) {
+    QList<int> inds2;
+    for (int i = 0; i < inds.count(); i++) {
         if (to_use[i])
             inds2 << inds[i];
     }
 
     Mda out(F.N1(), inds2.count());
-    for (long i = 0; i < inds2.count(); i++) {
+    for (int i = 0; i < inds2.count(); i++) {
         for (int j = 0; j < F.N1(); j++) {
             out.setValue(F.value(j, inds2[i]), j, i);
         }

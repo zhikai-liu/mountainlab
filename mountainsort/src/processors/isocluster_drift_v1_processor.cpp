@@ -54,7 +54,7 @@ bool isocluster_drift_v1_Processor::run(const QMap<QString, QVariant>& params)
     opts.consolidation_factor = params.value("consolidation_factor", 0.9).toDouble();
     opts.isocut_threshold = params.value("isocut_threshold", 1).toDouble();
     opts.K_init = params.value("K_init", 200).toInt();
-    opts.segment_size = (long)params.value("segment_size", 0).toDouble(); //important to go to double first because of scientific notation
+    opts.segment_size = (int)params.value("segment_size", 0).toDouble(); //important to go to double first because of scientific notation
 
     return Isocluster_drift_v1::isocluster_drift_v1(timeseries_path, detect_path, adjacency_matrix_path, firings_path, opts);
 }

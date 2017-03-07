@@ -53,11 +53,11 @@ MSProcessorTestResults normalize_channels_Processor::runTest(int test_number, co
         //set input parameters here
 
         results.params = params;
-        long M = 32;
-        long N = 10000;
+        int M = 32;
+        int N = 10000;
         Mda X(M, N);
-        for (long n = 0; n < N; n++) {
-            for (long m = 0; m < M; m++) {
+        for (int n = 0; n < N; n++) {
+            for (int m = 0; m < M; m++) {
                 X.setValue(sin(n + sin(m)), m, n);
             }
         }

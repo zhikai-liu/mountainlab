@@ -16,7 +16,7 @@
 #include <mveegcontext.h>
 
 struct TickStruct {
-    TickStruct(QString str0, long min_pixel_spacing_between_ticks0, double tick_height0, double timepoint_interval0)
+    TickStruct(QString str0, int min_pixel_spacing_between_ticks0, double tick_height0, double timepoint_interval0)
     {
         str = str0;
         min_pixel_spacing_between_ticks = min_pixel_spacing_between_ticks0;
@@ -26,7 +26,7 @@ struct TickStruct {
     }
 
     QString str;
-    long min_pixel_spacing_between_ticks;
+    int min_pixel_spacing_between_ticks;
     double tick_height;
     double timepoint_interval;
     bool show_scale;
@@ -143,7 +143,7 @@ public:
     MVRange m_selected_t_range;
     bool m_activated;
 
-    long m_num_timepoints;
+    int m_num_timepoints;
 
     QPointF m_left_click_anchor_pix;
     double m_left_click_anchor_time;
@@ -227,7 +227,7 @@ void MVTimeSeriesViewBase::setTimesLabels(const QVector<double>& times, const QV
 }
 */
 
-void MVTimeSeriesViewBase::setNumTimepoints(long N)
+void MVTimeSeriesViewBase::setNumTimepoints(int N)
 {
     d->m_num_timepoints = N;
 }
@@ -510,7 +510,7 @@ void TimeAxisLayer::paint_time_axis(QPainter* painter, double W, double H)
         return;
 
     double samplerate = c->sampleRate();
-    long min_pixel_spacing_between_ticks = 30;
+    int min_pixel_spacing_between_ticks = 30;
 
     double view_t1 = c->currentTimeRange().min;
     double view_t2 = c->currentTimeRange().max;
@@ -569,9 +569,9 @@ void TimeAxisLayer::paint_time_axis_unit(QPainter* painter, double W, double H, 
 
     if (d->m_prefs.show_time_axis_ticks) {
         if (pixel_interval >= TS.min_pixel_spacing_between_ticks) {
-            long i1 = (long)ceil(view_t1 / TS.timepoint_interval);
-            long i2 = (long)floor(view_t2 / TS.timepoint_interval);
-            for (long i = i1; i <= i2; i++) {
+            int i1 = (int)ceil(view_t1 / TS.timepoint_interval);
+            int i2 = (int)floor(view_t2 / TS.timepoint_interval);
+            for (int i = i1; i <= i2; i++) {
                 double x0 = d->time2xpix(i * TS.timepoint_interval);
                 QPointF p1(x0, H - d->m_prefs.mbottom);
                 QPointF p2(x0, H - d->m_prefs.mbottom + TS.tick_height);
@@ -582,10 +582,10 @@ void TimeAxisLayer::paint_time_axis_unit(QPainter* painter, double W, double H, 
     bool ok_to_show_scale = (d->m_prefs.show_time_axis_scale) || (TS.is_1ms);
     if ((TS.show_scale) && (ok_to_show_scale)) {
         int label_height = 10;
-        long j1 = view_t1 + 1;
+        int j1 = view_t1 + 1;
         if (j1 < 1)
             j1 = 1;
-        long j2 = j1 + TS.timepoint_interval;
+        int j2 = j1 + TS.timepoint_interval;
         double x1 = d->time2xpix(j1);
         double x2 = d->time2xpix(j2);
         QPointF p1(x1, H - d->m_prefs.mbottom + TS.tick_height);
@@ -698,11 +698,11 @@ QString MVTimeSeriesViewBasePrivate::format_time(double tp)
 
     double samplerate = c->sampleRate();
     double sec = tp / samplerate;
-    long day = (long)floor(sec / (24 * 60 * 60));
+    int day = (int)floor(sec / (24 * 60 * 60));
     sec -= day * 24 * 60 * 60;
-    long hour = (long)floor(sec / (60 * 60));
+    int hour = (int)floor(sec / (60 * 60));
     sec -= hour * 60 * 60;
-    long minute = (long)floor(sec / (60));
+    int minute = (int)floor(sec / (60));
     sec -= minute * 60;
 
     QString str;
@@ -735,8 +735,8 @@ void mvtsvb_calculator::compute()
     if (labels_to_use.isEmpty())
         return;
 
-    long L = firings.N2();
-    for (long i = 0; i < L; i++) {
+    int L = firings.N2();
+    for (int i = 0; i < L; i++) {
         int label0 = firings.value(2, i);
         if (labels_to_use.contains(label0)) {
             times << firings.value(1, i);
@@ -760,7 +760,7 @@ void EventMarkerLayer::paint(QPainter* painter)
     if (d->m_prefs.markers_visible) {
         QVector<double> times0;
         QVector<int> labels0;
-        for (long i = 0; i < d->m_times.count(); i++) {
+        for (int i = 0; i < d->m_times.count(); i++) {
             double t0 = d->m_times[i];
             int l0 = d->m_labels[i];
             if ((view_t1 <= t0) && (t0 <= view_t2)) {
@@ -781,11 +781,11 @@ void EventMarkerLayer::paint(QPainter* painter)
     }
 
     if (d->m_clip_size) {
-        long i1 = view_t1 / d->m_clip_size;
-        long i2 = view_t2 / d->m_clip_size;
+        int i1 = view_t1 / d->m_clip_size;
+        int i2 = view_t2 / d->m_clip_size;
         if (i2 - i1 + 1 < 1000) {
             QVector<double> times0;
-            for (long i = i1; i <= i2; i++) {
+            for (int i = i1; i <= i2; i++) {
                 times0 << i * d->m_clip_size;
             }
             paint_clip_dividers(painter, times0, W0, H0);
@@ -805,7 +805,7 @@ void EventMarkerLayer::paint_markers(QPainter* painter, const QVector<double>& t
 
     int min_dist = 20;
 
-    for (long i = 0; i < times.count(); i++) {
+    for (int i = 0; i < times.count(); i++) {
         double t0 = times[i];
         int l0 = labels[i];
         double x0 = d->time2xpix(t0);
@@ -816,7 +816,7 @@ void EventMarkerLayer::paint_markers(QPainter* painter, const QVector<double>& t
         marker_recs << MR;
     }
     sort_by_xpix2(marker_recs);
-    for (long i = 1; i < marker_recs.count(); i++) {
+    for (int i = 1; i < marker_recs.count(); i++) {
         if (marker_recs[i - 1].xpix + min_dist >= marker_recs[i].xpix) {
             marker_recs[i].level = (marker_recs[i - 1].level + 1) % d->m_prefs.num_label_levels;
         }
@@ -827,7 +827,7 @@ void EventMarkerLayer::paint_markers(QPainter* painter, const QVector<double>& t
     QFont font = painter->font();
     font.setPixelSize(d->m_prefs.label_font_height);
     painter->setFont(font);
-    for (long i = 0; i < marker_recs.count(); i++) {
+    for (int i = 0; i < marker_recs.count(); i++) {
         MarkerRecord MR = marker_recs[i];
         QPointF p0(MR.xpix, mtop);
         QPointF p1(MR.xpix, H - mbottom);
@@ -845,7 +845,7 @@ void EventMarkerLayer::paint_clip_dividers(QPainter* painter, const QVector<doub
 
     QList<MarkerRecord> marker_recs;
 
-    for (long i = 0; i < times.count(); i++) {
+    for (int i = 0; i < times.count(); i++) {
         double t0 = times[i];
         double x0 = d->time2xpix(t0);
         MarkerRecord MR;
@@ -857,7 +857,7 @@ void EventMarkerLayer::paint_clip_dividers(QPainter* painter, const QVector<doub
     QPen pen = painter->pen();
     pen.setColor(Qt::gray);
     painter->setPen(pen);
-    for (long i = 0; i < marker_recs.count(); i++) {
+    for (int i = 0; i < marker_recs.count(); i++) {
         MarkerRecord MR = marker_recs[i];
         QPointF p0(MR.xpix, mtop);
         QPointF p1(MR.xpix, H - mbottom);
@@ -954,10 +954,10 @@ void StatusLayer::paint(QPainter* painter)
     if (d->m_prefs.show_current_timepoint) {
         double samplerate = c->sampleRate();
         if (samplerate) {
-            str = QString("%1 (tp: %2)").arg(d->format_time(c->currentTimepoint())).arg((long)c->currentTimepoint());
+            str = QString("%1 (tp: %2)").arg(d->format_time(c->currentTimepoint())).arg((int)c->currentTimepoint());
         }
         else {
-            str = QString("Sample rate is null (tp: %2)").arg((long)c->currentTimepoint());
+            str = QString("Sample rate is null (tp: %2)").arg((int)c->currentTimepoint());
         }
     }
     paint_status_string(painter, windowSize().width(), windowSize().height(), str);

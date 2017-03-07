@@ -10,14 +10,14 @@ bool cluster_aa(const QString& clips_path, const QString& detect_path, const QSt
 
     int M = clips.N1();
     int T = clips.N2();
-    long L = clips.N3();
+    int L = clips.N3();
 
     Mda32 FF;
     {
         // do this inside a code block so memory gets released
         Mda32 clips_reshaped(M * T, L);
-        long iii = 0;
-        for (long ii = 0; ii < L; ii++) {
+        int iii = 0;
+        for (int ii = 0; ii < L; ii++) {
             for (int t = 0; t < T; t++) {
                 for (int m = 0; m < M; m++) {
                     clips_reshaped.set(clips.value(m, t, ii), iii);
@@ -42,7 +42,7 @@ bool cluster_aa(const QString& clips_path, const QString& detect_path, const QSt
     if (R < 3)
         R = 3;
     Mda firings(R, L);
-    for (long i = 0; i < L; i++) {
+    for (int i = 0; i < L; i++) {
         for (int r = 0; r < R; r++) {
             firings.setValue(detect.value(r, i), r, i); //important to use .value() here because otherwise it will be out of range
         }

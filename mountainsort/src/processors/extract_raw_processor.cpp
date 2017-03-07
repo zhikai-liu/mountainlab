@@ -56,14 +56,14 @@ bool extract_raw_Processor::run(const QMap<QString, QVariant>& params)
 {
     QString timeseries_path = params["timeseries"].toString();
     QString timeseries_out_path = params["timeseries_out"].toString();
-    long t1 = (long)params.value("t1", "-1").toDouble();
-    long t2 = (long)params.value("t2", "-1").toDouble();
+    int t1 = (int)params.value("t1", "-1").toDouble();
+    int t2 = (int)params.value("t2", "-1").toDouble();
     QString channels_str = params["channels"].toString();
     QVector<int> channels = str_to_intlist(channels_str);
 
     DiskReadMda X(timeseries_path);
-    long M = X.N1();
-    long N = X.N2();
+    int M = X.N1();
+    int N = X.N2();
 
     if (t1 < 0) {
         t1 = 1;
@@ -71,7 +71,7 @@ bool extract_raw_Processor::run(const QMap<QString, QVariant>& params)
     }
 
     if ((t1 < 0) || (t2 < t1) || (t2 > N)) {
-        printf("Unexpected input parameters, t1=%ld, t2=%ld, N=%ld\n", t1, t2, N);
+        printf("Unexpected input parameters, t1=%d, t2=%d, N=%d\n", t1, t2, N);
         return false;
     }
 
@@ -80,26 +80,26 @@ bool extract_raw_Processor::run(const QMap<QString, QVariant>& params)
             channels << m;
     }
 
-    long M2 = channels.count();
-    long N2 = t2 - t1 + 1;
+    int M2 = channels.count();
+    int N2 = t2 - t1 + 1;
 
     for (int j = 0; j < M2; j++) {
         if ((channels[j] <= 0) || (channels[j] > M)) {
-            printf("Unexpected input channel %d (M=%ld)\n", channels[j], M);
+            printf("Unexpected input channel %d (M=%d)\n", channels[j], M);
             return false;
         }
     }
 
     DiskWriteMda Y(MDAIO_TYPE_FLOAT32, timeseries_out_path, M2, N2);
-    long chunk_size = qMax(1000L, (long)1e6 / M);
+    int chunk_size = qMax(1000, (int)1e6 / M);
     QTime timer;
     timer.start();
-    for (long t = 0; t < N2; t += chunk_size) {
+    for (int t = 0; t < N2; t += chunk_size) {
         if ((t == 0) || (timer.elapsed() > 5000)) {
-            printf("extract raw %ld/%ld (%d%%)\n", t, N2, (int)(t * 100.0 / N2));
+            printf("extract raw %d/%d (%d%%)\n", t, N2, (int)(t * 100.0 / N2));
             timer.restart();
         }
-        long aa = chunk_size;
+        int aa = chunk_size;
         if (t + aa > N2)
             aa = N2 - t;
         Mda chunk;

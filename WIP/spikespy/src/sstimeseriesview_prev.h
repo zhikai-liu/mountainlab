@@ -26,7 +26,7 @@ public:
 
     void setChannelLabels(const QStringList& labels);
     void setUniformVerticalChannelSpacing(bool val);
-    void setTimesLabels(const QList<long>& times, const QList<long>& labels);
+    void setTimesLabels(const QList<int>& times, const QList<int>& labels);
 
     SSLabelsModel* getLabels();
 

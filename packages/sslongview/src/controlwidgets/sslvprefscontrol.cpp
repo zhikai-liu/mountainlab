@@ -20,7 +20,7 @@ SSLVPrefsControl::SSLVPrefsControl(MVAbstractContext* context, MVMainWindow* mw)
     d->q = this;
 
     QGridLayout* glayout = new QGridLayout;
-    int row = 0;
+    //int row = 0;
 
     /*
     {

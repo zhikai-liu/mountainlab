@@ -6,9 +6,9 @@
 namespace P_split_firings {
 
 struct Session {
-    long start_timepoint = 0;
-    long end_timepoint = 0;
-    QVector<long> event_indices;
+    int start_timepoint = 0;
+    int end_timepoint = 0;
+    QVector<int> event_indices;
 };
 }
 
@@ -17,10 +17,10 @@ bool p_split_firings(QStringList timeseries_paths, QString firings_path, QString
     if (timeseries_paths.count() == 0)
         return true;
 
-    QVector<long> start_timepoints;
+    QVector<int> start_timepoints;
 
     QList<P_split_firings::Session> sessions;
-    long offset = 0;
+    int offset = 0;
     for (int i = 0; i < timeseries_paths.count(); i++) {
         DiskReadMda32 X(timeseries_paths[i]);
         P_split_firings::Session S;
@@ -32,7 +32,7 @@ bool p_split_firings(QStringList timeseries_paths, QString firings_path, QString
 
     Mda firings(firings_path);
     int current_timeseries_ind = 0;
-    for (long i = 0; i < firings.N2(); i++) {
+    for (int i = 0; i < firings.N2(); i++) {
         double time0 = firings.value(1, i);
         while ((time0 < sessions[current_timeseries_ind].start_timepoint) && (current_timeseries_ind - 1 >= 0)) {
             current_timeseries_ind--;
@@ -45,7 +45,7 @@ bool p_split_firings(QStringList timeseries_paths, QString firings_path, QString
 
     for (int i = 0; i < sessions.count(); i++) {
         Mda firings0(firings.N1(), sessions[i].event_indices.count());
-        for (long j = 0; j < sessions[i].event_indices.count(); j++) {
+        for (int j = 0; j < sessions[i].event_indices.count(); j++) {
             for (int r = 0; r < firings.N1(); r++) {
                 firings0.setValue(firings.value(r, sessions[i].event_indices[j]), r, j);
             }

@@ -7,8 +7,9 @@
 #define P_EXTRACT_SEGMENT_TIMESERIES_H
 
 #include <QString>
+#include "mlcommon.h"
 
-bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, long t1, long t2);
-bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, QString timeseries_out, long t1, long t2);
+bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, int t1, int t2);
+bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, QString timeseries_out, int t1, int t2);
 
 #endif // P_EXTRACT_SEGMENT_TIMESERIES_H

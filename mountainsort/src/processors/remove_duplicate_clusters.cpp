@@ -10,7 +10,7 @@
 
 bool probably_the_same(Mda& templates, int ch1, int k1, int ch2, int k2, const remove_duplicate_clusters_Opts& opts);
 
-typedef QList<long> IntList;
+typedef QList<int> IntList;
 bool remove_duplicate_clusters(const QString& timeseries_path, const QString& firings_path, const QString& firings_out_path, const remove_duplicate_clusters_Opts& opts)
 {
     DiskReadMda X(timeseries_path);
@@ -32,7 +32,7 @@ bool remove_duplicate_clusters(const QString& timeseries_path, const QString& fi
     QVector<int> cluster_channels;
     for (int k = 0; k < K; k++)
         cluster_channels << 0;
-    for (long i = 0; i < L; i++) {
+    for (int i = 0; i < L; i++) {
         int k = (int)F.value(2, i);
         int ch = (int)F.value(0, i);
         if (k >= 1) {
@@ -85,7 +85,7 @@ bool remove_duplicate_clusters(const QString& timeseries_path, const QString& fi
     //finish!!!
 
     printf("Creating output firings...\n");
-    long L_new = 0;
+    int L_new = 0;
     for (int i = 0; i < L; i++) {
         int label0 = (int)F.value(2, i);
         if ((label0 == 0) || (clusters_to_use[label0]))

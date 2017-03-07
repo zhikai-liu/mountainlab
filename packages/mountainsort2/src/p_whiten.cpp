@@ -13,9 +13,9 @@ double quantize(float X, double unit)
     return (floor(X / unit + 0.5)) * unit;
 }
 
-void quantize(long N, float* X, double unit)
+void quantize(int N, float* X, double unit)
 {
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         X[i] = quantize(X[i], unit);
     }
 }
@@ -26,14 +26,14 @@ bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
     (void)opts;
 
     DiskReadMda32 X(timeseries);
-    long M = X.N1();
-    long N = X.N2();
+    int M = X.N1();
+    int N = X.N2();
 
-    long processing_chunk_size = 1e6;
+    int processing_chunk_size = 1e6;
 
     Mda XXt(M, M);
     double* XXtptr = XXt.dataPtr();
-    long chunk_size = processing_chunk_size;
+    int chunk_size = processing_chunk_size;
     if (N < processing_chunk_size) {
         chunk_size = N;
     }
@@ -41,9 +41,9 @@ bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
     {
         QTime timer;
         timer.start();
-        long num_timepoints_handled = 0;
+        int num_timepoints_handled = 0;
 #pragma omp parallel for
-        for (long timepoint = 0; timepoint < N; timepoint += chunk_size) {
+        for (int timepoint = 0; timepoint < N; timepoint += chunk_size) {
             Mda32 chunk;
 #pragma omp critical(lock1)
             {
@@ -52,9 +52,9 @@ bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
             float* chunkptr = chunk.dataPtr();
             Mda XXt0(M, M);
             double* XXt0ptr = XXt0.dataPtr();
-            for (long i = 0; i < chunk.N2(); i++) {
-                long aa = M * i;
-                long bb = 0;
+            for (int i = 0; i < chunk.N2(); i++) {
+                int aa = M * i;
+                int bb = 0;
                 for (int m1 = 0; m1 < M; m1++) {
                     for (int m2 = 0; m2 < M; m2++) {
                         XXt0ptr[bb] += chunkptr[aa + m1] * chunkptr[aa + m2];
@@ -64,7 +64,7 @@ bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
             }
 #pragma omp critical(lock2)
             {
-                long bb = 0;
+                int bb = 0;
                 for (int m1 = 0; m1 < M; m1++) {
                     for (int m2 = 0; m2 < M; m2++) {
                         XXtptr[bb] += XXt0ptr[bb];
@@ -73,7 +73,7 @@ bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
                 }
                 num_timepoints_handled += qMin(chunk_size, N - timepoint);
                 if ((timer.elapsed() > 5000) || (num_timepoints_handled == N)) {
-                    printf("%ld/%ld (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
+                    printf("%d/%d (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
                     timer.restart();
                 }
             }
@@ -95,9 +95,9 @@ bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
     {
         QTime timer;
         timer.start();
-        long num_timepoints_handled = 0;
+        int num_timepoints_handled = 0;
 #pragma omp parallel for
-        for (long timepoint = 0; timepoint < N; timepoint += chunk_size) {
+        for (int timepoint = 0; timepoint < N; timepoint += chunk_size) {
             Mda32 chunk_in;
 #pragma omp critical(lock1)
             {
@@ -106,9 +106,9 @@ bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
             float* chunk_in_ptr = chunk_in.dataPtr();
             Mda32 chunk_out(M, chunk_in.N2());
             float* chunk_out_ptr = chunk_out.dataPtr();
-            for (long i = 0; i < chunk_in.N2(); i++) { // explicitly do mat-mat mult ... TODO replace w/ BLAS3
-                long aa = M * i;
-                long bb = 0;
+            for (int i = 0; i < chunk_in.N2(); i++) { // explicitly do mat-mat mult ... TODO replace w/ BLAS3
+                int aa = M * i;
+                int bb = 0;
                 for (int m1 = 0; m1 < M; m1++) {
                     for (int m2 = 0; m2 < M; m2++) {
                         chunk_out_ptr[aa + m1] += chunk_in_ptr[aa + m2] * WWptr[bb]; // actually this does dgemm w/ WW^T
@@ -124,7 +124,7 @@ bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
                 Y.writeChunk(chunk_out, 0, timepoint);
                 num_timepoints_handled += qMin(chunk_size, N - timepoint);
                 if ((timer.elapsed() > 5000) || (num_timepoints_handled == N)) {
-                    printf("%ld/%ld (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
+                    printf("%d/%d (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
                     timer.restart();
                 }
             }

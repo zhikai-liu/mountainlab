@@ -238,6 +238,7 @@ void SSLVContext::clickCluster(int k, Qt::KeyboardModifiers modifiers)
 
 bool SSLVContext::clusterIsVisible(int k)
 {
+    (void)k;
     return true;
 }
 

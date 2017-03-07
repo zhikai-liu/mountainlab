@@ -42,7 +42,7 @@ MLNetwork::PrvParallelUploader* PrvUpload::initiateUploadToServer(QString server
         return 0;
     }
     QFileInfo finfo = local_path;
-    long size0 = finfo.size();
+    int size0 = finfo.size();
     if (size0 == 0) {
         TaskProgress err;
         err.error() << "File is empty: " + local_path;

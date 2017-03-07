@@ -48,7 +48,7 @@ int extractclips2(
             return 0;
         qint32* buffer_TL1 = (qint32*)malloc(sizeof(qint32) * N2 * 2);
         mda_read_int32(buffer_TL1, &HH_TL1, N2 * 2, infile_TL1);
-        for (long i = 0; i < N2; i++) {
+        for (int i = 0; i < N2; i++) {
             int t0 = buffer_TL1[i * 2];
             int l0 = buffer_TL1[i * 2 + 1];
             if (l0 == label1)
@@ -69,7 +69,7 @@ int extractclips2(
             return 0;
         qint32* buffer_TL2 = (qint32*)malloc(sizeof(qint32) * N2 * 2);
         mda_read_int32(buffer_TL2, &HH_TL2, N2 * 2, infile_TL2);
-        for (long i = 0; i < N2; i++) {
+        for (int i = 0; i < N2; i++) {
             int t0 = buffer_TL2[i * 2];
             int l0 = buffer_TL2[i * 2 + 1];
             if (l0 == label2)

@@ -23,7 +23,7 @@ public:
     QMutex m_mutex;
     QMutex m_status_mutex;
     bool m_start_scheduled;
-    long m_randomization_seed;
+    int m_randomization_seed;
 
     void schedule_start();
 };

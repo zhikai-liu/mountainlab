@@ -40,7 +40,7 @@ struct MLProcessor {
 
 struct MonitorStats {
     QDateTime timestamp;
-    long mem_bytes = 0;
+    int mem_bytes = 0;
     double cpu_pct = 0;
 };
 
@@ -77,7 +77,7 @@ public:
     bool checkParameters(const QString& processor_name, const QVariantMap& parameters);
     bool processAlreadyCompleted(const QString& processor_name, const QVariantMap& parameters);
     QString startProcess(const QString& processor_name, const QVariantMap& parameters, const RequestProcessResources& RPR, bool exec_mode, bool preserve_tempdir); //returns the process id/handle (a random string)
-    bool waitForFinished(const QString& process_id, long parent_pid);
+    bool waitForFinished(const QString& process_id, int parent_pid);
     MLProcessInfo processInfo(const QString& id);
     void clearProcess(const QString& id);
     void clearAllProcesses();

@@ -28,10 +28,10 @@ void pca_subtract_mean(Mda32& X);
 
 void pca(Mda& C, Mda& F, Mda& sigma, const Mda& X, int num_features, bool subtract_mean)
 {
-    long M = X.N1();
-    //long N = X.N2();
-    long K = num_features;
-    long num_iterations_per_component = 10; //hard-coded for now
+    int M = X.N1();
+    //int N = X.N2();
+    int K = num_features;
+    int num_iterations_per_component = 10; //hard-coded for now
 
     Mda Xw = X; //working data
     if (subtract_mean) {
@@ -41,12 +41,12 @@ void pca(Mda& C, Mda& F, Mda& sigma, const Mda& X, int num_features, bool subtra
     C.allocate(M, K);
     sigma.allocate(K, 1);
 
-    for (long k = 0; k < K; k++) {
+    for (int k = 0; k < K; k++) {
         // C will be Mx1, F will be 1xN
         Mda C0;
         double sigma0;
         iterate_to_get_top_component(C0, sigma0, Xw, num_iterations_per_component);
-        for (long m = 0; m < M; m++) {
+        for (int m = 0; m < M; m++) {
             C.set(C0.get(m), m, k); //think about speeding this up
         }
         sigma.set(sigma0, k);
@@ -58,10 +58,10 @@ void pca(Mda& C, Mda& F, Mda& sigma, const Mda& X, int num_features, bool subtra
 
 void pca(Mda32& C, Mda32& F, Mda32& sigma, const Mda32& X, int num_features, bool subtract_mean)
 {
-    long M = X.N1();
-    //long N = X.N2();
-    long K = num_features;
-    long num_iterations_per_component = 10; //hard-coded for now
+    int M = X.N1();
+    //int N = X.N2();
+    int K = num_features;
+    int num_iterations_per_component = 10; //hard-coded for now
 
     Mda32 Xw = X; //working data
     if (subtract_mean) {
@@ -71,12 +71,12 @@ void pca(Mda32& C, Mda32& F, Mda32& sigma, const Mda32& X, int num_features, boo
     C.allocate(M, K);
     sigma.allocate(K, 1);
 
-    for (long k = 0; k < K; k++) {
+    for (int k = 0; k < K; k++) {
         // C will be Mx1, F will be 1xN
         Mda32 C0;
         double sigma0;
         iterate_to_get_top_component(C0, sigma0, Xw, num_iterations_per_component);
-        for (long m = 0; m < M; m++) {
+        for (int m = 0; m < M; m++) {
             C.set(C0.get(m), m, k); //think about speeding this up
         }
         sigma.set(sigma0, k);
@@ -89,11 +89,11 @@ void pca(Mda32& C, Mda32& F, Mda32& sigma, const Mda32& X, int num_features, boo
 void pca_subtract_mean(Mda& X)
 {
     int M = X.N1();
-    long N = X.N2();
+    int N = X.N2();
     QVector<double> mean0(M);
     for (int m = 0; m < M; m++)
         mean0[m] = 0;
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         for (int m = 0; m < M; m++)
             mean0[m] += X.value(m, i);
     }
@@ -101,7 +101,7 @@ void pca_subtract_mean(Mda& X)
         for (int m = 0; m < M; m++)
             mean0[m] /= N;
     }
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         for (int m = 0; m < M; m++)
             X.setValue(X.value(m, i) - mean0[m], m, i);
     }
@@ -110,11 +110,11 @@ void pca_subtract_mean(Mda& X)
 void pca_subtract_mean(Mda32& X)
 {
     int M = X.N1();
-    long N = X.N2();
+    int N = X.N2();
     QVector<double> mean0(M);
     for (int m = 0; m < M; m++)
         mean0[m] = 0;
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         for (int m = 0; m < M; m++)
             mean0[m] += X.value(m, i);
     }
@@ -122,7 +122,7 @@ void pca_subtract_mean(Mda32& X)
         for (int m = 0; m < M; m++)
             mean0[m] /= N;
     }
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         for (int m = 0; m < M; m++)
             X.setValue(X.value(m, i) - mean0[m], m, i);
     }
@@ -130,21 +130,21 @@ void pca_subtract_mean(Mda32& X)
 
 void pca_from_XXt(Mda& C, Mda& sigma, const Mda& XXt, int num_features)
 {
-    long M = XXt.N1();
-    long K = num_features;
-    long num_iterations_per_component = 10; //hard-coded for now
+    int M = XXt.N1();
+    int K = num_features;
+    int num_iterations_per_component = 10; //hard-coded for now
 
     Mda XXtw = XXt; //working data
 
     C.allocate(M, K);
     sigma.allocate(K, 1);
 
-    for (long k = 0; k < K; k++) {
+    for (int k = 0; k < K; k++) {
         // C will be Mx1, F will be 1xN
         Mda C0;
         double sigma0;
         iterate_XXt_to_get_top_component(C0, sigma0, XXtw, num_iterations_per_component);
-        for (long m = 0; m < M; m++) {
+        for (int m = 0; m < M; m++) {
             C.set(C0.get(m), m, k); //think about speeding this up
         }
         sigma.set(sigma0, k);
@@ -154,21 +154,21 @@ void pca_from_XXt(Mda& C, Mda& sigma, const Mda& XXt, int num_features)
 
 void pca_from_XXt(Mda32& C, Mda32& sigma, const Mda32& XXt, int num_features)
 {
-    long M = XXt.N1();
-    long K = num_features;
-    long num_iterations_per_component = 10; //hard-coded for now
+    int M = XXt.N1();
+    int K = num_features;
+    int num_iterations_per_component = 10; //hard-coded for now
 
     Mda32 XXtw = XXt; //working data
 
     C.allocate(M, K);
     sigma.allocate(K, 1);
 
-    for (long k = 0; k < K; k++) {
+    for (int k = 0; k < K; k++) {
         // C will be Mx1, F will be 1xN
         Mda32 C0;
         double sigma0;
         iterate_XXt_to_get_top_component(C0, sigma0, XXtw, num_iterations_per_component);
-        for (long m = 0; m < M; m++) {
+        for (int m = 0; m < M; m++) {
             C.set(C0.get(m), m, k); //think about speeding this up
         }
         sigma.set(sigma0, k);
@@ -178,9 +178,9 @@ void pca_from_XXt(Mda32& C, Mda32& sigma, const Mda32& XXt, int num_features)
 
 Mda mult_AB(Mda& A, Mda& B) // gemm for two 2D MDAs.   inner part should be BLAS3 call
 {
-    long M = A.N1();
-    long L = A.N2();
-    long N = B.N2();
+    int M = A.N1();
+    int L = A.N2();
+    int N = B.N2();
     if (B.N1() != L) {
         qCritical() << "Unexpected dimensions in mult_AB" << A.N1() << A.N2() << B.N1() << B.N2();
         abort();
@@ -189,10 +189,10 @@ Mda mult_AB(Mda& A, Mda& B) // gemm for two 2D MDAs.   inner part should be BLAS
     double* Aptr = A.dataPtr();
     double* Bptr = B.dataPtr();
     double* Cptr = C.dataPtr();
-    long iC = 0;
-    for (long n = 0; n < N; n++) {
-        for (long m = 0; m < M; m++) {
-            for (long l = 0; l < L; l++) {
+    int iC = 0;
+    for (int n = 0; n < N; n++) {
+        for (int m = 0; m < M; m++) {
+            for (int l = 0; l < L; l++) {
                 Cptr[iC] += Aptr[m + l * M] * Bptr[l + L * n];
             }
             iC++;
@@ -203,9 +203,9 @@ Mda mult_AB(Mda& A, Mda& B) // gemm for two 2D MDAs.   inner part should be BLAS
 
 Mda32 mult_AB(Mda32& A, Mda32& B) // gemm for two 2D MDAs.   inner part should be BLAS3 call
 {
-    long M = A.N1();
-    long L = A.N2();
-    long N = B.N2();
+    int M = A.N1();
+    int L = A.N2();
+    int N = B.N2();
     if (B.N1() != L) {
         qCritical() << "Unexpected dimensions in mult_AB" << A.N1() << A.N2() << B.N1() << B.N2();
         abort();
@@ -214,10 +214,10 @@ Mda32 mult_AB(Mda32& A, Mda32& B) // gemm for two 2D MDAs.   inner part should b
     dtype32* Aptr = A.dataPtr();
     dtype32* Bptr = B.dataPtr();
     dtype32* Cptr = C.dataPtr();
-    long iC = 0;
-    for (long n = 0; n < N; n++) {
-        for (long m = 0; m < M; m++) {
-            for (long l = 0; l < L; l++) {
+    int iC = 0;
+    for (int n = 0; n < N; n++) {
+        for (int m = 0; m < M; m++) {
+            for (int l = 0; l < L; l++) {
                 Cptr[iC] += Aptr[m + l * M] * Bptr[l + L * n];
             }
             iC++;
@@ -228,9 +228,9 @@ Mda32 mult_AB(Mda32& A, Mda32& B) // gemm for two 2D MDAs.   inner part should b
 
 Mda mult_AtransB(const Mda& A, const Mda& B) // gemm for two 2D MDAs.   inner part should be BLAS3 call
 {
-    long M = A.N2();
-    long L = A.N1();
-    long N = B.N2();
+    int M = A.N2();
+    int L = A.N1();
+    int N = B.N2();
     if (B.N1() != L) {
         qCritical() << "Unexpected dimensions in mult_AtransB" << A.N1() << A.N2() << B.N1() << B.N2();
         abort();
@@ -239,9 +239,9 @@ Mda mult_AtransB(const Mda& A, const Mda& B) // gemm for two 2D MDAs.   inner pa
     const double* Aptr = A.constDataPtr();
     const double* Bptr = B.constDataPtr();
     double* Cptr = C.dataPtr();
-    long iC = 0;
-    for (long n = 0; n < N; n++) {
-        for (long m = 0; m < M; m++) {
+    int iC = 0;
+    for (int n = 0; n < N; n++) {
+        for (int m = 0; m < M; m++) {
             double val = MLCompute::dotProduct(L, &Aptr[L * m], &Bptr[L * n]);
             Cptr[iC] = val;
             iC++;
@@ -252,9 +252,9 @@ Mda mult_AtransB(const Mda& A, const Mda& B) // gemm for two 2D MDAs.   inner pa
 
 Mda32 mult_AtransB(const Mda32& A, const Mda32& B) // gemm for two 2D MDAs.   inner part should be BLAS3 call
 {
-    long M = A.N2();
-    long L = A.N1();
-    long N = B.N2();
+    int M = A.N2();
+    int L = A.N1();
+    int N = B.N2();
     if (B.N1() != L) {
         qCritical() << "Unexpected dimensions in mult_AtransB" << A.N1() << A.N2() << B.N1() << B.N2();
         abort();
@@ -263,9 +263,9 @@ Mda32 mult_AtransB(const Mda32& A, const Mda32& B) // gemm for two 2D MDAs.   in
     const dtype32* Aptr = A.constDataPtr();
     const dtype32* Bptr = B.constDataPtr();
     dtype32* Cptr = C.dataPtr();
-    long iC = 0;
-    for (long n = 0; n < N; n++) {
-        for (long m = 0; m < M; m++) {
+    int iC = 0;
+    for (int n = 0; n < N; n++) {
+        for (int m = 0; m < M; m++) {
             double val = MLCompute::dotProduct(L, &Aptr[L * m], &Bptr[L * n]);
             Cptr[iC] = val;
             iC++;
@@ -276,9 +276,9 @@ Mda32 mult_AtransB(const Mda32& A, const Mda32& B) // gemm for two 2D MDAs.   in
 
 Mda mult_ABtrans(const Mda& A, const Mda& B) // gemm for two 2D MDAs.   inner part should be BLAS3 call
 {
-    long M = A.N1();
-    long L = A.N2();
-    long N = B.N1();
+    int M = A.N1();
+    int L = A.N2();
+    int N = B.N1();
     if (B.N2() != L) {
         qCritical() << "Unexpected dimensions in mult_ABtrans" << A.N1() << A.N2() << B.N1() << B.N2();
         abort();
@@ -287,10 +287,10 @@ Mda mult_ABtrans(const Mda& A, const Mda& B) // gemm for two 2D MDAs.   inner pa
     const double* Aptr = A.constDataPtr();
     const double* Bptr = B.constDataPtr();
     double* Cptr = C.dataPtr();
-    long iC = 0;
-    for (long n = 0; n < N; n++) {
-        for (long m = 0; m < M; m++) {
-            for (long l = 0; l < L; l++) {
+    int iC = 0;
+    for (int n = 0; n < N; n++) {
+        for (int m = 0; m < M; m++) {
+            for (int l = 0; l < L; l++) {
                 Cptr[iC] += Aptr[m + l * M] * Bptr[n + l * N];
             }
             iC++;
@@ -301,9 +301,9 @@ Mda mult_ABtrans(const Mda& A, const Mda& B) // gemm for two 2D MDAs.   inner pa
 
 Mda32 mult_ABtrans(const Mda32& A, const Mda32& B) // gemm for two 2D MDAs.   inner part should be BLAS3 call
 {
-    long M = A.N1();
-    long L = A.N2();
-    long N = B.N1();
+    int M = A.N1();
+    int L = A.N2();
+    int N = B.N1();
     if (B.N2() != L) {
         qCritical() << "Unexpected dimensions in mult_ABtrans" << A.N1() << A.N2() << B.N1() << B.N2();
         abort();
@@ -312,10 +312,10 @@ Mda32 mult_ABtrans(const Mda32& A, const Mda32& B) // gemm for two 2D MDAs.   in
     const dtype32* Aptr = A.constDataPtr();
     const dtype32* Bptr = B.constDataPtr();
     dtype32* Cptr = C.dataPtr();
-    long iC = 0;
-    for (long n = 0; n < N; n++) {
-        for (long m = 0; m < M; m++) {
-            for (long l = 0; l < L; l++) {
+    int iC = 0;
+    for (int n = 0; n < N; n++) {
+        for (int m = 0; m < M; m++) {
+            for (int l = 0; l < L; l++) {
                 Cptr[iC] += Aptr[m + l * M] * Bptr[n + l * N];
             }
             iC++;
@@ -326,18 +326,18 @@ Mda32 mult_ABtrans(const Mda32& A, const Mda32& B) // gemm for two 2D MDAs.   in
 
 void subtract_out_rank_1(Mda& X, Mda& C)
 {
-    long M = X.N1();
-    long N = X.N2();
+    int M = X.N1();
+    int N = X.N2();
     if ((C.N1() != M) || (C.N2() != 1)) {
         qCritical() << "Incorrect dimensions in subtract_out_rank_1" << M << N << C.N1() << C.N2();
         abort();
     }
     double* Xptr = X.dataPtr();
     double* Cptr = C.dataPtr();
-    long iX = 0;
-    for (long n = 0; n < N; n++) {
+    int iX = 0;
+    for (int n = 0; n < N; n++) {
         double dp = MLCompute::dotProduct(M, &Xptr[iX], Cptr);
-        for (long m = 0; m < M; m++) {
+        for (int m = 0; m < M; m++) {
             Xptr[iX] -= dp * Cptr[m];
             iX++;
         }
@@ -346,18 +346,18 @@ void subtract_out_rank_1(Mda& X, Mda& C)
 
 void subtract_out_rank_1(Mda32& X, Mda32& C)
 {
-    long M = X.N1();
-    long N = X.N2();
+    int M = X.N1();
+    int N = X.N2();
     if ((C.N1() != M) || (C.N2() != 1)) {
         qCritical() << "Incorrect dimensions in subtract_out_rank_1" << M << N << C.N1() << C.N2();
         abort();
     }
     dtype32* Xptr = X.dataPtr();
     dtype32* Cptr = C.dataPtr();
-    long iX = 0;
-    for (long n = 0; n < N; n++) {
+    int iX = 0;
+    for (int n = 0; n < N; n++) {
         double dp = MLCompute::dotProduct(M, &Xptr[iX], Cptr);
-        for (long m = 0; m < M; m++) {
+        for (int m = 0; m < M; m++) {
             Xptr[iX] -= dp * Cptr[m];
             iX++;
         }
@@ -366,7 +366,7 @@ void subtract_out_rank_1(Mda32& X, Mda32& C)
 
 void subtract_out_rank_1_from_XXt(Mda& XXt, Mda& C)
 {
-    long M = XXt.N1();
+    int M = XXt.N1();
     if ((C.N1() != M) || (C.N2() != 1)) {
         qCritical() << "Incorrect dimensions in subtract_out_rank_1_from_XXt" << M << C.N1() << C.N2();
         abort();
@@ -390,7 +390,7 @@ void subtract_out_rank_1_from_XXt(Mda& XXt, Mda& C)
 
 void subtract_out_rank_1_from_XXt(Mda32& XXt, Mda32& C)
 {
-    long M = XXt.N1();
+    int M = XXt.N1();
     if ((C.N1() != M) || (C.N2() != 1)) {
         qCritical() << "Incorrect dimensions in subtract_out_rank_1_from_XXt" << M << C.N1() << C.N2();
         abort();
@@ -414,47 +414,47 @@ void subtract_out_rank_1_from_XXt(Mda32& XXt, Mda32& C)
 
 void normalize_vector(Mda& V)
 {
-    long N = V.totalSize();
+    int N = V.totalSize();
     double* Vptr = V.dataPtr();
     double norm = MLCompute::norm(N, Vptr);
     if (!norm)
         return;
-    for (long n = 0; n < N; n++)
+    for (int n = 0; n < N; n++)
         Vptr[n] /= norm;
 }
 
 void normalize_vector(Mda32& V)
 {
-    long N = V.totalSize();
+    int N = V.totalSize();
     dtype32* Vptr = V.dataPtr();
     double norm = MLCompute::norm(N, Vptr);
     if (!norm)
         return;
-    for (long n = 0; n < N; n++)
+    for (int n = 0; n < N; n++)
         Vptr[n] /= norm;
 }
 
-void matvec(long M, long N, double* ret, double* A, double* x) // really this should be BLAS2 call
+void matvec(int M, int N, double* ret, double* A, double* x) // really this should be BLAS2 call
 {
-    for (long m = 0; m < M; m++)
+    for (int m = 0; m < M; m++)
         ret[m] = 0;
-    long iA = 0;
-    for (long n = 0; n < N; n++) {
+    int iA = 0;
+    for (int n = 0; n < N; n++) {
         double xval = x[n];
-        for (long m = 0; m < M; m++) {
+        for (int m = 0; m < M; m++) {
             ret[m] += A[iA] * xval;
             iA++;
         }
     }
 }
 
-void matvec(long M, long N, float* ret, float* A, float* x) // really this should be BLAS2 call
+void matvec(int M, int N, float* ret, float* A, float* x) // really this should be BLAS2 call
 {
     std::memset(ret, 0, sizeof(float) * M);
-    long iA = 0;
-    for (long n = 0; n < N; n++) {
+    int iA = 0;
+    for (int n = 0; n < N; n++) {
         double xval = x[n];
-        for (long m = 0; m < M; m++) {
+        for (int m = 0; m < M; m++) {
             ret[m] += A[iA] * xval;
             iA++;
         }
@@ -463,8 +463,8 @@ void matvec(long M, long N, float* ret, float* A, float* x) // really this shoul
 
 void iterate_to_get_top_component(Mda& C, double& sigma, Mda& X, int num_iterations)
 {
-    long M = X.N1();
-    long N = X.N2();
+    int M = X.N1();
+    int N = X.N2();
     C.allocate(M, 1);
     for (int i = 0; i < M; i++) {
         C.set(sin(i + 1), i); //pseudo-random  - ahb fixed so the M=1 case isn't the zero vector
@@ -481,8 +481,8 @@ void iterate_to_get_top_component(Mda& C, double& sigma, Mda& X, int num_iterati
 
 void iterate_to_get_top_component(Mda32& C, double& sigma, Mda32& X, int num_iterations)
 {
-    long M = X.N1();
-    long N = X.N2();
+    int M = X.N1();
+    int N = X.N2();
     C.allocate(M, 1);
     for (int i = 0; i < M; i++) {
         C.set(sin(i + 1), i); //pseudo-random  - ahb fixed so the M=1 case isn't the zero vector
@@ -499,7 +499,7 @@ void iterate_to_get_top_component(Mda32& C, double& sigma, Mda32& X, int num_ite
 
 void iterate_XXt_to_get_top_component(Mda& C, double& sigma, Mda& XXt, int num_iterations)
 {
-    long M = XXt.N1();
+    int M = XXt.N1();
     C.allocate(M, 1);
     for (int i = 0; i < M; i++) {
         C.set(sin(i + 1), i); //pseudo-random  - ahb fixed so the M=1 case isn't the zero vector
@@ -517,7 +517,7 @@ void iterate_XXt_to_get_top_component(Mda& C, double& sigma, Mda& XXt, int num_i
 
 void iterate_XXt_to_get_top_component(Mda32& C, double& sigma, Mda32& XXt, int num_iterations)
 {
-    long M = XXt.N1();
+    int M = XXt.N1();
     C.allocate(M, 1);
     for (int i = 0; i < M; i++) {
         C.set(sin(i + 1), i); //pseudo-random  - ahb fixed so the M=1 case isn't the zero vector

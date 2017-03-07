@@ -7,7 +7,7 @@
 #include <objectregistry.h>
 
 #ifdef USE_SSE2
-static void* malloc_aligned(const long alignValue, const long nbytes)
+static void* malloc_aligned(const int alignValue, const bigint nbytes)
 {
     void* result = 0;
 #ifdef __linux__
@@ -20,7 +20,7 @@ static void* malloc_aligned(const long alignValue, const long nbytes)
 }
 #endif
 
-void* allocate(unsigned long nbytes)
+void* allocate(bigint nbytes)
 {
 #ifdef USE_SSE2
     return malloc_aligned(16, nbytes);
@@ -32,7 +32,7 @@ void* allocate(unsigned long nbytes)
 class MdaDataDouble : public MdaData<double> {
 };
 
-Mda::Mda(long N1, long N2, long N3, long N4, long N5, long N6)
+Mda::Mda(bigint N1, bigint N2, bigint N3, bigint N4, bigint N5, bigint N6)
 {
     d = new MdaDataDouble;
     this->allocate(N1, N2, N3, N4, N5, N6);
@@ -58,12 +58,12 @@ Mda::~Mda()
 {
 }
 
-bool Mda::allocate(long N1, long N2, long N3, long N4, long N5, long N6)
+bool Mda::allocate(bigint N1, bigint N2, bigint N3, bigint N4, bigint N5, bigint N6)
 {
     return d->allocate(0, N1, N2, N3, N4, N5, N6);
 }
 
-bool Mda::allocateFill(double value, long N1, long N2, long N3, long N4, long N5, long N6)
+bool Mda::allocateFill(double value, bigint N1, bigint N2, bigint N3, bigint N4, bigint N5, bigint N6)
 {
     return d->allocate(value, N1, N2, N3, N4, N5, N6);
 }
@@ -323,42 +323,42 @@ int Mda::ndims() const
     return d->determine_num_dims(N1(), N2(), N3(), N4(), N5(), N6());
 }
 
-long Mda::N1() const
+bigint Mda::N1() const
 {
     return d->dims(0);
 }
 
-long Mda::N2() const
+bigint Mda::N2() const
 {
     return d->dims(1);
 }
 
-long Mda::N3() const
+bigint Mda::N3() const
 {
     return d->dims(2);
 }
 
-long Mda::N4() const
+bigint Mda::N4() const
 {
     return d->dims(3);
 }
 
-long Mda::N5() const
+bigint Mda::N5() const
 {
     return d->dims(4);
 }
 
-long Mda::N6() const
+bigint Mda::N6() const
 {
     return d->dims(5);
 }
 
-long Mda::totalSize() const
+bigint Mda::totalSize() const
 {
     return d->totalSize();
 }
 
-long Mda::size(int dimension_index) const
+bigint Mda::size(int dimension_index) const
 {
     if (dimension_index < 0)
         return 0;
@@ -367,81 +367,81 @@ long Mda::size(int dimension_index) const
     return d->dims(dimension_index);
 }
 
-double Mda::get(long i) const
+double Mda::get(bigint i) const
 {
     return d->at(i);
 }
 
-double Mda::get(long i1, long i2) const
+double Mda::get(bigint i1, bigint i2) const
 {
     return d->at(i1 + d->dims(0) * i2);
 }
 
-double Mda::get(long i1, long i2, long i3) const
+double Mda::get(bigint i1, bigint i2, bigint i3) const
 {
     return d->at(i1 + d->dims(0) * i2 + d->dims(0) * d->dims(1) * i3);
 }
 
-double Mda::get(long i1, long i2, long i3, long i4, long i5, long i6) const
+double Mda::get(bigint i1, bigint i2, bigint i3, bigint i4, bigint i5, bigint i6) const
 {
-    const long d01 = d->dims(0) * d->dims(1);
-    const long d02 = d01 * d->dims(2);
-    const long d03 = d02 * d->dims(3);
-    const long d04 = d03 * d->dims(4);
+    const bigint d01 = d->dims(0) * d->dims(1);
+    const bigint d02 = d01 * d->dims(2);
+    const bigint d03 = d02 * d->dims(3);
+    const bigint d04 = d03 * d->dims(4);
 
     return d->at(i1 + d->dims(0) * i2 + d01 * i3 + d02 * i4 + d03 * i5 + d04 * i6);
 }
 
-double Mda::value(long i) const
+double Mda::value(bigint i) const
 {
     if (!d->safe_index(i))
         return 0;
     return get(i);
 }
 
-double Mda::value(long i1, long i2) const
+double Mda::value(bigint i1, bigint i2) const
 {
     if (!d->safe_index(i1, i2))
         return 0;
     return get(i1, i2);
 }
 
-double Mda::value(long i1, long i2, long i3) const
+double Mda::value(bigint i1, bigint i2, bigint i3) const
 {
     if (!d->safe_index(i1, i2, i3))
         return 0;
     return get(i1, i2, i3);
 }
 
-double Mda::value(long i1, long i2, long i3, long i4, long i5, long i6) const
+double Mda::value(bigint i1, bigint i2, bigint i3, bigint i4, bigint i5, bigint i6) const
 {
     if (!d->safe_index(i1, i2, i3, i4, i5, i6))
         return 0;
     return get(i1, i2, i3, i4, i5, i6);
 }
 
-void Mda::setValue(double val, long i)
+void Mda::setValue(double val, bigint i)
 {
     if (!d->safe_index(i))
         return;
     set(val, i);
 }
 
-void Mda::setValue(double val, long i1, long i2)
+void Mda::setValue(double val, bigint i1, bigint i2)
 {
     if (!d->safe_index(i1, i2))
         return;
     set(val, i1, i2);
 }
 
-void Mda::setValue(double val, long i1, long i2, long i3)
+void Mda::setValue(double val, bigint i1, bigint i2, bigint i3)
 {
     if (!d->safe_index(i1, i2, i3))
         return;
     set(val, i1, i2, i3);
 }
 
-void Mda::setValue(double val, long i1, long i2, long i3, long i4, long i5, long i6)
+void Mda::setValue(double val, bigint i1, bigint i2, bigint i3, bigint i4, bigint i5, bigint i6)
 {
     if (!d->safe_index(i1, i2, i3, i4, i5, i6))
         return;
@@ -458,46 +458,46 @@ const double* Mda::constDataPtr() const
     return d->constData();
 }
 
-double* Mda::dataPtr(long i)
+double* Mda::dataPtr(bigint i)
 {
     return d->data() + i;
 }
 
-double* Mda::dataPtr(long i1, long i2)
+double* Mda::dataPtr(bigint i1, bigint i2)
 {
     return d->data() + (i1 + N1() * i2);
 }
 
-double* Mda::dataPtr(long i1, long i2, long i3)
+double* Mda::dataPtr(bigint i1, bigint i2, bigint i3)
 {
     return d->data() + (i1 + N1() * i2 + N1() * N2() * i3);
 }
 
-double* Mda::dataPtr(long i1, long i2, long i3, long i4, long i5, long i6)
+double* Mda::dataPtr(bigint i1, bigint i2, bigint i3, bigint i4, bigint i5, bigint i6)
 {
-    const long N12 = N1() * N2();
-    const long N13 = N12 * N3();
-    const long N14 = N13 * N4();
-    const long N15 = N14 * N5();
+    const bigint N12 = N1() * N2();
+    const bigint N13 = N12 * N3();
+    const bigint N14 = N13 * N4();
+    const bigint N15 = N14 * N5();
 
     return d->data() + (i1 + N1() * i2 + N12 * i3 + N13 * i4 + N14 * i5 + N15 * i6);
 }
 
-void Mda::getChunk(Mda& ret, long i, long size) const
+void Mda::getChunk(Mda& ret, bigint i, bigint size) const
 {
     // A lot of bugs fixed on 5/31/16
-    long a_begin = i;
-    long x_begin = 0;
-    long a_end = i + size - 1;
-    //    long x_end = size - 1;  // unused?
+    bigint a_begin = i;
+    bigint x_begin = 0;
+    bigint a_end = i + size - 1;
+    //    bigint x_end = size - 1;  // unused?
 
     if (a_begin < 0) {
         x_begin += 0 - a_begin;
         a_begin += 0 - a_begin;
     }
-    if (a_end >= (long)d->totalSize()) {
-        //        x_end += (long)d->totalSize() - 1 - a_end; // unused?
-        a_end += (long)d->totalSize() - 1 - a_end;
+    if (a_end >= (bigint)d->totalSize()) {
+        //        x_end += (bigint)d->totalSize() - 1 - a_end; // unused?
+        a_end += (bigint)d->totalSize() - 1 - a_end;
     }
 
     ret.allocate(1, size);
@@ -508,13 +508,13 @@ void Mda::getChunk(Mda& ret, long i, long size) const
     std::copy(ptr1 + a_begin, ptr1 + a_end + 1, ptr2 + x_begin);
 }
 
-void Mda::getChunk(Mda& ret, long i1, long i2, long size1, long size2) const
+void Mda::getChunk(Mda& ret, bigint i1, bigint i2, bigint size1, bigint size2) const
 {
     // A lot of bugs fixed on 5/31/16
-    long a1_begin = i1;
-    long x1_begin = 0;
-    long a1_end = i1 + size1 - 1;
-    long x1_end = size1 - 1;
+    bigint a1_begin = i1;
+    bigint x1_begin = 0;
+    bigint a1_end = i1 + size1 - 1;
+    bigint x1_end = size1 - 1;
     if (a1_begin < 0) {
         x1_begin += 0 - a1_begin;
         a1_begin += 0 - a1_begin;
@@ -524,10 +524,10 @@ void Mda::getChunk(Mda& ret, long i1, long i2, long size1, long size2) const
         a1_end += N1() - 1 - a1_end;
     }
 
-    long a2_begin = i2;
-    long x2_begin = 0;
-    long a2_end = i2 + size2 - 1;
-    long x2_end = size2 - 1;
+    bigint a2_begin = i2;
+    bigint x2_begin = 0;
+    bigint a2_end = i2 + size2 - 1;
+    bigint x2_end = size2 - 1;
     if (a2_begin < 0) {
         x2_begin += 0 - a2_begin;
         a2_begin += 0 - a2_begin;
@@ -542,10 +542,10 @@ void Mda::getChunk(Mda& ret, long i1, long i2, long size1, long size2) const
     const double* ptr1 = this->constDataPtr();
     double* ptr2 = ret.dataPtr();
 
-    for (long ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
-        long ii_out = (ind2 + x2_begin) * size1 + x1_begin; //bug fixed on 5/31/16 by jfm
-        long ii_in = (ind2 + a2_begin) * N1() + a1_begin; //bug fixed on 5/31/16 by jfm
-        for (long ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
+    for (bigint ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
+        bigint ii_out = (ind2 + x2_begin) * size1 + x1_begin; //bug fixed on 5/31/16 by jfm
+        bigint ii_in = (ind2 + a2_begin) * N1() + a1_begin; //bug fixed on 5/31/16 by jfm
+        for (bigint ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
             ptr2[ii_out] = ptr1[ii_in];
             ii_in++;
             ii_out++;
@@ -553,13 +553,13 @@ void Mda::getChunk(Mda& ret, long i1, long i2, long size1, long size2) const
     }
 }
 
-void Mda::getChunk(Mda& ret, long i1, long i2, long i3, long size1, long size2, long size3) const
+void Mda::getChunk(Mda& ret, bigint i1, bigint i2, bigint i3, bigint size1, bigint size2, bigint size3) const
 {
     // A lot of bugs fixed on 5/31/16
-    long a1_begin = i1;
-    long x1_begin = 0;
-    long a1_end = i1 + size1 - 1;
-    long x1_end = size1 - 1;
+    bigint a1_begin = i1;
+    bigint x1_begin = 0;
+    bigint a1_end = i1 + size1 - 1;
+    bigint x1_end = size1 - 1;
     if (a1_begin < 0) {
         x1_begin += 0 - a1_begin;
         a1_begin += 0 - a1_begin;
@@ -569,10 +569,10 @@ void Mda::getChunk(Mda& ret, long i1, long i2, long i3, long size1, long size2, 
         a1_end += N1() - 1 - a1_end;
     }
 
-    long a2_begin = i2;
-    long x2_begin = 0;
-    long a2_end = i2 + size2 - 1;
-    long x2_end = size2 - 1;
+    bigint a2_begin = i2;
+    bigint x2_begin = 0;
+    bigint a2_end = i2 + size2 - 1;
+    bigint x2_end = size2 - 1;
     if (a2_begin < 0) {
         x2_begin += 0 - a2_begin;
         a2_begin += 0 - a2_begin;
@@ -582,10 +582,10 @@ void Mda::getChunk(Mda& ret, long i1, long i2, long i3, long size1, long size2, 
         a2_end += N2() - 1 - a2_end;
     }
 
-    long a3_begin = i3;
-    long x3_begin = 0;
-    long a3_end = i3 + size3 - 1;
-    long x3_end = size3 - 1;
+    bigint a3_begin = i3;
+    bigint x3_begin = 0;
+    bigint a3_end = i3 + size3 - 1;
+    bigint x3_end = size3 - 1;
     if (a3_begin < 0) {
         x3_begin += 0 - a3_begin;
         a3_begin += 0 - a3_begin;
@@ -600,11 +600,11 @@ void Mda::getChunk(Mda& ret, long i1, long i2, long i3, long size1, long size2, 
     const double* ptr1 = this->constDataPtr();
     double* ptr2 = ret.dataPtr();
 
-    for (long ind3 = 0; ind3 <= a3_end - a3_begin; ind3++) {
-        for (long ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
-            long ii_out = x1_begin + (ind2 + x2_begin) * size1 + (ind3 + x3_begin) * size1 * size2; //bug fixed on 5/31/16 by jfm
-            long ii_in = a1_begin + (ind2 + a2_begin) * N1() + (ind3 + a3_begin) * N1() * N2(); //bug fixed on 5/31/16 by jfm
-            for (long ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
+    for (bigint ind3 = 0; ind3 <= a3_end - a3_begin; ind3++) {
+        for (bigint ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
+            bigint ii_out = x1_begin + (ind2 + x2_begin) * size1 + (ind3 + x3_begin) * size1 * size2; //bug fixed on 5/31/16 by jfm
+            bigint ii_in = a1_begin + (ind2 + a2_begin) * N1() + (ind3 + a3_begin) * N1() * N2(); //bug fixed on 5/31/16 by jfm
+            for (bigint ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
                 ptr2[ii_out] = ptr1[ii_in];
                 ii_in++;
                 ii_out++;
@@ -613,43 +613,43 @@ void Mda::getChunk(Mda& ret, long i1, long i2, long i3, long size1, long size2, 
     }
 }
 
-void Mda::setChunk(Mda& X, long i)
+void Mda::setChunk(Mda& X, bigint i)
 {
-    long size = X.totalSize();
+    bigint size = X.totalSize();
 
-    long a_begin = i;
-    long x_begin = 0;
-    long a_end = i + size - 1;
-    long x_end = size - 1;
+    bigint a_begin = i;
+    bigint x_begin = 0;
+    bigint a_end = i + size - 1;
+    bigint x_end = size - 1;
 
     if (a_begin < 0) {
         a_begin += 0 - a_begin;
         x_begin += 0 - a_begin;
     }
-    if (a_end >= (long)d->totalSize()) {
-        a_end += (long)d->totalSize() - 1 - a_end;
-        x_end += (long)d->totalSize() - 1 - a_end;
+    if (a_end >= (bigint)d->totalSize()) {
+        a_end += (bigint)d->totalSize() - 1 - a_end;
+        x_end += (bigint)d->totalSize() - 1 - a_end;
     }
 
     double* ptr1 = this->dataPtr();
     double* ptr2 = X.dataPtr();
 
-    long ii = 0;
-    for (long a = a_begin; a <= a_end; a++) {
+    bigint ii = 0;
+    for (bigint a = a_begin; a <= a_end; a++) {
         ptr1[a_begin + ii] = ptr2[x_begin + ii];
         ii++;
     }
 }
 
-void Mda::setChunk(Mda& X, long i1, long i2)
+void Mda::setChunk(Mda& X, bigint i1, bigint i2)
 {
-    long size1 = X.N1();
-    long size2 = X.N2();
+    bigint size1 = X.N1();
+    bigint size2 = X.N2();
 
-    long a1_begin = i1;
-    long x1_begin = 0;
-    long a1_end = i1 + size1 - 1;
-    long x1_end = size1 - 1;
+    bigint a1_begin = i1;
+    bigint x1_begin = 0;
+    bigint a1_end = i1 + size1 - 1;
+    bigint x1_end = size1 - 1;
     if (a1_begin < 0) {
         a1_begin += 0 - a1_begin;
         x1_begin += 0 - a1_begin;
@@ -659,10 +659,10 @@ void Mda::setChunk(Mda& X, long i1, long i2)
         x1_end += N1() - 1 - a1_end;
     }
 
-    long a2_begin = i2;
-    long x2_begin = 0;
-    long a2_end = i2 + size2 - 1;
-    long x2_end = size2 - 1;
+    bigint a2_begin = i2;
+    bigint x2_begin = 0;
+    bigint a2_end = i2 + size2 - 1;
+    bigint x2_end = size2 - 1;
     if (a2_begin < 0) {
         a2_begin += 0 - a2_begin;
         x2_begin += 0 - a2_begin;
@@ -675,10 +675,10 @@ void Mda::setChunk(Mda& X, long i1, long i2)
     double* ptr1 = this->dataPtr();
     double* ptr2 = X.dataPtr();
 
-    for (long ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
-        long ii_out = (ind2 + x2_begin) * size1;
-        long ii_in = (ind2 + a2_begin) * N1();
-        for (long ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
+    for (bigint ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
+        bigint ii_out = (ind2 + x2_begin) * size1;
+        bigint ii_in = (ind2 + a2_begin) * N1();
+        for (bigint ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
             ptr1[ii_in] = ptr2[ii_out];
             ii_in++;
             ii_out++;
@@ -686,16 +686,16 @@ void Mda::setChunk(Mda& X, long i1, long i2)
     }
 }
 
-void Mda::setChunk(Mda& X, long i1, long i2, long i3)
+void Mda::setChunk(Mda& X, bigint i1, bigint i2, bigint i3)
 {
-    long size1 = X.N1();
-    long size2 = X.N2();
-    long size3 = X.N3();
+    bigint size1 = X.N1();
+    bigint size2 = X.N2();
+    bigint size3 = X.N3();
 
-    long a1_begin = i1;
-    long x1_begin = 0;
-    long a1_end = i1 + size1 - 1;
-    long x1_end = size1 - 1;
+    bigint a1_begin = i1;
+    bigint x1_begin = 0;
+    bigint a1_end = i1 + size1 - 1;
+    bigint x1_end = size1 - 1;
     if (a1_begin < 0) {
         a1_begin += 0 - a1_begin;
         x1_begin += 0 - a1_begin;
@@ -705,10 +705,10 @@ void Mda::setChunk(Mda& X, long i1, long i2, long i3)
         x1_end += N1() - 1 - a1_end;
     }
 
-    long a2_begin = i2;
-    long x2_begin = 0;
-    long a2_end = i2 + size2 - 1;
-    long x2_end = size2 - 1;
+    bigint a2_begin = i2;
+    bigint x2_begin = 0;
+    bigint a2_end = i2 + size2 - 1;
+    bigint x2_end = size2 - 1;
     if (a2_begin < 0) {
         a2_begin += 0 - a2_begin;
         x2_begin += 0 - a2_begin;
@@ -718,10 +718,10 @@ void Mda::setChunk(Mda& X, long i1, long i2, long i3)
         x2_end += N2() - 1 - a2_end;
     }
 
-    long a3_begin = i3;
-    long x3_begin = 0;
-    long a3_end = i3 + size3 - 1;
-    long x3_end = size3 - 1;
+    bigint a3_begin = i3;
+    bigint x3_begin = 0;
+    bigint a3_end = i3 + size3 - 1;
+    bigint x3_end = size3 - 1;
     if (a3_begin < 0) {
         a2_begin += 0 - a3_begin;
         x3_begin += 0 - a3_begin;
@@ -734,11 +734,11 @@ void Mda::setChunk(Mda& X, long i1, long i2, long i3)
     double* ptr1 = this->dataPtr();
     double* ptr2 = X.dataPtr();
 
-    for (long ind3 = 0; ind3 <= a3_end - a3_begin; ind3++) {
-        for (long ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
-            long ii_out = (ind2 + x2_begin) * size1 + (ind3 + x3_begin) * size1 * size2;
-            long ii_in = (ind2 + a2_begin) * N1() + (ind3 + a3_begin) * N1() * N2();
-            for (long ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
+    for (bigint ind3 = 0; ind3 <= a3_end - a3_begin; ind3++) {
+        for (bigint ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
+            bigint ii_out = (ind2 + x2_begin) * size1 + (ind3 + x3_begin) * size1 * size2;
+            bigint ii_in = (ind2 + a2_begin) * N1() + (ind3 + a3_begin) * N1() * N2();
+            for (bigint ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
                 ptr1[ii_in] = ptr2[ii_out];
                 ii_in++;
                 ii_out++;
@@ -749,7 +749,7 @@ void Mda::setChunk(Mda& X, long i1, long i2, long i3)
 
 double Mda::minimum() const
 {
-    long NN = this->totalSize();
+    bigint NN = this->totalSize();
     const double* ptr = this->constDataPtr();
     if ((!NN) || (!ptr)) {
         return 0;
@@ -759,7 +759,7 @@ double Mda::minimum() const
 
 double Mda::maximum() const
 {
-    long NN = this->totalSize();
+    bigint NN = this->totalSize();
     const double* ptr = this->constDataPtr();
     if ((!NN) || (!ptr)) {
         return 0;
@@ -767,7 +767,7 @@ double Mda::maximum() const
     return *std::max_element(ptr, ptr + NN);
 }
 
-bool Mda::reshape(int N1b, int N2b, int N3b, int N4b, int N5b, int N6b)
+bool Mda::reshape(bigint N1b, bigint N2b, bigint N3b, bigint N4b, bigint N5b, bigint N6b)
 {
     if (N1b * N2b * N3b * N4b * N5b * N6b != this->totalSize()) {
         qWarning() << "Unable to reshape Mda, wrong total size";
@@ -784,27 +784,27 @@ void Mda::detach()
     d.detach();
 }
 
-void Mda::set(double val, long i)
+void Mda::set(double val, bigint i)
 {
     d->set(val, i);
 }
 
-void Mda::set(double val, long i1, long i2)
+void Mda::set(double val, bigint i1, bigint i2)
 {
     d->set(val, i1 + d->dims(0) * i2);
 }
 
-void Mda::set(double val, long i1, long i2, long i3)
+void Mda::set(double val, bigint i1, bigint i2, bigint i3)
 {
     d->set(val, i1 + d->dims(0) * i2 + d->dims(0) * d->dims(1) * i3);
 }
 
-void Mda::set(double val, long i1, long i2, long i3, long i4, long i5, long i6)
+void Mda::set(double val, bigint i1, bigint i2, bigint i3, bigint i4, bigint i5, bigint i6)
 {
-    const long d01 = d->dims(0) * d->dims(1);
-    const long d02 = d01 * d->dims(2);
-    const long d03 = d02 * d->dims(3);
-    const long d04 = d03 * d->dims(4);
+    const bigint d01 = d->dims(0) * d->dims(1);
+    const bigint d02 = d01 * d->dims(2);
+    const bigint d03 = d02 * d->dims(3);
+    const bigint d04 = d03 * d->dims(4);
 
     d->set(val, i1 + d->dims(0) * i2 + d01 * i3 + d02 * i4 + d03 * i5 + d04 * i6);
 }

@@ -118,8 +118,8 @@ void MSCacheManager::slot_remove_on_delete()
 QString MSCacheManagerPrivate::create_random_file_name()
 {
 
-    long num1 = QDateTime::currentMSecsSinceEpoch();
-    long num2 = (long)QThread::currentThreadId();
-    long num3 = qrand();
+    int num1 = QDateTime::currentMSecsSinceEpoch();
+    int num2 = (int)QThread::currentThreadId();
+    int num3 = qrand();
     return QString("ms.%1.%2.%3.tmp").arg(num1).arg(num2).arg(num3);
 }

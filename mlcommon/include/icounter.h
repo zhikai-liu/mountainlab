@@ -6,6 +6,8 @@
 #include <QVariant>
 #include <QHash>
 
+#include "mlcommon.h"
+
 class ICounterBase : public QObject {
     Q_OBJECT
 public:

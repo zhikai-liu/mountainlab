@@ -31,13 +31,13 @@ bool merge_stage(const QString& timeseries_path, const QString& firings_path, co
 
     int M = X.N1();
     int T = opts.clip_size;
-    long L = firings.N2();
+    int L = firings.N2();
 
     //setup arrays for peakchans, times, labels
     QVector<int> peakchans;
     QVector<double> times;
     QVector<int> labels;
-    for (long j = 0; j < L; j++) {
+    for (int j = 0; j < L; j++) {
         peakchans << (int)firings.value(0, j);
         times << firings.value(1, j);
         labels << (int)firings.value(2, j);
@@ -52,8 +52,8 @@ bool merge_stage(const QString& timeseries_path, const QString& firings_path, co
     Mda best_dt(K, K);
     for (int k1 = 1; k1 <= K; k1++) {
         for (int k2 = k1 + 1; k2 <= K; k2++) {
-            QList<long> inds1 = find_inds(labels, k1);
-            QList<long> inds2 = find_inds(labels, k2);
+            QList<int> inds1 = find_inds(labels, k1);
+            QList<int> inds2 = find_inds(labels, k2);
             if ((!inds1.isEmpty()) && (!inds2.isEmpty())) {
                 Mda template1, template2;
                 templates.getChunk(template1, 0, 0, k1 - 1, M, T, 1);
@@ -64,9 +64,9 @@ bool merge_stage(const QString& timeseries_path, const QString& firings_path, co
                 if (check_if_merge_candidate(best_dt0, template1, template2, peakchan1, peakchan2, opts)) {
                     printf("Candidate: (%d,%d) dt=%g\n", k1, k2, best_dt0);
                     QVector<double> times1, times2;
-                    for (long a = 0; a < inds1.count(); a++)
+                    for (int a = 0; a < inds1.count(); a++)
                         times1 << times[inds1[a]];
-                    for (long a = 0; a < inds2.count(); a++)
+                    for (int a = 0; a < inds2.count(); a++)
                         times2 << times[inds2[a]] - best_dt0; //do the time correction (very important)
                     Mda clips1 = extract_clips(X, times1, opts.clip_size);
                     Mda clips2 = extract_clips(X, times2, opts.clip_size);
@@ -89,8 +89,8 @@ bool merge_stage(const QString& timeseries_path, const QString& firings_path, co
         for (int k2 = k1 + 1; k2 <= K; k2++) {
             if (merge_matrix.value(k1 - 1, k2 - 1)) {
                 //now we merge
-                QList<long> inds_k2 = find_inds(new_labels, k2);
-                for (long j = 0; j < inds_k2.count(); j++) {
+                QList<int> inds_k2 = find_inds(new_labels, k2);
+                for (int j = 0; j < inds_k2.count(); j++) {
                     new_labels[inds_k2[j]] = k1;
                     new_times[inds_k2[j]] = times[inds_k2[j]] - best_dt.value(k1 - 1, k2 - 1);
                 }
@@ -105,16 +105,16 @@ bool merge_stage(const QString& timeseries_path, const QString& firings_path, co
 
     //set the output
     Mda firings_out = firings;
-    for (long i = 0; i < firings_out.N2(); i++) {
+    for (int i = 0; i < firings_out.N2(); i++) {
         firings_out.setValue(new_times[i], 1, i);
         firings_out.setValue(new_labels[i], 2, i);
     }
 
     //Now we may have a bunch of redundant events! So let's remove them!
-    long maxdt = 5;
+    int maxdt = 5;
     firings_out = remove_redundant_events_2(firings_out, maxdt);
 
-    printf("Using %ld of %ld events\n", firings_out.N2(), firings.N2());
+    printf("Using %lld of %lld events\n", firings_out.N2(), firings.N2());
 
     firings_out.write64(firings_out_path);
 
@@ -161,10 +161,10 @@ double max_absolute_value_on_channel_2(Mda& template1, int channel)
     return MLCompute::max(vals);
 }
 
-double compute_noncentered_correlation_2(long N, double* X1, double* X2)
+double compute_noncentered_correlation_2(int N, double* X1, double* X2)
 {
     double S12 = 0, S11 = 0, S22 = 0;
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         S12 += X1[i] * X2[i];
         S11 += X1[i] * X1[i];
         S22 += X2[i] * X2[i];
@@ -228,36 +228,36 @@ Mda remove_redundant_events_2(Mda& firings, int maxdt)
     QVector<double> times;
     QVector<int> labels;
 
-    long L = firings.N2();
-    for (long i = 0; i < L; i++) {
+    int L = firings.N2();
+    for (int i = 0; i < L; i++) {
         times << firings.value(1, i);
         labels << (int)firings.value(2, i);
     }
     int K = MLCompute::max<int>(labels);
 
     QVector<int> to_use;
-    for (long i = 0; i < L; i++)
+    for (int i = 0; i < L; i++)
         to_use << 1;
     for (int k = 1; k <= K; k++) {
-        QList<long> inds_k = find_inds(labels, k);
+        QList<int> inds_k = find_inds(labels, k);
         QVector<double> times_k;
-        for (long i = 0; i < inds_k.count(); i++)
+        for (int i = 0; i < inds_k.count(); i++)
             times_k << times[inds_k[i]];
         //the bad indices are those whose times occur too close to the previous times
-        for (long i = 1; i < times_k.count(); i++) {
+        for (int i = 1; i < times_k.count(); i++) {
             if (times_k[i] <= times_k[i - 1] + maxdt)
                 to_use[inds_k[i]] = 0;
         }
     }
 
-    QList<long> inds_to_use;
-    for (long i = 0; i < L; i++) {
+    QList<int> inds_to_use;
+    for (int i = 0; i < L; i++) {
         if (to_use[i])
             inds_to_use << i;
     }
 
     Mda firings_out(firings.N1(), inds_to_use.count());
-    for (long i = 0; i < inds_to_use.count(); i++) {
+    for (int i = 0; i < inds_to_use.count(); i++) {
         for (int j = 0; j < firings.N1(); j++) {
             firings_out.setValue(firings.value(j, inds_to_use[i]), j, i);
         }
@@ -272,7 +272,7 @@ QVector<int> remove_unused_labels_2(const QVector<int>& labels)
     QVector<int> used_labels;
     for (int k = 1; k <= K; k++)
         used_labels << 0;
-    for (long i = 0; i < labels.count(); i++) {
+    for (int i = 0; i < labels.count(); i++) {
         if (labels[i] > 0) {
             used_labels[labels[i] - 1] = 1;
         }
@@ -288,7 +288,7 @@ QVector<int> remove_unused_labels_2(const QVector<int>& labels)
     for (int j = 0; j < used_label_numbers.count(); j++)
         label_map[used_label_numbers[j]] = j + 1;
     QVector<int> labels_out;
-    for (long i = 0; i < labels.count(); i++) {
+    for (int i = 0; i < labels.count(); i++) {
         labels_out << label_map[labels[i]];
     }
     return labels_out;
@@ -297,7 +297,7 @@ QVector<int> remove_unused_labels_2(const QVector<int>& labels)
 QVector<double> everything_below(const QVector<double>& X, double val)
 {
     QVector<double> ret;
-    for (long i = 0; i < X.count(); i++) {
+    for (int i = 0; i < X.count(); i++) {
         if (X[i] < val)
             ret << X[i];
     }
@@ -307,7 +307,7 @@ QVector<double> everything_below(const QVector<double>& X, double val)
 QVector<double> everything_above(const QVector<double>& X, double val)
 {
     QVector<double> ret;
-    for (long i = 0; i < X.count(); i++) {
+    for (int i = 0; i < X.count(); i++) {
         if (X[i] >= val)
             ret << X[i];
     }
@@ -362,13 +362,13 @@ bool test_for_merge(const Mda& clips1, const Mda& clips2)
 {
     int M = clips1.N1();
     int T = clips1.N2();
-    long L1 = clips1.N3();
-    long L2 = clips2.N3();
+    int L1 = clips1.N3();
+    int L2 = clips2.N3();
 
     Mda W1 = compute_mean_clip(clips1);
     Mda W2 = compute_mean_clip(clips2);
     Mda Wdiff(M, T);
-    for (long ii = 0; ii < M * T; ii++) {
+    for (int ii = 0; ii < M * T; ii++) {
         Wdiff.setValue(W2.value(ii) - W1.value(ii), ii);
     }
 
@@ -377,11 +377,11 @@ bool test_for_merge(const Mda& clips1, const Mda& clips2)
     const double* Wdiff_ptr = Wdiff.dataPtr();
 
     QVector<double> inner_products_1(L1);
-    for (long i = 0; i < L1; i++) {
+    for (int i = 0; i < L1; i++) {
         inner_products_1[i] = MLCompute::dotProduct(M * T, Wdiff_ptr, &ptr1[M * T * i]);
     }
     QVector<double> inner_products_2(L2);
-    for (long i = 0; i < L2; i++) {
+    for (int i = 0; i < L2; i++) {
         inner_products_2[i] = MLCompute::dotProduct(M * T, Wdiff_ptr, &ptr2[M * T * i]);
     }
 

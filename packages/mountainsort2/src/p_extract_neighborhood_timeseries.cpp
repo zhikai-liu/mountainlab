@@ -17,7 +17,7 @@ bool p_extract_neighborhood_timeseries(QString timeseries, QString timeseries_ou
 {
     DiskReadMda32 X(timeseries);
     int M = X.N1();
-    long N = X.N2();
+    int N = X.N2();
     int M2 = channels.count();
 
     DiskWriteMda Y;
@@ -37,9 +37,9 @@ namespace P_extract_neighborhood_timeseries {
 Mda32 extract_neighborhood(const Mda32& X, QList<int> channels)
 {
     int M2 = channels.count();
-    long N = X.N2();
+    int N = X.N2();
     Mda32 ret(M2, N);
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         for (int m = 0; m < M2; m++) {
             int m2 = channels[m] - 1;
             ret.setValue(X.value(m2, i), m, i);

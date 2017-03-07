@@ -18,8 +18,8 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
     }
 
     DiskReadMda32 X(timeseries);
-    const long M = X.N1();
-    const long N = X.N2();
+    const int M = X.N1();
+    const int N = X.N2();
 
     DiskWriteMda Y(MDAIO_TYPE_FLOAT32, timeseries_out, M, N);
 
@@ -27,16 +27,16 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
     timer_status.start();
 
     int num_threads = omp_get_max_threads();
-    long memory_size = 0.1 * 1e9;
-    long chunk_size = memory_size * 1.0 / (M * 4 * num_threads);
+    int memory_size = 0.1 * 1e9;
+    int chunk_size = memory_size * 1.0 / (M * 4 * num_threads);
     chunk_size = qMin(N * 1.0, qMax(1e4 * 1.0, chunk_size * 1.0));
-    long overlap_size = chunk_size / 5;
-    printf("************ Using chunk size / overlap size: %ld / %ld (num threads=%d)\n", chunk_size, overlap_size, num_threads);
+    int overlap_size = chunk_size / 5;
+    printf("************ Using chunk size / overlap size: %d / %d (num threads=%d)\n", chunk_size, overlap_size, num_threads);
 
     {
-        long num_timepoints_handled = 0;
+        int num_timepoints_handled = 0;
 #pragma omp parallel for
-        for (long timepoint = 0; timepoint < N; timepoint += chunk_size) {
+        for (int timepoint = 0; timepoint < N; timepoint += chunk_size) {
             Mda32 chunk;
 #pragma omp critical(lock1)
             {
@@ -56,7 +56,7 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
                 }
                 num_timepoints_handled += qMin(chunk_size, N - timepoint);
                 if ((timer_status.elapsed() > 5000) || (num_timepoints_handled == N) || (timepoint == 0)) {
-                    printf("%ld/%ld (%d%%) -- using %d threads.\n",
+                    printf("%d/%d (%d%%) -- using %d threads.\n",
                         num_timepoints_handled, N,
                         (int)(num_timepoints_handled * 1.0 / N * 100),
                         omp_get_num_threads());
@@ -71,9 +71,9 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
 
 namespace P_bandpass_filter {
 
-void multiply_by_factor(long N, float* X, double factor)
+void multiply_by_factor(int N, float* X, double factor)
 {
-    /*long start = 0;
+    /*int start = 0;
 #ifdef USE_SSE2
     __m128d factor_m128 = _mm_load_pd1(&factor);
     for (; start < (N / 2) * 2; start += 2) {
@@ -84,7 +84,7 @@ void multiply_by_factor(long N, float* X, double factor)
     }
 #endif
 */
-    for (long i = 0; i < N; i++)
+    for (int i = 0; i < N; i++)
         X[i] *= factor;
 }
 
@@ -143,7 +143,7 @@ bool do_fft_1d_r2c(int M, int N, float* out, float* in)
      */
     fftw_plan p;
     int rank = 1;
-    int n[] = { N };
+    int n[] = { (int)N };
     int howmany = M;
     int* inembed = n;
     int istride = M;
@@ -197,7 +197,7 @@ bool do_ifft_1d_c2r(int M, int N, float* out, float* in)
 
     fftw_plan p;
     int rank = 1;
-    int n[] = { N };
+    int n[] = { (int)N };
     int howmany = M;
     int* inembed = n;
     int istride = M;
@@ -232,8 +232,8 @@ bool do_ifft_1d_c2r(int M, int N, float* out, float* in)
 
 void multiply_complex_by_real_kernel(int M, int N, float* Y, double* kernel)
 {
-    long bb = 0;
-    long aa = 0;
+    int bb = 0;
+    int aa = 0;
     /*
 #ifdef USE_SSE2
     for (int i = 0; i < N; i++) {
@@ -248,8 +248,8 @@ void multiply_complex_by_real_kernel(int M, int N, float* Y, double* kernel)
     }
 #else
 */
-    for (long i = 0; i < N; i++) {
-        for (long j = 0; j < M; j++) {
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < M; j++) {
             Y[bb * 2] *= kernel[aa];
             Y[bb * 2 + 1] *= kernel[aa];
             bb++;
@@ -290,9 +290,9 @@ void define_kernel(int N, double* kernel, double samplefreq, double freq_min, do
 Mda32 bandpass_filter_kernel(Mda32& X, double samplerate, double freq_min, double freq_max, double freq_wid)
 {
     QTime timer; timer.start();
-    long M = X.N1();
-    long N = X.N2();
-    long MN = M * N;
+    int M = X.N1();
+    int N = X.N2();
+    int MN = M * N;
     Mda32 Y(M, N);
     float* Xptr = X.dataPtr();
     float* Yptr = Y.dataPtr();

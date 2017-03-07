@@ -21,24 +21,24 @@ struct compute_detectability_scores_opts {
 bool compute_detectability_scores(QString timeseries_path, QString firings_path, QString firings_out_path, const compute_detectability_scores_opts& opts);
 
 struct Subcluster {
-    QList<long> inds;
+    QList<int> inds;
     double detectability_score;
     double peak;
     int label;
 };
 
 struct Shell {
-    QList<long> inds;
+    QList<int> inds;
 };
 struct Define_Shells_Opts {
     double shell_increment;
     int min_shell_size;
 };
 
-QVector<long> find_label_inds(const QVector<int>& labels, int k);
-Mda get_subclips(Mda& clips, const QList<long>& inds);
+QVector<int> find_label_inds(const QVector<int>& labels, int k);
+Mda get_subclips(Mda& clips, const QList<int>& inds);
 QList<Shell> define_shells(const QVector<double>& peaks, const Define_Shells_Opts& opts);
-QVector<double> randsample_with_replacement(long N, long K);
+QVector<double> randsample_with_replacement(int N, int K);
 Mda estimate_noise_shape(DiskReadMda& X, int T, int ch);
 Mda compute_features(Mda& clips, int num_features);
 void compute_geometric_median(int M, int N, double* output, double* input, int num_iterations = 10);

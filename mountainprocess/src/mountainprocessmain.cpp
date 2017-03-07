@@ -110,7 +110,7 @@ struct run_script_opts {
 };
 
 QJsonArray monitor_stats_to_json_array(const QList<MonitorStats>& stats);
-long compute_peak_mem_bytes(const QList<MonitorStats>& stats);
+int compute_peak_mem_bytes(const QList<MonitorStats>& stats);
 double compute_peak_cpu_pct(const QList<MonitorStats>& stats);
 double compute_avg_cpu_pct(const QList<MonitorStats>& stats);
 //void log_begin(int argc,char* argv[]);
@@ -268,7 +268,7 @@ int main(int argc, char* argv[])
         int ret = 0;
         QString error_message;
         MLProcessInfo info;
-        long parent_pid = CLP.named_parameters.value("_parent_pid", 0).toLongLong();
+        int parent_pid = CLP.named_parameters.value("_parent_pid", 0).toLongLong();
 
         bool preserve_tempdir = CLP.named_parameters.contains("_preserve_tempdir");
 
@@ -314,11 +314,11 @@ int main(int argc, char* argv[])
             printf("PROCESS COMPLETED: %s\n", info.processor_name.toLatin1().data());
             if (!error_message.isEmpty())
                 printf("ERROR: %s\n", error_message.toLatin1().data());
-            long mb = compute_peak_mem_bytes(info.monitor_stats) / 1000000;
+            int mb = compute_peak_mem_bytes(info.monitor_stats) / 1000000;
             double cpu = compute_peak_cpu_pct(info.monitor_stats);
             double cpu_avg = compute_avg_cpu_pct(info.monitor_stats);
             double sec = info.start_time.msecsTo(info.finish_time) * 1.0 / 1000;
-            printf("Peak RAM: %ld MB. Peak CPU: %g%%. Avg CPU: %g%%. Elapsed time: %g seconds.\n", mb, cpu, cpu_avg, sec);
+            printf("Peak RAM: %d MB. Peak CPU: %g%%. Avg CPU: %g%%. Elapsed time: %g seconds.\n", mb, cpu, cpu_avg, sec);
             printf("---------------------------------------------------------------\n");
         }
         QJsonObject obj; //the output info to be saved
@@ -335,7 +335,7 @@ int main(int argc, char* argv[])
         obj["standard_error"] = QString(info.standard_error);
         obj["success"] = error_message.isEmpty();
         obj["error"] = error_message;
-        obj["peak_mem_bytes"] = (long long)compute_peak_mem_bytes(info.monitor_stats);
+        obj["peak_mem_bytes"] = (int)compute_peak_mem_bytes(info.monitor_stats);
         obj["peak_cpu_pct"] = compute_peak_cpu_pct(info.monitor_stats);
         obj["avg_cpu_pct"] = compute_avg_cpu_pct(info.monitor_stats);
         obj["start_time"] = info.start_time.toString("yyyy-MM-dd:hh-mm-ss.zzz");
@@ -1216,15 +1216,15 @@ QJsonArray monitor_stats_to_json_array(const QList<MonitorStats>& stats)
         MonitorStats X = stats[i];
         QJsonObject obj;
         obj["timestamp"] = X.timestamp.toMSecsSinceEpoch();
-        obj["mem_bytes"] = (long long)X.mem_bytes;
+        obj["mem_bytes"] = (int)X.mem_bytes;
         obj["cpu_pct"] = X.cpu_pct;
         ret << obj;
     }
     return ret;
 }
-long compute_peak_mem_bytes(const QList<MonitorStats>& stats)
+int compute_peak_mem_bytes(const QList<MonitorStats>& stats)
 {
-    long ret = 0;
+    int ret = 0;
     for (int i = 0; i < stats.count(); i++) {
         ret = qMax(ret, stats[i].mem_bytes);
     }
@@ -1271,10 +1271,10 @@ QString get_daemon_state_summary(const QJsonObject& state)
 
     //scripts
     {
-        long num_running = 0;
-        long num_finished = 0;
-        long num_queued = 0;
-        long num_errors = 0;
+        int num_running = 0;
+        int num_finished = 0;
+        int num_queued = 0;
+        int num_errors = 0;
         QJsonObject scripts = state["scripts"].toObject();
         QStringList ids = scripts.keys();
         foreach (QString id, ids) {
@@ -1299,10 +1299,10 @@ QString get_daemon_state_summary(const QJsonObject& state)
 
     //processes
     {
-        long num_running = 0;
-        long num_finished = 0;
-        long num_queued = 0;
-        long num_errors = 0;
+        int num_running = 0;
+        int num_finished = 0;
+        int num_queued = 0;
+        int num_errors = 0;
         QMap<QString, ProcessorCount> processor_counts;
         QJsonObject processes = state["processes"].toObject();
         QStringList ids = processes.keys();

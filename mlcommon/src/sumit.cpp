@@ -16,14 +16,14 @@
 #include <QDataStream>
 #include <sys/stat.h>
 
-QString compute_the_file_hash(const QString& path, long num_bytes)
+QString compute_the_file_hash(const QString& path, int num_bytes)
 {
     // Do not printf here!
     QCryptographicHash hash(QCryptographicHash::Sha1);
     QFile FF(path);
     if (!FF.open(QFile::ReadOnly))
         return "";
-    long num_bytes_processed = 0;
+    int num_bytes_processed = 0;
     while ((!FF.atEnd()) && ((num_bytes == 0) || (num_bytes_processed < num_bytes))) {
         QByteArray tmp = FF.read(10000);
         if (num_bytes != 0) {
@@ -82,7 +82,7 @@ void create_hash_file(const QString& path, const QString& hash_path)
     write_text_file(hash_path, the_hash);
 }
 
-QString sumit(const QString& path, long num_bytes, const QString& temporary_path)
+QString sumit(const QString& path, int num_bytes, const QString& temporary_path)
 {
     if (num_bytes != 0) {
         return compute_the_file_hash(path, num_bytes);

@@ -132,19 +132,19 @@ void PrvManagerDialog::slot_restart_thread()
     d->restart_thread();
 }
 
-QString format_file_size(long file_size)
+QString format_file_size(int file_size)
 {
     if (file_size < 1e3) {
         return QString("%1 bytes").arg(file_size);
     }
     else if (file_size < 1e6) {
-        return QString("%1K").arg(((long)(file_size * 1.0 / 1e3 * 10)) / 10.0);
+        return QString("%1K").arg(((int)(file_size * 1.0 / 1e3 * 10)) / 10.0);
     }
     else if (file_size < 1e9) {
-        return QString("%1M").arg(((long)(file_size * 1.0 / 1e6 * 10)) / 10.0);
+        return QString("%1M").arg(((int)(file_size * 1.0 / 1e6 * 10)) / 10.0);
     }
     else {
-        return QString("%1G").arg(((long)(file_size * 1.0 / 1e9 * 10)) / 10.0);
+        return QString("%1G").arg(((int)(file_size * 1.0 / 1e9 * 10)) / 10.0);
     }
 }
 
@@ -164,7 +164,7 @@ void PrvManagerDialogPrivate::refresh_tree()
     for (int i = 0; i < names.count(); i++) {
         QString name = names[i];
         QJsonObject prv_object = m_prv_objects[name];
-        long file_size = prv_object["original_size"].toVariant().toLongLong();
+        int file_size = prv_object["original_size"].toVariant().toLongLong();
         QTreeWidgetItem* it = new QTreeWidgetItem();
         it->setText(0, name);
         it->setData(0, Qt::UserRole, name);

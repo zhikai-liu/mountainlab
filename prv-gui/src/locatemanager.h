@@ -11,7 +11,7 @@ public:
     friend class LocateManagerPrivate;
     LocateManager();
     virtual ~LocateManager();
-    void startSearchForPrv(QString checksum, long size, QString original_path, QString server);
+    void startSearchForPrv(QString checksum, int size, QString original_path, QString server);
     fuzzybool getSearchState(const PrvRecord& prv, QString server);
     QString getResultPathOrUrl(const PrvRecord& prv, QString server);
 signals:

@@ -302,7 +302,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     return id;
 }
 
-bool ProcessManager::waitForFinished(const QString& process_id, long parent_pid)
+bool ProcessManager::waitForFinished(const QString& process_id, int parent_pid)
 {
     if (!d->m_processes.contains(process_id))
         return false;

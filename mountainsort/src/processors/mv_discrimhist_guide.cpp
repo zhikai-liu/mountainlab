@@ -53,7 +53,7 @@ bool mv_discrimhist_guide(QString timeseries_path, QString firings_path, QString
 
     datas = datas.mid(0, opts.num_histograms);
 
-    long total_count = 0;
+    int total_count = 0;
     for (int i = 0; i < datas.count(); i++) {
         total_count += datas[i].data1.count();
         total_count += datas[i].data2.count();
@@ -61,18 +61,18 @@ bool mv_discrimhist_guide(QString timeseries_path, QString firings_path, QString
 
     Mda output(4, total_count);
     //first two rows are k1/k2, third row is k1 or k2, fourth row is the value
-    long jj = 0;
+    int jj = 0;
     for (int i = 0; i < datas.count(); i++) {
         int k1 = datas[i].k1;
         int k2 = datas[i].k2;
-        for (long k = 0; k < datas[i].data1.count(); k++) {
+        for (int k = 0; k < datas[i].data1.count(); k++) {
             output.setValue(k1, 0, jj);
             output.setValue(k2, 1, jj);
             output.setValue(k1, 2, jj);
             output.setValue(datas[i].data1[k], 3, jj);
             jj++;
         }
-        for (long k = 0; k < datas[i].data2.count(); k++) {
+        for (int k = 0; k < datas[i].data2.count(); k++) {
             output.setValue(k1, 0, jj);
             output.setValue(k2, 1, jj);
             output.setValue(k2, 2, jj);
@@ -90,7 +90,7 @@ bool mv_discrimhist_guide(QString timeseries_path, QString firings_path, QString
 void get_discrimhist_guide_data(QVector<double>& ret1, QVector<double>& ret2, const DiskReadMda& timeseries, const DiskReadMda& firings, int k1, int k2, int clip_size)
 {
     QVector<double> times1, times2;
-    for (long i = 0; i < firings.N2(); i++) {
+    for (int i = 0; i < firings.N2(); i++) {
         int label = (int)firings.value(2, i);
         if (label == k1) {
             times1 << firings.value(1, i);
@@ -106,8 +106,8 @@ void get_discrimhist_guide_data(QVector<double>& ret1, QVector<double>& ret2, co
     Mda centroid2 = compute_mean_clip(clips2);
 
     Mda diff(centroid1.N1(), centroid1.N2());
-    for (long i2 = 0; i2 < centroid1.N2(); i2++) {
-        for (long i1 = 0; i1 < centroid1.N1(); i1++) {
+    for (int i2 = 0; i2 < centroid1.N2(); i2++) {
+        for (int i1 = 0; i1 < centroid1.N1(); i1++) {
             diff.setValue(centroid2.value(i1, i2) - centroid1.value(i1, i2), i1, i2);
         }
     }
@@ -115,27 +115,27 @@ void get_discrimhist_guide_data(QVector<double>& ret1, QVector<double>& ret2, co
     double* ptr_clips1 = clips1.dataPtr();
     double* ptr_clips2 = clips2.dataPtr();
 
-    long N = centroid1.N1() * centroid1.N2();
+    int N = centroid1.N1() * centroid1.N2();
     double* ptr_diff = diff.dataPtr();
     double norm0 = MLCompute::norm(N, ptr_diff);
     if (!norm0)
         norm0 = 1;
 
     ret1.clear();
-    for (long i = 0; i < clips1.N3(); i++) {
+    for (int i = 0; i < clips1.N3(); i++) {
         ret1 << MLCompute::dotProduct(N, ptr_diff, &ptr_clips1[N * i]) / (norm0 * norm0);
     }
     ret2.clear();
-    for (long i = 0; i < clips2.N3(); i++) {
+    for (int i = 0; i < clips2.N3(); i++) {
         ret2 << MLCompute::dotProduct(N, ptr_diff, &ptr_clips2[N * i]) / (norm0 * norm0);
     }
 }
 */
 
-double compute_distance(long N, double* ptr1, double* ptr2)
+double compute_distance(int N, double* ptr1, double* ptr2)
 {
     double sumsqr = 0;
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         double tmp = ptr1[i] - ptr2[i];
         sumsqr += tmp * tmp;
     }
@@ -151,7 +151,7 @@ Mda compute_distance_matrix(DiskReadMda timeseries, DiskReadMda firings, mv_disc
 {
     QVector<double> times;
     QVector<int> labels;
-    for (long i = 0; i < firings.N2(); i++) {
+    for (int i = 0; i < firings.N2(); i++) {
         times << firings.value(1, i);
         labels << (int)firings.value(2, i);
     }
@@ -227,10 +227,10 @@ double compute_separation_score(const QVector<double>& data1, const QVector<doub
     double mean1 = MLCompute::mean(data1);
     double mean2 = MLCompute::mean(data2);
     QVector<double> mean_subtracted_vals;
-    for (long i = 0; i < data1.count(); i++) {
+    for (int i = 0; i < data1.count(); i++) {
         mean_subtracted_vals << data1[i] - mean1;
     }
-    for (long i = 0; i < data2.count(); i++) {
+    for (int i = 0; i < data2.count(); i++) {
         mean_subtracted_vals << data2[i] - mean2;
     }
 

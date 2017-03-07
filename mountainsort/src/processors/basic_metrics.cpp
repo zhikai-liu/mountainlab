@@ -28,7 +28,7 @@ bool basic_metrics(QString timeseries, QString firings, QString cluster_metrics_
 
     //define opts.cluster_numbers in case it is empty
     QVector<int> labels0;
-    for (long i = 0; i < F.N2(); i++) {
+    for (int i = 0; i < F.N2(); i++) {
         labels0 << (int)F.value(2, i);
     }
     int K = MLCompute::max(labels0);
@@ -43,10 +43,10 @@ bool basic_metrics(QString timeseries, QString firings, QString cluster_metrics_
     }
 
     printf("Extracting times and labels...\n");
-    //QVector<long> inds;
+    //QVector<int> inds;
     QVector<double> times;
     QVector<int> labels;
-    for (long i = 0; i < F.N2(); i++) {
+    for (int i = 0; i < F.N2(); i++) {
         int label0 = (int)F.value(2, i);
         if (cluster_numbers_set.contains(label0)) {
             //inds << i;
@@ -59,7 +59,7 @@ bool basic_metrics(QString timeseries, QString firings, QString cluster_metrics_
     for (int i = 0; i < opts.cluster_numbers.count(); i++) {
         int k = opts.cluster_numbers[i];
         QVector<double> times_k;
-        for (long i = 0; i < times.count(); i++) {
+        for (int i = 0; i < times.count(); i++) {
             if (labels[i] == k) {
                 times_k << times[i];
             }

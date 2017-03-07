@@ -207,7 +207,7 @@ QVector<int> ClusterMerge::mapLabels(const QVector<int>& labels) const
 {
     QMap<int, int> map = this->labelMap(MLCompute::max<int>(labels));
     QVector<int> ret = labels;
-    for (long i = 0; i < ret.count(); i++) {
+    for (int i = 0; i < ret.count(); i++) {
         ret[i] = map[ret[i]];
     }
     return ret;

@@ -79,6 +79,8 @@ void ClusterPairMetricsView::keyPressEvent(QKeyEvent* evt)
 
 void ClusterPairMetricsView::prepareMimeData(QMimeData& mimeData, const QPoint& pos)
 {
+    (void)mimeData;
+    (void)pos;
     /*
     QByteArray ba;
     QDataStream ds(&ba, QIODevice::WriteOnly);
@@ -93,8 +95,8 @@ void ClusterPairMetricsView::slot_current_item_changed()
 {
     QTreeWidgetItem* it = d->m_tree->currentItem();
     if (it) {
-        int k1 = it->data(0, Qt::UserRole).toInt();
-        int k2 = it->data(0, Qt::UserRole + 1).toInt();
+        //int k1 = it->data(0, Qt::UserRole).toInt();
+        //int k2 = it->data(0, Qt::UserRole + 1).toInt();
         //mvContext()->setCurrentClusterPair(k1,k2);
     }
     else {

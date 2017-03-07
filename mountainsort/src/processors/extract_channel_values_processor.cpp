@@ -48,8 +48,8 @@ bool extract_channel_values_Processor::run(const QMap<QString, QVariant>& params
     DiskReadMda X(timeseries_path);
     DiskReadMda F(firings_path);
     Mda values(num_channels, F.N2());
-    for (long i = 0; i < F.N2(); i++) {
-        long t0 = (long)F.value(1, i);
+    for (int i = 0; i < F.N2(); i++) {
+        int t0 = (int)F.value(1, i);
         for (int j = 0; j < channels.count(); j++) {
             double val = X.value(channels[j] - 1, t0);
             values.setValue(val, j, i);

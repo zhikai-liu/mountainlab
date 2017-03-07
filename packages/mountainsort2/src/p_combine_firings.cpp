@@ -11,9 +11,9 @@ bool p_combine_firings(QStringList firings_list, QString firings_out, bool incre
 
     int max_label = 0;
     int label_offset = 0;
-    for (long i = 0; i < firings_list.count(); i++) {
+    for (int i = 0; i < firings_list.count(); i++) {
         Mda F(firings_list[i]);
-        for (long j = 0; j < F.N2(); j++) {
+        for (int j = 0; j < F.N2(); j++) {
             int label0 = F.value(2, j);
             if (label0 > 0) {
                 all_central_channels << F.value(0, j);
@@ -27,11 +27,11 @@ bool p_combine_firings(QStringList firings_list, QString firings_out, bool incre
             label_offset = max_label;
     }
 
-    long L = all_times.count();
-    QList<long> sort_inds = get_sort_indices(all_times);
+    int L = all_times.count();
+    QList<int> sort_inds = get_sort_indices(all_times);
 
     Mda ret(3, L);
-    for (long j = 0; j < L; j++) {
+    for (int j = 0; j < L; j++) {
         ret.setValue(all_central_channels[sort_inds[j]], 0, j);
         ret.setValue(all_times[sort_inds[j]], 1, j);
         ret.setValue(all_labels[sort_inds[j]], 2, j);

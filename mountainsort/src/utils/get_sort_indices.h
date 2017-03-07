@@ -7,9 +7,10 @@
 #define GET_SORT_INDICES_H
 
 #include <QList>
+#include "mlcommon.h"
 
-QList<long> get_sort_indices(const QList<long>& X);
-QVector<long> get_sort_indices(const QVector<long>& X);
-QList<long> get_sort_indices(const QVector<double>& X);
+QList<int> get_sort_indices(const QList<int>& X);
+QVector<int> get_sort_indices(const QVector<int>& X);
+QList<int> get_sort_indices(const QVector<double>& X);
 
 #endif // GET_SORT_INDICES_H

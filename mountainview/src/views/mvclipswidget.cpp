@@ -200,7 +200,7 @@ void MVClipsWidgetComputer::compute()
     DiskReadMda firings_out(firings_out_path);
     task.log(QString("firings_out: %1 x %2").arg(firings_out.N1()).arg(firings_out.N2()));
     times.clear();
-    for (long j = 0; j < firings_out.N2(); j++) {
+    for (int j = 0; j < firings_out.N2(); j++) {
         times << firings_out.value(1, j);
         labels << firings_out.value(2, j);
     }

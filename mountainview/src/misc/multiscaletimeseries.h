@@ -21,13 +21,13 @@ public:
     void setMLProxyUrl(const QString& url);
     void initialize();
 
-    long N1();
-    long N2();
-    bool getData(Mda& min, Mda& max, long t1, long t2, long ds_factor); //returns values at timepoints i1*ds_factor:ds_factor:i2*ds_factor
+    int N1();
+    int N2();
+    bool getData(Mda& min, Mda& max, int t1, int t2, int ds_factor); //returns values at timepoints i1*ds_factor:ds_factor:i2*ds_factor
     double minimum(); //return the global minimum value
     double maximum(); //return the global maximum value
 
-    static long smallest_power_of_3_larger_than(long N);
+    static int smallest_power_of_3_larger_than(int N);
 
 private:
     MultiScaleTimeSeriesPrivate* d;

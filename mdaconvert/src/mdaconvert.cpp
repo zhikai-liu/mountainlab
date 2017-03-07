@@ -35,7 +35,7 @@ struct working_data {
     void* buf = 0;
 };
 
-bool copy_data(working_data& D, long N);
+bool copy_data(working_data& D, int N);
 int get_num_bytes_per_entry(int dtype);
 bool convert_ncs(const mdaconvert_opts& opts);
 bool convert_nrd(const mdaconvert_opts& opts);
@@ -92,14 +92,14 @@ bool mdaconvert(const mdaconvert_opts& opts_in)
         }
         opts.dims.clear();
         opts.dims << opts.num_channels;
-        long input_size = QFileInfo(opts.input_path).size();
+        int input_size = QFileInfo(opts.input_path).size();
         int dtype_size = get_num_bytes_per_entry(get_mda_dtype(opts.input_dtype));
-        long num_timepoints = input_size / (dtype_size * opts.num_channels);
+        int num_timepoints = input_size / (dtype_size * opts.num_channels);
         if (input_size != num_timepoints * dtype_size * opts.num_channels) {
             qWarning() << QString("The size of the file (%1) is not compatible with this datatype (%2) and number of channels (%3).").arg(input_size).arg(opts.input_dtype).arg(opts.num_channels);
             return false;
         }
-        printf("Auto-setting number of timepoints to %ld\n", num_timepoints);
+        printf("Auto-setting number of timepoints to %d\n", num_timepoints);
         opts.dims << num_timepoints;
     }
     else {
@@ -193,12 +193,12 @@ bool mdaconvert(const mdaconvert_opts& opts_in)
             return false;
             /*
             //auto-determine final dimension
-            long size0 = QFileInfo(opts.input_path).size();
-            long tmp = size0 / D.HH_in.num_bytes_per_entry;
+            int size0 = QFileInfo(opts.input_path).size();
+            int tmp = size0 / D.HH_in.num_bytes_per_entry;
             for (int j = 0; j < opts.dims.count() - 1; j++) {
                 tmp /= opts.dims[j];
             }
-            printf("Auto-setting final dimension to %ld\n", tmp);
+            printf("Auto-setting final dimension to %d\n", tmp);
             opts.dims[opts.dims.count() - 1] = tmp;
             */
         }
@@ -228,7 +228,7 @@ bool mdaconvert(const mdaconvert_opts& opts_in)
     }
     D.HH_out.num_bytes_per_entry = get_num_bytes_per_entry(D.HH_out.data_type);
     D.HH_out.num_dims = D.HH_in.num_dims;
-    long dim_prod = 1;
+    int dim_prod = 1;
     for (int i = 0; i < D.HH_out.num_dims; i++) {
         D.HH_out.dims[i] = D.HH_in.dims[i];
         dim_prod *= D.HH_in.dims[i];
@@ -249,8 +249,8 @@ bool mdaconvert(const mdaconvert_opts& opts_in)
 
     //check input file size
     if (opts.check_input_file_size) {
-        long expected_input_file_size = D.HH_in.num_bytes_per_entry * dim_prod + D.HH_in.header_size;
-        long actual_input_file_size = QFileInfo(opts.input_path).size();
+        int expected_input_file_size = D.HH_in.num_bytes_per_entry * dim_prod + D.HH_in.header_size;
+        int actual_input_file_size = QFileInfo(opts.input_path).size();
         if (actual_input_file_size != expected_input_file_size) {
             qWarning() << QString("Unexpected input file size: Expected/Actual=%1/%2 bytes").arg(expected_input_file_size).arg(actual_input_file_size);
             qWarning() << "Try using --allow-subset";
@@ -259,16 +259,16 @@ bool mdaconvert(const mdaconvert_opts& opts_in)
     }
 
     bool ret = true;
-    long chunk_size = 1e7;
+    int chunk_size = 1e7;
     QTime timer;
     timer.start();
-    for (long ii = 0; ii < dim_prod; ii += chunk_size) {
+    for (int ii = 0; ii < dim_prod; ii += chunk_size) {
         if (timer.elapsed() > 1000) {
             int pct = (int)((ii * 1.0 / dim_prod) * 100);
             printf("%d%%\n", pct);
             timer.restart();
         }
-        long NN = qMin(chunk_size, dim_prod - ii);
+        int NN = qMin(chunk_size, dim_prod - ii);
         if (!copy_data(D, NN)) {
             ret = false;
             break;
@@ -283,7 +283,7 @@ bool mdaconvert(const mdaconvert_opts& opts_in)
     return false;
 }
 
-bool copy_data(working_data& D, long N)
+bool copy_data(working_data& D, int N)
 {
     if (!N)
         return true;
@@ -291,7 +291,7 @@ bool copy_data(working_data& D, long N)
         free(D.buf);
         D.buf = 0;
     }
-    long buf_size = N * D.HH_out.num_bytes_per_entry;
+    int buf_size = N * D.HH_out.num_bytes_per_entry;
     D.buf = malloc(buf_size);
     if (!D.buf) {
         qWarning() << QString("Error in malloc of size %1 ").arg(buf_size);
@@ -299,7 +299,7 @@ bool copy_data(working_data& D, long N)
     }
 
     void* buf = D.buf;
-    long num_read = 0;
+    int num_read = 0;
     if (D.HH_out.data_type == MDAIO_TYPE_BYTE) {
         num_read = mda_read_byte((unsigned char*)buf, &D.HH_in, N, D.inf);
     }
@@ -331,7 +331,7 @@ bool copy_data(working_data& D, long N)
         return false;
     }
 
-    long num_written = 0;
+    int num_written = 0;
     if (D.HH_out.data_type == MDAIO_TYPE_BYTE) {
         num_written = mda_write_byte((unsigned char*)buf, &D.HH_out, N, D.outf);
     }
@@ -408,10 +408,10 @@ bool convert_ncs(const mdaconvert_opts& opts)
         fclose(inf);
         return false;
     }
-    long size_of_input = QFileInfo(opts.input_path).size();
-    long header_size = 16 * 1024;
-    long record_size = 20 + 512 * 2;
-    long num_records = (size_of_input - header_size) / record_size;
+    int size_of_input = QFileInfo(opts.input_path).size();
+    int header_size = 16 * 1024;
+    int record_size = 20 + 512 * 2;
+    int num_records = (size_of_input - header_size) / record_size;
     fseek(inf, header_size, SEEK_SET); //skip the header
     MDAIO_HEADER H_out;
     H_out.data_type = MDAIO_TYPE_INT16;
@@ -422,9 +422,9 @@ bool convert_ncs(const mdaconvert_opts& opts)
     mda_write_header(&H_out, outf);
     char buffer[record_size];
     qint16* record_data = (qint16*)(&buffer[record_size - 512 * 2]);
-    for (long i = 0; i < num_records; i++) {
+    for (int i = 0; i < num_records; i++) {
         {
-            long ret = fread(buffer, sizeof(char), record_size, inf);
+            int ret = fread(buffer, sizeof(char), record_size, inf);
             if (ret != record_size) {
                 qWarning() << QString("Problem reading record %1 of %2 from .ncs file: ").arg(i).arg(num_records) + opts.input_path;
                 fclose(inf);
@@ -433,7 +433,7 @@ bool convert_ncs(const mdaconvert_opts& opts)
             }
         }
         {
-            long ret = mda_write_int16(record_data, &H_out, 512, outf);
+            int ret = mda_write_int16(record_data, &H_out, 512, outf);
             if (ret != 512) {
                 qWarning() << QString("Problem writing record %1 of %2 from .ncs file: ").arg(i).arg(num_records) + opts.input_path;
                 fclose(inf);
@@ -442,7 +442,7 @@ bool convert_ncs(const mdaconvert_opts& opts)
             }
         }
     }
-    long test_num_bytes = fread(buffer, sizeof(char), record_size, inf);
+    int test_num_bytes = fread(buffer, sizeof(char), record_size, inf);
     if (test_num_bytes != 0) {
         qWarning() << "Warning: extra bytes found in input file: " + opts.input_path;
     }
@@ -499,10 +499,10 @@ bool convert_nrd(const mdaconvert_opts& opts)
         fclose(inf);
         return false;
     }
-    long size_of_input = QFileInfo(opts.input_path).size();
-    long header_size = 16 * 1024;
-    long record_size = 32 + 40 + 4 * opts.num_channels; //TODO: this should be auto-detected
-    long num_records = (size_of_input - header_size) / record_size;
+    int size_of_input = QFileInfo(opts.input_path).size();
+    int header_size = 16 * 1024;
+    int record_size = 32 + 40 + 4 * opts.num_channels; //TODO: this should be auto-detected
+    int num_records = (size_of_input - header_size) / record_size;
     fseek(inf, header_size, SEEK_SET); //skip the header
     MDAIO_HEADER H_out;
     H_out.data_type = MDAIO_TYPE_INT32;
@@ -513,9 +513,9 @@ bool convert_nrd(const mdaconvert_opts& opts)
     mda_write_header(&H_out, outf);
     char buffer[record_size];
     qint32* record_data = (qint32*)(&buffer[record_size - opts.num_channels * 4 - 4]);
-    for (long i = 0; i < num_records; i++) {
+    for (int i = 0; i < num_records; i++) {
         {
-            long ret = fread(buffer, sizeof(char), record_size, inf);
+            int ret = fread(buffer, sizeof(char), record_size, inf);
             if (ret != record_size) {
                 qWarning() << QString("Problem reading record %1 of %2 from .ncs file: ").arg(i).arg(num_records) + opts.input_path;
                 fclose(inf);
@@ -524,7 +524,7 @@ bool convert_nrd(const mdaconvert_opts& opts)
             }
         }
         {
-            long ret = mda_write_int32(record_data, &H_out, 512, outf);
+            int ret = mda_write_int32(record_data, &H_out, 512, outf);
             if (ret != 512) {
                 qWarning() << QString("Problem writing record %1 of %2 from .ncs file: ").arg(i).arg(num_records) + opts.input_path;
                 fclose(inf);
@@ -533,7 +533,7 @@ bool convert_nrd(const mdaconvert_opts& opts)
             }
         }
     }
-    long test_num_bytes = fread(buffer, sizeof(char), record_size, inf);
+    int test_num_bytes = fread(buffer, sizeof(char), record_size, inf);
     if (test_num_bytes != 0) {
         qWarning() << "Warning: extra bytes found in input file: " + opts.input_path;
     }

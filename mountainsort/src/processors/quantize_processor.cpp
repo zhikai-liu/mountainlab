@@ -77,12 +77,12 @@ bool quantize(QString input_path, QString output_path, QString output_format)
     bool is_unsigned = (output_format.startsWith("u"));
     double* ptr1 = X.dataPtr();
     double* ptr2 = X_scaled.dataPtr();
-    long N = X.totalSize();
-    for (long i = 0; i < N; i++) {
+    int N = X.totalSize();
+    for (int i = 0; i < N; i++) {
         ptr2[i] = ptr1[i] * scale_factor;
     }
     if (is_unsigned) {
-        for (long i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++) {
             if (ptr2[i] < 0)
                 ptr2[i] = 0;
         }

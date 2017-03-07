@@ -13,8 +13,8 @@ Mda compute_templates_0(const DiskReadMda& X, Mda& firings, int clip_size)
 {
     QVector<double> times;
     QVector<int> labels;
-    long L = firings.N2();
-    for (long i = 0; i < L; i++) {
+    int L = firings.N2();
+    for (int i = 0; i < L; i++) {
         times << firings.value(1, i);
         labels << (int)firings.value(2, i);
     }
@@ -25,8 +25,8 @@ Mda32 compute_templates_0(const DiskReadMda32& X, Mda& firings, int clip_size)
 {
     QVector<double> times;
     QVector<int> labels;
-    long L = firings.N2();
-    for (long i = 0; i < L; i++) {
+    int L = firings.N2();
+    for (int i = 0; i < L; i++) {
         times << firings.value(1, i);
         labels << (int)firings.value(2, i);
     }
@@ -37,19 +37,19 @@ Mda compute_templates_0(const DiskReadMda& X, const QVector<double>& times, cons
 {
     int M = X.N1();
     int T = clip_size;
-    long L = times.count();
+    int L = times.count();
 
     int K = MLCompute::max<int>(labels);
 
     int Tmid = (int)((T + 1) / 2) - 1;
 
     Mda templates(M, T, K);
-    QList<long> counts;
+    QList<int> counts;
     for (int k = 0; k < K; k++)
         counts << k;
-    for (long i = 0; i < L; i++) {
+    for (int i = 0; i < L; i++) {
         int k = labels[i];
-        long t0 = (long)(times[i] + 0.5);
+        int t0 = (int)(times[i] + 0.5);
         if (k >= 1) {
             Mda X0;
             X.readChunk(X0, 0, t0 - Tmid, M, T);
@@ -78,19 +78,19 @@ Mda32 compute_templates_0(const DiskReadMda32& X, const QVector<double>& times, 
 {
     int M = X.N1();
     int T = clip_size;
-    long L = times.count();
+    int L = times.count();
 
     int K = MLCompute::max<int>(labels);
 
     int Tmid = (int)((T + 1) / 2) - 1;
 
     Mda32 templates(M, T, K);
-    QList<long> counts;
+    QList<int> counts;
     for (int k = 0; k < K; k++)
         counts << k;
-    for (long i = 0; i < L; i++) {
+    for (int i = 0; i < L; i++) {
         int k = labels[i];
-        long t0 = (long)(times[i] + 0.5);
+        int t0 = (int)(times[i] + 0.5);
         if (k >= 1) {
             Mda32 X0;
             X.readChunk(X0, 0, t0 - Tmid, M, T);
@@ -119,7 +119,7 @@ void compute_templates_stdevs(Mda& templates, Mda& stdevs, DiskReadMda& X, const
 {
     int M = X.N1();
     int T = clip_size;
-    long L = times.count();
+    int L = times.count();
 
     int K = MLCompute::max<int>(labels);
 
@@ -127,12 +127,12 @@ void compute_templates_stdevs(Mda& templates, Mda& stdevs, DiskReadMda& X, const
 
     Mda sums(M, T, K);
     Mda sumsqrs(M, T, K);
-    QList<long> counts;
+    QList<int> counts;
     for (int k = 0; k < K; k++)
         counts << k;
-    for (long i = 0; i < L; i++) {
+    for (int i = 0; i < L; i++) {
         int k = labels[i];
-        long t0 = (long)(times[i] + 0.5);
+        int t0 = (int)(times[i] + 0.5);
         if (k >= 1) {
             Mda X0;
             X.readChunk(X0, 0, t0 - Tmid, M, T);

@@ -198,14 +198,14 @@ int main(int argc, char* argv[])
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
         QStringList channels_str = CLP.named_parameters["channels"].toString().split(",");
-        QList<int> channels = MLUtil::stringListToIntList(channels_str);
+        QList<int> channels = MLUtil::stringListToBigIntList(channels_str);
         ret = p_extract_neighborhood_timeseries(timeseries, timeseries_out, channels);
     }
     else if (arg1 == "mountainsort.extract_segment_timeseries") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries"]);
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
-        long t1 = CLP.named_parameters["t1"].toDouble(); //to double to handle scientific notation
-        long t2 = CLP.named_parameters["t2"].toDouble(); //to double to handle scientific notation
+        int t1 = CLP.named_parameters["t1"].toDouble(); //to double to handle scientific notation
+        int t2 = CLP.named_parameters["t2"].toDouble(); //to double to handle scientific notation
         if (timeseries_list.count() <= 1) {
             ret = p_extract_segment_timeseries(timeseries_list.value(0), timeseries_out, t1, t2);
         }

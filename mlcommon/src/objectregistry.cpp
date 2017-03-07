@@ -1,5 +1,7 @@
 #include "objectregistry.h"
 
+#include "mlcommon.h"
+
 class ObjectRegistryPrivate : public MLPrivate<ObjectRegistry> {
 public:
     using MLPrivate::MLPrivate;

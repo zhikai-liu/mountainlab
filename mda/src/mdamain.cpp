@@ -28,7 +28,7 @@ void silent_message_output(QtMsgType type, const QMessageLogContext& context, co
     return;
 }
 
-QList<long> parse_int_list(QString str);
+QList<int> parse_int_list(QString str);
 int parse_data_type(QString str);
 
 int main(int argc, char* argv[])
@@ -64,8 +64,8 @@ int main(int argc, char* argv[])
             printf("Input file does not exist.\n");
             return -1;
         }
-        QList<long> index = parse_int_list(params.named_parameters["index"].toString());
-        QList<long> size = parse_int_list(params.named_parameters["size"].toString());
+        QList<int> index = parse_int_list(params.named_parameters["index"].toString());
+        QList<int> size = parse_int_list(params.named_parameters["size"].toString());
         if ((index.count() < 2) || (index.count() > 3)) {
             print_usage();
             return -1;
@@ -113,7 +113,7 @@ int main(int argc, char* argv[])
         return 0;
     }
     else if (arg1 == "create") {
-        QList<long> size = parse_int_list(params.named_parameters["size"].toString());
+        QList<int> size = parse_int_list(params.named_parameters["size"].toString());
         if (!arg2.endsWith(".mda")) {
             print_usage();
             return -1;
@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
             printf("Target file does not exist.\n");
             return -1;
         }
-        QList<long> index = parse_int_list(params.named_parameters["index"].toString());
+        QList<int> index = parse_int_list(params.named_parameters["index"].toString());
 
         DiskWriteMda Y;
         Y.open(arg2);
@@ -401,8 +401,8 @@ bool extract_time_chunk(QString input_fname, QString output_fname, const QMap<QS
     DiskReadMda X(input_fname);
     Mda Y;
 
-    long t1 = params["t1"].toLongLong();
-    long t2 = params["t2"].toLongLong();
+    int t1 = params["t1"].toLongLong();
+    int t2 = params["t2"].toLongLong();
 
     if (!X.readChunk(Y, 0, t1, X.N1(), t2 - t1 + 1)) {
         qWarning() << "Problem reading chunk.";
@@ -429,9 +429,9 @@ bool extract_time_chunk(QString input_fname, QString output_fname, const QMap<QS
     }
 }
 
-QList<long> parse_int_list(QString str)
+QList<int> parse_int_list(QString str)
 {
-    QList<long> ret;
+    QList<int> ret;
     if (str.isEmpty())
         return ret;
     str = str.split("x").join(",");

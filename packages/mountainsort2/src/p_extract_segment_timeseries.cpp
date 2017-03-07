@@ -11,14 +11,14 @@
 #include <mda32.h>
 
 namespace P_extract_segment_timeseries {
-QVector<long> get_durations(QStringList timeseries_list);
+QVector<int> get_durations(QStringList timeseries_list);
 }
 
-bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, long t1, long t2)
+bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, int t1, int t2)
 {
     DiskReadMda32 X(timeseries);
     int M = X.N1();
-    //long N=X.N2();
+    //int N=X.N2();
     int N2 = t2 - t1 + 1;
 
     //do it this way so we can specify the datatype
@@ -26,9 +26,9 @@ bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, lo
     Y.open(X.mdaioHeader().data_type, timeseries_out, M, N2);
 
     //conserve memory as of 3/1/17 -- jfm
-    long chunk_size = 10000; //conserve memory!
-    for (long t = 0; t < N2; t += chunk_size) {
-        long sz = chunk_size;
+    int chunk_size = 10000; //conserve memory!
+    for (int t = 0; t < N2; t += chunk_size) {
+        int sz = chunk_size;
         if (t + sz > N2)
             sz = N2 - t;
         Mda32 chunk;
@@ -40,13 +40,13 @@ bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, lo
     return true;
 }
 
-bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, QString timeseries_out, long t1, long t2)
+bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, QString timeseries_out, int t1, int t2)
 {
     QString ts0 = timeseries_list.value(0);
     DiskReadMda32 X(ts0);
     int M = X.N1();
-    QVector<long> durations = P_extract_segment_timeseries::get_durations(timeseries_list);
-    QVector<long> start_timepoints, end_timepoints;
+    QVector<int> durations = P_extract_segment_timeseries::get_durations(timeseries_list);
+    QVector<int> start_timepoints, end_timepoints;
     start_timepoints << 0;
     end_timepoints << durations.value(0) - 1;
     for (int i = 1; i < durations.count(); i++) {
@@ -54,11 +54,11 @@ bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, 
         end_timepoints << start_timepoints[i] + durations[i] - 1;
     }
 
-    long ii1 = 0;
+    int ii1 = 0;
     while ((ii1 < timeseries_list.count()) && (t1 > end_timepoints[ii1])) {
         ii1++;
     }
-    long ii2 = ii1;
+    int ii2 = ii1;
     while ((ii2 + 1 < timeseries_list.count()) && (start_timepoints[ii2 + 1] <= t2)) {
         ii2++;
     }
@@ -70,9 +70,9 @@ bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, 
 
         //ttA,ttB, the range to read from Y
         //ssA, the position to write it in "out"
-        long ttA, ttB, ssA;
+        int ttA, ttB, ssA;
         if (ii == ii1) {
-            long offset = t1 - start_timepoints[ii];
+            int offset = t1 - start_timepoints[ii];
             ssA = 0;
             if (ii1 < ii2) {
                 ttA = offset;
@@ -108,9 +108,9 @@ bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, 
 }
 
 namespace P_extract_segment_timeseries {
-QVector<long> get_durations(QStringList timeseries_list)
+QVector<int> get_durations(QStringList timeseries_list)
 {
-    QVector<long> ret;
+    QVector<int> ret;
     foreach (QString ts, timeseries_list) {
         DiskReadMda32 X(ts);
         ret << X.N2();

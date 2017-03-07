@@ -13,17 +13,17 @@
 #include "msmisc.h"
 
 //Mda get_whitening_matrix(Mda& COV);
-void quantize(long N, double* X, double unit);
+void quantize(int N, double* X, double unit);
 
 bool whiten(const QString& input, const QString& output)
 {
     DiskReadMda X(input);
-    long M = X.N1();
-    long N = X.N2();
+    int M = X.N1();
+    int N = X.N2();
 
     Mda XXt(M, M);
     double* XXtptr = XXt.dataPtr();
-    long chunk_size = PROCESSING_CHUNK_SIZE;
+    int chunk_size = PROCESSING_CHUNK_SIZE;
     if (N < PROCESSING_CHUNK_SIZE) {
         chunk_size = N;
     }
@@ -31,9 +31,9 @@ bool whiten(const QString& input, const QString& output)
     {
         QTime timer;
         timer.start();
-        long num_timepoints_handled = 0;
+        int num_timepoints_handled = 0;
 #pragma omp parallel for
-        for (long timepoint = 0; timepoint < N; timepoint += chunk_size) {
+        for (int timepoint = 0; timepoint < N; timepoint += chunk_size) {
             Mda chunk;
 #pragma omp critical(lock1)
             {
@@ -42,9 +42,9 @@ bool whiten(const QString& input, const QString& output)
             double* chunkptr = chunk.dataPtr();
             Mda XXt0(M, M);
             double* XXt0ptr = XXt0.dataPtr();
-            for (long i = 0; i < chunk.N2(); i++) {
-                long aa = M * i;
-                long bb = 0;
+            for (int i = 0; i < chunk.N2(); i++) {
+                int aa = M * i;
+                int bb = 0;
                 for (int m1 = 0; m1 < M; m1++) {
                     for (int m2 = 0; m2 < M; m2++) {
                         XXt0ptr[bb] += chunkptr[aa + m1] * chunkptr[aa + m2];
@@ -54,7 +54,7 @@ bool whiten(const QString& input, const QString& output)
             }
 #pragma omp critical(lock2)
             {
-                long bb = 0;
+                int bb = 0;
                 for (int m1 = 0; m1 < M; m1++) {
                     for (int m2 = 0; m2 < M; m2++) {
                         XXtptr[bb] += XXt0ptr[bb];
@@ -63,7 +63,7 @@ bool whiten(const QString& input, const QString& output)
                 }
                 num_timepoints_handled += qMin(chunk_size, N - timepoint);
                 if ((timer.elapsed() > 5000) || (num_timepoints_handled == N)) {
-                    printf("%ld/%ld (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
+                    printf("%d/%d (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
                     timer.restart();
                 }
             }
@@ -85,9 +85,9 @@ bool whiten(const QString& input, const QString& output)
     {
         QTime timer;
         timer.start();
-        long num_timepoints_handled = 0;
+        int num_timepoints_handled = 0;
 #pragma omp parallel for
-        for (long timepoint = 0; timepoint < N; timepoint += chunk_size) {
+        for (int timepoint = 0; timepoint < N; timepoint += chunk_size) {
             Mda chunk_in;
 #pragma omp critical(lock1)
             {
@@ -96,9 +96,9 @@ bool whiten(const QString& input, const QString& output)
             double* chunk_in_ptr = chunk_in.dataPtr();
             Mda chunk_out(M, chunk_in.N2());
             double* chunk_out_ptr = chunk_out.dataPtr();
-            for (long i = 0; i < chunk_in.N2(); i++) { // explicitly do mat-mat mult ... TODO replace w/ BLAS3
-                long aa = M * i;
-                long bb = 0;
+            for (int i = 0; i < chunk_in.N2(); i++) { // explicitly do mat-mat mult ... TODO replace w/ BLAS3
+                int aa = M * i;
+                int bb = 0;
                 for (int m1 = 0; m1 < M; m1++) {
                     for (int m2 = 0; m2 < M; m2++) {
                         chunk_out_ptr[aa + m1] += chunk_in_ptr[aa + m2] * WWptr[bb]; // actually this does dgemm w/ WW^T
@@ -114,7 +114,7 @@ bool whiten(const QString& input, const QString& output)
                 Y.writeChunk(chunk_out, 0, timepoint);
                 num_timepoints_handled += qMin(chunk_size, N - timepoint);
                 if ((timer.elapsed() > 5000) || (num_timepoints_handled == N)) {
-                    printf("%ld/%ld (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
+                    printf("%d/%d (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
                     timer.restart();
                 }
             }
@@ -130,9 +130,9 @@ double quantize(double X, double unit)
     return (floor(X / unit + 0.5)) * unit;
 }
 
-void quantize(long N, double* X, double unit)
+void quantize(int N, double* X, double unit)
 {
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         X[i] = quantize(X[i], unit);
     }
 }

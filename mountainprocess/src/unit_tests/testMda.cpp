@@ -19,7 +19,7 @@ static double max_difference(Mda& X, Mda& Y)
     if (X.N6() != Y.N6())
         return -1;
     double max_diff = 0;
-    for (long i = 0; i < X.totalSize(); i++) {
+    for (int i = 0; i < X.totalSize(); i++) {
         double diff = X.value(i) - Y.value(i);
         if (fabs(diff) > max_diff)
             max_diff = diff;

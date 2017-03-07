@@ -6,14 +6,14 @@
 #include "hungarian.h"
 
 QVector<int> indexlist(const QVector<int>& T2, int t1, int offset, int& ptr2);
-Mda confusion_matrix_2(QString firings1_path, QString firings2_path, int max_matching_offset, QMap<int, int>& map12, QVector<long>& event_correspondence);
+Mda confusion_matrix_2(QString firings1_path, QString firings2_path, int max_matching_offset, QMap<int, int>& map12, QVector<int>& event_correspondence);
 Mda compute_optimal_assignments(const Mda& confusion_matrix);
 
 bool confusion_matrix(QString firings1_path, QString firings2_path, QString output_path, QString optimal_assignments_path, QString event_correspondence_path, int max_matching_offset)
 {
     //first we get the confusion matrix with an empty map12
     QMap<int, int> empty_map;
-    QVector<long> event_correspondence;
+    QVector<int> event_correspondence;
     Mda CM = confusion_matrix_2(firings1_path, firings2_path, max_matching_offset, empty_map, event_correspondence);
 
     //next we estimate the map12 based on CM
@@ -41,7 +41,7 @@ bool confusion_matrix(QString firings1_path, QString firings2_path, QString outp
 
     //finally we create the event correspondence
     Mda EC(event_correspondence.count(), 1);
-    for (long i = 0; i < event_correspondence.count(); i++) {
+    for (int i = 0; i < event_correspondence.count(); i++) {
         EC.setValue(event_correspondence.value(i), i);
     }
 
@@ -53,13 +53,13 @@ bool confusion_matrix(QString firings1_path, QString firings2_path, QString outp
     return true;
 }
 
-void sort_times_labels_inds(QVector<double>& times, QVector<int>& labels, QVector<long>& INDS)
+void sort_times_labels_inds(QVector<double>& times, QVector<int>& labels, QVector<int>& INDS)
 {
     QVector<double> times2;
     QVector<int> labels2;
-    QVector<long> INDS2;
-    QList<long> inds = get_sort_indices(times);
-    for (long i = 0; i < inds.count(); i++) {
+    QVector<int> INDS2;
+    QList<int> inds = get_sort_indices(times);
+    for (int i = 0; i < inds.count(); i++) {
         times2 << times[inds[i]];
         labels2 << labels[inds[i]];
         INDS2 << INDS[inds[i]];
@@ -69,7 +69,7 @@ void sort_times_labels_inds(QVector<double>& times, QVector<int>& labels, QVecto
     INDS = INDS2;
 }
 
-Mda confusion_matrix_2(QString firings1_path, QString firings2_path, int max_matching_offset, QMap<int, int>& map12, QVector<long>& event_correspondence)
+Mda confusion_matrix_2(QString firings1_path, QString firings2_path, int max_matching_offset, QMap<int, int>& map12, QVector<int>& event_correspondence)
 {
     event_correspondence.clear(); //this will be output
 
@@ -80,7 +80,7 @@ Mda confusion_matrix_2(QString firings1_path, QString firings2_path, int max_mat
 
     QVector<double> T1d, T2d;
     QVector<int> L1, L2;
-    QVector<long> IND1, IND2;
+    QVector<int> IND1, IND2;
 
     for (int ii = 0; ii < C1.N2(); ii++) {
         T1d << C1.value(1, ii);
@@ -97,10 +97,10 @@ Mda confusion_matrix_2(QString firings1_path, QString firings2_path, int max_mat
     sort_times_labels_inds(T2d, L2, IND2);
 
     QVector<int> T1, T2;
-    for (long i = 0; i < T1d.count(); i++) {
+    for (int i = 0; i < T1d.count(); i++) {
         T1 << (int)T1d[i];
     }
-    for (long i = 0; i < T2d.count(); i++) {
+    for (int i = 0; i < T2d.count(); i++) {
         T2 << (int)T2d[i];
     }
 
@@ -124,7 +124,7 @@ Mda confusion_matrix_2(QString firings1_path, QString firings2_path, int max_mat
     if (map12.isEmpty())
         pass1 = 2; //if the map is empty, only do pass 2
 
-    QMap<long, long> event_mapping;
+    QMap<int, int> event_mapping;
     for (int pass = pass1; pass <= pass2; pass++) {
         //on the first pass we are giving priority to matches that agree with map12
         for (int offset = 0; offset <= max_matching_offset; offset++) {
@@ -164,7 +164,7 @@ Mda confusion_matrix_2(QString firings1_path, QString firings2_path, int max_mat
             }
             //now remove the events that were marked above
             QVector<int> new_T1, new_L1;
-            QVector<long> new_IND1;
+            QVector<int> new_IND1;
             for (int i = 0; i < T1.count(); i++) {
                 if (!inds1_to_remove.contains(i)) {
                     new_T1 << T1[i];
@@ -177,7 +177,7 @@ Mda confusion_matrix_2(QString firings1_path, QString firings2_path, int max_mat
             IND1 = new_IND1;
 
             QVector<int> new_T2, new_L2;
-            QVector<long> new_IND2;
+            QVector<int> new_IND2;
             for (int i = 0; i < T2.count(); i++) {
                 if (!inds2_to_remove.contains(i)) {
                     new_T2 << T2[i];
@@ -208,7 +208,7 @@ Mda confusion_matrix_2(QString firings1_path, QString firings2_path, int max_mat
     }
 
     event_correspondence.clear();
-    for (long i = 0; i < C1.N2(); i++) {
+    for (int i = 0; i < C1.N2(); i++) {
         if (event_mapping.contains(i)) {
             event_correspondence << event_mapping[i];
         }

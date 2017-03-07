@@ -12,6 +12,6 @@
 QVector<int> isosplit2(Mda32& X, float isocut_threshold = 1.5, int K_init = 30, bool verbose = false);
 void test_isosplit2_routines();
 
-QList<long> find_inds(const QVector<int>& labels, int k);
+QList<int> find_inds(const QVector<int>& labels, int k);
 
 #endif

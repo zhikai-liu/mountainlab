@@ -33,7 +33,7 @@ public:
     QString prvFileName() const;
     void setPrvFileName(QString fname);
 
-    void searchAgain(QString checksum, long size, QString original_path, QString server);
+    void searchAgain(QString checksum, int size, QString original_path, QString server);
 
 protected:
     void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;

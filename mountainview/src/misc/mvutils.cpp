@@ -139,10 +139,10 @@ void draw_axis(QPainter* painter, draw_axis_opts opts)
         possible_tick_intervals << x << x * 2 << x * 5;
     }
 
-    long best_count = 0;
+    int best_count = 0;
     double best_interval = 0;
     for (int i = 0; i < possible_tick_intervals.count(); i++) {
-        long count = (long)range / possible_tick_intervals[i];
+        int count = (int)range / possible_tick_intervals[i];
         if (count >= 4) {
             if ((best_interval == 0) || (count < best_count)) {
                 best_count = count;
@@ -152,9 +152,9 @@ void draw_axis(QPainter* painter, draw_axis_opts opts)
     }
     double tick_length = opts.tick_length;
     if (best_interval) {
-        long ind1 = (long)(opts.minval / best_interval) - 1;
-        long ind2 = (long)(opts.maxval / best_interval) + 1;
-        for (long ind = ind1; ind <= ind2; ind++) {
+        int ind1 = (int)(opts.minval / best_interval) - 1;
+        int ind2 = (int)(opts.maxval / best_interval) + 1;
+        for (int ind = ind1; ind <= ind2; ind++) {
             if ((opts.minval <= ind * best_interval) && (ind * best_interval <= opts.maxval)) {
                 double pct = (ind * best_interval - opts.minval) / (opts.maxval - opts.minval);
                 if (opts.orientation == Qt::Vertical)

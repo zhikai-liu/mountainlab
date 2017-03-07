@@ -12,17 +12,17 @@ bool p_detect_events(QString timeseries, QString event_times_out, int central_ch
 {
     DiskReadMda32 X(timeseries);
     int M = X.N1();
-    long N = X.N2();
+    int N = X.N2();
 
     printf("Collecting data vector...\n");
     QVector<double> data(N);
     if (central_channel > 0) {
-        for (long i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++) {
             data[i] = X.value(central_channel - 1, i);
         }
     }
     else {
-        for (long i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++) {
             double best_value = 0;
             int best_m = 0;
             for (int m = 0; m < M; m++) {
@@ -47,7 +47,7 @@ bool p_detect_events(QString timeseries, QString event_times_out, int central_ch
 
     printf("Creating result array...\n");
     Mda ret(1, event_times.count());
-    for (long j = 0; j < event_times.count(); j++) {
+    for (int j = 0; j < event_times.count(); j++) {
         ret.setValue(event_times[j], j);
     }
     printf("Writing result...\n");
@@ -60,12 +60,12 @@ QVector<double> detect_events(const QVector<double>& X, double detect_threshold,
     double stdev = MLCompute::stdev(X);
     double threshold2 = detect_threshold * stdev;
 
-    long N = X.count();
+    int N = X.count();
     QVector<int> to_use(N);
     to_use.fill(0);
-    long last_best_ind = 0;
+    int last_best_ind = 0;
     double last_best_val = 0;
-    for (long n = 0; n < N; n++) {
+    for (int n = 0; n < N; n++) {
         double val = X[n];
         if (sign < 0)
             val = -val;

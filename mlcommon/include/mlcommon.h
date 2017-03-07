@@ -12,6 +12,8 @@
 #include <QJsonValue>
 #include <QByteArray>
 
+typedef long long bigint;
+
 namespace TextFile {
 QString read(const QString& fname, QTextCodec* codec = 0);
 bool write(const QString& fname, const QString& txt, QTextCodec* codec = 0);
@@ -27,10 +29,11 @@ QString mlLogPath();
 QString resolvePath(const QString& basepath, const QString& path);
 void mkdirIfNeeded(const QString& path);
 QString computeSha1SumOfFile(const QString& path);
-QString computeSha1SumOfFileHead(const QString& path, long num_bytes);
+QString computeSha1SumOfFileHead(const QString& path, int num_bytes);
 QString computeSha1SumOfString(const QString& str);
 bool matchesFastChecksum(QString path, QString fcs);
 QList<int> stringListToIntList(const QStringList& list);
+QList<int> stringListToBigIntList(const QStringList& list);
 QStringList intListToStringList(const QList<int>& list);
 QJsonValue toJsonValue(const QByteArray& X);
 QJsonValue toJsonValue(const QList<int>& X);
@@ -65,18 +68,18 @@ double dotProduct(const QVector<float>& X1, const QVector<float>& X2);
 
 template <typename T>
 T max(const QVector<T>& X);
-double min(long N, const double* X);
-double max(long N, const double* X);
-double sum(long N, const double* X);
-double mean(long N, const double* X);
-double dotProduct(long N, const double* X1, const double* X2);
-double norm(long N, const double* X);
-double min(long N, const float* X);
-double max(long N, const float* X);
-double sum(long N, const float* X);
-double mean(long N, const float* X);
-double dotProduct(long N, const float* X1, const float* X2);
-double norm(long N, const float* X);
+double min(int N, const double* X);
+double max(int N, const double* X);
+double sum(int N, const double* X);
+double mean(int N, const double* X);
+double dotProduct(int N, const double* X1, const double* X2);
+double norm(int N, const double* X);
+double min(int N, const float* X);
+double max(int N, const float* X);
+double sum(int N, const float* X);
+double mean(int N, const float* X);
+double dotProduct(int N, const float* X1, const float* X2);
+double norm(int N, const float* X);
 }
 
 class CLParams {

@@ -16,7 +16,7 @@
 #include "mlcommon.h"
 
 void usage();
-QString get_chunk_code(const QString& fname, const QString& datatype, long index, long size);
+QString get_chunk_code(const QString& fname, const QString& datatype, int index, int size);
 QString get_sha1_code(const QString& fname);
 
 Mda quantize8(Mda& X); //returns array of size 1x2 containing the min/max dynamic range
@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
             return -1;
         }
         DiskReadMda X(arg1);
-        printf("%ld,%ld,%ld,%ld,%ld,%ld\n", X.N1(), X.N2(), X.N3(), X.N4(), X.N5(), X.N6());
+        printf("%d,%d,%d,%d,%d,%d\n", X.N1(), X.N2(), X.N3(), X.N4(), X.N5(), X.N6());
         return 0;
     }
     else if (arg0 == "info") {
@@ -55,10 +55,10 @@ int main(int argc, char* argv[])
             return -1;
         }
         DiskReadMda X(arg1);
-        printf("%ld,%ld,%ld,%ld,%ld,%ld\n", X.N1(), X.N2(), X.N3(), X.N4(), X.N5(), X.N6());
+        printf("%d,%d,%d,%d,%d,%d\n", X.N1(), X.N2(), X.N3(), X.N4(), X.N5(), X.N6());
         QString sha1_code = get_sha1_code(arg1);
         printf("%s\n", sha1_code.toLatin1().data());
-        printf("%ld\n", (long)QFileInfo(arg1).lastModified().toMSecsSinceEpoch());
+        printf("%d\n", (int)QFileInfo(arg1).lastModified().toMSecsSinceEpoch());
         return 0;
     }
     else if (arg0 == "readChunk") {
@@ -77,9 +77,9 @@ int main(int argc, char* argv[])
             return -1;
         }
         QString index_string = CLP.named_parameters["index"].toString();
-        long index = index_string.toLong();
+        int index = index_string.toLong();
         QString size_string = CLP.named_parameters["size"].toString();
-        long size = size_string.toLong();
+        int size = size_string.toLong();
         QString datatype = CLP.named_parameters["datatype"].toString();
         if (datatype.isEmpty()) {
             printf("datatype is empty\n");
@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
             }
             DiskReadMda check(fname + ".tmp");
             if (check.totalSize() != size) {
-                printf("Unexpected dimension of output file: %ld<>%ld (%ldx%ldx%ld)\n", check.totalSize(), size, X.N1(), X.N2(), X.N3());
+		printf("Unexpected dimension of output file: %lld<>%ld (%lldx%lldx%lld)\n", check.totalSize(), size, X.N1(), X.N2(), X.N3());
                 QFile::remove(fname + ".tmp");
                 return -1;
             }
@@ -140,14 +140,14 @@ int main(int argc, char* argv[])
         else {
             DiskReadMda check(fname);
             if (check.totalSize() != size) {
-                printf("Unexpected dimensions of existing output file: %ld<>%ld\n", check.totalSize(), size);
+                printf("Unexpected dimensions of existing output file: %d<>%d\n", check.totalSize(), size);
                 QFile::remove(fname);
                 return -1;
             }
             if (datatype == "float32_q8") {
                 DiskReadMda check_q8(fname + ".q8");
                 if (check_q8.totalSize() != 2L) {
-                    printf("Unexpected dimensions of existing output.q8 file: %ld<>%ld\n", check_q8.totalSize(), 2L);
+                    printf("Unexpected dimensions of existing output.q8 file: %d<>%d\n", check_q8.totalSize(), 2L);
                     QFile::remove(fname);
                     QFile::remove(fname + ".q8");
                     return -1;
@@ -218,7 +218,7 @@ QString get_sha1_code(const QString& fname)
     */
 }
 
-QString get_chunk_code(const QString& fname, const QString& datatype, long index, long size)
+QString get_chunk_code(const QString& fname, const QString& datatype, int index, int size)
 {
     QString sha1 = get_sha1_code(fname);
     return QString("%1.%2.%3.%4").arg(sha1).arg(datatype).arg(index).arg(size);
@@ -231,9 +231,9 @@ Mda quantize8(Mda& X)
     Mda dynamic_range(1, 2);
     dynamic_range.setValue(minval, 0);
     dynamic_range.setValue(maxval, 1);
-    long N = X.totalSize();
+    int N = X.totalSize();
     double* Xptr = X.dataPtr();
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         Xptr[i] = (int)((Xptr[i] - minval) / (maxval - minval) * 255);
     }
     return dynamic_range;

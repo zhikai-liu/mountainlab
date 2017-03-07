@@ -246,7 +246,7 @@ void ComponentManagerTest::testDependency_data()
         << QList<QStringList>({ { "C2" }, { "C1" } })
         << QStringList();
 
-    QTest::newRow("long cycle")
+    QTest::newRow("int cycle")
         << QStringList({ "C1", "C2", "C3" })
         << QList<QStringList>({ { "C2" }, { "C3" }, { "C1" } })
         << QStringList();

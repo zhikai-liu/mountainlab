@@ -289,10 +289,10 @@ void MVAmpHistView3Computer::compute()
 
     QVector<int> labels;
     //QVector<double> amplitudes;
-    long L = firings2.N2();
+    int L = firings2.N2();
 
     task.setProgress(0.2);
-    for (long n = 0; n < L; n++) {
+    for (int n = 0; n < L; n++) {
         labels << (int)firings2.value(2, n);
     }
 
@@ -306,7 +306,7 @@ void MVAmpHistView3Computer::compute()
     }
 
     int row = 3; //for amplitudes
-    for (long n = 0; n < L; n++) {
+    for (int n = 0; n < L; n++) {
         int label0 = (int)firings2.value(2, n);
         double amp0 = firings2.value(row, n);
         if ((label0 >= 1) && (label0 <= K)) {
@@ -326,7 +326,7 @@ void MVAmpHistView3Computer::compute()
     for (int i = 0; i < histograms.count(); i++) {
         abs_medians[i] = qAbs(MLCompute::median(histograms[i].data));
     }
-    QList<long> inds = get_sort_indices(abs_medians);
+    QList<int> inds = get_sort_indices(abs_medians);
     QList<AmpHistogram3> hist_new;
     for (int i = 0; i < inds.count(); i++) {
         hist_new << histograms[inds[i]];

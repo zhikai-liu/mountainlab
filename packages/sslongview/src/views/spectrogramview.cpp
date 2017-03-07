@@ -45,7 +45,7 @@ public:
     SpectrogramViewCalculator m_calculator;
 
     QColor get_pixel_color(double val);
-    Mda get_spectrogram_data(long t1, long t2);
+    Mda get_spectrogram_data(int t1, int t2);
 
     static void parse_freq_range(int& ret_min, int& ret_max, QString str);
 };
@@ -154,8 +154,8 @@ void SpectrogramView::paintContent(QPainter* painter)
         return;
 
     MVRange timerange = c->currentTimeRange();
-    long t1 = ceil(timerange.min / time_resolution);
-    long t2 = floor(timerange.max / time_resolution);
+    int t1 = ceil(timerange.min / time_resolution);
+    int t2 = floor(timerange.max / time_resolution);
 
     if (t2 <= t1 + 2)
         return;
@@ -182,7 +182,7 @@ void SpectrogramView::paintContent(QPainter* painter)
         int M = d->m_num_channels;
         d->m_layout_needed = false;
         d->m_channels = d->make_channel_layout(M);
-        for (long m = 0; m < M; m++) {
+        for (int m = 0; m < M; m++) {
             mvtsv_channel* CH = &d->m_channels[m];
             CH->channel = m;
             CH->label = QString("%1").arg(m + 1);
@@ -232,8 +232,8 @@ void SpectrogramView::slot_export_csv()
         return;
     }
 
-    long t1 = 0;
-    long t2 = d->m_spectrogram.N2() - 1;
+    int t1 = 0;
+    int t2 = d->m_spectrogram.N2() - 1;
 
     if (t2 <= t1 + 2) {
         QMessageBox::warning(0, "Problem exporting", "Problem exporting. t2 <= t1+2");
@@ -326,7 +326,7 @@ QColor SpectrogramViewPrivate::get_pixel_color(double val)
     return gray;
 }
 
-Mda SpectrogramViewPrivate::get_spectrogram_data(long t1, long t2)
+Mda SpectrogramViewPrivate::get_spectrogram_data(int t1, int t2)
 {
     MVEEGContext* c = qobject_cast<MVEEGContext*>(q->mvContext());
     Q_ASSERT(c);

@@ -33,8 +33,8 @@ bool extract_clips_aa(const QString& timeseries_path, const QString& detect_path
     DiskReadMda32 X(timeseries_path);
     DiskReadMda D(detect_path);
     QVector<double> times;
-    QVector<long> event_indices;
-    for (long j = 0; j < D.N2(); j++) {
+    QVector<int> event_indices;
+    for (int j = 0; j < D.N2(); j++) {
         if (D.value(0, j) == central_channel) {
             double t0 = D.value(1, j);
             if ((t2 == 0) || ((t1 <= t0) && (t0 <= t2))) {
@@ -50,7 +50,7 @@ bool extract_clips_aa(const QString& timeseries_path, const QString& detect_path
     if (R < 4)
         R = 4;
     Mda detect_out(R, event_indices.count());
-    for (long i = 0; i < event_indices.count(); i++) {
+    for (int i = 0; i < event_indices.count(); i++) {
         for (int r = 0; r < R; r++) {
             detect_out.setValue(D.value(r, event_indices[i]), r, i);
         }

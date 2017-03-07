@@ -246,7 +246,7 @@ void MVSpikeSprayView::runCalculation()
 Mda extract_channels_from_clips(const Mda& clips, QList<int> channels)
 {
     Mda ret(channels.count(), clips.N2(), clips.N3());
-    for (long i = 0; i < clips.N3(); i++) {
+    for (int i = 0; i < clips.N3(); i++) {
         for (int t = 0; t < clips.N2(); t++) {
             for (int j = 0; j < channels.count(); j++) {
                 ret.setValue(clips.value(channels[j] - 1, t, i), j, t, i);
@@ -278,7 +278,7 @@ void MVSpikeSprayView::onCalculationFinished()
         d->m_clips_to_render_subchannels = extract_channels_from_clips(d->m_clips_to_render, c->visibleChannels());
     else
         d->m_clips_to_render_subchannels = d->m_clips_to_render;
-    for (long i = 0; i < d->m_panels.count(); i++) {
+    for (int i = 0; i < d->m_panels.count(); i++) {
         d->m_panels[i]->setClipsToRender(&d->m_clips_to_render_subchannels);
         d->m_panels[i]->setLabelsToRender(d->m_labels_to_render);
     }
@@ -531,7 +531,7 @@ void MVSpikeSprayComputer::compute()
     firings2.readChunk(firings0, 0, 0, firings2.N1(), firings2.N2());
     task.setProgress(0.9);
     labels_to_render.clear();
-    for (long i = 0; i < firings0.N2(); i++) {
+    for (int i = 0; i < firings0.N2(); i++) {
         int label0 = (int)firings0.value(2, i);
         labels_to_render << label0;
     }

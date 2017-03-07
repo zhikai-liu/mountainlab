@@ -73,7 +73,7 @@ Mda32 compute_stdev_clip(const Mda32& clips)
 {
     int M = clips.N1();
     int T = clips.N2();
-    long L = clips.N3();
+    int L = clips.N3();
 
     Mda32 stdevs(M, T);
     float* stdevs_ptr = stdevs.dataPtr();
@@ -84,7 +84,7 @@ Mda32 compute_stdev_clip(const Mda32& clips)
     double* sums_ptr = sums.dataPtr();
     double* sumsqrs_ptr = sumsqrs.dataPtr();
     double count = 0;
-    for (long i = 0; i < L; i++) {
+    for (int i = 0; i < L; i++) {
         const float* Xptr = &clips_ptr[M * T * i];
         for (int i = 0; i < M * T; i++) {
             sums_ptr[i] += Xptr[i];
@@ -150,8 +150,8 @@ Mda grab_clips_subset(const Mda& clips, const QVector<int>& inds)
     Mda ret;
     ret.allocate(M, T, LLL);
     for (int i = 0; i < LLL; i++) {
-        long aaa = i * M * T;
-        long bbb = inds[i] * M * T;
+        int aaa = i * M * T;
+        int bbb = inds[i] * M * T;
         for (int k = 0; k < M * T; k++) {
             ret.set(clips.get(bbb), aaa);
             aaa++;
@@ -169,8 +169,8 @@ Mda32 grab_clips_subset(const Mda32& clips, const QVector<int>& inds)
     Mda32 ret;
     ret.allocate(M, T, LLL);
     for (int i = 0; i < LLL; i++) {
-        long aaa = i * M * T;
-        long bbb = inds[i] * M * T;
+        int aaa = i * M * T;
+        int bbb = inds[i] * M * T;
         for (int k = 0; k < M * T; k++) {
             ret.set(clips.get(bbb), aaa);
             aaa++;

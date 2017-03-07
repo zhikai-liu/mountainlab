@@ -1,11 +1,13 @@
 #ifndef ISOCUT5_H
 #define ISOCUT5_H
 
+#include "mlcommon.h"
+
 struct isocut5_opts {
     bool already_sorted = false;
 };
 
-void isocut5(double* dipscore_out, double* cutpoint_out, long N, float* samples, isocut5_opts opts);
+void isocut5(double* dipscore_out, double* cutpoint_out, int N, float* samples, isocut5_opts opts);
 
 /*
  * MCWRAP [ dipscore[1,1], cutpoint[1,1] ] = isocut5_mex(samples[1,N])

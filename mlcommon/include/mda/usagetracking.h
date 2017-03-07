@@ -8,6 +8,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "mlcommon.h"
 
 FILE* jfopen(const char* path, const char* mode);
 void jfclose(FILE* F);

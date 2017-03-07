@@ -30,7 +30,7 @@ bool mv_discrimhist_guide2(QString timeseries_path, QString firings_path, QStrin
 
     QVector<double> times;
     QVector<int> labels;
-    for (long i = 0; i < F.N2(); i++) {
+    for (int i = 0; i < F.N2(); i++) {
         times << F.value(1, i);
         labels << (int)F.value(2, i);
     }
@@ -68,14 +68,14 @@ bool mv_discrimhist_guide2(QString timeseries_path, QString firings_path, QStrin
         DD.k2 = k2;
 
         QVector<double> times_k1;
-        for (long j = 0; j < labels.count(); j++) {
+        for (int j = 0; j < labels.count(); j++) {
             if (labels[j] == k1)
                 times_k1 << times[j];
         }
         Mda32 clips_k1 = extract_clips(X, times_k1, opts.clip_size);
 
         QVector<double> times_k2;
-        for (long j = 0; j < labels.count(); j++) {
+        for (int j = 0; j < labels.count(); j++) {
             if (labels[j] == k2)
                 times_k2 << times[j];
         }
@@ -88,7 +88,7 @@ bool mv_discrimhist_guide2(QString timeseries_path, QString firings_path, QStrin
 
     qSort(datas.begin(), datas.end(), discrimhist_guide2_data_comparer());
 
-    long total_count = 0;
+    int total_count = 0;
     for (int i = 0; i < datas.count(); i++) {
         total_count += datas[i].data1.count();
         total_count += datas[i].data2.count();
@@ -96,18 +96,18 @@ bool mv_discrimhist_guide2(QString timeseries_path, QString firings_path, QStrin
 
     Mda output(4, total_count);
     //first two rows are k1/k2, third row is k1 or k2, fourth row is the value
-    long jj = 0;
+    int jj = 0;
     for (int i = 0; i < datas.count(); i++) {
         int k1 = datas[i].k1;
         int k2 = datas[i].k2;
-        for (long k = 0; k < datas[i].data1.count(); k++) {
+        for (int k = 0; k < datas[i].data1.count(); k++) {
             output.setValue(k1, 0, jj);
             output.setValue(k2, 1, jj);
             output.setValue(k1, 2, jj);
             output.setValue(datas[i].data1[k], 3, jj);
             jj++;
         }
-        for (long k = 0; k < datas[i].data2.count(); k++) {
+        for (int k = 0; k < datas[i].data2.count(); k++) {
             output.setValue(k1, 0, jj);
             output.setValue(k2, 1, jj);
             output.setValue(k2, 2, jj);

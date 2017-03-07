@@ -74,7 +74,7 @@ void Downloader::start()
 
 class FileChunkReader : public QIODevice {
 public:
-    FileChunkReader(QFile* file, long start_byte, long end_byte)
+    FileChunkReader(QFile* file, int start_byte, int end_byte)
     {
         m_file = file;
         m_start_byte = start_byte;
@@ -179,8 +179,8 @@ protected:
 
 private:
     QFile* m_file = 0;
-    long m_start_byte = -1;
-    long m_end_byte = -1;
+    int m_start_byte = -1;
+    int m_end_byte = -1;
 };
 
 Uploader::~Uploader()
@@ -211,7 +211,7 @@ void Uploader::start()
 
     QNetworkRequest request = QNetworkRequest(destination_url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
-    long content_length;
+    int content_length;
     if ((start_byte >= 0) && (end_byte >= 0))
         content_length = end_byte - start_byte + 1;
     else
@@ -301,7 +301,7 @@ double Uploader::elapsed_msec()
     return m_timer.elapsed();
 }
 
-long Uploader::num_bytes_uploaded()
+int Uploader::num_bytes_uploaded()
 {
     return m_num_bytes_uploaded;
 }
@@ -311,7 +311,7 @@ double Downloader::elapsed_msec()
     return m_timer.elapsed();
 }
 
-long Downloader::num_bytes_downloaded()
+int Downloader::num_bytes_downloaded()
 {
     return m_num_bytes_downloaded;
 }
@@ -392,7 +392,7 @@ bool concatenate_files(QStringList file_paths, QString dest_path)
             f.close();
             return false;
         }
-        long chunk_size = 1e5;
+        int chunk_size = 1e5;
         QTime timer;
         timer.start();
         while (!g.atEnd()) {
@@ -445,15 +445,15 @@ void PrvParallelDownloader::start()
     m_task.log() << "size:" << size << "num_threads:" << num_threads;
 
     //get the start and end bytes
-    QList<long> start_bytes;
-    QList<long> end_bytes;
-    long incr = (long)(1 + size * 1.0 / num_threads);
+    QList<int> start_bytes;
+    QList<int> end_bytes;
+    int incr = (int)(1 + size * 1.0 / num_threads);
     if (incr < 1000)
         incr = 1000; //let's be a bit reasonable
-    long sum = 0;
+    int sum = 0;
     for (int i = 0; i < num_threads; i++) {
         if (sum < size) {
-            long val = qMin(incr, size - sum);
+            int val = qMin(incr, size - sum);
             start_bytes << sum;
             end_bytes << sum + val - 1;
             sum += val;
@@ -510,7 +510,7 @@ void PrvParallelDownloader::start()
                 done = false;
             }
         }
-        long num_bytes = 0;
+        int num_bytes = 0;
         for (int i = 0; i < downloaders.count(); i++) {
             num_bytes += downloaders[i]->num_bytes_downloaded();
         }
@@ -557,14 +557,14 @@ double PrvParallelDownloader::elapsed_msec()
     return m_timer.elapsed();
 }
 
-long PrvParallelDownloader::num_bytes_downloaded()
+int PrvParallelDownloader::num_bytes_downloaded()
 {
     return m_num_bytes_downloaded;
 }
 
 void PrvParallelDownloader::slot_downloader_progress()
 {
-    long num_bytes = 0;
+    int num_bytes = 0;
     for (int i = 0; i < m_downloaders.count(); i++) {
         num_bytes += m_downloaders[i]->num_bytes_downloaded();
     }
@@ -645,19 +645,19 @@ void PrvParallelUploader::start()
 
     url += "a=upload&";
 
-    long size = QFileInfo(source_file_name).size();
+    int size = QFileInfo(source_file_name).size();
     m_size = size;
 
     //get the start and end bytes
-    QList<long> start_bytes;
-    QList<long> end_bytes;
-    long incr = (long)(1 + size * 1.0 / num_threads);
+    QList<int> start_bytes;
+    QList<int> end_bytes;
+    int incr = (int)(1 + size * 1.0 / num_threads);
     if (incr < 1000)
         incr = 1000; //let's be a bit reasonable
-    long sum = 0;
+    int sum = 0;
     for (int i = 0; i < num_threads; i++) {
         if (sum < size) {
-            long val = qMin(incr, size - sum);
+            int val = qMin(incr, size - sum);
             start_bytes << sum;
             end_bytes << sum + val - 1;
             sum += val;
@@ -684,14 +684,14 @@ double PrvParallelUploader::elapsed_msec()
     return m_timer.elapsed();
 }
 
-long PrvParallelUploader::num_bytes_uploaded()
+int PrvParallelUploader::num_bytes_uploaded()
 {
     return m_num_bytes_uploaded;
 }
 
 void PrvParallelUploader::slot_uploader_progress()
 {
-    long num_bytes = 0;
+    int num_bytes = 0;
     for (int i = 0; i < m_uploaders.count(); i++) {
         num_bytes += m_uploaders[i]->num_bytes_uploaded();
     }
@@ -839,7 +839,7 @@ bool Runner::isFinished()
     return m_is_finished;
 }
 
-bool Runner::waitForFinished(long msec)
+bool Runner::waitForFinished(int msec)
 {
     QTime timer;
     timer.start();

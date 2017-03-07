@@ -46,7 +46,7 @@ bool concat_mda_Processor::run(const QMap<QString, QVariant>& params)
 
     QString path0 = input_paths[0];
     DiskReadMda X0(path0);
-    long DIMS[4];
+    int DIMS[4];
     for (int dd = 1; dd <= 3; dd++) {
         if (dd != dimension) {
             DIMS[dd] = X0.N(dd);
@@ -67,12 +67,12 @@ bool concat_mda_Processor::run(const QMap<QString, QVariant>& params)
                 }
             }
         }
-        printf("INPUT: %ld x %ld x %ld\n", X1.N1(), X1.N2(), X1.N3());
+        printf("INPUT: %lld x %lld x %lld\n", X1.N1(), X1.N2(), X1.N3());
     }
 
-    printf("OUTPUT:  %ld x %ld x %ld\n", DIMS[1], DIMS[2], DIMS[3]);
+    printf("OUTPUT:  %d x %d x %d\n", DIMS[1], DIMS[2], DIMS[3]);
     DiskWriteMda Y(X0.mdaioHeader().data_type, output_path, DIMS[1], DIMS[2], DIMS[3]);
-    long offset = 0;
+    int offset = 0;
     for (int i = 0; i < input_paths.count(); i++) {
         QString path1 = input_paths[i];
         DiskReadMda X1(path1);
@@ -80,9 +80,9 @@ bool concat_mda_Processor::run(const QMap<QString, QVariant>& params)
         printf("Reading chunk...\n");
         if (!X1.readChunk(chunk, 0, 0, 0, X1.N1(), X1.N2(), X1.N3()))
             return false;
-        long ind1 = 0;
-        long ind2 = 0;
-        long ind3 = 0;
+        int ind1 = 0;
+        int ind2 = 0;
+        int ind3 = 0;
         if (dimension == 1) {
             ind1 = offset;
             offset += X1.N1();

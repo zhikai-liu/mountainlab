@@ -274,7 +274,7 @@ void ClusterDetailView::runCalculation()
 Mda32 extract_channels_from_template(const Mda32& X, QList<int> channels)
 {
     Mda32 ret(channels.count(), X.N2(), X.N3());
-    for (long i = 0; i < X.N3(); i++) { //handle case of more than 1 template, just because
+    for (int i = 0; i < X.N3(); i++) { //handle case of more than 1 template, just because
         for (int t = 0; t < X.N2(); t++) {
             for (int j = 0; j < channels.count(); j++) {
                 ret.setValue(X.value(channels[j] - 1, t, i), j, t, i);
@@ -1190,7 +1190,7 @@ ClusterData combine_cluster_data_group(const QList<ClusterData>& group, ClusterD
     ret.template0.allocate(sum0.N1(), sum0.N2(), sum0.N3());
     ret.stdev0.allocate(sum0.N1(), sum0.N2(), sum0.N3());
     if (total_weight) {
-        for (long i = 0; i < ret.template0.totalSize(); i++) {
+        for (int i = 0; i < ret.template0.totalSize(); i++) {
             double val_sum = sum0.get(i);
             double val_sumsqr = sumsqr0.get(i);
             ret.template0.set(val_sum / total_weight, i);
@@ -1256,7 +1256,7 @@ void ClusterDetailViewPrivate::sort_cluster_data(QList<ClusterData>& CD)
     */
 
     QList<ClusterData> ret;
-    QList<long> inds = get_sort_indices(sort_scores);
+    QList<int> inds = get_sort_indices(sort_scores);
     for (int i = 0; i < inds.count(); i++) {
         ret << CD[inds[i]];
     }
@@ -1276,7 +1276,7 @@ double compute_centeredness_score(const Mda32& template0)
         }
     }
     double sum_yt = 0, sum_y = 0;
-    for (long i = 0; i < tvals.count(); i++) {
+    for (int i = 0; i < tvals.count(); i++) {
         sum_yt += yvals[i] * tvals[i];
         sum_y += yvals[i];
     }

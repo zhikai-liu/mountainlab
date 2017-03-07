@@ -23,10 +23,10 @@ private:
     PCASolverPrivate* d;
 };
 
-float vector_norm(long N, float* v);
-void define_random_vector(long N, float* v);
-void normalize(long N, float* v);
-float inner_product(long N, float* v, float* w);
-void subtract_component(long N, float* v, float* comp);
+float vector_norm(int N, float* v);
+void define_random_vector(int N, float* v);
+void normalize(int N, float* v);
+float inner_product(int N, float* v, float* w);
+void subtract_component(int N, float* v, float* comp);
 
 #endif

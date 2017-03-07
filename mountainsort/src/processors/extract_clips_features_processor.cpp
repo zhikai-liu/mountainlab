@@ -51,17 +51,17 @@ bool extract_clips_features_Processor::run(const QMap<QString, QVariant>& params
     DiskReadMda F(firings_path);
     QVector<double> times;
     //QVector<int> labels;
-    for (long i = 0; i < F.N2(); i++) {
+    for (int i = 0; i < F.N2(); i++) {
         times << F.value(1, i);
         //labels << (int)F.value(2,i);
     }
     Mda clips = extract_clips(X, times, clip_size);
-    long M = clips.N1();
-    long T = clips.N2();
-    long L = clips.N3();
+    int M = clips.N1();
+    int T = clips.N2();
+    int L = clips.N3();
     Mda clips_reshaped(M * T, L);
-    long NNN = M * T * L;
-    for (long iii = 0; iii < NNN; iii++) {
+    int NNN = M * T * L;
+    for (int iii = 0; iii < NNN; iii++) {
         clips_reshaped.set(clips.get(iii), iii);
     }
     Mda CC, FF, sigma;

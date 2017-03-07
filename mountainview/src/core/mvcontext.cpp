@@ -358,7 +358,7 @@ double MVContext::currentTimepoint() const
 MVRange MVContext::currentTimeRange() const
 {
     if ((d->m_current_time_range.min <= 0) && (d->m_current_time_range.max <= 0)) {
-        return MVRange(0, qMax(0L, this->currentTimeseries().N2() - 1));
+        return MVRange(0LL, qMax(0LL, this->currentTimeseries().N2() - 1));
     }
     return d->m_current_time_range;
 }
@@ -587,9 +587,9 @@ QList<int> MVContext::clusterOrder(int max_K) const
             ret << k;
         }
     }
-    QList<long> inds = get_sort_indices(d->m_cluster_order_scores.toVector());
+    QList<int> inds = get_sort_indices(d->m_cluster_order_scores.toVector());
 
-    for (long i = 0; i < inds.count(); i++) {
+    for (int i = 0; i < inds.count(); i++) {
         ret << inds[i] + 1;
     }
     return ret;
@@ -769,7 +769,7 @@ void MVContext::loadClusterMetricsFromFile(QString csv_or_json_file_path)
         QJsonArray clusters = X["clusters"].toArray();
         for (int j = 0; j < clusters.count(); j++) {
             QJsonObject C = clusters[j].toObject();
-            long k = C["label"].toDouble();
+            int k = C["label"].toDouble();
             QJsonObject C_metrics = C["metrics"].toObject();
             if (k > 0) {
                 QJsonObject obj = this->clusterAttributes(k);

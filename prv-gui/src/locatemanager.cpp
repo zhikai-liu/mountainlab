@@ -26,7 +26,7 @@ LocateManager::~LocateManager()
     delete d;
 }
 
-void LocateManager::startSearchForPrv(QString checksum, long size, QString original_path, QString server)
+void LocateManager::startSearchForPrv(QString checksum, int size, QString original_path, QString server)
 {
     PrvRecord prv;
     prv.checksum = checksum;

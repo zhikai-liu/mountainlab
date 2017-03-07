@@ -47,7 +47,7 @@ public:
     {
         deallocate();
     }
-    bool allocate(T value, long N1, long N2, long N3 = 1, long N4 = 1, long N5 = 1, long N6 = 1)
+    bool allocate(T value, int N1, int N2, int N3 = 1, int N4 = 1, int N5 = 1, int N6 = 1)
     {
         deallocate();
         setDims(N1, N2, N3, N4, N5, N6);
@@ -71,9 +71,9 @@ public:
         return true;
     }
 
-    inline long dim(size_t idx) const { return m_dims.at(idx); }
-    inline long N1() const { return dim(0); }
-    inline long N2() const { return dim(1); }
+    inline int dim(size_t idx) const { return m_dims.at(idx); }
+    inline int N1() const { return dim(0); }
+    inline int N2() const { return dim(1); }
 
     void allocate(size_t size)
     {
@@ -99,13 +99,13 @@ public:
     inline void set(T val, size_t idx) { m_data[idx] = val; }
     inline void set(T val, size_t i1, size_t i2) { set(val, i1 + dim(0) * i2); }
 
-    inline long dims(size_t idx) const
+    inline int dims(size_t idx) const
     {
         if (idx < 0 || idx >= m_dims.size())
             return 0;
         return *(m_dims.data() + idx);
     }
-    void setDims(long n1, long n2, long n3, long n4, long n5, long n6)
+    void setDims(int n1, int n2, int n3, int n4, int n5, int n6)
     {
         m_dims.resize(MDA_MAX_DIMS);
         m_dims[0] = n1;
@@ -116,8 +116,10 @@ public:
         m_dims[5] = n6;
     }
 
-    int determine_num_dims(long N1, long N2, long N3, long N4, long N5, long N6) const
+    int determine_num_dims(int N1, int N2, int N3, int N4, int N5, int N6) const
     {
+        Q_UNUSED(N1);
+        Q_UNUSED(N2);
         //changed this on 2/21/17 by jfm
         //if (!(N6 > 0 && N5 > 0 && N4 > 0 && N3 > 0 && N2 > 0 && N1 > 0))
         //    return 0;
@@ -137,13 +139,13 @@ public:
     }
     bool safe_index(size_t i1, size_t i2) const
     {
-        return (((long)i1 < dims(0)) && ((long)i2 < dims(1)));
+        return (((int)i1 < dims(0)) && ((int)i2 < dims(1)));
     }
     bool safe_index(size_t i1, size_t i2, size_t i3) const
     {
-        return (((long)i1 < dims(0)) && ((long)i2 < dims(1)) && ((long)i3 < dims(2)));
+        return (((int)i1 < dims(0)) && ((int)i2 < dims(1)) && ((int)i3 < dims(2)));
     }
-    bool safe_index(long i1, long i2, long i3, long i4, long i5, long i6) const
+    bool safe_index(int i1, int i2, int i3, int i4, int i5, int i6) const
     {
         return (
             (0 <= i1) && (i1 < dims(0))
@@ -198,15 +200,15 @@ public:
         char sep = ' ';
         if (path.endsWith(".csv"))
             sep = ',';
-        long max_num_entries = 1e6;
+        int max_num_entries = 1e6;
         if (N1() * N2() == max_num_entries) {
             qWarning() << "mda is too large to write text file";
             return false;
         }
         QList<QString> lines;
-        for (long i = 0; i < N2(); i++) {
+        for (int i = 0; i < N2(); i++) {
             QStringList vals;
-            for (long j = 0; j < N1(); j++) {
+            for (int j = 0; j < N1(); j++) {
                 vals << QString("%1").arg(at(j, i));
             }
             QString line = vals.join(sep);
@@ -238,7 +240,7 @@ public:
 
 private:
     pointer m_data;
-    std::vector<long> m_dims;
+    std::vector<int> m_dims;
     size_t total_size;
     mutable IIntCounter* allocatedCounter = nullptr;
     mutable IIntCounter* freedCounter = nullptr;

@@ -9,11 +9,11 @@
 bool detect(const QString& timeseries_path, const QString& detect_path, const Detect_Opts& opts)
 {
     DiskReadMda X(timeseries_path);
-    long M = X.N1();
-    long N = X.N2();
+    int M = X.N1();
+    int N = X.N2();
 
-    long chunk_size = PROCESSING_CHUNK_SIZE;
-    long overlap_size = PROCESSING_CHUNK_OVERLAP_SIZE;
+    int chunk_size = PROCESSING_CHUNK_SIZE;
+    int overlap_size = PROCESSING_CHUNK_OVERLAP_SIZE;
     if (N < PROCESSING_CHUNK_SIZE) {
         chunk_size = N;
         overlap_size = 0;
@@ -26,9 +26,9 @@ bool detect(const QString& timeseries_path, const QString& detect_path, const De
 
         QTime timer;
         timer.start();
-        long num_timepoints_handled = 0;
+        int num_timepoints_handled = 0;
 #pragma omp parallel for
-        for (long timepoint = 0; timepoint < N; timepoint += chunk_size) {
+        for (int timepoint = 0; timepoint < N; timepoint += chunk_size) {
             Mda chunk;
 #pragma omp critical(lock1)
             {
@@ -85,7 +85,7 @@ bool detect(const QString& timeseries_path, const QString& detect_path, const De
                 channels.append(channels1);
                 num_timepoints_handled += qMin(chunk_size, N - timepoint);
                 if ((timer.elapsed() > 5000) || (num_timepoints_handled == N)) {
-                    printf("%ld/%ld (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
+                    printf("%d/%d (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
                     timer.restart();
                 }
             }
@@ -99,7 +99,7 @@ bool detect(const QString& timeseries_path, const QString& detect_path, const De
     }
     output.write64(detect_path);
 
-    printf("Detected %ld events.\n", output.N2());
+    printf("Detected %lld events.\n", output.N2());
 
     return true;
 }

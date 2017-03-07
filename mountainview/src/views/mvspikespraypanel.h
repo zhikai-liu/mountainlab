@@ -101,16 +101,16 @@ public:
     int W;
     int H;
     QPointF coord2pix(int m, double t, double val) const;
-    void render_clip(QPainter* painter, long i) const;
+    void render_clip(QPainter* painter, int i) const;
 
     class ClipsAllocator {
     public:
         ClipsAllocator();
-        ClipsAllocator(Mda* src, long _M, long _T, const QList<long>& _inds);
+        ClipsAllocator(Mda* src, int _M, int _T, const QList<int>& _inds);
         Mda* source = nullptr;
-        long M = 0;
-        long T = 0;
-        QList<long> inds;
+        int M = 0;
+        int T = 0;
+        QList<int> inds;
         std::function<void(int)> progressFunction;
         Mda allocate(const std::function<bool()>& breakFunc);
     };

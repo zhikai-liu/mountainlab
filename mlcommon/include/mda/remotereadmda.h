@@ -24,22 +24,22 @@ public:
     virtual ~RemoteReadMda();
 
     void setRemoteDataType(QString dtype);
-    void setDownloadChunkSize(long size);
-    long downloadChunkSize();
+    void setDownloadChunkSize(int size);
+    int downloadChunkSize();
 
     void setPath(const QString& path);
     QString makePath() const; //not capturing the reshaping
 
-    bool reshape(long N1b, long N2b, long N3b);
+    bool reshape(int N1b, int N2b, int N3b);
 
-    long N1() const;
-    long N2() const;
-    long N3() const;
+    int N1() const;
+    int N2() const;
+    int N3() const;
     QDateTime fileLastModified() const;
 
     ///Retrieve a chunk of the vectorized data of size 1xN starting at position i
-    bool readChunk(Mda& X, long i, long size) const;
-    bool readChunk32(Mda32& X, long i, long size) const;
+    bool readChunk(Mda& X, int i, int size) const;
+    bool readChunk32(Mda32& X, int i, int size) const;
 
 private:
     RemoteReadMdaPrivate* d;

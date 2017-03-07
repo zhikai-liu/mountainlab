@@ -54,7 +54,7 @@ void run_all_unit_tests()
 
     Mda tmp;
     tmp.read(path3);
-    for (long i = 0; i < tmp.totalSize(); i++)
+    for (int i = 0; i < tmp.totalSize(); i++)
         tmp.set(tmp.get(i) / 2, i);
     printf("Max difference: %.16f\n", max_difference(X1, tmp));
 }
@@ -74,7 +74,7 @@ double max_difference(Mda& X, Mda& Y)
     if (X.N6() != Y.N6())
         return -1;
     double max_diff = 0;
-    for (long i = 0; i < X.totalSize(); i++) {
+    for (int i = 0; i < X.totalSize(); i++) {
         double diff = X.value(i) - Y.value(i);
         if (fabs(diff) > max_diff)
             max_diff = diff;

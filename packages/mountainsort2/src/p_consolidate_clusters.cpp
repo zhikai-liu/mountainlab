@@ -15,7 +15,7 @@ bool should_use_template(const Mda32& template0, Consolidate_clusters_opts opts)
 bool p_consolidate_clusters(QString clips, QString labels_path, QString labels_out, Consolidate_clusters_opts opts)
 {
     QVector<int> labels = P_consolidate_clusters::read_labels(labels_path);
-    long L = labels.count();
+    int L = labels.count();
 
     int K = MLCompute::max(labels);
 
@@ -43,7 +43,7 @@ bool p_consolidate_clusters(QString clips, QString labels_path, QString labels_o
     };
 
     QVector<int> new_labels(L);
-    for (long i = 0; i < L; i++) {
+    for (int i = 0; i < L; i++) {
         new_labels[i] = label_map.value(labels[i]);
     }
 
@@ -54,16 +54,16 @@ namespace P_consolidate_clusters {
 QVector<int> read_labels(QString path)
 {
     Mda X(path);
-    long L = X.totalSize();
+    int L = X.totalSize();
     QVector<int> ret(L);
-    for (long i = 0; i < L; i++)
+    for (int i = 0; i < L; i++)
         ret[i] = X.value(i);
     return ret;
 }
 bool write_labels(QString path, const QVector<int>& labels)
 {
     Mda X(1, labels.count());
-    for (long i = 0; i < labels.count(); i++) {
+    for (int i = 0; i < labels.count(); i++) {
         X.setValue(labels[i], i);
     }
     return X.write64(path);
@@ -75,11 +75,11 @@ Mda32 compute_template(QString clips_path, const QVector<int>& labels, int k)
     int T = clips.N2();
     Mda sum(M, T);
     double ct = 0;
-    for (long i = 0; i < labels.count(); i++) {
+    for (int i = 0; i < labels.count(); i++) {
         if (labels[i] == k) {
             Mda32 tmp;
             clips.readChunk(tmp, 0, 0, i, M, T, 1);
-            for (long j = 0; j < M * T; j++) {
+            for (int j = 0; j < M * T; j++) {
                 sum.set(sum.get(j) + tmp.get(j), j);
             }
             ct++;
@@ -87,7 +87,7 @@ Mda32 compute_template(QString clips_path, const QVector<int>& labels, int k)
     }
     Mda32 ret(M, T);
     if (ct) {
-        for (long j = 0; j < M * T; j++) {
+        for (int j = 0; j < M * T; j++) {
             ret.set(sum.get(j) / ct, j);
         }
     }
@@ -99,14 +99,14 @@ bool should_use_template(const Mda32& template0, Consolidate_clusters_opts opts)
 
     int M = template0.N1();
     int T = template0.N2();
-    long Tmid = (int)((T + 1) / 2) - 1;
+    int Tmid = (int)((T + 1) / 2) - 1;
 
     if (opts.central_channel > 0) {
         QVector<double> energies(M);
         energies.fill(0);
         double max_energy = 0;
-        for (long t = 0; t < T; t++) {
-            for (long m = 0; m < M; m++) {
+        for (int t = 0; t < T; t++) {
+            for (int m = 0; m < M; m++) {
                 double val = template0.value(m, t);
                 energies[m] += val * val;
                 if ((m != opts.central_channel - 1) && (energies[m] > max_energy))
@@ -118,9 +118,9 @@ bool should_use_template(const Mda32& template0, Consolidate_clusters_opts opts)
     }
 
     double abs_peak_val = 0;
-    long abs_peak_ind = 0;
-    long abs_peak_chan = 0;
-    for (long t = 0; t < T; t++) {
+    int abs_peak_ind = 0;
+    int abs_peak_chan = 0;
+    for (int t = 0; t < T; t++) {
         for (int m = 0; m < M; m++) {
             double value = template0.value(m, t);
             if (fabs(value) > abs_peak_val) {

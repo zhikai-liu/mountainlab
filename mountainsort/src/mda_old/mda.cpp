@@ -8,19 +8,19 @@ class MdaPrivate {
 public:
     Mda* q;
     double* m_data;
-    long m_dims[MDA_MAX_DIMS];
-    long m_total_size;
+    int m_dims[MDA_MAX_DIMS];
+    int m_total_size;
 
     void do_construct();
     void copy_from(const Mda& other);
-    int determine_num_dims(long N1, long N2, long N3, long N4, long N5, long N6);
-    bool safe_index(long i);
-    bool safe_index(long i1, long i2);
-    bool safe_index(long i1, long i2, long i3);
-    bool safe_index(long i1, long i2, long i3, long i4, long i5, long i6);
+    int determine_num_dims(int N1, int N2, int N3, int N4, int N5, int N6);
+    bool safe_index(int i);
+    bool safe_index(int i1, int i2);
+    bool safe_index(int i1, int i2, int i3);
+    bool safe_index(int i1, int i2, int i3, int i4, int i5, int i6);
 };
 
-Mda::Mda(long N1, long N2, long N3, long N4, long N5, long N6)
+Mda::Mda(int N1, int N2, int N3, int N4, int N5, int N6)
 {
     d = new MdaPrivate;
     d->q = this;
@@ -56,7 +56,7 @@ Mda::~Mda()
     delete d;
 }
 
-bool Mda::allocate(long N1, long N2, long N3, long N4, long N5, long N6)
+bool Mda::allocate(int N1, int N2, int N3, int N4, int N5, int N6)
 {
     d->m_dims[0] = N1;
     d->m_dims[1] = N2;
@@ -71,7 +71,7 @@ bool Mda::allocate(long N1, long N2, long N3, long N4, long N5, long N6)
     d->m_data = 0;
     if (d->m_total_size > 0) {
         d->m_data = (double*)malloc(sizeof(double) * d->m_total_size);
-        for (long i = 0; i < d->m_total_size; i++)
+        for (int i = 0; i < d->m_total_size; i++)
             d->m_data[i] = 0;
     }
 
@@ -155,42 +155,42 @@ int Mda::ndims() const
     return d->determine_num_dims(N1(), N2(), N3(), N4(), N5(), N6());
 }
 
-long Mda::N1() const
+int Mda::N1() const
 {
     return d->m_dims[0];
 }
 
-long Mda::N2() const
+int Mda::N2() const
 {
     return d->m_dims[1];
 }
 
-long Mda::N3() const
+int Mda::N3() const
 {
     return d->m_dims[2];
 }
 
-long Mda::N4() const
+int Mda::N4() const
 {
     return d->m_dims[3];
 }
 
-long Mda::N5() const
+int Mda::N5() const
 {
     return d->m_dims[4];
 }
 
-long Mda::N6() const
+int Mda::N6() const
 {
     return d->m_dims[5];
 }
 
-long Mda::totalSize() const
+int Mda::totalSize() const
 {
     return d->m_total_size;
 }
 
-long Mda::size(int dimension_index)
+int Mda::size(int dimension_index)
 {
     if (dimension_index < 0)
         return 0;
@@ -199,76 +199,76 @@ long Mda::size(int dimension_index)
     return d->m_dims[dimension_index];
 }
 
-double Mda::get(long i) const
+double Mda::get(int i) const
 {
     return d->m_data[i];
 }
 
-double Mda::get(long i1, long i2) const
+double Mda::get(int i1, int i2) const
 {
     return d->m_data[i1 + d->m_dims[0] * i2];
 }
 
-double Mda::get(long i1, long i2, long i3) const
+double Mda::get(int i1, int i2, int i3) const
 {
     return d->m_data[i1 + d->m_dims[0] * i2 + d->m_dims[0] * d->m_dims[1] * i3];
 }
 
-double Mda::get(long i1, long i2, long i3, long i4, long i5, long i6) const
+double Mda::get(int i1, int i2, int i3, int i4, int i5, int i6) const
 {
     return d->m_data[i1 + d->m_dims[0] * i2 + d->m_dims[0] * d->m_dims[1] * i3 + d->m_dims[0] * d->m_dims[1] * d->m_dims[2] * i4 + d->m_dims[0] * d->m_dims[1] * d->m_dims[2] * d->m_dims[3] * i5 + d->m_dims[0] * d->m_dims[1] * d->m_dims[2] * d->m_dims[3] * d->m_dims[4] * i6];
 }
 
-double Mda::value(long i) const
+double Mda::value(int i) const
 {
     if (!d->safe_index(i))
         return 0;
     return get(i);
 }
 
-double Mda::value(long i1, long i2) const
+double Mda::value(int i1, int i2) const
 {
     if (!d->safe_index(i1, i2))
         return 0;
     return get(i1, i2);
 }
 
-double Mda::value(long i1, long i2, long i3) const
+double Mda::value(int i1, int i2, int i3) const
 {
     if (!d->safe_index(i1, i2, i3))
         return 0;
     return get(i1, i2, i3);
 }
 
-double Mda::value(long i1, long i2, long i3, long i4, long i5, long i6) const
+double Mda::value(int i1, int i2, int i3, int i4, int i5, int i6) const
 {
     if (!d->safe_index(i1, i2, i3, i4, i5, i6))
         return 0;
     return get(i1, i2, i3, i4, i5, i6);
 }
 
-void Mda::setValue(double val, long i)
+void Mda::setValue(double val, int i)
 {
     if (!d->safe_index(i))
         return;
     set(val, i);
 }
 
-void Mda::setValue(double val, long i1, long i2)
+void Mda::setValue(double val, int i1, int i2)
 {
     if (!d->safe_index(i1, i2))
         return;
     set(val, i1, i2);
 }
 
-void Mda::setValue(double val, long i1, long i2, long i3)
+void Mda::setValue(double val, int i1, int i2, int i3)
 {
     if (!d->safe_index(i1, i2, i3))
         return;
     set(val, i1, i2, i3);
 }
 
-void Mda::setValue(double val, long i1, long i2, long i3, long i4, long i5, long i6)
+void Mda::setValue(double val, int i1, int i2, int i3, int i4, int i5, int i6)
 {
     if (!d->safe_index(i1, i2, i3, i4, i5, i6))
         return;
@@ -280,32 +280,32 @@ double* Mda::dataPtr()
     return d->m_data;
 }
 
-double* Mda::dataPtr(long i)
+double* Mda::dataPtr(int i)
 {
     return &d->m_data[i];
 }
 
-double* Mda::dataPtr(long i1, long i2)
+double* Mda::dataPtr(int i1, int i2)
 {
     return &d->m_data[i1 + N1() * i2];
 }
 
-double* Mda::dataPtr(long i1, long i2, long i3)
+double* Mda::dataPtr(int i1, int i2, int i3)
 {
     return &d->m_data[i1 + N1() * i2 + N1() * N2() * i3];
 }
 
-double* Mda::dataPtr(long i1, long i2, long i3, long i4, long i5, long i6)
+double* Mda::dataPtr(int i1, int i2, int i3, int i4, int i5, int i6)
 {
     return &d->m_data[i1 + N1() * i2 + N1() * N2() * i3 + N1() * N2() * N3() * i4 + N1() * N2() * N3() * N4() * i5 + N1() * N2() * N3() * N4() * N5() * i6];
 }
 
-void Mda::getChunk(Mda& ret, long i, long size)
+void Mda::getChunk(Mda& ret, int i, int size)
 {
-    long a_begin = i;
-    long x_begin = 0;
-    long a_end = i + size - 1;
-    long x_end = size - 1;
+    int a_begin = i;
+    int x_begin = 0;
+    int a_end = i + size - 1;
+    int x_end = size - 1;
 
     if (a_begin < 0) {
         a_begin += 0 - a_begin;
@@ -321,18 +321,18 @@ void Mda::getChunk(Mda& ret, long i, long size)
     double* ptr1 = this->dataPtr();
     double* ptr2 = ret.dataPtr();
 
-    long ii = 0;
-    for (long a = a_begin; a <= a_end; a++) {
+    int ii = 0;
+    for (int a = a_begin; a <= a_end; a++) {
         ptr2[x_begin + ii] = ptr1[a_begin + ii];
     }
 }
 
-void Mda::getChunk(Mda& ret, long i1, long i2, long size1, long size2)
+void Mda::getChunk(Mda& ret, int i1, int i2, int size1, int size2)
 {
-    long a1_begin = i1;
-    long x1_begin = 0;
-    long a1_end = i1 + size1 - 1;
-    long x1_end = size1 - 1;
+    int a1_begin = i1;
+    int x1_begin = 0;
+    int a1_end = i1 + size1 - 1;
+    int x1_end = size1 - 1;
     if (a1_begin < 0) {
         a1_begin += 0 - a1_begin;
         x1_begin += 0 - a1_begin;
@@ -342,10 +342,10 @@ void Mda::getChunk(Mda& ret, long i1, long i2, long size1, long size2)
         x1_end += N1() - 1 - a1_end;
     }
 
-    long a2_begin = i2;
-    long x2_begin = 0;
-    long a2_end = i2 + size2 - 1;
-    long x2_end = size2 - 1;
+    int a2_begin = i2;
+    int x2_begin = 0;
+    int a2_end = i2 + size2 - 1;
+    int x2_end = size2 - 1;
     if (a2_begin < 0) {
         a2_begin += 0 - a2_begin;
         x2_begin += 0 - a2_begin;
@@ -360,10 +360,10 @@ void Mda::getChunk(Mda& ret, long i1, long i2, long size1, long size2)
     double* ptr1 = this->dataPtr();
     double* ptr2 = ret.dataPtr();
 
-    for (long ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
-        long ii_out = (ind2 + x2_begin) * size1;
-        long ii_in = (ind2 + a2_begin) * N1();
-        for (long ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
+    for (int ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
+        int ii_out = (ind2 + x2_begin) * size1;
+        int ii_in = (ind2 + a2_begin) * N1();
+        for (int ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
             ptr2[ii_out] = ptr1[ii_in];
             ii_in++;
             ii_out++;
@@ -371,12 +371,12 @@ void Mda::getChunk(Mda& ret, long i1, long i2, long size1, long size2)
     }
 }
 
-void Mda::getChunk(Mda& ret, long i1, long i2, long i3, long size1, long size2, long size3)
+void Mda::getChunk(Mda& ret, int i1, int i2, int i3, int size1, int size2, int size3)
 {
-    long a1_begin = i1;
-    long x1_begin = 0;
-    long a1_end = i1 + size1 - 1;
-    long x1_end = size1 - 1;
+    int a1_begin = i1;
+    int x1_begin = 0;
+    int a1_end = i1 + size1 - 1;
+    int x1_end = size1 - 1;
     if (a1_begin < 0) {
         a1_begin += 0 - a1_begin;
         x1_begin += 0 - a1_begin;
@@ -386,10 +386,10 @@ void Mda::getChunk(Mda& ret, long i1, long i2, long i3, long size1, long size2, 
         x1_end += N1() - 1 - a1_end;
     }
 
-    long a2_begin = i2;
-    long x2_begin = 0;
-    long a2_end = i2 + size2 - 1;
-    long x2_end = size2 - 1;
+    int a2_begin = i2;
+    int x2_begin = 0;
+    int a2_end = i2 + size2 - 1;
+    int x2_end = size2 - 1;
     if (a2_begin < 0) {
         a2_begin += 0 - a2_begin;
         x2_begin += 0 - a2_begin;
@@ -399,10 +399,10 @@ void Mda::getChunk(Mda& ret, long i1, long i2, long i3, long size1, long size2, 
         x2_end += N2() - 1 - a2_end;
     }
 
-    long a3_begin = i3;
-    long x3_begin = 0;
-    long a3_end = i3 + size3 - 1;
-    long x3_end = size3 - 1;
+    int a3_begin = i3;
+    int x3_begin = 0;
+    int a3_end = i3 + size3 - 1;
+    int x3_end = size3 - 1;
     if (a3_begin < 0) {
         a2_begin += 0 - a3_begin;
         x3_begin += 0 - a3_begin;
@@ -417,11 +417,11 @@ void Mda::getChunk(Mda& ret, long i1, long i2, long i3, long size1, long size2, 
     double* ptr1 = this->dataPtr();
     double* ptr2 = ret.dataPtr();
 
-    for (long ind3 = 0; ind3 <= a3_end - a3_begin; ind3++) {
-        for (long ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
-            long ii_out = (ind2 + x2_begin) * size1 + (ind3 + x3_begin) * size1 * size2;
-            long ii_in = (ind2 + a2_begin) * N1() + (ind3 + a3_begin) * N1() * N2();
-            for (long ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
+    for (int ind3 = 0; ind3 <= a3_end - a3_begin; ind3++) {
+        for (int ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
+            int ii_out = (ind2 + x2_begin) * size1 + (ind3 + x3_begin) * size1 * size2;
+            int ii_in = (ind2 + a2_begin) * N1() + (ind3 + a3_begin) * N1() * N2();
+            for (int ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
                 ptr2[ii_out] = ptr1[ii_in];
                 ii_in++;
                 ii_out++;
@@ -430,14 +430,14 @@ void Mda::getChunk(Mda& ret, long i1, long i2, long i3, long size1, long size2, 
     }
 }
 
-void Mda::setChunk(Mda& X, long i)
+void Mda::setChunk(Mda& X, int i)
 {
-    long size = X.totalSize();
+    int size = X.totalSize();
 
-    long a_begin = i;
-    long x_begin = 0;
-    long a_end = i + size - 1;
-    long x_end = size - 1;
+    int a_begin = i;
+    int x_begin = 0;
+    int a_end = i + size - 1;
+    int x_end = size - 1;
 
     if (a_begin < 0) {
         a_begin += 0 - a_begin;
@@ -451,21 +451,21 @@ void Mda::setChunk(Mda& X, long i)
     double* ptr1 = this->dataPtr();
     double* ptr2 = X.dataPtr();
 
-    long ii = 0;
-    for (long a = a_begin; a <= a_end; a++) {
+    int ii = 0;
+    for (int a = a_begin; a <= a_end; a++) {
         ptr1[a_begin + ii] = ptr2[x_begin + ii];
     }
 }
 
-void Mda::setChunk(Mda& X, long i1, long i2)
+void Mda::setChunk(Mda& X, int i1, int i2)
 {
-    long size1 = X.N1();
-    long size2 = X.N2();
+    int size1 = X.N1();
+    int size2 = X.N2();
 
-    long a1_begin = i1;
-    long x1_begin = 0;
-    long a1_end = i1 + size1 - 1;
-    long x1_end = size1 - 1;
+    int a1_begin = i1;
+    int x1_begin = 0;
+    int a1_end = i1 + size1 - 1;
+    int x1_end = size1 - 1;
     if (a1_begin < 0) {
         a1_begin += 0 - a1_begin;
         x1_begin += 0 - a1_begin;
@@ -475,10 +475,10 @@ void Mda::setChunk(Mda& X, long i1, long i2)
         x1_end += N1() - 1 - a1_end;
     }
 
-    long a2_begin = i2;
-    long x2_begin = 0;
-    long a2_end = i2 + size2 - 1;
-    long x2_end = size2 - 1;
+    int a2_begin = i2;
+    int x2_begin = 0;
+    int a2_end = i2 + size2 - 1;
+    int x2_end = size2 - 1;
     if (a2_begin < 0) {
         a2_begin += 0 - a2_begin;
         x2_begin += 0 - a2_begin;
@@ -491,10 +491,10 @@ void Mda::setChunk(Mda& X, long i1, long i2)
     double* ptr1 = this->dataPtr();
     double* ptr2 = X.dataPtr();
 
-    for (long ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
-        long ii_out = (ind2 + x2_begin) * size1;
-        long ii_in = (ind2 + a2_begin) * N1();
-        for (long ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
+    for (int ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
+        int ii_out = (ind2 + x2_begin) * size1;
+        int ii_in = (ind2 + a2_begin) * N1();
+        for (int ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
             ptr1[ii_in] = ptr2[ii_out];
             ii_in++;
             ii_out++;
@@ -502,16 +502,16 @@ void Mda::setChunk(Mda& X, long i1, long i2)
     }
 }
 
-void Mda::setChunk(Mda& X, long i1, long i2, long i3)
+void Mda::setChunk(Mda& X, int i1, int i2, int i3)
 {
-    long size1 = X.N1();
-    long size2 = X.N2();
-    long size3 = X.N3();
+    int size1 = X.N1();
+    int size2 = X.N2();
+    int size3 = X.N3();
 
-    long a1_begin = i1;
-    long x1_begin = 0;
-    long a1_end = i1 + size1 - 1;
-    long x1_end = size1 - 1;
+    int a1_begin = i1;
+    int x1_begin = 0;
+    int a1_end = i1 + size1 - 1;
+    int x1_end = size1 - 1;
     if (a1_begin < 0) {
         a1_begin += 0 - a1_begin;
         x1_begin += 0 - a1_begin;
@@ -521,10 +521,10 @@ void Mda::setChunk(Mda& X, long i1, long i2, long i3)
         x1_end += N1() - 1 - a1_end;
     }
 
-    long a2_begin = i2;
-    long x2_begin = 0;
-    long a2_end = i2 + size2 - 1;
-    long x2_end = size2 - 1;
+    int a2_begin = i2;
+    int x2_begin = 0;
+    int a2_end = i2 + size2 - 1;
+    int x2_end = size2 - 1;
     if (a2_begin < 0) {
         a2_begin += 0 - a2_begin;
         x2_begin += 0 - a2_begin;
@@ -534,10 +534,10 @@ void Mda::setChunk(Mda& X, long i1, long i2, long i3)
         x2_end += N2() - 1 - a2_end;
     }
 
-    long a3_begin = i3;
-    long x3_begin = 0;
-    long a3_end = i3 + size3 - 1;
-    long x3_end = size3 - 1;
+    int a3_begin = i3;
+    int x3_begin = 0;
+    int a3_end = i3 + size3 - 1;
+    int x3_end = size3 - 1;
     if (a3_begin < 0) {
         a2_begin += 0 - a3_begin;
         x3_begin += 0 - a3_begin;
@@ -550,11 +550,11 @@ void Mda::setChunk(Mda& X, long i1, long i2, long i3)
     double* ptr1 = this->dataPtr();
     double* ptr2 = X.dataPtr();
 
-    for (long ind3 = 0; ind3 <= a3_end - a3_begin; ind3++) {
-        for (long ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
-            long ii_out = (ind2 + x2_begin) * size1 + (ind3 + x3_begin) * size1 * size2;
-            long ii_in = (ind2 + a2_begin) * N1() + (ind3 + a3_begin) * N1() * N2();
-            for (long ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
+    for (int ind3 = 0; ind3 <= a3_end - a3_begin; ind3++) {
+        for (int ind2 = 0; ind2 <= a2_end - a2_begin; ind2++) {
+            int ii_out = (ind2 + x2_begin) * size1 + (ind3 + x3_begin) * size1 * size2;
+            int ii_in = (ind2 + a2_begin) * N1() + (ind3 + a3_begin) * N1() * N2();
+            for (int ind1 = 0; ind1 <= a1_end - a1_begin; ind1++) {
                 ptr1[ii_in] = ptr2[ii_out];
                 ii_in++;
                 ii_out++;
@@ -579,22 +579,22 @@ void Mda::reshape(int N1b, int N2b, int N3b, int N4b, int N5b, int N6b)
     d->m_dims[5] = N6b;
 }
 
-void Mda::set(double val, long i)
+void Mda::set(double val, int i)
 {
     d->m_data[i] = val;
 }
 
-void Mda::set(double val, long i1, long i2)
+void Mda::set(double val, int i1, int i2)
 {
     d->m_data[i1 + d->m_dims[0] * i2] = val;
 }
 
-void Mda::set(double val, long i1, long i2, long i3)
+void Mda::set(double val, int i1, int i2, int i3)
 {
     d->m_data[i1 + d->m_dims[0] * i2 + d->m_dims[0] * d->m_dims[1] * i3] = val;
 }
 
-void Mda::set(double val, long i1, long i2, long i3, long i4, long i5, long i6)
+void Mda::set(double val, int i1, int i2, int i3, int i4, int i5, int i6)
 {
     d->m_data[i1 + d->m_dims[0] * i2 + d->m_dims[0] * d->m_dims[1] * i3 + d->m_dims[0] * d->m_dims[1] * d->m_dims[2] * i4 + d->m_dims[0] * d->m_dims[1] * d->m_dims[2] * d->m_dims[3] * i5 + d->m_dims[0] * d->m_dims[1] * d->m_dims[2] * d->m_dims[3] * d->m_dims[4] * i6]
         = val;
@@ -623,7 +623,7 @@ void MdaPrivate::copy_from(const Mda& other)
     }
 }
 
-int MdaPrivate::determine_num_dims(long N1, long N2, long N3, long N4, long N5, long N6)
+int MdaPrivate::determine_num_dims(int N1, int N2, int N3, int N4, int N5, int N6)
 {
 #ifdef QT_CORE_LIB
     Q_UNUSED(N1)
@@ -640,22 +640,22 @@ int MdaPrivate::determine_num_dims(long N1, long N2, long N3, long N4, long N5, 
     return 2;
 }
 
-bool MdaPrivate::safe_index(long i)
+bool MdaPrivate::safe_index(int i)
 {
     return ((0 <= i) && (i < m_total_size));
 }
 
-bool MdaPrivate::safe_index(long i1, long i2)
+bool MdaPrivate::safe_index(int i1, int i2)
 {
     return ((0 <= i1) && (i1 < m_dims[0]) && (0 <= i2) && (i2 < m_dims[1]));
 }
 
-bool MdaPrivate::safe_index(long i1, long i2, long i3)
+bool MdaPrivate::safe_index(int i1, int i2, int i3)
 {
     return ((0 <= i1) && (i1 < m_dims[0]) && (0 <= i2) && (i2 < m_dims[1]) && (0 <= i3) && (i3 < m_dims[2]));
 }
 
-bool MdaPrivate::safe_index(long i1, long i2, long i3, long i4, long i5, long i6)
+bool MdaPrivate::safe_index(int i1, int i2, int i3, int i4, int i5, int i6)
 {
     return (
         (0 <= i1) && (i1 < m_dims[0]) && (0 <= i2) && (i2 < m_dims[1]) && (0 <= i3) && (i3 < m_dims[2]) && (0 <= i4) && (i4 < m_dims[3]) && (0 <= i5) && (i5 < m_dims[4]) && (0 <= i6) && (i6 < m_dims[5]));

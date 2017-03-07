@@ -52,7 +52,7 @@ bool isocluster_v2_Processor::run(const QMap<QString, QVariant>& params)
     opts.consolidation_factor = params.value("consolidation_factor", 0.9).toDouble();
     opts.isocut_threshold = params.value("isocut_threshold", 1).toDouble();
     opts.K_init = params.value("K_init", 200).toInt();
-    opts.time_segment_size = (long)params.value("time_segment_size", 0).toDouble(); //important to go to double first because of scientific notation
+    opts.time_segment_size = (int)params.value("time_segment_size", 0).toDouble(); //important to go to double first because of scientific notation
 
     return isocluster_v2(timeseries_path, detect_path, adjacency_matrix_path, firings_path, opts);
 }

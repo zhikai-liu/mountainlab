@@ -228,7 +228,7 @@ QString MLUtil::computeSha1SumOfFile(const QString& path)
     return ret;
     */
 }
-QString MLUtil::computeSha1SumOfFileHead(const QString& path, long num_bytes)
+QString MLUtil::computeSha1SumOfFileHead(const QString& path, int num_bytes)
 {
     return sumit(path, num_bytes, MLUtil::tempPath());
 }
@@ -403,7 +403,7 @@ double MLCompute::correlation(const QVector<double>& X1, const QVector<double>& 
 {
     if (X1.count() != X2.count())
         return 0;
-    long N = X1.count();
+    int N = X1.count();
     double mean1 = mean(X1);
     double stdev1 = stdev(X1);
     double mean2 = mean(X2);
@@ -412,24 +412,24 @@ double MLCompute::correlation(const QVector<double>& X1, const QVector<double>& 
         return 0;
     QVector<double> Y1(N);
     QVector<double> Y2(N);
-    for (long i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         Y1[i] = (X1[i] - mean1) / stdev1;
         Y2[i] = (X2[i] - mean2) / stdev2;
     }
     return dotProduct(Y1, Y2);
 }
 
-double MLCompute::norm(long N, const double* X)
+double MLCompute::norm(int N, const double* X)
 {
     return sqrt(dotProduct(N, X, X));
 }
 
-double MLCompute::dotProduct(long N, const double* X1, const double* X2)
+double MLCompute::dotProduct(int N, const double* X1, const double* X2)
 {
     return std::inner_product(X1, X1 + N, X2, 0.0);
 }
 
-double MLCompute::dotProduct(long N, const float* X1, const float* X2)
+double MLCompute::dotProduct(int N, const float* X1, const float* X2)
 {
 
     return std::inner_product(X1, X1 + N, X2, 0.0);
@@ -442,24 +442,24 @@ QString MLUtil::computeSha1SumOfString(const QString& str)
     return QString(hash.result().toHex());
 }
 
-double MLCompute::sum(long N, const double* X)
+double MLCompute::sum(int N, const double* X)
 {
     return std::accumulate(X, X + N, 0.0);
 }
 
-double MLCompute::mean(long N, const double* X)
+double MLCompute::mean(int N, const double* X)
 {
     if (!N)
         return 0;
     return sum(N, X) / N;
 }
 
-double MLCompute::max(long N, const double* X)
+double MLCompute::max(int N, const double* X)
 {
     return N ? *std::max_element(X, X + N) : 0;
 }
 
-double MLCompute::min(long N, const double* X)
+double MLCompute::min(int N, const double* X)
 {
     return N ? *std::min_element(X, X + N) : 0;
 }
@@ -470,6 +470,16 @@ QList<int> MLUtil::stringListToIntList(const QStringList& list)
     ret.reserve(list.size());
     foreach (QString str, list) {
         ret << str.toInt();
+    }
+    return ret;
+}
+
+QList<int> MLUtil::stringListToBigIntList(const QStringList& list)
+{
+    QList<int> ret;
+    ret.reserve(list.size());
+    foreach (QString str, list) {
+        ret << str.toLongLong();
     }
     return ret;
 }
@@ -589,29 +599,29 @@ bool MLUtil::writeByteArray(const QString& path, const QByteArray& X)
     return true;
 }
 
-double MLCompute::min(long N, const float* X)
+double MLCompute::min(int N, const float* X)
 {
     return N ? *std::min_element(X, X + N) : 0;
 }
 
-double MLCompute::max(long N, const float* X)
+double MLCompute::max(int N, const float* X)
 {
     return N ? *std::max_element(X, X + N) : 0;
 }
 
-double MLCompute::sum(long N, const float* X)
+double MLCompute::sum(int N, const float* X)
 {
     return std::accumulate(X, X + N, 0.0);
 }
 
-double MLCompute::mean(long N, const float* X)
+double MLCompute::mean(int N, const float* X)
 {
     if (!N)
         return 0;
     return sum(N, X) / N;
 }
 
-double MLCompute::norm(long N, const float* X)
+double MLCompute::norm(int N, const float* X)
 {
     return sqrt(dotProduct(N, X, X));
 }
@@ -699,7 +709,7 @@ QString system_call_return_output(QString cmd)
     return ret.trimmed();
 }
 
-QString locate_file_with_checksum(QString checksum, QString fcs, long size, bool allow_downloads)
+QString locate_file_with_checksum(QString checksum, QString fcs, int size, bool allow_downloads)
 {
     QString extra_args = "";
     if (!allow_downloads)
@@ -773,7 +783,7 @@ QString concatenate_files_to_temporary_file(QStringList file_paths)
     return tmp_fname;
 }
 
-QString parallel_download_file_from_prvfileserver_to_temp_dir(QString url, long size, int num_downloads)
+QString parallel_download_file_from_prvfileserver_to_temp_dir(QString url, int size, int num_downloads)
 {
 
     QString tmp_fname = CacheManager::globalInstance()->makeLocalFile() + ".parallel_download";
@@ -870,7 +880,7 @@ QString locate_prv(const QJsonObject& obj)
     QString path0 = obj["original_path"].toString();
     QString checksum0 = obj["original_checksum"].toString();
     QString fcs0 = obj["original_fcs"].toString();
-    long size0 = obj["original_size"].toVariant().toLongLong();
+    int size0 = obj["original_size"].toVariant().toLongLong();
     QString ret = locate_file_with_checksum(checksum0, fcs0, size0, false);
     if (ret.isEmpty()) {
         if (QFile::exists(path0)) {

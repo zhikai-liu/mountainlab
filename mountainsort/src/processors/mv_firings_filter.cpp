@@ -136,10 +136,10 @@ void define_shells(QVector<double>& shell_mins, QVector<double>& shell_maxs, QVe
         while (shell_increment * num_bins <= max_clip_peaks)
             num_bins++;
         num_bins++;
-        long counts[num_bins];
+        int counts[num_bins];
         for (int b = 0; b < num_bins; b++)
             counts[b] = 0;
-        long tot = 0;
+        int tot = 0;
         for (int i = 0; i < clip_peaks.count(); i++) {
             if (clip_peaks[i] > 0) {
                 int b = (int)(clip_peaks[i] / shell_increment);
@@ -190,10 +190,10 @@ void define_shells(QVector<double>& shell_mins, QVector<double>& shell_maxs, QVe
         while (shell_increment * num_bins <= -min_clip_peaks)
             num_bins++;
         num_bins++;
-        long counts[num_bins];
+        int counts[num_bins];
         for (int b = 0; b < num_bins; b++)
             counts[b] = 0;
-        long tot = 0;
+        int tot = 0;
         for (int i = 0; i < clip_peaks.count(); i++) {
             if (clip_peaks[i] < 0) {
                 int b = (int)(-clip_peaks[i] / shell_increment);

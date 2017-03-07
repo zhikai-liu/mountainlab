@@ -50,7 +50,7 @@ bool synthesize1_Processor::run(const QMap<QString, QVariant>& params)
     QString firings_true_path = params["firings_true"].toString();
 
     synthesize1_opts opts;
-    opts.N = (long)params["N"].toDouble(); //we need to use double here because string might be something like 1e+6
+    opts.N = (int)params["N"].toDouble(); //we need to use double here because string might be something like 1e+6
     opts.noise_level = params.value("noise_level", 1).toDouble();
     opts.waveforms_oversamp = params.value("waveforms_oversamp").toInt();
     opts.samplerate = params.value("samplerate", 30000).toDouble();

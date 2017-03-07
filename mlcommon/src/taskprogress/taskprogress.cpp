@@ -232,6 +232,7 @@ namespace ChangeLog {
         virtual void exec(TaskProgressModelPrivate* model, const QPersistentModelIndex& index) = 0;
         virtual bool merge(Change* other)
         {
+            Q_UNUSED(other);
             return false;
         }
     };

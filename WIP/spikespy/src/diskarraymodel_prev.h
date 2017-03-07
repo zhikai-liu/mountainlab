@@ -18,11 +18,11 @@ public:
     QString path();
     bool fileHierarchyExists();
     void createFileHierarchyIfNeeded();
-    double value(long ch, long t);
+    double value(int ch, int t);
 
-    virtual Mda loadData(long scale, long t1, long t2);
-    virtual long size(long dim);
-    virtual long dim3();
+    virtual Mda loadData(int scale, int t1, int t2);
+    virtual int size(int dim);
+    virtual int dim3();
 
 private:
     DiskArrayModelPrivate* d;

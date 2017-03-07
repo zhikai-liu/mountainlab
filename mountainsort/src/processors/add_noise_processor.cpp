@@ -40,7 +40,7 @@ bool add_noise_Processor::run(const QMap<QString, QVariant>& params)
     Mda32 X(input);
     Mda32 noise(X.N1(), X.N2());
     generate_randn(X.totalSize(), noise.dataPtr());
-    for (long i = 0; i < X.totalSize(); i++) {
+    for (int i = 0; i < X.totalSize(); i++) {
         X.set(X.get(i) + noise.get(i) * noise_level, i);
     }
     return X.write32(output);

@@ -18,15 +18,15 @@ bool mask_out_artifacts(const QString& timeseries_path, const QString& timeserie
     status_timer.start();
 
     DiskReadMda X(timeseries_path);
-    long M = X.N1();
-    long N = X.N2();
+    int M = X.N1();
+    int N = X.N2();
 
     //compute norms of chunks
     Mda norms(M, N / interval_size);
-    for (long i = 0; i < N / interval_size; i++) {
-        long timepoint = i * interval_size;
+    for (int i = 0; i < N / interval_size; i++) {
+        int timepoint = i * interval_size;
         if (status_timer.elapsed() > 5000) {
-            printf("mask_out_artifacts compute_norms: %ld/%ld (%d%%)\n", timepoint, N, (int)(timepoint * 100.0 / N));
+            printf("mask_out_artifacts compute_norms: %d/%d (%d%%)\n", timepoint, N, (int)(timepoint * 100.0 / N));
             status_timer.restart();
         }
         Mda chunk;
@@ -42,11 +42,11 @@ bool mask_out_artifacts(const QString& timeseries_path, const QString& timeserie
 
     //determine which chunks to use
     QVector<int> use_it(N / interval_size + 1);
-    for (long i = 0; i < use_it.count(); i++)
+    for (int i = 0; i < use_it.count(); i++)
         use_it[i] = 1;
     for (int m = 0; m < M; m++) {
         QVector<double> vals;
-        for (long i = 0; i < norms.N2(); i++) {
+        for (int i = 0; i < norms.N2(); i++) {
             vals << norms.get(m, i);
         }
         double sigma0 = MLCompute::stdev(vals);
@@ -62,14 +62,14 @@ bool mask_out_artifacts(const QString& timeseries_path, const QString& timeserie
     }
 
     //write the data
-    long num_timepoints_used = 0;
-    long num_timepoints_not_used = 0;
+    int num_timepoints_used = 0;
+    int num_timepoints_not_used = 0;
     DiskWriteMda Y;
     Y.open(MDAIO_TYPE_FLOAT32, timeseries_out_path, M, N);
-    for (long i = 0; i < N / interval_size; i++) {
-        long timepoint = i * interval_size;
+    for (int i = 0; i < N / interval_size; i++) {
+        int timepoint = i * interval_size;
         if (status_timer.elapsed() > 5000) {
-            printf("mask_out_artifacts write data: %ld/%ld (%d%%)\n", timepoint, N, (int)(timepoint * 100.0 / N));
+            printf("mask_out_artifacts write data: %d/%d (%d%%)\n", timepoint, N, (int)(timepoint * 100.0 / N));
             status_timer.restart();
         }
         Mda chunk;

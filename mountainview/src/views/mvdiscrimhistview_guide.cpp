@@ -171,8 +171,8 @@ void MVDiscrimHistViewGuideComputer::compute()
 
     QMap<QString, DiscrimHistogram*> hist_lookup;
 
-    long LL = output.N2();
-    for (long i = 0; i < LL; i++) {
+    int LL = output.N2();
+    for (int i = 0; i < LL; i++) {
         int k1 = output.value(0, i);
         int k2 = output.value(1, i);
         int k0 = output.value(2, i);

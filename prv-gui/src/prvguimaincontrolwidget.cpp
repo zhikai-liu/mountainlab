@@ -122,7 +122,7 @@ void PrvGuiMainControlWidget::slot_upload()
             MLNetwork::PrvParallelUploader* uploader = PrvUpload::initiateUploadToServer(dlg.selectedServer(), prvs[i]);
             if (uploader) {
                 uploader->setProperty("checksum", prvs[i].checksum);
-                uploader->setProperty("size", (long long)prvs[i].size);
+                uploader->setProperty("size", (int)prvs[i].size);
                 uploader->setProperty("original_path", prvs[i].original_path);
                 uploader->setProperty("server", dlg.selectedServer());
                 QObject::connect(uploader, SIGNAL(finished()), this, SLOT(slot_uploader_finished()));
@@ -176,7 +176,7 @@ void PrvGuiMainControlWidget::slot_uploader_finished()
     if (!uploader)
         return;
     QString checksum = uploader->property("checksum").toString();
-    long size = uploader->property("checksum").toLongLong();
+    int size = uploader->property("checksum").toLongLong();
     QString original_path = uploader->property("original_path").toString();
     QString server = uploader->property("server").toString();
     d->m_main_window->searchAgain(checksum, size, original_path, server);

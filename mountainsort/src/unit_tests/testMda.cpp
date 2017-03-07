@@ -21,7 +21,7 @@ static double max_difference(const Mda& X, const Mda& Y)
     if (X.N6() != Y.N6())
         return -1;
     double max_diff = 0;
-    for (long i = 0; i < X.totalSize(); i++) {
+    for (int i = 0; i < X.totalSize(); i++) {
         double diff = X.value(i) - Y.value(i);
         if (fabs(diff) > max_diff)
             max_diff = diff;
@@ -37,7 +37,7 @@ static void fill_mda(Mda& X, const int M, const int N)
             X.set(1 + sin(m + sin(n)), m, n);
 }
 
-static int num_dims(const long dims[6])
+static int num_dims(const int dims[6])
 {
     for (int i = 5; i >= 0; --i)
         if (dims[i] > 1)
@@ -45,10 +45,10 @@ static int num_dims(const long dims[6])
     return 2;
 }
 
-static bool verify_sizes(const Mda& m, const long dims[6], const QString& message)
+static bool verify_sizes(const Mda& m, const int dims[6], const QString& message)
 {
     bool result = true;
-    long totalSize = 1;
+    int totalSize = 1;
     for (int k = 0; k < 6; ++k) {
         totalSize *= dims[k];
         if (m.size(k) != dims[k])
@@ -74,8 +74,8 @@ void TestMda::testSizes()
 {
     qsrand(time(0));
     for (int i = 0; i < 100; ++i) {
-        long dims[6];
-        long totalSize = 1;
+        int dims[6];
+        int totalSize = 1;
         for (int k = 0; k < 6; ++k) {
             dims[k] = qrand() % 10 + 1;
             totalSize *= dims[k];

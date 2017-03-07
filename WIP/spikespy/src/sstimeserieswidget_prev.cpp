@@ -612,7 +612,7 @@ void SSTimeSeriesWidgetPrivate::update_info(SSAbstractView* V)
         double x0 = V->currentX();
         double t0 = V->currentTimepoint();
         if ((x0 >= 0) && (t0 >= 0)) {
-            str = QString("Time = %1 (%2)").arg(V->getTimeLabelForX(x0)).arg((long)t0 + 1);
+            str = QString("Time = %1 (%2)").arg(V->getTimeLabelForX(x0)).arg((int)t0 + 1);
 
             //str+=QString("; Value = %1  ").arg(V->currentValue());
         }

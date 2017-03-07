@@ -73,7 +73,7 @@ void PrvGuiWorkerThread::run()
         PrvRecord prv = prvs[i];
         QString prv_code = to_prv_code(prv);
         QString name = QFileInfo(prv.original_path).fileName();
-        long size = prv.size;
+        int size = prv.size;
         {
             task.log() << "check if on local disk" << name << size;
             QString local_path = prv.find_local_file();
@@ -260,7 +260,7 @@ QVariantMap PrvRecord::toVariantMap() const
 
     ret["checksum"] = this->checksum;
     ret["fcs"] = this->fcs;
-    ret["size"] = (long long)this->size;
+    ret["size"] = (int)this->size;
     ret["original_path"] = this->original_path;
 
     QVariantList processes0;

@@ -55,7 +55,7 @@ public:
     QString prvFilePath() const;
     QString checksum() const;
     QString fcs() const;
-    long size() const;
+    int size() const;
     QString originalPath() const;
 
 private:

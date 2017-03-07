@@ -25,13 +25,13 @@ public:
     void setPath(const QString& path);
     QString path() const;
 
-    long N1();
-    long N2();
-    long N3();
+    int N1();
+    int N2();
+    int N3();
     QDateTime fileLastModified();
 
     ///Retrieve a chunk of the vectorized data of size 1xN starting at position i
-    bool readChunk(Mda& X, long i, long size) const;
+    bool readChunk(Mda& X, int i, int size) const;
 
 private:
     RemoteReadMdaPrivate* d;

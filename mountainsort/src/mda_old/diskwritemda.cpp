@@ -13,7 +13,7 @@ public:
     MDAIO_HEADER m_header;
     FILE* m_file;
 
-    int determine_ndims(long N1, long N2, long N3, long N4, long N5, long N6);
+    int determine_ndims(int N1, int N2, int N3, int N4, int N5, int N6);
 };
 
 DiskWriteMda::DiskWriteMda()
@@ -23,7 +23,7 @@ DiskWriteMda::DiskWriteMda()
     d->m_file = 0;
 }
 
-DiskWriteMda::DiskWriteMda(int data_type, const QString& path, long N1, long N2, long N3, long N4, long N5, long N6)
+DiskWriteMda::DiskWriteMda(int data_type, const QString& path, int N1, int N2, int N3, int N4, int N5, int N6)
 {
     d = new DiskWriteMdaPrivate;
     d->q = this;
@@ -37,7 +37,7 @@ DiskWriteMda::~DiskWriteMda()
     delete d;
 }
 
-bool DiskWriteMda::open(int data_type, const QString& path, long N1, long N2, long N3, long N4, long N5, long N6)
+bool DiskWriteMda::open(int data_type, const QString& path, int N1, int N2, int N3, int N4, int N5, int N6)
 {
     if (d->m_file)
         return false; //can't open twice!
@@ -67,8 +67,8 @@ bool DiskWriteMda::open(int data_type, const QString& path, long N1, long N2, lo
     if (!d->m_file)
         return false;
 
-    long NN = N1 * N2 * N3 * N4 * N5 * N6;
-    //long buf_size=1e6;
+    int NN = N1 * N2 * N3 * N4 * N5 * N6;
+    //int buf_size=1e6;
 
     //write the header
     mda_write_header(&d->m_header, d->m_file);
@@ -77,9 +77,9 @@ bool DiskWriteMda::open(int data_type, const QString& path, long N1, long N2, lo
 	//fill it all with zeros!
 	float *zeros=(float *)malloc(sizeof(float)*buf_size);
 	for (int i=0; i<buf_size; i++) zeros[i]=0;
-	long i=0;
+	int i=0;
 	while (i<NN) {
-		long num_to_write=NN-i;
+		int num_to_write=NN-i;
 		if (num_to_write>buf_size) num_to_write=buf_size;
 		mda_write_float32(zeros,&d->m_header,num_to_write,d->m_file);
 		i+=buf_size;
@@ -104,59 +104,59 @@ void DiskWriteMda::close()
     }
 }
 
-long DiskWriteMda::N1()
+int DiskWriteMda::N1()
 {
     if (!d->m_file)
         return 0;
     return d->m_header.dims[0];
 }
 
-long DiskWriteMda::N2()
+int DiskWriteMda::N2()
 {
     if (!d->m_file)
         return 0;
     return d->m_header.dims[1];
 }
 
-long DiskWriteMda::N3()
+int DiskWriteMda::N3()
 {
     if (!d->m_file)
         return 0;
     return d->m_header.dims[2];
 }
 
-long DiskWriteMda::N4()
+int DiskWriteMda::N4()
 {
     if (!d->m_file)
         return 0;
     return d->m_header.dims[3];
 }
 
-long DiskWriteMda::N5()
+int DiskWriteMda::N5()
 {
     if (!d->m_file)
         return 0;
     return d->m_header.dims[4];
 }
 
-long DiskWriteMda::N6()
+int DiskWriteMda::N6()
 {
     if (!d->m_file)
         return 0;
     return d->m_header.dims[5];
 }
 
-long DiskWriteMda::totalSize()
+int DiskWriteMda::totalSize()
 {
     return N1() * N2() * N3() * N4() * N5() * N6();
 }
 
-void DiskWriteMda::writeChunk(Mda& X, long i)
+void DiskWriteMda::writeChunk(Mda& X, int i)
 {
     if (!d->m_file)
         return;
     fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * i, SEEK_SET);
-    long size = X.totalSize();
+    int size = X.totalSize();
     if (i + size > this->totalSize())
         size = this->totalSize() - i;
     if (size > 0) {
@@ -164,7 +164,7 @@ void DiskWriteMda::writeChunk(Mda& X, long i)
     }
 }
 
-void DiskWriteMda::writeChunk(Mda& X, long i1, long i2)
+void DiskWriteMda::writeChunk(Mda& X, int i1, int i2)
 {
     if ((X.N1() == N1()) && (i1 == 0)) {
         writeChunk(X, i1 + this->N1() * i2);
@@ -174,7 +174,7 @@ void DiskWriteMda::writeChunk(Mda& X, long i1, long i2)
     }
 }
 
-void DiskWriteMda::writeChunk(Mda& X, long i1, long i2, long i3)
+void DiskWriteMda::writeChunk(Mda& X, int i1, int i2, int i3)
 {
     if ((X.N1() == N1()) && (X.N2() == N2()) && (i1 == 0) && (i2 == 0)) {
         writeChunk(X, i1 + this->N1() * i2 + this->N1() * this->N2() * i3);
@@ -184,7 +184,7 @@ void DiskWriteMda::writeChunk(Mda& X, long i1, long i2, long i3)
     }
 }
 
-int DiskWriteMdaPrivate::determine_ndims(long N1, long N2, long N3, long N4, long N5, long N6)
+int DiskWriteMdaPrivate::determine_ndims(int N1, int N2, int N3, int N4, int N5, int N6)
 {
 #ifdef QT_CORE_LIB
     Q_UNUSED(N1)

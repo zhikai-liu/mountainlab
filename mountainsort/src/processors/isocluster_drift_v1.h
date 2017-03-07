@@ -17,7 +17,7 @@ struct isocluster_drift_v1_opts {
     double consolidation_factor;
     double isocut_threshold = 1.5;
     int K_init = 200;
-    long segment_size = 30000 * 60 * 5;
+    int segment_size = 30000 * 60 * 5;
 };
 
 namespace Isocluster_drift_v1 {

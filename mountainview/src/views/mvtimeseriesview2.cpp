@@ -17,7 +17,7 @@
 #include <mvcontext.h>
 
 struct mvtsv_channel {
-    long channel;
+    int channel;
     QString label;
     QRectF geometry;
 };
@@ -172,7 +172,7 @@ void MVTimeSeriesView2::paintContent(QPainter* painter)
         int M = d->m_num_channels;
         d->m_layout_needed = false;
         d->m_channels = d->make_channel_layout(M);
-        for (long m = 0; m < M; m++) {
+        for (int m = 0; m < M; m++) {
             mvtsv_channel* CH = &d->m_channels[m];
             CH->channel = m;
             CH->label = QString("%1").arg(m + 1);
@@ -246,7 +246,7 @@ void MVTimeSeriesView2Private::paint_channel_labels(QPainter* painter, double W,
     font.setPixelSize(13);
     painter->setFont(font);
 
-    long M = m_num_channels;
+    int M = m_num_channels;
     for (int m = 0; m < M; m++) {
         double ypix = val2ypix(m, 0);
         QRectF rect(0, ypix - 30, q->contentGeometry().left() - 5, 60);

@@ -29,9 +29,9 @@ public:
     QString m_mlproxy_url;
 
     QString get_multiscale_fname();
-    bool get_data(Mda& min, Mda& max, long t1, long t2, long ds_factor);
+    bool get_data(Mda& min, Mda& max, int t1, int t2, int ds_factor);
 
-    static bool is_power_of_3(long N);
+    static bool is_power_of_3(int N);
 };
 
 MultiScaleTimeSeries::MultiScaleTimeSeries()
@@ -119,24 +119,24 @@ void MultiScaleTimeSeries::initialize()
     }
 }
 
-long MultiScaleTimeSeries::N1()
+int MultiScaleTimeSeries::N1()
 {
     return d->m_data.N1();
 }
 
-long MultiScaleTimeSeries::N2()
+int MultiScaleTimeSeries::N2()
 {
     return d->m_data.N2();
 }
 
-bool MultiScaleTimeSeries::getData(Mda& min, Mda& max, long t1, long t2, long ds_factor)
+bool MultiScaleTimeSeries::getData(Mda& min, Mda& max, int t1, int t2, int ds_factor)
 {
     return d->get_data(min, max, t1, t2, ds_factor);
 }
 
 double MultiScaleTimeSeries::minimum()
 {
-    long ds_factor = MultiScaleTimeSeries::smallest_power_of_3_larger_than(this->N2() / 3);
+    int ds_factor = MultiScaleTimeSeries::smallest_power_of_3_larger_than(this->N2() / 3);
     Mda min, max;
     this->getData(min, max, 0, 0, ds_factor);
     return min.minimum();
@@ -144,24 +144,24 @@ double MultiScaleTimeSeries::minimum()
 
 double MultiScaleTimeSeries::maximum()
 {
-    long ds_factor = MultiScaleTimeSeries::smallest_power_of_3_larger_than(this->N2() / 3);
+    int ds_factor = MultiScaleTimeSeries::smallest_power_of_3_larger_than(this->N2() / 3);
     Mda min, max;
     this->getData(min, max, 0, 0, ds_factor);
     return max.maximum();
 }
 
-long MultiScaleTimeSeries::smallest_power_of_3_larger_than(long N)
+int MultiScaleTimeSeries::smallest_power_of_3_larger_than(int N)
 {
-    long ret = 1;
+    int ret = 1;
     while (ret < N) {
         ret *= 3;
     }
     return ret;
 }
 
-bool MultiScaleTimeSeriesPrivate::get_data(Mda& min, Mda& max, long t1, long t2, long ds_factor)
+bool MultiScaleTimeSeriesPrivate::get_data(Mda& min, Mda& max, int t1, int t2, int ds_factor)
 {
-    long M, N, N2;
+    int M, N, N2;
     {
         if (!m_initialized) {
             qWarning() << "Cannot get_data. Multiscale timeseries is not initialized!";
@@ -184,7 +184,7 @@ bool MultiScaleTimeSeriesPrivate::get_data(Mda& min, Mda& max, long t1, long t2,
         min.allocate(M, t2 - t1 + 1);
         max.allocate(M, t2 - t1 + 1);
         Mda min0, max0;
-        long s1 = t1, s2 = t2;
+        int s1 = t1, s2 = t2;
         if (s1 < 0)
             s1 = 0;
         if (s2 >= N2 / ds_factor)
@@ -217,13 +217,13 @@ bool MultiScaleTimeSeriesPrivate::get_data(Mda& min, Mda& max, long t1, long t2,
 
         //m_multiscale_data.setRemoteDataType(m_remote_data_type);
 
-        long t_offset_min = 0;
-        long ds_factor_0 = 3;
+        int t_offset_min = 0;
+        int ds_factor_0 = 3;
         while (ds_factor_0 < ds_factor) {
             t_offset_min += 2 * (N / ds_factor_0);
             ds_factor_0 *= 3;
         }
-        long t_offset_max = t_offset_min + N / ds_factor;
+        int t_offset_max = t_offset_min + N / ds_factor;
 
         m_multiscale_data.readChunk(min, 0, t1 + t_offset_min, M, t2 - t1 + 1);
         m_multiscale_data.readChunk(max, 0, t1 + t_offset_max, M, t2 - t1 + 1);
@@ -236,7 +236,7 @@ bool MultiScaleTimeSeriesPrivate::get_data(Mda& min, Mda& max, long t1, long t2,
     return true;
 }
 
-bool MultiScaleTimeSeriesPrivate::is_power_of_3(long N)
+bool MultiScaleTimeSeriesPrivate::is_power_of_3(int N)
 {
     double val = N;
     while (val > 1) {

@@ -45,8 +45,8 @@ bool concat_timeseries_Processor::run(const QMap<QString, QVariant>& params)
     }
 
     DiskReadMda32 X0(timeseries[0]);
-    long M = X0.N1();
-    long N = 0;
+    int M = X0.N1();
+    int N = 0;
 
     for (int i = 0; i < timeseries.count(); i++) {
         DiskReadMda32 X1(timeseries[i]);
@@ -59,16 +59,16 @@ bool concat_timeseries_Processor::run(const QMap<QString, QVariant>& params)
 
     DiskWriteMda Y(X0.mdaioHeader().data_type, timeseries_concat, M, N);
 
-    long N_offset = 0;
+    int N_offset = 0;
     for (int i = 0; i < timeseries.count(); i++) {
         DiskReadMda32 X1(timeseries[i]);
         Mda32 chunk;
-        printf("Reading %ld x %ld\n", M, X1.N2());
+        printf("Reading %d x %lld\n", M, X1.N2());
         if (!X1.readChunk(chunk, 0, 0, M, X1.N2())) {
             qWarning() << "Error reading chunk.";
             return false;
         }
-        printf("Writing %ld x %ld\n", M, X1.N2());
+        printf("Writing %d x %lld\n", M, X1.N2());
         if (!Y.writeChunk(chunk, 0, N_offset)) {
             qWarning() << "Error writing chunk.";
             return false;
@@ -119,8 +119,8 @@ bool split_timeseries_Processor::run(const QMap<QString, QVariant>& params)
     }
 
     DiskReadMda32 X(timeseries);
-    long M = X.N1();
-    long N_offset = 0;
+    int M = X.N1();
+    int N_offset = 0;
     for (int i = 0; i < raw_timeseries.count(); i++) {
         DiskReadMda R(raw_timeseries[i]);
         if (R.N1() != M) {
@@ -128,12 +128,12 @@ bool split_timeseries_Processor::run(const QMap<QString, QVariant>& params)
             return false;
         }
         Mda32 chunk;
-        printf("Reading %ld x %ld...\n", M, R.N2());
+        printf("Reading %d x %lld...\n", M, R.N2());
         if (!X.readChunk(chunk, 0, N_offset, M, R.N2())) {
             qWarning() << "Problem reading chunk.";
             return false;
         }
-        printf("Writing %ld x %ld...\n", M, R.N2());
+        printf("Writing %d x %lld...\n", M, R.N2());
         if (!chunk.write32(timeseries_split[i])) {
             qWarning() << "Problem writing chunk.";
             return false;
@@ -184,30 +184,30 @@ bool split_firings_Processor::run(const QMap<QString, QVariant>& params)
     }
 
     Mda F(firings);
-    QVector<long> rounded_timepoints;
-    for (long i = 0; i < F.N2(); i++) {
-        rounded_timepoints << (long)F.value(1, i);
+    QVector<int> rounded_timepoints;
+    for (int i = 0; i < F.N2(); i++) {
+        rounded_timepoints << (int)F.value(1, i);
     }
-    long N_offset = 0;
+    int N_offset = 0;
     for (int i = 0; i < raw_timeseries.count(); i++) {
         DiskReadMda R(raw_timeseries[i]);
-        long min_timepoint = N_offset + 1;
-        long max_timepoint = N_offset + R.N2();
+        int min_timepoint = N_offset + 1;
+        int max_timepoint = N_offset + R.N2();
 
-        QVector<long> inds_to_use;
-        for (long j = 0; j < rounded_timepoints.count(); j++) {
+        QVector<int> inds_to_use;
+        for (int j = 0; j < rounded_timepoints.count(); j++) {
             if ((rounded_timepoints[j] >= min_timepoint) && (rounded_timepoints[j] <= max_timepoint)) {
                 inds_to_use << j;
             }
         }
         Mda F2(F.N1(), inds_to_use.count());
-        for (long j = 0; j < inds_to_use.count(); j++) {
+        for (int j = 0; j < inds_to_use.count(); j++) {
             for (int k = 0; k < F.N1(); k++) {
                 F2.setValue(F.value(k, inds_to_use[j]), k, j);
             }
             F2.setValue(F2.value(1, j) - N_offset, 1, j);
         }
-        printf("Writing %ld x %ld\n", F2.N1(), F2.N2());
+        printf("Writing %lld x %lld\n", F2.N1(), F2.N2());
         F2.write64(firings_split[i]);
 
         N_offset += R.N2();

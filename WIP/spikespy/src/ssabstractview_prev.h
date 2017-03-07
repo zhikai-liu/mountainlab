@@ -36,7 +36,7 @@ public:
     Vec2 selectionRange() const;
     void setSelectionRange(const Vec2& range);
     QString getTimeLabelForX(double x);
-    long getTimepointForX(int x);
+    int getTimepointForX(int x);
     void enableSignals();
     void disableSignals();
     void setTimelineVisible(bool val);

@@ -19,15 +19,15 @@
 #define PANEL_HEIGHT_PER_CHANNEL 30
 #define MIN_PANEL_HEIGHT 600
 #define MAX_PANEL_HEIGHT 1800
-#define PANEL_HEIGHT(M) (long) qMin(MAX_PANEL_HEIGHT * 1.0, qMax(MIN_PANEL_HEIGHT * 1.0, PANEL_HEIGHT_PER_CHANNEL * M * 1.0))
+#define PANEL_HEIGHT(M) (int) qMin(MAX_PANEL_HEIGHT * 1.0, qMax(MIN_PANEL_HEIGHT * 1.0, PANEL_HEIGHT_PER_CHANNEL * M * 1.0))
 
 #define MAX_NUM_IMAGE_PIXELS 50 * 1e6
 
 struct ImagePanel {
-    long ds_factor;
-    long panel_width;
-    long panel_num_points;
-    long index;
+    int ds_factor;
+    int panel_width;
+    int panel_num_points;
+    int index;
     double amp_factor;
     QImage image;
     Mda min_data, max_data;
@@ -109,9 +109,9 @@ QImage MVTimeSeriesRenderManager::getImage(double t1, double t2, double amp_fact
     ret.fill(transparent);
     QPainter painter(&ret);
 
-    long ds_factor = 1;
-    long panel_width = PANEL_WIDTH;
-    long panel_num_points = PANEL_NUM_POINTS;
+    int ds_factor = 1;
+    int panel_width = PANEL_WIDTH;
+    int panel_num_points = PANEL_NUM_POINTS;
     //points per pixel should be around 1
     while (((t2 - t1) / ds_factor) / W > 3) {
         ds_factor *= 3;
@@ -129,9 +129,9 @@ QImage MVTimeSeriesRenderManager::getImage(double t1, double t2, double amp_fact
 
     d->m_visible_minimum = d->m_visible_maximum = 0;
 
-    long ind1 = (long)(t1 / (ds_factor * panel_num_points));
-    long ind2 = (long)(t2 / (ds_factor * panel_num_points));
-    for (long iii = ind1; iii <= ind2; iii++) {
+    int ind1 = (int)(t1 / (ds_factor * panel_num_points));
+    int ind2 = (int)(t2 / (ds_factor * panel_num_points));
+    for (int iii = ind1; iii <= ind2; iii++) {
         ImagePanel p;
         p.amp_factor = amp_factor;
         p.ds_factor = ds_factor;
@@ -257,7 +257,7 @@ ImagePanel* MVTimeSeriesRenderManagerPrivate::closest_ancestor_panel(ImagePanel 
     if (candidates.isEmpty())
         return 0;
     ImagePanel* ret = candidates[0];
-    long best_ds_factor = ret->ds_factor;
+    int best_ds_factor = ret->ds_factor;
     for (int i = 0; i < candidates.count(); i++) {
         if (candidates[i]->ds_factor < best_ds_factor) {
             ret = candidates[i];
@@ -284,7 +284,7 @@ void MVTimeSeriesRenderManagerPrivate::cleanup_images(double t1, double t2, doub
     }
 }
 
-QColor MVTimeSeriesRenderManagerThread::get_channel_color(long m)
+QColor MVTimeSeriesRenderManagerThread::get_channel_color(int m)
 {
     if (channel_colors.isEmpty())
         return Qt::black;
@@ -293,7 +293,7 @@ QColor MVTimeSeriesRenderManagerThread::get_channel_color(long m)
 
 void MVTimeSeriesRenderManagerThread::run()
 {
-    long M = ts.N1();
+    int M = ts.N1();
     if (!M)
         return;
 
@@ -310,8 +310,8 @@ void MVTimeSeriesRenderManagerThread::run()
     QPainter painter(&image0);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    long t1 = index * panel_num_points;
-    long t2 = (index + 1) * panel_num_points;
+    int t1 = index * panel_num_points;
+    int t2 = (index + 1) * panel_num_points;
 
     Mda Xmin, Xmax;
     ts.getData(Xmin, Xmax, t1, t2, ds_factor);
@@ -321,7 +321,7 @@ void MVTimeSeriesRenderManagerThread::run()
 
     double space = 0;
     double channel_height = (PANEL_HEIGHT(M) - (M - 1) * space) / M;
-    long y0 = 0;
+    int y0 = 0;
     QPen pen = painter.pen();
     for (int m = 0; m < M; m++) {
         if (MLUtil::threadInterruptRequested())
@@ -333,7 +333,7 @@ void MVTimeSeriesRenderManagerThread::run()
         QRectF geom(0, y0, panel_width, channel_height);
         /*
         QPainterPath path;
-        for (long ii = t1; ii <= t2; ii++) {
+        for (int ii = t1; ii <= t2; ii++) {
             double val_min = Xmin.value(m, ii - t1);
             double val_max = Xmax.value(m, ii - t1);
             double pctx = (ii - t1) * 1.0 / (t2 - t1);
@@ -351,7 +351,7 @@ void MVTimeSeriesRenderManagerThread::run()
         */
         QPainterPath path;
         QPointF first;
-        for (long ii = t1; ii <= t2; ii++) {
+        for (int ii = t1; ii <= t2; ii++) {
             double val_min = Xmin.value(m, ii - t1);
             double pctx = (ii - t1) * 1.0 / (t2 - t1);
             double pcty_min = 1 - (val_min * amp_factor + 1) / 2;
@@ -364,7 +364,7 @@ void MVTimeSeriesRenderManagerThread::run()
                 path.lineTo(pt_min);
         }
         if (ds_factor > 1) {
-            for (long ii = t2; ii >= t1; ii--) {
+            for (int ii = t2; ii >= t1; ii--) {
                 double val_max = Xmax.value(m, ii - t1);
                 double pctx = (ii - t1) * 1.0 / (t2 - t1);
                 double pcty_max = 1 - (val_max * amp_factor + 1) / 2;

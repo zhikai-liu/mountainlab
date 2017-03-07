@@ -33,53 +33,53 @@ void PCASolver::setComponentCount(int c)
     d->m_component_count = c;
 }
 
-float vector_norm(long N, float* v)
+float vector_norm(int N, float* v)
 {
     float norm = 0;
-    for (long j = 0; j < N; j++)
+    for (int j = 0; j < N; j++)
         norm += v[j] * v[j];
     norm = sqrt(norm);
     return norm;
 }
-void define_random_vector(long N, float* v)
+void define_random_vector(int N, float* v)
 {
-    for (long j = 0; j < N; j++) {
+    for (int j = 0; j < N; j++) {
         v[j] = (qrand() * 1.0 / RAND_MAX) * 2 - 1;
     }
 }
-void normalize(long N, float* v)
+void normalize(int N, float* v)
 {
     float norm = vector_norm(N, v);
     if (norm == 0)
         return;
-    for (long j = 0; j < N; j++)
+    for (int j = 0; j < N; j++)
         v[j] /= norm;
 }
-float inner_product(long N, float* v, float* w)
+float inner_product(int N, float* v, float* w)
 {
     float ret = 0;
-    for (long j = 0; j < N; j++)
+    for (int j = 0; j < N; j++)
         ret += v[j] * w[j];
     return ret;
 }
-void subtract_component(long N, float* v, float* comp)
+void subtract_component(int N, float* v, float* comp)
 {
     float ip = inner_product(N, v, comp);
-    for (long j = 0; j < N; j++) {
+    for (int j = 0; j < N; j++) {
         v[j] -= ip * comp[j];
     }
 }
-float inner_product_with_weights(long N, float* v, float* w, float* weights)
+float inner_product_with_weights(int N, float* v, float* w, float* weights)
 {
     float ret = 0;
-    for (long j = 0; j < N; j++)
+    for (int j = 0; j < N; j++)
         ret += v[j] * w[j] * weights[j];
     return ret;
 }
-void subtract_component_with_weights(long N, float* v, float* comp, float* weights)
+void subtract_component_with_weights(int N, float* v, float* comp, float* weights)
 {
     float ip = inner_product_with_weights(N, v, comp, weights);
-    for (long j = 0; j < N; j++) {
+    for (int j = 0; j < N; j++) {
         v[j] -= ip * comp[j];
     }
 }
@@ -92,7 +92,7 @@ bool PCASolver::solve()
     int num_vectors = d->m_vectors.height();
     float* working_vectors = (float*)malloc(sizeof(float) * N * num_vectors);
     for (int vnum = 0; vnum < num_vectors; vnum++) {
-        for (long j = 0; j < N; j++)
+        for (int j = 0; j < N; j++)
             working_vectors[vnum * N + j] = d->m_vectors.value(j, vnum);
     }
 
@@ -100,7 +100,7 @@ bool PCASolver::solve()
     int num_components = d->m_component_count;
     float* working_components = (float*)malloc(sizeof(float) * N * num_components);
     for (int cnum = 0; cnum < num_components; cnum++) {
-        for (long j = 0; j < N; j++)
+        for (int j = 0; j < N; j++)
             working_components[cnum * N + j] = 0;
     }
 
@@ -115,7 +115,7 @@ bool PCASolver::solve()
             define_random_vector(N, component_vector);
             normalize(N, component_vector);
         }
-        for (long it = 0; it < d->m_num_iterations; it++) {
+        for (int it = 0; it < d->m_num_iterations; it++) {
             float* hold = (float*)malloc(sizeof(float) * N);
             if (!hold) {
                 qWarning() << "Unable to allocate hold of size:" << N;
@@ -138,7 +138,7 @@ bool PCASolver::solve()
             free(hold);
         }
         //Compute coefficients
-        for (long vnum = 0; vnum < num_vectors; vnum++) {
+        for (int vnum = 0; vnum < num_vectors; vnum++) {
             float ip0 = 0;
             if (d->m_weights.width() <= 1)
                 ip0 = inner_product(N, &working_vectors[vnum * N], &working_components[current_component * N]);

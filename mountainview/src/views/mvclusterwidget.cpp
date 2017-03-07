@@ -532,7 +532,7 @@ void MVClusterWidgetComputer::compute()
     times.clear();
     labels.clear();
     amplitudes.clear();
-    for (long j = 0; j < F.N2(); j++) {
+    for (int j = 0; j < F.N2(); j++) {
         times << F.value(1, j);
         labels << (int)F.value(2, j);
         amplitudes << F.value(3, j);

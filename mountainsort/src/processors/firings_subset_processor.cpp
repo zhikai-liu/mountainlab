@@ -50,19 +50,19 @@ bool firings_subset_Processor::run(const QMap<QString, QVariant>& params)
     }
 
     DiskReadMda X(firings);
-    long J = X.N1();
-    long L = X.N2();
-    QList<long> inds_to_use;
-    for (long i = 0; i < L; i++) {
+    int J = X.N1();
+    int L = X.N2();
+    QList<int> inds_to_use;
+    for (int i = 0; i < L; i++) {
         int label0 = X.value(2, i);
         if (labels.contains(label0)) {
             inds_to_use << i;
         }
     }
 
-    long L2 = inds_to_use.count();
+    int L2 = inds_to_use.count();
     Mda Y(J, L2);
-    for (long i = 0; i < L2; i++) {
+    for (int i = 0; i < L2; i++) {
         for (int j = 0; j < J; j++) {
             Y.setValue(X.value(j, inds_to_use[i]), j, i);
         }

@@ -348,7 +348,7 @@ private:
     int64_t uploadFile(const QString& path, const QString& server_url, const QVariantMap& params)
     {
         QFileInfo finfo = path;
-        long size0 = finfo.size();
+        int size0 = finfo.size();
         if (size0 == 0) {
             println("File is empty... skipping: " + path);
             return 0;

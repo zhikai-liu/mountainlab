@@ -144,7 +144,7 @@ void MVClusterView::setLabels(const QVector<int>& labels)
     d->m_labels = labels;
 
     QList<int> list;
-    for (long i = 0; i < d->m_labels.count(); i++) {
+    for (int i = 0; i < d->m_labels.count(); i++) {
         const int value = d->m_labels.at(i);
         QList<int>::iterator iter = qLowerBound(list.begin(), list.end(), value);
         if (iter == list.end() || *iter != value) {
@@ -489,7 +489,7 @@ void MVClusterViewPrivate::update_grid()
             }
         }
     }
-    long N1 = m_grid_N1, N2 = m_grid_N2;
+    int N1 = m_grid_N1, N2 = m_grid_N2;
 
     m_point_grid.allocate(N1, N2);
     for (int i = 0; i < N1 * N2; i++)
