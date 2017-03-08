@@ -6,23 +6,27 @@
 #ifndef MLCONFIGPAGE_H
 #define MLCONFIGPAGE_H
 
+#include <QJsonObject>
+#include <QList>
 #include <QString>
+#include "mlconfigquestion.h"
 
 class MLConfigPage {
 public:
-    MLConfigPage();
+    MLConfigPage(QJsonObject *config);
     virtual ~MLConfigPage();
 
     virtual QString title() = 0;
     virtual QString description() = 0;
 
     int questionCount() const;
-    MLConfigQuestion* questions(int num) const;
+    MLConfigQuestion* question(int num) const;
 
 protected:
     void addQuestion(MLConfigQuestion* question);
 
 private:
+    QJsonObject *m_config=0;
     QList<MLConfigQuestion*> m_questions;
 };
 

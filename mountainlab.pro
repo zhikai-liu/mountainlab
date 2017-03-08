@@ -12,6 +12,7 @@ isEmpty(COMPONENTS) {
 
 CONFIG += ordered
 
+SUBDIRS += mlconfig/src/mlconfig.pro
 SUBDIRS += mlcommon/src/mlcommon.pro
 SUBDIRS += mvcommon/src/mvcommon.pro
 
