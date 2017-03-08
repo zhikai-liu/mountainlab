@@ -16,12 +16,14 @@ public:
     friend class MLConfigQuestionPrivate;
     MLConfigQuestion();
     virtual ~MLConfigQuestion();
-    virtual QString ask()=0;
-    virtual bool processResponse(QString str)=0;
+    virtual QString ask() = 0;
+    virtual bool processResponse(QString str) = 0;
+
 protected:
-    QJsonObject *config() {return m_config;}
+    QJsonObject* config() { return m_config; }
+
 private:
-    QJsonObject *m_config;
+    QJsonObject* m_config;
     MLConfigQuestionPrivate* d;
 };
 

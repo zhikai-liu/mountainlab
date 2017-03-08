@@ -17,29 +17,33 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 class Tempdir_Q1 : public MLConfigQuestion {
 public:
-    virtual ~Tempdir_Q1() {
+    virtual ~Tempdir_Q1()
+    {
     }
-    QString ask() Q_DECL_OVERRIDE {
-        QJsonObject gen=config()->value("general").toObject();
-        QString temporary_path=gen["temporary_path"].toString();
-        QString str="Current temporary path: "+temporary_path+"\n";
-        str+="Type new path or enter to keep same:";
+    QString ask() Q_DECL_OVERRIDE
+    {
+        QJsonObject gen = config()->value("general").toObject();
+        QString temporary_path = gen["temporary_path"].toString();
+        QString str = "Current temporary path: " + temporary_path + "\n";
+        str += "Type new path or enter to keep same:";
         return str;
     }
-    bool processResponse(QString str) Q_DECL_OVERRIDE {
-        if (str.isEmpty()) return true;
-        QString new_path=str.trimmed();
+    bool processResponse(QString str) Q_DECL_OVERRIDE
+    {
+        if (str.isEmpty())
+            return true;
+        QString new_path = str.trimmed();
         if (!QFileInfo(new_path).isAbsolute()) {
             qDebug().noquote() << "You must enter an absolute path.";
             return false;
         }
-        if ((!QFile::exists(new_path))||(!QFileInfo(new_path).isDir())) {
-            qDebug().noquote() << "Directory does not exist: "+new_path;
+        if ((!QFile::exists(new_path)) || (!QFileInfo(new_path).isDir())) {
+            qDebug().noquote() << "Directory does not exist: " + new_path;
             return false;
         }
-        QJsonObject gen=config()->value("general").toObject();
-        gen["temporary_path"]=new_path;
-        (*config())["general"]=gen;
+        QJsonObject gen = config()->value("general").toObject();
+        gen["temporary_path"] = new_path;
+        (*config())["general"] = gen;
         return true;
     }
 };
@@ -47,7 +51,8 @@ public:
 class Page_tempdir : public MLConfigPage {
 public:
     Page_tempdir(QJsonObject* config)
-        : MLConfigPage(config){
+        : MLConfigPage(config)
+    {
         addQuestion(new Tempdir_Q1);
     };
     QString title() Q_DECL_OVERRIDE
@@ -63,14 +68,16 @@ public:
     }
 };
 
-QStringList json_array_to_stringlist(QJsonArray X) {
+QStringList json_array_to_stringlist(QJsonArray X)
+{
     QStringList ret;
-    foreach (QJsonValue val,X) {
+    foreach (QJsonValue val, X) {
         ret << val.toString();
     }
     return ret;
 }
-QJsonArray stringlist_to_json_array(QStringList X) {
+QJsonArray stringlist_to_json_array(QStringList X)
+{
     QJsonArray ret;
     foreach (QString val, X) {
         ret << val;
@@ -81,21 +88,25 @@ QJsonArray stringlist_to_json_array(QStringList X) {
 ////////////////////////////////////////////////////////////////////////////////////////
 class Prv_Q1 : public MLConfigQuestion {
 public:
-    virtual ~Prv_Q1() {
+    virtual ~Prv_Q1()
+    {
     }
-    QString ask() Q_DECL_OVERRIDE {
-        QJsonObject prv=config()->value("prv").toObject();
-        QStringList local_search_paths=json_array_to_stringlist(prv["local_search_paths"].toArray());
-        QString str="Current prv search paths:\n     "+local_search_paths.join("\n     ");
-        str+="\n";
-        str+="Type in a path to add or delete, or press enter to keep those listed above:";
+    QString ask() Q_DECL_OVERRIDE
+    {
+        QJsonObject prv = config()->value("prv").toObject();
+        QStringList local_search_paths = json_array_to_stringlist(prv["local_search_paths"].toArray());
+        QString str = "Current prv search paths:\n     " + local_search_paths.join("\n     ");
+        str += "\n";
+        str += "Type in a path to add or delete, or press enter to keep those listed above:";
         return str;
     }
-    bool processResponse(QString str) Q_DECL_OVERRIDE {
-        QJsonObject prv=config()->value("prv").toObject();
-        QStringList local_search_paths=json_array_to_stringlist(prv["local_search_paths"].toArray());
-        if (str.isEmpty()) return true;
-        QString path=str.trimmed();
+    bool processResponse(QString str) Q_DECL_OVERRIDE
+    {
+        QJsonObject prv = config()->value("prv").toObject();
+        QStringList local_search_paths = json_array_to_stringlist(prv["local_search_paths"].toArray());
+        if (str.isEmpty())
+            return true;
+        QString path = str.trimmed();
         if (path.isEmpty()) {
             return true;
         }
@@ -107,15 +118,15 @@ public:
             if (local_search_paths.contains(path)) {
                 local_search_paths.removeAll(path);
             }
-            else if ((!QFile::exists(path))||(!QFileInfo(path).isDir())) {
-                qDebug().noquote() << "Directory does not exist: "+path;
+            else if ((!QFile::exists(path)) || (!QFileInfo(path).isDir())) {
+                qDebug().noquote() << "Directory does not exist: " + path;
                 return false;
             }
             else {
                 local_search_paths << path;
             }
-            prv["local_search_paths"]=stringlist_to_json_array(local_search_paths);
-            (*config())["prv"]=prv;
+            prv["local_search_paths"] = stringlist_to_json_array(local_search_paths);
+            (*config())["prv"] = prv;
             return false;
         }
     }
@@ -124,7 +135,8 @@ public:
 class Page_prv : public MLConfigPage {
 public:
     Page_prv(QJsonObject* config)
-        : MLConfigPage(config){
+        : MLConfigPage(config)
+    {
         addQuestion(new Prv_Q1);
     };
     QString title() Q_DECL_OVERRIDE
@@ -143,12 +155,12 @@ QString format_description(QString str, int line_length);
 QJsonObject read_config();
 void write_config(QJsonObject obj);
 QString get_keyboard_response();
-QJsonObject extend_object(QJsonObject obj1,QJsonObject obj2);
-QJsonObject dupstend_object(QJsonObject obj1,QJsonObject obj2);
+QJsonObject extend_object(QJsonObject obj1, QJsonObject obj2);
+QJsonObject dupstend_object(QJsonObject obj1, QJsonObject obj2);
 
 int main(int argc, char* argv[])
 {
-    QCoreApplication app(argc,argv);
+    QCoreApplication app(argc, argv);
 
     QJsonObject config = read_config();
 
@@ -166,7 +178,7 @@ int main(int argc, char* argv[])
         qDebug().noquote() << descr;
         qDebug().noquote() << "";
         for (int i = 0; i < page->questionCount(); i++) {
-            QString str=page->question(i)->ask();
+            QString str = page->question(i)->ask();
             qDebug().noquote() << str;
             QString resp = get_keyboard_response();
             if (!page->question(i)->processResponse(resp)) {
@@ -200,103 +212,109 @@ void write_text_file(const QString& path, const QString& txt)
     out << txt;
 }
 
-QJsonObject read_config() {
-    QString fname1=qApp->applicationDirPath()+"/../../mountainlab.default.json";
-    QString fname2=qApp->applicationDirPath()+"/../../mountainlab.user.json";
-    QString json1=read_text_file(fname1);
-    QString json2=read_text_file(fname2);
-    if (json2.isEmpty()) json2="{}";
-    QJsonObject obj1=QJsonDocument::fromJson(json1.toUtf8()).object();
-    QJsonObject obj2=QJsonDocument::fromJson(json2.toUtf8()).object();
-    QJsonObject ret=extend_object(obj1,obj2);
+QJsonObject read_config()
+{
+    QString fname1 = qApp->applicationDirPath() + "/../../mountainlab.default.json";
+    QString fname2 = qApp->applicationDirPath() + "/../../mountainlab.user.json";
+    QString json1 = read_text_file(fname1);
+    QString json2 = read_text_file(fname2);
+    if (json2.isEmpty())
+        json2 = "{}";
+    QJsonObject obj1 = QJsonDocument::fromJson(json1.toUtf8()).object();
+    QJsonObject obj2 = QJsonDocument::fromJson(json2.toUtf8()).object();
+    QJsonObject ret = extend_object(obj1, obj2);
     return ret;
 }
 
-void write_config(QJsonObject obj) {
-    QString fname1=qApp->applicationDirPath()+"/../../mountainlab.default.json";
-    QString fname2=qApp->applicationDirPath()+"/../../mountainlab.user.json";
-    QString json1=read_text_file(fname1);
-    QJsonObject obj1=QJsonDocument::fromJson(json1.toUtf8()).object();
-    QJsonObject obj2=dupstend_object(obj1,obj);
-    QString json2=QJsonDocument(obj2).toJson(QJsonDocument::Indented);
-    write_text_file(fname2,json2);
+void write_config(QJsonObject obj)
+{
+    QString fname1 = qApp->applicationDirPath() + "/../../mountainlab.default.json";
+    QString fname2 = qApp->applicationDirPath() + "/../../mountainlab.user.json";
+    QString json1 = read_text_file(fname1);
+    QJsonObject obj1 = QJsonDocument::fromJson(json1.toUtf8()).object();
+    QJsonObject obj2 = dupstend_object(obj1, obj);
+    QString json2 = QJsonDocument(obj2).toJson(QJsonDocument::Indented);
+    write_text_file(fname2, json2);
 }
 
-QString get_keyboard_response() {
+QString get_keyboard_response()
+{
     char str[1000];
-    char *ret=fgets(str,1000,stdin);
+    char* ret = fgets(str, 1000, stdin);
     (void)ret;
     return QString(str).trimmed();
 }
 
-QJsonObject extend_object(QJsonObject obj1,QJsonObject obj2) {
+QJsonObject extend_object(QJsonObject obj1, QJsonObject obj2)
+{
     QJsonObject ret;
-    QStringList keys1=obj1.keys();
-    QStringList keys2=obj2.keys();
-    foreach (QString key,keys1) {
+    QStringList keys1 = obj1.keys();
+    QStringList keys2 = obj2.keys();
+    foreach (QString key, keys1) {
         if (obj2.contains(key)) {
             if (obj1[key].isObject()) {
-                ret[key]=extend_object(obj1[key].toObject(),obj2[key].toObject());
+                ret[key] = extend_object(obj1[key].toObject(), obj2[key].toObject());
             }
             else {
-                ret[key]=obj2[key];
+                ret[key] = obj2[key];
             }
         }
         else {
-            ret[key]=obj1[key];
+            ret[key] = obj1[key];
         }
     }
-    foreach (QString key,keys2) {
+    foreach (QString key, keys2) {
         if (!obj1.contains(key)) {
-            ret[key]=obj2[key];
+            ret[key] = obj2[key];
         }
     }
     return ret;
 }
 
-
-bool dupstend_match(QJsonValue V1,QJsonValue V2) {
+bool dupstend_match(QJsonValue V1, QJsonValue V2)
+{
     if (V1.isObject()) {
-        QJsonObject obj1=V1.toObject();
-        QJsonObject obj2=V2.toObject();
-        QStringList keys1=obj1.keys();
-        if (keys1.count()!=obj2.keys().count())
+        QJsonObject obj1 = V1.toObject();
+        QJsonObject obj2 = V2.toObject();
+        QStringList keys1 = obj1.keys();
+        if (keys1.count() != obj2.keys().count())
             return false;
-        foreach (QString key,keys1) {
+        foreach (QString key, keys1) {
             if (!obj2.contains(key))
                 return false;
-            if (!dupstend_match(obj1[key],obj2[key]))
+            if (!dupstend_match(obj1[key], obj2[key]))
                 return false;
         }
         return true;
     }
     else {
-        return (V1==V2);
+        return (V1 == V2);
     }
 }
 
 //dupstend means check to see which values of obj2 are consistent with those in obj1 and then don't use those.
-QJsonObject dupstend_object(QJsonObject obj1,QJsonObject obj2) {
+QJsonObject dupstend_object(QJsonObject obj1, QJsonObject obj2)
+{
     QJsonObject ret;
-    QStringList keys1=obj1.keys();
-    QStringList keys2=obj2.keys();
-    foreach (QString key,keys1) {
+    QStringList keys1 = obj1.keys();
+    QStringList keys2 = obj2.keys();
+    foreach (QString key, keys1) {
         if (obj2.contains(key)) {
-            if (dupstend_match(obj1[key],obj2[key])) {
+            if (dupstend_match(obj1[key], obj2[key])) {
                 //don't include it
             }
             else if (obj1[key].isObject()) {
-                ret[key]=dupstend_object(obj1[key].toObject(),obj2[key].toObject());
+                ret[key] = dupstend_object(obj1[key].toObject(), obj2[key].toObject());
             }
             else {
-                ret[key]=obj2[key];
+                ret[key] = obj2[key];
             }
         }
         else {
-            ret[key]=obj1[key];
+            ret[key] = obj1[key];
         }
     }
-    foreach (QString key,keys2) {
+    foreach (QString key, keys2) {
         if (!obj1.contains(key)) {
             //don't include it
         }
@@ -323,5 +341,3 @@ QString format_description(QString str, int line_length)
     }
     return ret;
 }
-
-

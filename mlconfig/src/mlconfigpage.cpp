@@ -7,9 +7,9 @@
 #include "mlconfigpage.h"
 #include <QDebug>
 
-MLConfigPage::MLConfigPage(QJsonObject *config)
+MLConfigPage::MLConfigPage(QJsonObject* config)
 {
-    m_config=config;
+    m_config = config;
 }
 
 MLConfigPage::~MLConfigPage()
@@ -23,13 +23,13 @@ int MLConfigPage::questionCount() const
     return m_questions.count();
 }
 
-MLConfigQuestion *MLConfigPage::question(int num) const
+MLConfigQuestion* MLConfigPage::question(int num) const
 {
     return m_questions[num];
 }
 
 void MLConfigPage::addQuestion(MLConfigQuestion* question)
 {
-    question->m_config=m_config;
+    question->m_config = m_config;
     m_questions << question;
 }

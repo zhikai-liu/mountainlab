@@ -13,7 +13,7 @@
 
 class MLConfigPage {
 public:
-    MLConfigPage(QJsonObject *config);
+    MLConfigPage(QJsonObject* config);
     virtual ~MLConfigPage();
 
     virtual QString title() = 0;
@@ -26,7 +26,7 @@ protected:
     void addQuestion(MLConfigQuestion* question);
 
 private:
-    QJsonObject *m_config=0;
+    QJsonObject* m_config = 0;
     QList<MLConfigQuestion*> m_questions;
 };
 
