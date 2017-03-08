@@ -10,6 +10,7 @@
 
 #include <QWidget>
 #include <mvabstractcontext.h>
+#include "diskreadmda.h"
 
 /** \class MVClipsView
  *  \brief View a set of clips. Usually each clip contains a single spike.

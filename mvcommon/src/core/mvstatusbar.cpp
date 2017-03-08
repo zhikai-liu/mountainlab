@@ -3,7 +3,7 @@
 
 #include <QHBoxLayout>
 #include <QLabel>
-#include <objectregistry.h>
+//#include <objectregistry.h>
 #include <icounter.h>
 
 class MVStatusBarPrivate {
@@ -48,7 +48,8 @@ MVStatusBar::MVStatusBar()
     d->m_tp_agent = TaskManager::TaskProgressMonitor::globalInstance();
     connect(d->m_tp_agent->model(), SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(slot_update_tasks()));
     connect(d->m_tp_agent->model(), SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(slot_update_tasks()));
-    ICounterManager* manager = ObjectRegistry::getObject<ICounterManager>();
+    /* TODO: put this back in
+    ICounterManager* manager = ObjectRegistry::getObject<ICounterManager>(); TODO: put this back in
     SimpleAggregateCounter* meminuse = new SimpleAggregateCounter("bytes_in_use", SimpleAggregateCounter::Subtract, manager->counter("allocated_bytes"), manager->counter("freed_bytes"));
     meminuse->setParent(this);
     ObjectRegistry::addObject(meminuse);
@@ -62,6 +63,7 @@ MVStatusBar::MVStatusBar()
                 qWarning() << cntr << "counter not present";
         }
     }
+    */
 }
 
 MVStatusBar::~MVStatusBar()
@@ -89,6 +91,7 @@ QString format_duration(double msec)
 
 void MVStatusBar::slot_update_quantities()
 {
+    /* TODO put this back in
     ICounterManager* manager = ObjectRegistry::getObject<ICounterManager>();
     if (ICounterBase* counter = manager ? manager->counter("bytes_downloaded") : nullptr) {
         QString txt = QString("%1 downloaded |").arg(counter->label());
@@ -114,6 +117,7 @@ void MVStatusBar::slot_update_quantities()
                 d->m_bytes_allocated_label.setToolTip(QString("Allocated: <b>%1</b><br>Freed: <b>%2</b>").arg(format_num_bytes(allocatedCounter->value())).arg(format_num_bytes(freedCounter->value())));
         }
     }
+    */
 }
 
 void MVStatusBar::slot_update_tasks()

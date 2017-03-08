@@ -1,6 +1,12 @@
 QT += core gui network widgets
 CONFIG -= app_bundle #Please apple, don't make a bundle
 CONFIG += c++11
+QMAKE_CXXFLAGS += -Wno-reorder #qaccordion
+
+include(../../mlcommon/mlcommon.pri)
+include(../../mlcommon/mlnetwork.pri)
+include(../../mlcommon/taskprogress.pri)
+include(../../mvcommon/mvcommon.pri)
 
 DESTDIR = ../bin
 OBJECTS_DIR = ../build
@@ -10,7 +16,6 @@ TEMPLATE = app
 
 SOURCES += prv-guimain.cpp \
     prvguimainwindow.cpp \
-    ../../mountainview/src/core/taskprogressview.cpp \
     prvguicontrolpanel.cpp \
     prvguitreewidget.cpp \
     prvgui.cpp \
@@ -25,14 +30,9 @@ SOURCES += prv-guimain.cpp \
     jsoneditorwindow.cpp \
     jsonmerger.cpp
 
-include(../../mlcommon/mlcommon.pri)
-include(../../mlcommon/mlnetwork.pri)
-include(../../mlcommon/taskprogress.pri)
-
 INCLUDEPATH += ../../mountainview/src/core
 HEADERS += \
     prvguimainwindow.h \
-    ../../mountainview/src/core/taskprogressview.h \
     prvguicontrolpanel.h \
     prvguitreewidget.h \
     prvgui.h \
@@ -47,16 +47,6 @@ HEADERS += \
     jsoneditorwindow.h \
     jsonmerger.h
 
-INCLUDEPATH += ../../mountainview/src/core
-HEADERS += ../../mountainview/src/core/mountainprocessrunner.h
-SOURCES += ../../mountainview/src/core/mountainprocessrunner.cpp
-
-INCLUDEPATH += ../../mountainview/src/3rdparty/qaccordion/include
-VPATH += ../../mountainview/src/3rdparty/qaccordion
-HEADERS += include/qAccordion/qaccordion.h include/qAccordion/contentpane.h include/qAccordion/clickableframe.h
-SOURCES += src/qaccordion.cpp src/contentpane.cpp src/clickableframe.cpp
-
-RESOURCES += icons/qaccordionicons.qrc
 
 FORMS += \
     prvguiuploaddialog.ui prvguidownloaddialog.ui \

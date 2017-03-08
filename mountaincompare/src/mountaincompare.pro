@@ -8,6 +8,7 @@ CONFIG -= app_bundle #Please apple, don't make a bundle today
 include(../../mlcommon/mlcommon.pri)
 include(../../mlcommon/mda.pri)
 include(../../mlcommon/taskprogress.pri)
+include(../../mvcommon/mvcommon.pri)
 
 QT += widgets
 QT+=concurrent
@@ -20,10 +21,8 @@ TEMPLATE = app
 
 INCLUDEPATH += ../../mountainview/src/msv/plugins
 VPATH += ../../mountainview/src/msv/plugins
-HEADERS += clusterdetailplugin.h clipsviewplugin.h \
-    ../../mountainview/src/misc/renderablewidget.h
-SOURCES += clusterdetailplugin.cpp clipsviewplugin.cpp \
-    ../../mountainview/src/misc/renderablewidget.cpp
+HEADERS += clusterdetailplugin.h clipsviewplugin.h
+SOURCES += clusterdetailplugin.cpp clipsviewplugin.cpp
 
 INCLUDEPATH += ../../mountainview/src/msv/views
 VPATH += ../../mountainview/src/msv/views
@@ -31,51 +30,19 @@ HEADERS += clusterdetailview.h clusterdetailviewpropertiesdialog.h
 SOURCES += clusterdetailview.cpp clusterdetailviewpropertiesdialog.cpp
 FORMS += clusterdetailviewpropertiesdialog.ui
 
+HEADERS += \
+    mccontext.h \
+    views/confusionmatrixview.h \
+    views/matrixview.h \
+    mcviewfactories.h \
+    views/compareclusterview.h
+
 SOURCES += mountaincomparemain.cpp \
-    mvmainwindow.cpp \
     mccontext.cpp \
     views/confusionmatrixview.cpp \
     views/matrixview.cpp \
     mcviewfactories.cpp \
     views/compareclusterview.cpp
-
-INCLUDEPATH += ../../mountainview/src/core
-VPATH += ../../mountainview/src/core
-HEADERS += \
-closemehandler.h flowlayout.h imagesavedialog.h \
-mountainprocessrunner.h mvabstractcontextmenuhandler.h \
-mvabstractcontrol.h mvabstractview.h mvabstractviewfactory.h \
-mvcontrolpanel2.h mvstatusbar.h \
-mvcontext.h mvabstractcontext.h tabber.h tabberframe.h taskprogressview.h actionfactory.h \
-    mvmainwindow.h \
-    mccontext.h \
-    views/confusionmatrixview.h \
-    views/matrixview.h \
-    mcviewfactories.h \
-    views/compareclusterview.h \
-    resolveprvsdialog.h
-
-HEADERS += mvabstractplugin.h
-SOURCES += mvabstractplugin.cpp
-
-SOURCES += \
-closemehandler.cpp flowlayout.cpp imagesavedialog.cpp \
-mountainprocessrunner.cpp mvabstractcontextmenuhandler.cpp \
-mvabstractcontrol.cpp mvabstractview.cpp mvabstractviewfactory.cpp \
-mvcontrolpanel2.cpp mvstatusbar.cpp \
-mvcontext.cpp mvabstractcontext.cpp tabber.cpp tabberframe.cpp taskprogressview.cpp actionfactory.cpp \
-resolveprvsdialog.cpp
-
-FORMS += resolveprvsdialog.ui
-
-INCLUDEPATH += ../../mountainview/src/misc
-VPATH += ../../mountainview/src/misc
-HEADERS += \
-clustermerge.h multiscaletimeseries.h \
-mvmisc.h mvutils.h paintlayer.h paintlayerstack.h
-SOURCES += \
-clustermerge.cpp multiscaletimeseries.cpp \
-mvmisc.cpp mvutils.cpp paintlayer.cpp paintlayerstack.cpp
 
 INCLUDEPATH += ../../mountainview/src/controlwidgets
 VPATH += ../../mountainview/src/controlwidgets
@@ -97,13 +64,6 @@ VPATH += ../../mountainsort/src/processors
 HEADERS += extract_clips.h
 SOURCES += extract_clips.cpp
 
-#TODO, make a .pri for the accordion because this appears in the mountainview as well
-INCLUDEPATH += ../../mountainview/src/3rdparty/qaccordion/include
-VPATH += ../../mountainview/src/3rdparty/qaccordion/include
-VPATH += ../../mountainview/src/3rdparty/qaccordion/src
-HEADERS += qAccordion/qaccordion.h qAccordion/contentpane.h qAccordion/clickableframe.h
-SOURCES += qaccordion.cpp contentpane.cpp clickableframe.cpp
-
 INCLUDEPATH += ../../mountainsort/src/utils
 DEPENDPATH += ../../mountainsort/src/utils
 VPATH += ../../mountainsort/src/utils
@@ -112,5 +72,13 @@ SOURCES += get_sort_indices.cpp msmisc.cpp
 HEADERS += affinetransformation.h
 SOURCES += affinetransformation.cpp
 
-RESOURCES += ../../mountainview/src/mountainview.qrc \
-            ../../mountainview/src/3rdparty/qaccordion/icons/qaccordionicons.qrc
+INCLUDEPATH += ../../mountainview/src
+VPATH += ../../mountainview/src
+HEADERS += mvcontext.h
+SOURCES += mvcontext.cpp
+
+INCLUDEPATH += ../../mountainview/src/multiscaletimeseries
+VPATH += ../../mountainview/src/multiscaletimeseries
+HEADERS += multiscaletimeseries.h
+SOURCES += multiscaletimeseries.cpp
+

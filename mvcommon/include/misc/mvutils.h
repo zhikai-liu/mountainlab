@@ -6,7 +6,6 @@
 #ifndef MVUTILS_H
 #define MVUTILS_H
 
-#include "diskreadmda.h"
 #include <QList>
 #include <QColor>
 #include <math.h>

@@ -10,10 +10,10 @@ CONFIG -= app_bundle #Please apple, don't make a bundle today
 include(../../mlcommon/mlcommon.pri)
 include(../../mlcommon/mda.pri)
 include(../../mlcommon/taskprogress.pri)
-include(../../controlwidgets/prvmanagerdialog/prvmanagerdialog.pri)
+include(../../mvcommon/mvcommon.pri)
 
 QT += widgets
-QT+=concurrent
+QT += concurrent
 
 DESTDIR = ../bin
 OBJECTS_DIR = ../build
@@ -36,9 +36,6 @@ HEADERS += clusterdetailplugin.h clusterdetailview.h \
     msv/views/curationprogramcontroller.h \
     views/mvgridview.h \
     views/mvgridviewpropertiesdialog.h \
-    misc/renderablewidget.h \
-    misc/jscounter.h \
-    core/mvabstractcontext.h \
     controlwidgets/createtimeseriesdialog.h
 SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
     clusterdetailviewpropertiesdialog.cpp \
@@ -52,9 +49,6 @@ SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
     msv/views/curationprogramcontroller.cpp \
     views/mvgridview.cpp \
     views/mvgridviewpropertiesdialog.cpp \
-    misc/renderablewidget.cpp \
-    misc/jscounter.cpp \
-    core/mvabstractcontext.cpp \
     controlwidgets/createtimeseriesdialog.cpp
 FORMS += clusterdetailviewpropertiesdialog.ui \
     controlwidgets/createtimeseriesdialog.ui
@@ -81,18 +75,17 @@ SOURCES += mountainviewmain.cpp \
     views/mvtemplatesview2.cpp \
     views/mvtemplatesview3.cpp \
     views/mvtemplatesview2panel.cpp \
-    core/mvabstractplugin.cpp
 
 
-INCLUDEPATH += core
-VPATH += core
-HEADERS += \
-closemehandler.h flowlayout.h imagesavedialog.h \
-mountainprocessrunner.h mvabstractcontextmenuhandler.h \
-mvabstractcontrol.h mvabstractview.h mvabstractviewfactory.h \
-mvcontrolpanel2.h mvmainwindow.h mvstatusbar.h \
-mvcontext.h tabber.h tabberframe.h taskprogressview.h actionfactory.h \
-    guides/individualmergedecisionpage.h \
+HEADERS += mvcontext.h
+SOURCES += mvcontext.cpp
+
+INCLUDEPATH += multiscaletimeseries
+VPATH += multiscaletimeseries
+HEADERS += multiscaletimeseries.h
+SOURCES += multiscaletimeseries.cpp
+
+HEADERS += guides/individualmergedecisionpage.h \
     views/mvspikespraypanel.h \
     views/firetrackview.h \
     views/ftelectrodearrayview.h \
@@ -102,29 +95,14 @@ mvcontext.h tabber.h tabberframe.h taskprogressview.h actionfactory.h \
     views/mvtemplatesview2.h \
     views/mvtemplatesview3.h \
     views/mvtemplatesview2panel.h \
-    core/mvabstractplugin.h
 
-SOURCES += \
-closemehandler.cpp flowlayout.cpp imagesavedialog.cpp \
-mountainprocessrunner.cpp mvabstractcontextmenuhandler.cpp \
-mvabstractcontrol.cpp mvabstractview.cpp mvabstractviewfactory.cpp \
-mvcontrolpanel2.cpp mvmainwindow.cpp mvstatusbar.cpp \
-mvcontext.cpp tabber.cpp tabberframe.cpp taskprogressview.cpp actionfactory.cpp
+
 # to remove
-HEADERS += computationthread.h
-SOURCES += computationthread.cpp
+#HEADERS += computationthread.h
+#SOURCES += computationthread.cpp
 
 HEADERS += guides/guidev1.h guides/guidev2.h
 SOURCES += guides/guidev1.cpp guides/guidev2.cpp
-
-INCLUDEPATH += misc
-VPATH += misc
-HEADERS += \
-clustermerge.h multiscaletimeseries.h \
-mvmisc.h mvutils.h paintlayer.h paintlayerstack.h
-SOURCES += \
-clustermerge.cpp multiscaletimeseries.cpp \
-mvmisc.cpp mvutils.cpp paintlayer.cpp paintlayerstack.cpp
 
 INCLUDEPATH += views
 VPATH += views
@@ -149,15 +127,24 @@ INCLUDEPATH += controlwidgets
 VPATH += controlwidgets
 HEADERS += \
 mvclustervisibilitycontrol.h \
-mvexportcontrol.h mvgeneralcontrol.h mvtimeseriescontrol.h mvopenviewscontrol.h mvclusterordercontrol.h
+mvgeneralcontrol.h mvtimeseriescontrol.h mvopenviewscontrol.h mvclusterordercontrol.h
 SOURCES += \
 mvclustervisibilitycontrol.cpp \
-mvexportcontrol.cpp mvgeneralcontrol.cpp mvtimeseriescontrol.cpp mvopenviewscontrol.cpp mvclusterordercontrol.cpp
+mvgeneralcontrol.cpp mvtimeseriescontrol.cpp mvopenviewscontrol.cpp mvclusterordercontrol.cpp
+
+INCLUDEPATH += controlwidgets/mvexportcontrol
+VPATH += controlwidgets/mvexportcontrol
+HEADERS += mvexportcontrol.h
+SOURCES += mvexportcontrol.cpp
 
 INCLUDEPATH += guides
 VPATH += guides
 HEADERS += clustercurationguide.h
 SOURCES += clustercurationguide.cpp
+
+## TODO: REMOVE THIS:
+HEADERS += computationthread.h
+SOURCES += computationthread.cpp
 
 INCLUDEPATH += msv/contextmenuhandlers
 VPATH += msv/contextmenuhandlers
@@ -181,15 +168,6 @@ DEPENDPATH += ../../mountainsort/src/processors
 VPATH += ../../mountainsort/src/processors
 HEADERS += extract_clips.h
 SOURCES += extract_clips.cpp
-
-INCLUDEPATH += ./3rdparty/qaccordion/include
-VPATH += ./3rdparty/qaccordion/include
-VPATH += ./3rdparty/qaccordion/src
-HEADERS += qAccordion/qaccordion.h qAccordion/contentpane.h qAccordion/clickableframe.h
-SOURCES += qaccordion.cpp contentpane.cpp clickableframe.cpp
-
-RESOURCES += mountainview.qrc \
-    3rdparty/qaccordion/icons/qaccordionicons.qrc
 
 #TODO: Do we need openmp for mountainview?
 #OPENMP

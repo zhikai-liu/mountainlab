@@ -13,7 +13,7 @@ isEmpty(COMPONENTS) {
 CONFIG += ordered
 
 SUBDIRS += mlcommon/src/mlcommon.pro
-SUBDIRS += controlwidgets/mvexportcontrol/src/mvexportcontrol.pro
+SUBDIRS += mvcommon/src/mvcommon.pro
 
 defineReplace(ifcomponent) {
   contains(COMPONENTS, $$1) {

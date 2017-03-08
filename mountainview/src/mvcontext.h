@@ -13,6 +13,7 @@
 #include <QMap>
 #include <QObject>
 #include "mvutils.h"
+#include "diskreadmda.h"
 
 class MVContext;
 

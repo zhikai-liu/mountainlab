@@ -17,14 +17,14 @@
 #include <QFileDialog>
 #include <QSettings>
 #include <QJsonDocument>
-#include <mvmainwindow.h>
 #include <QMessageBox>
 #include <QTextBrowser>
 #include <QProcess>
 #include "taskprogress.h"
 #include <QThread>
 #include <cachemanager.h>
-#include <mvcontext.h>
+#include "diskreadmda.h"
+#include "mvcontext.h"
 
 class MVExportControlPrivate {
 public:
@@ -173,8 +173,8 @@ private:
 
 void MVExportControl::slot_export_mv2_document()
 {
-    MVContext* c = qobject_cast<MVContext*>(mvContext());
-    Q_ASSERT(c);
+    //MVContext* c = qobject_cast<MVContext*>(mvContext());
+    //Q_ASSERT(c);
 
     //QSettings settings("SCDA", "MountainView");
     //QString default_dir = settings.value("default_export_dir", "").toString();
@@ -187,10 +187,10 @@ void MVExportControl::slot_export_mv2_document()
         fname = fname + ".mv2";
     TaskProgress task("export mv2 document");
     task.log() << "Writing: " + fname;
-    QJsonObject obj = c->toMV2FileObject();
+    QJsonObject obj = mvContext()->toMV2FileObject();
     QString json = QJsonDocument(obj).toJson();
     if (TextFile::write(fname, json)) {
-        c->setMV2FileName(fname);
+        mvContext()->setMV2FileName(fname);
         task.log() << QString("Wrote %1 kilobytes").arg(json.count() * 1.0 / 1000);
     }
     else {
@@ -275,8 +275,8 @@ void export_file(QString source_path, QString dest_path, bool use_float64)
 
 void MVExportControl::slot_export_firings()
 {
-    MVContext* c = qobject_cast<MVContext*>(mvContext());
-    Q_ASSERT(c);
+    //MVContext* c = qobject_cast<MVContext*>(mvContext());
+    //Q_ASSERT(c);
 
     //QSettings settings("SCDA", "MountainView");
     //QString default_dir = settings.value("default_export_dir", "").toString();
@@ -288,7 +288,9 @@ void MVExportControl::slot_export_firings()
     if (QFileInfo(fname).suffix() != "mda")
         fname = fname + ".mda";
 
-    DiskReadMda firings = c->firings();
+    QJsonObject obj = mvContext()->toMV2FileObject();
+    DiskReadMda firings(obj["firings"].toObject());
+    //DiskReadMda firings = c->firings();
     export_file(firings.makePath(), fname, true);
 }
 
@@ -321,7 +323,7 @@ void MVExportControl::slot_export_curated_firings()
     DiskReadMda F = c->firings();
 
     QVector<int> labels;
-    for (int i = 0; i < F.N2(); i++) {
+    for (long i = 0; i < F.N2(); i++) {
         int label = F.value(2, i);
         labels << label;
     }
@@ -337,8 +339,8 @@ void MVExportControl::slot_export_curated_firings()
         }
     }
 
-    QVector<int> inds_to_use;
-    for (int i = 0; i < F.N2(); i++) {
+    QVector<long> inds_to_use;
+    for (long i = 0; i < F.N2(); i++) {
         int label = F.value(2, i);
         if (accepted_clusters.contains(label)) {
             inds_to_use << i;
@@ -346,8 +348,8 @@ void MVExportControl::slot_export_curated_firings()
     }
 
     Mda F2(F.N1(), inds_to_use.count());
-    for (int j = 0; j < inds_to_use.count(); j++) {
-        int i = inds_to_use[j];
+    for (long j = 0; j < inds_to_use.count(); j++) {
+        long i = inds_to_use[j];
         for (int a = 0; a < F.N1(); a++) {
             F2.set(F.value(a, i), a, j);
         }

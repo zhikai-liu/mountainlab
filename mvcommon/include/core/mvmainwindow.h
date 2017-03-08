@@ -7,10 +7,8 @@
 #define MVMAINWINDOW_H
 
 #include <QWidget>
-#include "mda.h"
 #include <QMimeData>
 #include <QTabWidget>
-#include "clustermerge.h"
 #include "mvutils.h"
 #include "mvabstractcontext.h"
 #include "mvabstractcontrol.h"
