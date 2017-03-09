@@ -183,3 +183,5 @@ FORMS += \
 DISTFILES += \
     msv/views/curationprogram.js
 
+RESOURCES += ../../mvcommon/src/mvcommon.qrc \
+    ../../mvcommon/3rdparty/qaccordion/icons/qaccordionicons.qrc
