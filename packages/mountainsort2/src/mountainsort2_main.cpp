@@ -211,8 +211,8 @@ int main(int argc, char* argv[])
     else if (arg1 == "mountainsort.extract_segment_timeseries") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries"]);
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
-        int t1 = CLP.named_parameters["t1"].toDouble(); //to double to handle scientific notation
-        int t2 = CLP.named_parameters["t2"].toDouble(); //to double to handle scientific notation
+        bigint t1 = CLP.named_parameters["t1"].toDouble(); //to double to handle scientific notation
+        bigint t2 = CLP.named_parameters["t2"].toDouble(); //to double to handle scientific notation
         if (timeseries_list.count() <= 1) {
             ret = p_extract_segment_timeseries(timeseries_list.value(0), timeseries_out, t1, t2);
         }

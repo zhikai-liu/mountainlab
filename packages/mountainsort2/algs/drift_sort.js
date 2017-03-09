@@ -154,7 +154,7 @@ exports.run=function(opts,callback) {
 			console.log('--------------------------- SEGMENT '+(ii+1)+' of '+segment_steps.length +' -----------');
 			var timer=new Date();
 			step(function() {
-				console.log ('Elapsed time (sec): '+get_elapsed_sec(timer));
+				console.log ('Elapsed time for step sort '+(ii+1)+' of '+(segment_steps.length)+' (sec): '+get_elapsed_sec(timer));
 				cb();
 			});
 		},function() {

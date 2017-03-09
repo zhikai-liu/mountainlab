@@ -19,7 +19,7 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
 
     DiskReadMda32 X(timeseries);
     const int M = X.N1();
-    const int N = X.N2();
+    const bigint N = X.N2();
 
     DiskWriteMda Y(MDAIO_TYPE_FLOAT32, timeseries_out, M, N);
 
@@ -34,9 +34,9 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
     printf("************ Using chunk size / overlap size: %d / %d (num threads=%d)\n", chunk_size, overlap_size, num_threads);
 
     {
-        int num_timepoints_handled = 0;
+        bigint num_timepoints_handled = 0;
 #pragma omp parallel for
-        for (int timepoint = 0; timepoint < N; timepoint += chunk_size) {
+        for (bigint timepoint = 0; timepoint < N; timepoint += chunk_size) {
             Mda32 chunk;
 #pragma omp critical(lock1)
             {
@@ -54,7 +54,7 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
                 {
                     Y.writeChunk(chunk2, 0, timepoint);
                 }
-                num_timepoints_handled += qMin(chunk_size, N - timepoint);
+                num_timepoints_handled += qMin((bigint)chunk_size, N - timepoint);
                 if ((timer_status.elapsed() > 5000) || (num_timepoints_handled == N) || (timepoint == 0)) {
                     printf("%d/%d (%d%%) -- using %d threads.\n",
                         num_timepoints_handled, N,
@@ -71,7 +71,7 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
 
 namespace P_bandpass_filter {
 
-void multiply_by_factor(int N, float* X, double factor)
+void multiply_by_factor(bigint N, float* X, double factor)
 {
     /*int start = 0;
 #ifdef USE_SSE2
@@ -84,7 +84,7 @@ void multiply_by_factor(int N, float* X, double factor)
     }
 #endif
 */
-    for (int i = 0; i < N; i++)
+    for (bigint i = 0; i < N; i++)
         X[i] *= factor;
 }
 
@@ -230,15 +230,15 @@ bool do_ifft_1d_c2r(int M, int N, float* out, float* in)
     return true;
 }
 
-void multiply_complex_by_real_kernel(int M, int N, float* Y, double* kernel)
+void multiply_complex_by_real_kernel(int M, bigint N, float* Y, double* kernel)
 {
-    int bb = 0;
-    int aa = 0;
+    bigint bb = 0;
+    bigint aa = 0;
     /*
 #ifdef USE_SSE2
-    for (int i = 0; i < N; i++) {
+    for (bigint i = 0; i < N; i++) {
         __m128d kernel_m128 = _mm_load_pd1(kernel + aa);
-        for (int j = 0; j < M; j++) {
+        for (bigint j = 0; j < M; j++) {
             __m128d Y_m128 = _mm_load_pd(Y + bb * 2);
             __m128d result = _mm_mul_pd(Y_m128, kernel_m128);
             _mm_store_pd(Y + bb * 2, result);
@@ -248,8 +248,8 @@ void multiply_complex_by_real_kernel(int M, int N, float* Y, double* kernel)
     }
 #else
 */
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < M; j++) {
+    for (bigint i = 0; i < N; i++) {
+        for (bigint j = 0; j < M; j++) {
             Y[bb * 2] *= kernel[aa];
             Y[bb * 2 + 1] *= kernel[aa];
             bb++;
@@ -259,7 +259,7 @@ void multiply_complex_by_real_kernel(int M, int N, float* Y, double* kernel)
     //#endif
 }
 
-void define_kernel(int N, double* kernel, double samplefreq, double freq_min, double freq_max, double freq_wid)
+void define_kernel(bigint N, double* kernel, double samplefreq, double freq_min, double freq_max, double freq_wid)
 {
     // Matches ahb's code /matlab/processors/ms_bandpass_filter.m
     // improved ahb, changing tanh to erf, correct -3dB pts  6/14/16
@@ -270,7 +270,7 @@ void define_kernel(int N, double* kernel, double samplefreq, double freq_min, do
     //printf("filter params: %.15g %.15g %.15g \n", freq_min, freq_max, freq_wid); // debug
     //freq_wid = 1000.0; // *** why not correctly read in? override hack
 
-    for (int i = 0; i < N; i++) {
+    for (bigint i = 0; i < N; i++) {
         const double fgrid = (i <= (N + 1) / 2) ? df * i : df * (i - N); // why const? (ahb)
         const double absf = fabs(fgrid);
         double val = 1.0;
@@ -292,8 +292,8 @@ Mda32 bandpass_filter_kernel(Mda32& X, double samplerate, double freq_min, doubl
     QTime timer;
     timer.start();
     int M = X.N1();
-    int N = X.N2();
-    int MN = M * N;
+    bigint N = X.N2();
+    bigint MN = M * N;
     Mda32 Y(M, N);
     float* Xptr = X.dataPtr();
     float* Yptr = Y.dataPtr();

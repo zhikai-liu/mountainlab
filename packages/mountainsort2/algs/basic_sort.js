@@ -29,9 +29,8 @@ exports.spec=function() {
 	return common.clone(spec0);
 };
 
-var console_prefix='';
 exports.run=function(opts,callback) {
-	console_prefix=opts.console_prefix||'';
+	var console_prefix=opts.console_prefix||'';
 	if (!opts._tempdir) {
 		console.error('opts._tempdir is empty');
 		process.exit(-1);
