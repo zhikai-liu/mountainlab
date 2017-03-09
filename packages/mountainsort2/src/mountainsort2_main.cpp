@@ -28,6 +28,7 @@
 #include "p_concat_timeseries.h"
 #include "p_concat_firings.h"
 #include "p_compute_templates.h"
+#include "p_load_test.h"
 #include "omp.h"
 
 QJsonObject get_spec()
@@ -162,6 +163,12 @@ QJsonObject get_spec()
         X.addOutputs("timeseries_out");
         X.addOutputs("firings_out");
         //X.addRequiredParameters();
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.load_test", "0.1");
+        X.addOutputs("stats_out");
+        X.addOptionalParameters("num_read_bytes","num_write_bytes","num_cpu_ops");
         processors.push_back(X.get_spec());
     }
 
@@ -334,6 +341,14 @@ int main(int argc, char* argv[])
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
         QString firings_out = CLP.named_parameters["firings_out"].toString();
         ret = p_concat_firings(timeseries_list, firings_list, timeseries_out, firings_out);
+    }
+    else if (arg1 == "mountainsort.load_test") {
+        QString stats_out = CLP.named_parameters["stats_out"].toString();
+        P_load_test_opts opts;
+        opts.num_cpu_ops=CLP.named_parameters["num_cpu_ops"].toDouble();
+        opts.num_read_bytes=CLP.named_parameters["num_read_bytes"].toDouble();
+        opts.num_write_bytes=CLP.named_parameters["num_write_bytes"].toDouble();
+        ret = p_load_test(stats_out,opts);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

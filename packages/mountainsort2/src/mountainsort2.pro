@@ -42,7 +42,8 @@ SOURCES += \
     p_split_firings.cpp \
     p_concat_timeseries.cpp \
     p_concat_firings.cpp \
-    p_compute_templates.cpp
+    p_compute_templates.cpp \
+    p_load_test.cpp
 
 HEADERS += \
     p_extract_clips.h \
@@ -63,7 +64,8 @@ HEADERS += \
     p_split_firings.h \
     p_concat_timeseries.h \
     p_concat_firings.h \
-    p_compute_templates.h
+    p_compute_templates.h \
+    p_load_test.h
 
 INCLUDEPATH += ../../../mountainsort/src/isosplit5
 VPATH += ../../../mountainsort/src/isosplit5
