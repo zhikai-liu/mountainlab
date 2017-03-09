@@ -41,8 +41,10 @@ DiskWriteMda::~DiskWriteMda()
 
 bool DiskWriteMda::open(int data_type, const QString& path, bigint N1, bigint N2, bigint N3, bigint N4, bigint N5, bigint N6)
 {
-    if (d->m_file)
+    if (d->m_file) {
+        qWarning() << "Error in DiskWriteMda::open -- cannot open the file twice";
         return false; //can't open twice!
+    }
 
     if (QFile::exists(path)) {
         if (!QFile::remove(path)) {
@@ -67,8 +69,10 @@ bool DiskWriteMda::open(int data_type, const QString& path, bigint N1, bigint N2
     d->m_file = fopen((path + ".tmp").toLatin1().data(), "wb");
     d->m_requires_rename = true;
 
-    if (!d->m_file)
+    if (!d->m_file) {
+        qWarning() << "Error in DiskWriteMda::open -- problem in fopen: "+path+".tmp";
         return false;
+    }
 
     bigint NN = N1 * N2 * N3 * N4 * N5 * N6;
     //int buf_size=1e6;

@@ -11,24 +11,24 @@
 #include <mda32.h>
 
 namespace P_extract_segment_timeseries {
-QVector<int> get_durations(QStringList timeseries_list);
+QVector<bigint> get_durations(QStringList timeseries_list);
 }
 
-bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, int t1, int t2)
+bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, bigint t1, bigint t2)
 {
     DiskReadMda32 X(timeseries);
     int M = X.N1();
-    //int N=X.N2();
-    int N2 = t2 - t1 + 1;
+    //bigint N=X.N2();
+    bigint N2 = t2 - t1 + 1;
 
     //do it this way so we can specify the datatype
     DiskWriteMda Y;
     Y.open(X.mdaioHeader().data_type, timeseries_out, M, N2);
 
     //conserve memory as of 3/1/17 -- jfm
-    int chunk_size = 10000; //conserve memory!
-    for (int t = 0; t < N2; t += chunk_size) {
-        int sz = chunk_size;
+    bigint chunk_size = 10000; //conserve memory!
+    for (bigint t = 0; t < N2; t += chunk_size) {
+        bigint sz = chunk_size;
         if (t + sz > N2)
             sz = N2 - t;
         Mda32 chunk;
@@ -40,13 +40,13 @@ bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, in
     return true;
 }
 
-bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, QString timeseries_out, int t1, int t2)
+bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, QString timeseries_out, bigint t1, bigint t2)
 {
     QString ts0 = timeseries_list.value(0);
     DiskReadMda32 X(ts0);
     int M = X.N1();
-    QVector<int> durations = P_extract_segment_timeseries::get_durations(timeseries_list);
-    QVector<int> start_timepoints, end_timepoints;
+    QVector<bigint> durations = P_extract_segment_timeseries::get_durations(timeseries_list);
+    QVector<bigint> start_timepoints, end_timepoints;
     start_timepoints << 0;
     end_timepoints << durations.value(0) - 1;
     for (int i = 1; i < durations.count(); i++) {
@@ -70,9 +70,9 @@ bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, 
 
         //ttA,ttB, the range to read from Y
         //ssA, the position to write it in "out"
-        int ttA, ttB, ssA;
+        bigint ttA, ttB, ssA;
         if (ii == ii1) {
-            int offset = t1 - start_timepoints[ii];
+            bigint offset = t1 - start_timepoints[ii];
             ssA = 0;
             if (ii1 < ii2) {
                 ttA = offset;
@@ -100,7 +100,10 @@ bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, 
 
     //do it this way so we can specify the datatype
     DiskWriteMda Y;
-    Y.open(X.mdaioHeader().data_type, timeseries_out, M, t2 - t1 + 1);
+    if (!Y.open(X.mdaioHeader().data_type, timeseries_out, M, t2 - t1 + 1)) {
+        qWarning() << "Error opening file for writing: " << timeseries_out << M << t2-t1+1;
+        return false;
+    }
     Y.writeChunk(out, 0, 0);
     Y.close();
 
@@ -108,9 +111,9 @@ bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, 
 }
 
 namespace P_extract_segment_timeseries {
-QVector<int> get_durations(QStringList timeseries_list)
+QVector<bigint> get_durations(QStringList timeseries_list)
 {
-    QVector<int> ret;
+    QVector<bigint> ret;
     foreach (QString ts, timeseries_list) {
         DiskReadMda32 X(ts);
         ret << X.N2();
