@@ -8,6 +8,7 @@ struct Bandpass_filter_opts {
     double freq_min = 0;
     double freq_max = 0;
     double freq_wid = 0;
+    QString testcode;
 };
 
 bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filter_opts opts);

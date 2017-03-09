@@ -1,2 +1,3 @@
 m2drift mountainsort2_drift_01.pipeline --num_time_segment_threads=20 --num_basic_sort_threads=2
 pip1 mountainsort2_drift_01.pipeline --num_time_segment_threads=1 --num_basic_sort_threads=1
+pip6 mountainsort2_drift_01.pipeline --num_time_segment_threads=6 --num_basic_sort_threads=1

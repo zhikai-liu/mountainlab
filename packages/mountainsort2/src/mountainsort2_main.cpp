@@ -54,6 +54,7 @@ QJsonObject get_spec()
         X.addInputs("timeseries");
         X.addOutputs("timeseries_out");
         X.addRequiredParameters("samplerate", "freq_min", "freq_max", "freq_wid");
+        X.addOptionalParameter("testcode");
         processors.push_back(X.get_spec());
     }
     {
@@ -228,6 +229,7 @@ int main(int argc, char* argv[])
         opts.freq_min = CLP.named_parameters["freq_min"].toDouble();
         opts.freq_max = CLP.named_parameters["freq_max"].toDouble();
         opts.freq_wid = CLP.named_parameters["freq_wid"].toDouble();
+        opts.testcode = CLP.named_parameters.value("testcode","").toString();
         ret = p_bandpass_filter(timeseries, timeseries_out, opts);
     }
     else if (arg1 == "mountainsort.whiten") {

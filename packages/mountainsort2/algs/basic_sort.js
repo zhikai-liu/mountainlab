@@ -226,6 +226,7 @@ exports.run=function(opts,callback) {
 				freq_min:opts.freq_min||0,
 				freq_max:opts.freq_max||0,
 				freq_wid:opts.freq_wid||0,
+				//testcode:'noread,nowrite',
 				_request_num_threads:opts._request_num_threads||1
 			},
 			callback
