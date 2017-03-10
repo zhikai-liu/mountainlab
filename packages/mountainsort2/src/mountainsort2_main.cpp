@@ -152,14 +152,14 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.concat_timeseries", "0.1");
+        ProcessorSpec X("mountainsort.concat_timeseries", "0.11");
         X.addInputs("timeseries_list");
         X.addOutputs("timeseries_out");
         //X.addRequiredParameters();
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.concat_firings", "0.1");
+        ProcessorSpec X("mountainsort.concat_firings", "0.11");
         X.addInputs("timeseries_list");
         X.addInputs("firings_list");
         X.addOutputs("timeseries_out");

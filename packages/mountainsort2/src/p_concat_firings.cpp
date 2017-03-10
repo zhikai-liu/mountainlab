@@ -31,8 +31,8 @@ bool p_concat_firings(QStringList timeseries_list, QStringList firings_list, QSt
 
     DiskWriteMda Y(X0.mdaioHeader().data_type, timeseries_out, M, NN);
     Mda G(R, LL);
-    int n0 = 0;
-    int i0 = 0;
+    bigint n0 = 0;
+    bigint i0 = 0;
     for (int i = 0; i < timeseries_list.count(); i++) {
         printf("Timeseries %d of %d\n", i + 1, timeseries_list.count());
         DiskReadMda32 X1(timeseries_list.value(i));
