@@ -32,7 +32,7 @@ struct Kernel_runner {
 
         data_in = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * MN);
         data_out = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * MN);
-        kernel0 = (double*)malloc(sizeof(double) * MN);
+        kernel0 = (double*)malloc(sizeof(double) * N);
 
         define_kernel(N, kernel0, samplerate, freq_min, freq_max, freq_wid);
 
@@ -59,9 +59,13 @@ struct Kernel_runner {
         fftw_execute(p_fft);
         //multiply by kernel
         double factor=1.0/N;
-        for (bigint i=0; i<MN; i++) {
-            data_out[i][0]*=kernel0[i] *factor;
-            data_out[i][1]*=kernel0[i] *factor;
+        bigint aa=0;
+        for (bigint i=0; i<N; i++) {
+            for (int m=0; m<M; m++) {
+                data_out[aa][0]*=kernel0[i] *factor;
+                data_out[aa][1]*=kernel0[i] *factor;
+                aa++;
+            }
         }
         fftw_execute(p_ifft);
         //set the output data
@@ -108,11 +112,16 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
     timer_status.start();
 
     int num_threads = omp_get_max_threads();
-    int memory_size = 0.1 * 1e9;
-    int chunk_size = memory_size * 1.0 / (M * 4 * num_threads);
-    chunk_size = qMin(N * 1.0, qMax(1e4 * 1.0, chunk_size * 1.0));
-    int overlap_size = chunk_size / 5;
-    printf("************ Using chunk size / overlap size: %d / %d (num threads=%d)\n", chunk_size, overlap_size, num_threads);
+
+    //int memory_size = 0.1 * 1e9;
+    //int chunk_size = memory_size * 1.0 / (M * 4 * num_threads);
+    //chunk_size = qMin(N * 1.0, qMax(1e4 * 1.0, chunk_size * 1.0));
+    //int overlap_size = chunk_size / 5;
+
+    int chunk_size=20000;
+    int overlap_size=2000;
+    printf("************+++ Using chunk size / overlap size: %d / %d (num threads=%d)\n", chunk_size, overlap_size, num_threads);
+    qDebug() << "samplerate/freq_min/freq_max/freq_wid:" << opts.samplerate << opts.freq_min << opts.freq_max << opts.freq_wid;
 
 #pragma omp parallel
     {
@@ -134,7 +143,7 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
                 QTime kernel_timer; kernel_timer.start();
                 KR.apply(chunk);
                 //chunk = P_bandpass_filter::bandpass_filter_kernel(chunk, opts.samplerate, opts.freq_min, opts.freq_max, opts.freq_wid);
-                qDebug().noquote() << "Kernel timer elapsed: " << kernel_timer.elapsed() << " for chunk at " << timepoint << " of " << N;
+                //qDebug().noquote() << "Kernel timer elapsed: " << kernel_timer.elapsed() << " for chunk at " << timepoint << " of " << N;
             }
             Mda32 chunk2;
             {
