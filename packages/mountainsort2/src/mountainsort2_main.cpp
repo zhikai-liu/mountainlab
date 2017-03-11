@@ -138,7 +138,7 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.cluster_metrics", "0.1");
+        ProcessorSpec X("mountainsort.cluster_metrics", "0.11");
         X.addInputs("timeseries", "firings");
         X.addOutputs("cluster_metrics_out");
         X.addRequiredParameters("samplerate");

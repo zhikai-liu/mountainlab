@@ -47,7 +47,7 @@ namespace P_cluster_metrics {
 QJsonObject get_cluster_metrics(const DiskReadMda32& X, const QVector<double>& times, const QVector<int>& labels, int k, Cluster_metrics_opts opts)
 {
     (void)X;
-    QVector<int> times_k;
+    QVector<double> times_k;
     for (int i = 0; i < labels.count(); i++) {
         if (labels[i] == k)
             times_k << times[i];
