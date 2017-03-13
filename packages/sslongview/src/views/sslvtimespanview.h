@@ -36,6 +36,7 @@ protected:
 
 private slots:
     void slot_update_image();
+    void slot_rect_clicked(int k,Qt::KeyboardModifiers modifiers);
 
 private:
     SSLVTimeSpanViewPrivate* d;
@@ -50,12 +51,15 @@ public:
 
     void paint(QPainter* painter) Q_DECL_OVERRIDE;
     void setWindowSize(QSize size) Q_DECL_OVERRIDE;
-
+    void mouseReleaseEvent(QMouseEvent* evt) Q_DECL_OVERRIDE;
     TimeSpanImageCalculator* calculator;
 
     //void updateImage();
 
     QImage output_image;
+    QMap<int,QRectF> rects;
+signals:
+    void rectClicked(int k,Qt::KeyboardModifiers modifiers);
 
 private slots:
     void slot_calculator_finished();

@@ -44,6 +44,7 @@ struct ClusterData {
     Mda32 template0;
     Mda32 stdev0;
     int num_events = 0;
+    double firing_rate = 0;
 
     QJsonObject toJsonObject();
     void fromJsonObject(const QJsonObject& X);
@@ -307,6 +308,23 @@ void ClusterDetailView::onCalculationFinished()
     Q_ASSERT(c);
 
     d->m_cluster_data = d->m_calculator.cluster_data;
+
+    QJsonObject CM=c->clusterMetrics();
+    QJsonArray clusters0=CM["clusters"].toArray();
+    QMap<int,QJsonObject> lookup;
+    for (int i=0; i<clusters0.count(); i++) {
+        int kk=clusters0[i].toObject()["label"].toInt();
+        lookup[kk]=clusters0[i].toObject();
+    }
+
+    for (int i=0; i<d->m_cluster_data.count(); i++) {
+        ClusterData *CD=&d->m_cluster_data[i];
+        int k=CD->k;
+        QJsonObject metrics0=clusters0[k].toObject()["metrics"].toObject();
+        CD->num_events=metrics0["num_events"].toInt();
+        CD->firing_rate=metrics0["firing_rate"].toDouble();
+    }
+
     //if (!c->visibleChannels().isEmpty()) {
     //    extract_channels_from_templates(d->m_cluster_data, c->visibleChannels());
     //}
@@ -972,7 +990,7 @@ void ClusterView::paint(QPainter* painter, QRectF rect, bool render_image_mode)
             QPen pen;
             pen.setWidth(1);
             RR = QRectF(m_bottom_rect.x(), m_bottom_rect.y() + m_bottom_rect.height() - text_height * 2, m_bottom_rect.width(), text_height);
-            double rate = m_CD.num_events * 1.0 / d->m_total_time_sec;
+            double rate = m_CD.firing_rate;
             pen.setColor(get_firing_rate_text_color(rate));
             if (!compressed_info)
                 txt = QString("%1 sp/sec").arg(QString::number(rate, 'g', 2));
@@ -1327,7 +1345,7 @@ QColor ClusterView::get_firing_rate_text_color(double rate)
     return QColor(50, 0, 0);
 }
 
-DiskReadMda32 mp_compute_templates(const QString& timeseries, const QString& firings, int clip_size)
+DiskReadMda32 mp_compute_templates(const QString& timeseries, const QString& firings, int clip_size, const QList<int> &clusters)
 {
     TaskProgress task(TaskProgress::Calculate, "mp_compute_templates");
     MountainProcessRunner X;
@@ -1338,6 +1356,7 @@ DiskReadMda32 mp_compute_templates(const QString& timeseries, const QString& fir
     params["timeseries"] = timeseries;
     params["firings"] = firings;
     params["clip_size"] = clip_size;
+    params["clusters"] = MLUtil::intListToStringList(clusters).join(",");
     task.log() << "PARAMS = " << params;
     X.setInputParameters(params);
 
@@ -1392,7 +1411,7 @@ void ClusterDetailViewCalculator::compute()
 
     int M = timeseries.N1();
     //int N = timeseries.N2();
-    int L = firings.N2();
+    //int L = firings.N2();
     int T = clip_size;
 
     QMap<int, int> label_map;
@@ -1400,6 +1419,7 @@ void ClusterDetailViewCalculator::compute()
         label_map[clusters_to_view[i]] = i + 1;
     }
 
+    /*
     QVector<double> times;
     QVector<int> labels;
     QVector<int> peak_channels;
@@ -1414,13 +1434,16 @@ void ClusterDetailViewCalculator::compute()
             peak_channels << firings.value(0, i);
         }
     }
+    */
 
+    /*
     Mda firings0(3, times.count());
     for (int i = 0; i < times.count(); i++) {
         firings0.setValue(peak_channels[i], 0, i);
         firings0.setValue(times[i], 1, i);
         firings0.setValue(labels[i], 2, i);
     }
+    */
 
     if (MLUtil::threadInterruptRequested()) {
         task.error("Halted *");
@@ -1430,7 +1453,8 @@ void ClusterDetailViewCalculator::compute()
     cluster_data.clear();
 
     QString timeseries_path = timeseries.makePath();
-    QString firings_path = DiskReadMda(firings0).makePath();
+    //QString firings_path = DiskReadMda(firings0).makePath();
+    QString firings_path=firings.makePath();
 
     /*
     this->setStatus("", "mscmd_compute_templates: "+mscmdserver_url+" timeseries_path="+timeseries_path+" firings_path="+firings_path, 0.6);
@@ -1451,7 +1475,7 @@ void ClusterDetailViewCalculator::compute()
 
     task.log("compute_templates: timeseries_path=" + timeseries_path + " firings_path=" + firings_path);
     task.setProgress(0.25);
-    DiskReadMda32 templates0 = mp_compute_templates(timeseries_path, firings_path, T);
+    DiskReadMda32 templates0 = mp_compute_templates(timeseries_path, firings_path, T, clusters_to_view);
     if (MLUtil::threadInterruptRequested()) {
         task.error("Halted **");
         return;
@@ -1467,11 +1491,13 @@ void ClusterDetailViewCalculator::compute()
         ClusterData CD;
         CD.k = clusters_to_view[aa];
         CD.channel = 0;
+        /*
         for (int i = 0; i < L; i++) {
             if (labels[i] == aa + 1) {
                 CD.num_events++;
             }
         }
+        */
         if (MLUtil::threadInterruptRequested()) {
             task.error("Halted ****");
             return;
@@ -1479,9 +1505,9 @@ void ClusterDetailViewCalculator::compute()
         templates0.readChunk(CD.template0, 0, 0, aa, M, T, 1);
         //stdevs0.readChunk(CD.stdev0, 0, 0, k - 1, M, T, 1);
         if (!MLUtil::threadInterruptRequested()) {
-            if (CD.num_events > 0) {
+            //if (CD.num_events > 0) {
                 cluster_data << CD;
-            }
+            //}
         }
     }
 }

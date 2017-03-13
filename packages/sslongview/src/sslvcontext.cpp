@@ -230,6 +230,22 @@ void SSLVContext::clickCluster(int k, Qt::KeyboardModifiers modifiers)
             }
         }
     }
+    else if (modifiers & Qt::ShiftModifier) {
+        if (d->m_current_cluster>0) {
+            QList<int> tmp = d->m_selected_clusters;
+            int k1=qMin(k,d->m_current_cluster);
+            int k2=qMax(k,d->m_current_cluster);
+            for (int kk=k1; kk<=k2; kk++) {
+                if (this->clusterIsVisible(kk))
+                    tmp << kk;
+            }
+            this->setSelectedClusters(tmp);
+        }
+        else {
+            this->setSelectedClusters(QList<int>());
+            this->setCurrentCluster(k);
+        }
+    }
     else {
         this->setSelectedClusters(QList<int>());
         this->setCurrentCluster(k);

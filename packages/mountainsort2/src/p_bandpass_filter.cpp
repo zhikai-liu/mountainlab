@@ -121,7 +121,7 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
     int chunk_size=20000;
     int overlap_size=2000;
     printf("************+++ Using chunk size / overlap size: %d / %d (num threads=%d)\n", chunk_size, overlap_size, num_threads);
-    qDebug() << "samplerate/freq_min/freq_max/freq_wid:" << opts.samplerate << opts.freq_min << opts.freq_max << opts.freq_wid;
+    qDebug().noquote() << "samplerate/freq_min/freq_max/freq_wid:" << opts.samplerate << opts.freq_min << opts.freq_max << opts.freq_wid;
 
 #pragma omp parallel
     {
