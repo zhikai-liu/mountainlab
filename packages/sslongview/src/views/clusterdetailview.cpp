@@ -309,20 +309,20 @@ void ClusterDetailView::onCalculationFinished()
 
     d->m_cluster_data = d->m_calculator.cluster_data;
 
-    QJsonObject CM=c->clusterMetrics();
-    QJsonArray clusters0=CM["clusters"].toArray();
-    QMap<int,QJsonObject> lookup;
-    for (int i=0; i<clusters0.count(); i++) {
-        int kk=clusters0[i].toObject()["label"].toInt();
-        lookup[kk]=clusters0[i].toObject();
+    QJsonObject CM = c->clusterMetrics();
+    QJsonArray clusters0 = CM["clusters"].toArray();
+    QMap<int, QJsonObject> lookup;
+    for (int i = 0; i < clusters0.count(); i++) {
+        int kk = clusters0[i].toObject()["label"].toInt();
+        lookup[kk] = clusters0[i].toObject();
     }
 
-    for (int i=0; i<d->m_cluster_data.count(); i++) {
-        ClusterData *CD=&d->m_cluster_data[i];
-        int k=CD->k;
-        QJsonObject metrics0=clusters0[k].toObject()["metrics"].toObject();
-        CD->num_events=metrics0["num_events"].toInt();
-        CD->firing_rate=metrics0["firing_rate"].toDouble();
+    for (int i = 0; i < d->m_cluster_data.count(); i++) {
+        ClusterData* CD = &d->m_cluster_data[i];
+        int k = CD->k;
+        QJsonObject metrics0 = clusters0[k].toObject()["metrics"].toObject();
+        CD->num_events = metrics0["num_events"].toInt();
+        CD->firing_rate = metrics0["firing_rate"].toDouble();
     }
 
     //if (!c->visibleChannels().isEmpty()) {
@@ -1345,7 +1345,7 @@ QColor ClusterView::get_firing_rate_text_color(double rate)
     return QColor(50, 0, 0);
 }
 
-DiskReadMda32 mp_compute_templates(const QString& timeseries, const QString& firings, int clip_size, const QList<int> &clusters)
+DiskReadMda32 mp_compute_templates(const QString& timeseries, const QString& firings, int clip_size, const QList<int>& clusters)
 {
     TaskProgress task(TaskProgress::Calculate, "mp_compute_templates");
     MountainProcessRunner X;
@@ -1454,7 +1454,7 @@ void ClusterDetailViewCalculator::compute()
 
     QString timeseries_path = timeseries.makePath();
     //QString firings_path = DiskReadMda(firings0).makePath();
-    QString firings_path=firings.makePath();
+    QString firings_path = firings.makePath();
 
     /*
     this->setStatus("", "mscmd_compute_templates: "+mscmdserver_url+" timeseries_path="+timeseries_path+" firings_path="+firings_path, 0.6);
@@ -1506,7 +1506,7 @@ void ClusterDetailViewCalculator::compute()
         //stdevs0.readChunk(CD.stdev0, 0, 0, k - 1, M, T, 1);
         if (!MLUtil::threadInterruptRequested()) {
             //if (CD.num_events > 0) {
-                cluster_data << CD;
+            cluster_data << CD;
             //}
         }
     }

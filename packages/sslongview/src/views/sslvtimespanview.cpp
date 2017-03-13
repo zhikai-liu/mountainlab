@@ -66,7 +66,7 @@ public:
 
     //output
     QImage image;
-    QMap<int,QRectF> rects;
+    QMap<int, QRectF> rects;
 
     QColor cluster_color(int k);
     double time2xpix(double t);
@@ -107,7 +107,7 @@ SSLVTimeSpanView::SSLVTimeSpanView(MVAbstractContext* context)
     //d->m_legend->setClusterColors(c->clusterColors());
 
     d->m_content_layer = new TimeSpanContentLayer;
-    connect(d->m_content_layer,SIGNAL(rectClicked(int,Qt::KeyboardModifiers)),this,SLOT(slot_rect_clicked(int,Qt::KeyboardModifiers)));
+    connect(d->m_content_layer, SIGNAL(rectClicked(int, Qt::KeyboardModifiers)), this, SLOT(slot_rect_clicked(int, Qt::KeyboardModifiers)));
 
     d->m_axis_layer = new TimeSpanAxisLayer;
     d->m_paint_layer_stack.addLayer(d->m_content_layer);
@@ -251,7 +251,7 @@ void SSLVTimeSpanView::slot_update_image()
     d->m_content_layer->calculator->cluster_metrics = c->clusterMetrics();
     d->m_content_layer->calculator->samplerate = c->sampleRate();
     d->m_content_layer->calculator->current_cluster = c->currentCluster();
-    d->m_content_layer->calculator->selected_clusters=c->selectedClusters().toSet();
+    d->m_content_layer->calculator->selected_clusters = c->selectedClusters().toSet();
     d->m_content_layer->calculator->start();
 }
 
@@ -259,7 +259,7 @@ void SSLVTimeSpanView::slot_rect_clicked(int k, Qt::KeyboardModifiers modifiers)
 {
     SSLVContext* c = qobject_cast<SSLVContext*>(mvContext());
     Q_ASSERT(c);
-    c->clickCluster(k,modifiers);
+    c->clickCluster(k, modifiers);
 }
 
 void SSLVTimeSpanView::paintContent(QPainter* painter)
@@ -376,13 +376,13 @@ void TimeSpanContentLayer::setWindowSize(QSize size)
     PaintLayer::setWindowSize(size);
 }
 
-void TimeSpanContentLayer::mouseReleaseEvent(QMouseEvent *evt)
+void TimeSpanContentLayer::mouseReleaseEvent(QMouseEvent* evt)
 {
-    QList<int> keys=rects.keys();
-    foreach (int key,keys) {
-        QRectF rect=rects[key];
+    QList<int> keys = rects.keys();
+    foreach (int key, keys) {
+        QRectF rect = rects[key];
         if (rect.contains(evt->pos())) {
-            emit rectClicked(key,evt->modifiers());
+            emit rectClicked(key, evt->modifiers());
         }
     }
 }
@@ -405,7 +405,7 @@ void TimeSpanContentLayer::slot_calculator_finished()
     if (this->calculator->isInterruptionRequested())
         return;
     this->output_image = this->calculator->image;
-    this->rects=this->calculator->rects;
+    this->rects = this->calculator->rects;
     emit repaintNeeded();
 }
 
@@ -452,11 +452,11 @@ void TimeSpanImageCalculator::run()
 
                 if (pass == 1) {
                     painter.fillRect(R, col);
-                    painter.setPen(QColor(200,200,255));
+                    painter.setPen(QColor(200, 200, 255));
                     painter.drawRect(R);
-                    rects[k]=R;
+                    rects[k] = R;
                 }
-                if ((selected_clusters.contains(k))  && (pass == 2)) {
+                if ((selected_clusters.contains(k)) && (pass == 2)) {
                     QRectF R2 = R;
                     R2.adjust(-1, -1, 1, 1);
                     //painter.setPen(Qt::white);

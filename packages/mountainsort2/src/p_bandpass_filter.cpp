@@ -10,20 +10,22 @@
 namespace P_bandpass_filter {
 void define_kernel(bigint N, double* kernel, double samplefreq, double freq_min, double freq_max, double freq_wid);
 struct Kernel_runner {
-    Kernel_runner() {
-
+    Kernel_runner()
+    {
     }
 
-    ~Kernel_runner() {
+    ~Kernel_runner()
+    {
         fftw_free(data_in);
         fftw_free(data_out);
         free(kernel0);
         //delete p_fft;
         //delete p_ifft;
     }
-    void init(int M_in,bigint N_in,double samplerate, double freq_min,double freq_max,double freq_wid) {
-        M=M_in;
-        N=N_in;
+    void init(int M_in, bigint N_in, double samplerate, double freq_min, double freq_max, double freq_wid)
+    {
+        M = M_in;
+        N = N_in;
         MN = M * N;
         /*
         p_fft=new fftw_plan; //this nonsense is necessary because we cannot instantiate fftw plans in multiple threads simultaneously
@@ -46,36 +48,37 @@ struct Kernel_runner {
         int ostride = M;
         int odist = 1;
         unsigned flags = FFTW_ESTIMATE;
-        p_fft = fftw_plan_many_dft(rank,n,howmany,data_in,inembed,istride,idist,data_out,onembed,ostride,odist,FFTW_FORWARD,flags);
-        p_ifft = fftw_plan_many_dft(rank,n,howmany,data_out,inembed,istride,idist,data_in,onembed,ostride,odist,FFTW_BACKWARD,flags);
+        p_fft = fftw_plan_many_dft(rank, n, howmany, data_in, inembed, istride, idist, data_out, onembed, ostride, odist, FFTW_FORWARD, flags);
+        p_ifft = fftw_plan_many_dft(rank, n, howmany, data_out, inembed, istride, idist, data_in, onembed, ostride, odist, FFTW_BACKWARD, flags);
     }
-    void apply(Mda32 &chunk) {
+    void apply(Mda32& chunk)
+    {
         //set input data
-        for (bigint i=0; i<MN; i++) {
-            data_in[i][0]=chunk.get(i);
-            data_in[i][1]=0;
+        for (bigint i = 0; i < MN; i++) {
+            data_in[i][0] = chunk.get(i);
+            data_in[i][1] = 0;
         }
         //fft
         fftw_execute(p_fft);
         //multiply by kernel
-        double factor=1.0/N;
-        bigint aa=0;
-        for (bigint i=0; i<N; i++) {
-            for (int m=0; m<M; m++) {
-                data_out[aa][0]*=kernel0[i] *factor;
-                data_out[aa][1]*=kernel0[i] *factor;
+        double factor = 1.0 / N;
+        bigint aa = 0;
+        for (bigint i = 0; i < N; i++) {
+            for (int m = 0; m < M; m++) {
+                data_out[aa][0] *= kernel0[i] * factor;
+                data_out[aa][1] *= kernel0[i] * factor;
                 aa++;
             }
         }
         fftw_execute(p_ifft);
         //set the output data
-        for (bigint i=0; i<MN; i++) {
-            chunk.set(data_in[i][0],i);
+        for (bigint i = 0; i < MN; i++) {
+            chunk.set(data_in[i][0], i);
         }
     }
 
     int M;
-    bigint N,MN;
+    bigint N, MN;
     fftw_complex* data_in;
     fftw_complex* data_out;
     double* kernel0;
@@ -91,17 +94,17 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
         return QFile::copy(timeseries, timeseries_out);
     }
 
-    bool do_write=true;
+    bool do_write = true;
     if (opts.testcode.split(",").contains("nowrite"))
-        do_write=false;
+        do_write = false;
 
     DiskReadMda32 X;
     if (opts.testcode.isEmpty())
         X.setPath(timeseries);
     else if (opts.testcode.split(",").contains("noread")) {
         DiskReadMda32 A(timeseries);
-        Mda32 tmp(A.N1(),A.N2());
-        X=DiskReadMda32(tmp);
+        Mda32 tmp(A.N1(), A.N2());
+        X = DiskReadMda32(tmp);
     }
     const int M = X.N1();
     const bigint N = X.N2();
@@ -118,8 +121,8 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
     //chunk_size = qMin(N * 1.0, qMax(1e4 * 1.0, chunk_size * 1.0));
     //int overlap_size = chunk_size / 5;
 
-    int chunk_size=20000;
-    int overlap_size=2000;
+    int chunk_size = 20000;
+    int overlap_size = 2000;
     printf("************+++ Using chunk size / overlap size: %d / %d (num threads=%d)\n", chunk_size, overlap_size, num_threads);
     qDebug().noquote() << "samplerate/freq_min/freq_max/freq_wid:" << opts.samplerate << opts.freq_min << opts.freq_max << opts.freq_wid;
 
@@ -129,7 +132,7 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
         P_bandpass_filter::Kernel_runner KR;
 #pragma omp critical(lock1)
         {
-            KR.init(M,chunk_size+2*overlap_size,opts.samplerate,opts.freq_min,opts.freq_max,opts.freq_wid);
+            KR.init(M, chunk_size + 2 * overlap_size, opts.samplerate, opts.freq_min, opts.freq_max, opts.freq_wid);
         }
         bigint num_timepoints_handled = 0;
 #pragma omp for
@@ -140,7 +143,8 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
                 X.readChunk(chunk, 0, timepoint - overlap_size, M, chunk_size + 2 * overlap_size);
             }
             if (!opts.testcode.split(",").contains("nokernel")) {
-                QTime kernel_timer; kernel_timer.start();
+                QTime kernel_timer;
+                kernel_timer.start();
                 KR.apply(chunk);
                 //chunk = P_bandpass_filter::bandpass_filter_kernel(chunk, opts.samplerate, opts.freq_min, opts.freq_max, opts.freq_wid);
                 //qDebug().noquote() << "Kernel timer elapsed: " << kernel_timer.elapsed() << " for chunk at " << timepoint << " of " << N;

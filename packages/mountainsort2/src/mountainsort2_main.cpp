@@ -171,7 +171,7 @@ QJsonObject get_spec()
     {
         ProcessorSpec X("mountainsort.load_test", "0.1");
         X.addOutputs("stats_out");
-        X.addOptionalParameters("num_read_bytes","num_write_bytes","num_cpu_ops");
+        X.addOptionalParameters("num_read_bytes", "num_write_bytes", "num_cpu_ops");
         processors.push_back(X.get_spec());
     }
 
@@ -231,8 +231,9 @@ int main(int argc, char* argv[])
         opts.freq_min = CLP.named_parameters["freq_min"].toDouble();
         opts.freq_max = CLP.named_parameters["freq_max"].toDouble();
         opts.freq_wid = CLP.named_parameters.value("freq_wid").toDouble();
-        if (!opts.freq_wid) opts.freq_wid=1000;
-        opts.testcode = CLP.named_parameters.value("testcode","").toString();
+        if (!opts.freq_wid)
+            opts.freq_wid = 1000;
+        opts.testcode = CLP.named_parameters.value("testcode", "").toString();
         ret = p_bandpass_filter(timeseries, timeseries_out, opts);
     }
     else if (arg1 == "mountainsort.whiten") {
@@ -261,7 +262,7 @@ int main(int argc, char* argv[])
         QString firings = CLP.named_parameters["firings"].toString();
         QString templates_out = CLP.named_parameters["templates_out"].toString();
         int clip_size = CLP.named_parameters["clip_size"].toInt();
-        QList<int> clusters= MLUtil::stringListToIntList(CLP.named_parameters["clusters"].toString().split(","));
+        QList<int> clusters = MLUtil::stringListToIntList(CLP.named_parameters["clusters"].toString().split(","));
         ret = p_compute_templates(timeseries_list, firings, templates_out, clip_size, clusters);
     }
     else if (arg1 == "mountainsort.sort_clips") {
@@ -351,10 +352,10 @@ int main(int argc, char* argv[])
     else if (arg1 == "mountainsort.load_test") {
         QString stats_out = CLP.named_parameters["stats_out"].toString();
         P_load_test_opts opts;
-        opts.num_cpu_ops=CLP.named_parameters["num_cpu_ops"].toDouble();
-        opts.num_read_bytes=CLP.named_parameters["num_read_bytes"].toDouble();
-        opts.num_write_bytes=CLP.named_parameters["num_write_bytes"].toDouble();
-        ret = p_load_test(stats_out,opts);
+        opts.num_cpu_ops = CLP.named_parameters["num_cpu_ops"].toDouble();
+        opts.num_read_bytes = CLP.named_parameters["num_read_bytes"].toDouble();
+        opts.num_write_bytes = CLP.named_parameters["num_write_bytes"].toDouble();
+        ret = p_load_test(stats_out, opts);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

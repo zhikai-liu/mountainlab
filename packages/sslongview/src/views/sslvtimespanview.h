@@ -36,7 +36,7 @@ protected:
 
 private slots:
     void slot_update_image();
-    void slot_rect_clicked(int k,Qt::KeyboardModifiers modifiers);
+    void slot_rect_clicked(int k, Qt::KeyboardModifiers modifiers);
 
 private:
     SSLVTimeSpanViewPrivate* d;
@@ -57,9 +57,9 @@ public:
     //void updateImage();
 
     QImage output_image;
-    QMap<int,QRectF> rects;
+    QMap<int, QRectF> rects;
 signals:
-    void rectClicked(int k,Qt::KeyboardModifiers modifiers);
+    void rectClicked(int k, Qt::KeyboardModifiers modifiers);
 
 private slots:
     void slot_calculator_finished();

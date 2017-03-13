@@ -101,7 +101,7 @@ bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, 
     //do it this way so we can specify the datatype
     DiskWriteMda Y;
     if (!Y.open(X.mdaioHeader().data_type, timeseries_out, M, t2 - t1 + 1)) {
-        qWarning() << "Error opening file for writing: " << timeseries_out << M << t2-t1+1;
+        qWarning() << "Error opening file for writing: " << timeseries_out << M << t2 - t1 + 1;
         return false;
     }
     Y.writeChunk(out, 0, 0);

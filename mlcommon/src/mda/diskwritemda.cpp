@@ -70,7 +70,7 @@ bool DiskWriteMda::open(int data_type, const QString& path, bigint N1, bigint N2
     d->m_requires_rename = true;
 
     if (!d->m_file) {
-        qWarning() << "Error in DiskWriteMda::open -- problem in fopen: "+path+".tmp";
+        qWarning() << "Error in DiskWriteMda::open -- problem in fopen: " + path + ".tmp";
         return false;
     }
 
