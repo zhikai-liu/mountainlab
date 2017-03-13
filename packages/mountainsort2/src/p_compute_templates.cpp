@@ -53,14 +53,14 @@ bool p_compute_templates(QStringList timeseries_list, QString firings_path, QStr
     int Tmid = (int)((T + 1) / 2) - 1;
     printf("computing templates (M=%d,T=%d,K=%d,L=%d)...\n", M, T, K0, times.count());
     for (int i = 0; i < times.count(); i++) {
-        int t1 = times[i] - Tmid;
+        bigint t1 = times[i] - Tmid;
         //int t2 = t1 + T - 1;
         int k = label_map[labels[i]];
         {
             Mda32 tmp;
             X.readChunk(tmp, 0, t1, M, T);
             float* tmp_ptr = tmp.dataPtr();
-            int offset = M * T * k;
+            bigint offset = M * T * k;
             for (int aa = 0; aa < M * T; aa++) {
                 templates_ptr[offset + aa] += tmp_ptr[aa];
             }

@@ -366,3 +366,66 @@ double SSLVContextPrivate::compute_max_timepoint()
     }
     return ret;
 }
+
+ClusterPair::ClusterPair(int k1, int k2)
+{
+    set(k1, k2);
+}
+
+ClusterPair::ClusterPair(const ClusterPair& other)
+{
+    set(other.k1(), other.k2());
+}
+
+void ClusterPair::set(int k1, int k2)
+{
+    m_k1 = k1;
+    m_k2 = k2;
+}
+
+int ClusterPair::k1() const
+{
+    return m_k1;
+}
+
+int ClusterPair::k2() const
+{
+    return m_k2;
+}
+
+void ClusterPair::operator=(const ClusterPair& other)
+{
+    set(other.k1(), other.k2());
+}
+
+bool ClusterPair::operator==(const ClusterPair& other) const
+{
+    return ((k1() == other.k1()) && (k2() == other.k2()));
+}
+
+bool ClusterPair::operator<(const ClusterPair& other) const
+{
+    if (k1() < other.k1())
+        return true;
+    if (k2() > other.k2())
+        return false;
+    return (k2() < other.k2());
+}
+
+QString ClusterPair::toString() const
+{
+    return QString("pair_%1_%2").arg(m_k1).arg(m_k2);
+}
+
+ClusterPair ClusterPair::fromString(const QString& str)
+{
+    QStringList list = str.split("_");
+    if (list.count() != 3)
+        return ClusterPair(0, 0);
+    return ClusterPair(list.value(1).toInt(), list.value(2).toInt());
+}
+
+uint qHash(const ClusterPair& pair)
+{
+    return qHash(pair.toString());
+}

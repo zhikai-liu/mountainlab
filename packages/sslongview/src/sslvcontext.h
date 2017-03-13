@@ -7,6 +7,24 @@
 #include <diskreadmda.h>
 #include <diskreadmda32.h>
 
+struct ClusterPair {
+    ClusterPair(int k1 = 0, int k2 = 0);
+    ClusterPair(const ClusterPair& other);
+
+    void set(int k1, int k2);
+    int k1() const;
+    int k2() const;
+    void operator=(const ClusterPair& other);
+    bool operator==(const ClusterPair& other) const;
+    bool operator<(const ClusterPair& other) const;
+    QString toString() const;
+    static ClusterPair fromString(const QString& str);
+
+private:
+    int m_k1 = 0, m_k2 = 0;
+};
+uint qHash(const ClusterPair& pair);
+
 class SSLVContextPrivate;
 class SSLVContext : public MVAbstractContext {
     Q_OBJECT

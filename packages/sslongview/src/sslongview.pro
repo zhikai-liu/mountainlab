@@ -24,9 +24,11 @@ TEMPLATE = app
 INCLUDEPATH += plugins views
 VPATH += plugins views
 
-SOURCES += sslongviewmain.cpp
+SOURCES += sslongviewmain.cpp \
+    views/correlogramwidget.cpp
 
-HEADERS += sslvcontext.h
+HEADERS += sslvcontext.h \
+    views/correlogramwidget.h
 SOURCES += sslvcontext.cpp
 
 INCLUDEPATH += controlwidgets
@@ -43,6 +45,10 @@ SOURCES += sslvtimeseriesviewbase.cpp sslvtimespanview.cpp sslvtimespanplugin.cp
 HEADERS += clusterdetailplugin.h clusterdetailview.h clusterdetailviewpropertiesdialog.h
 SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp clusterdetailviewpropertiesdialog.cpp
 FORMS += clusterdetailviewpropertiesdialog.ui
+
+HEADERS += correlogramplugin.h mvhistogramgrid.h mvgridview.h histogramview.h mvgridviewpropertiesdialog.h
+SOURCES += correlogramplugin.cpp mvhistogramgrid.cpp mvgridview.cpp histogramview.cpp mvgridviewpropertiesdialog.cpp
+FORMS += mvgridviewpropertiesdialog.ui
 
 INCLUDEPATH += ../../../mountainsort/src/utils
 VPATH += ../../../mountainsort/src/utils

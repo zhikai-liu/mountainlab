@@ -86,11 +86,9 @@ OpenViewsControl::OpenViewsControl(MVAbstractContext* context, MVMainWindow* mw)
     }
     this->setLayout(d->m_flow_layout);
 
-    /*
     QObject::connect(context, SIGNAL(selectedClustersChanged()), this, SLOT(slot_update_enabled()));
     QObject::connect(context, SIGNAL(currentClusterChanged()), this, SLOT(slot_update_enabled()));
-    QObject::connect(context, SIGNAL(selectedClusterPairsChanged()), this, SLOT(slot_update_enabled()));
-    */
+    //QObject::connect(context, SIGNAL(selectedClusterPairsChanged()), this, SLOT(slot_update_enabled()));
 
     QObject::connect(mw, SIGNAL(viewsChanged()), this, SLOT(updateControls()));
     QObject::connect(mw, SIGNAL(viewsChanged()), this, SLOT(slot_update_enabled()));

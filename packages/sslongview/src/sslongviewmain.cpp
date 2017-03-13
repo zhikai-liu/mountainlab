@@ -36,6 +36,7 @@
 #include <sslvclustermetricsplugin.h>
 #include <sslvtimespanplugin.h>
 #include <clusterdetailplugin.h>
+#include "correlogramplugin.h"
 
 #include "sslvprefscontrol.h"
 
@@ -577,6 +578,7 @@ void setup_main_window(MVMainWindow* W)
     W->loadPlugin(new SSLVClusterMetricsPlugin);
     W->loadPlugin(new SSLVTimeSpanPlugin);
     W->loadPlugin(new ClusterDetailPlugin);
+    W->loadPlugin(new CorrelogramPlugin);
     //W->loadPlugin(new TimeseriesPlugin);
     //W->loadPlugin(new SpectrogramPlugin);
 
