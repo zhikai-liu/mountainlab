@@ -19,7 +19,7 @@ class SSLVClusterMetricsViewPrivate {
 public:
     SSLVClusterMetricsView* q;
     QTreeWidget* m_tree;
-    bool m_updating_selected=false;
+    bool m_updating_selected = false;
 
     void refresh_tree();
 };
@@ -111,7 +111,8 @@ void SSLVClusterMetricsView::slot_current_item_changed()
 void SSLVClusterMetricsView::slot_item_selection_changed()
 {
     //QList<QTreeWidgetItem*> items=d->m_tree->selectedItems();
-    if (d->m_updating_selected) return;
+    if (d->m_updating_selected)
+        return;
 
     SSLVContext* c = qobject_cast<SSLVContext*>(mvContext());
     Q_ASSERT(c);
@@ -155,7 +156,7 @@ void SSLVClusterMetricsView::slot_update_selected_clusters()
 
     QSet<int> selected = c->selectedClusters().toSet();
 
-    d->m_updating_selected=true;
+    d->m_updating_selected = true;
 
     for (int i = 0; i < d->m_tree->topLevelItemCount(); i++) {
         QTreeWidgetItem* it = d->m_tree->topLevelItem(i);
@@ -163,7 +164,7 @@ void SSLVClusterMetricsView::slot_update_selected_clusters()
         it->setSelected(selected.contains(k));
     }
 
-    d->m_updating_selected=false;
+    d->m_updating_selected = false;
 }
 
 class NumericSortTreeWidgetItem : public QTreeWidgetItem {

@@ -151,7 +151,7 @@ void CorrelogramWidget::onCalculationFinished()
     double bin_min = -bin_max;
     //int num_bins=100;
     double sample_freq = c->sampleRate();
-    int bin_size = c->option("cc_bin_size_msec",0.5).toDouble() / 1000 * sample_freq;
+    int bin_size = c->option("cc_bin_size_msec", 0.5).toDouble() / 1000 * sample_freq;
     int num_bins = (bin_max - bin_min) / bin_size;
     //if (num_bins < 100)
     //    num_bins = 100;
@@ -494,7 +494,6 @@ void CorrelogramWidgetComputer::loadStaticOutput(const QJsonObject& X)
     }
     loaded_from_static_output = true;
 }
-
 
 void CorrelogramWidgetPrivate::update_scale_stuff()
 {

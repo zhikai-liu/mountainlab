@@ -428,7 +428,8 @@ void TimeSpanImageCalculator::run()
 
     for (int pass = 1; pass <= 2; pass++) {
         for (int i = 0; i < clusters_to_show.count(); i++) {
-            if (MLUtil::threadInterruptRequested()) return;
+            if (MLUtil::threadInterruptRequested())
+                return;
             int k = clusters_to_show[i];
             if (cluster_index_lookup.contains(k)) {
                 int jj = cluster_index_lookup.value(k);
@@ -468,7 +469,6 @@ void TimeSpanImageCalculator::run()
             }
         }
     }
-
 
     /*
     double alpha_pct = 0.7;
