@@ -32,6 +32,7 @@
 #include <icounter.h>
 #include <sslvopenviewscontrol.h>
 #include <sslvprefscontrol.h>
+#include <firingeventplugin.h>
 //#include <sslvclustermetricsview.h>
 #include <sslvclustermetricsplugin.h>
 #include <sslvtimespanplugin.h>
@@ -579,6 +580,7 @@ void setup_main_window(MVMainWindow* W)
     W->loadPlugin(new SSLVTimeSpanPlugin);
     W->loadPlugin(new ClusterDetailPlugin);
     W->loadPlugin(new CorrelogramPlugin);
+    W->loadPlugin(new FiringEventPlugin);
     //W->loadPlugin(new TimeseriesPlugin);
     //W->loadPlugin(new SpectrogramPlugin);
 

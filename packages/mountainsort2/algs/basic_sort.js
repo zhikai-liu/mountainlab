@@ -5,7 +5,7 @@ var common=require('./common.js');
 exports.spec=function() {
 	var spec0={
 	    name: "mountainsort.basic_sort",
-	    version: "0.1",
+	    version: "0.12",
 	    description: "",
 	    inputs: [
 	        {name:"timeseries",description:"preprocessed timeseries (M x N)"}
@@ -52,6 +52,7 @@ exports.run=function(opts,callback) {
 	var clips='';
 	var labels='';
 	var labels2=''; //consolidated
+	var amplitudes='';
 	var firings='';
 	var firings2=''; //after fitting
 
@@ -110,6 +111,15 @@ exports.run=function(opts,callback) {
 		});
 
 		////////////////////////////////////////////////////////
+		//compute amplitudes
+		amplitudes=mktmp('amplitudes.mda');
+		steps.push(function(cb) {
+			console.log ('>>>>> Compute amplitudes');
+			//important to use filt here for a couple reasons -- one is that the whitening matrix may be different on different segments! 
+			compute_amplitudes(filt,event_times,opts.central_channel,amplitudes,cb);
+		});
+
+		////////////////////////////////////////////////////////
 		//consolidate clusters
 		if (opts.consolidate_clusters) {
 			labels2=mktmp('labels2.mda');
@@ -127,7 +137,7 @@ exports.run=function(opts,callback) {
 		firings=mktmp('firings.mda');
 		steps.push(function(cb) {
 			console.log ('>>>>> Create firings');
-			create_firings(event_times,labels2,firings,cb);
+			create_firings(event_times,labels2,amplitudes,firings,cb);
 		});
 
 		////////////////////////////////////////////////////////
@@ -281,6 +291,17 @@ exports.run=function(opts,callback) {
 		);	
 	}
 
+	function compute_amplitudes(timeseries,event_times,central_channel,amplitudes_out,callback) {
+		common.mp_exec_process('mountainsort.compute_amplitudes',
+			{timeseries:timeseries,event_times:event_times},
+			{amplitudes_out:amplitudes_out},
+			{
+				central_channel:central_channel
+			},
+			callback
+		);	
+	}
+
 	function consolidate_clusters(clips,labels,labels_out,callback) {
 		common.mp_exec_process('mountainsort.consolidate_clusters',
 			{clips:clips,labels:labels},
@@ -292,9 +313,9 @@ exports.run=function(opts,callback) {
 		);
 	}
 
-	function create_firings(event_times,labels,firings_out,callback) {
+	function create_firings(event_times,labels,amplitudes,firings_out,callback) {
 		common.mp_exec_process('mountainsort.create_firings',
-			{event_times:event_times,labels:labels},
+			{event_times:event_times,labels:labels,amplitudes:amplitudes},
 			{firings_out:firings_out},
 			{
 				central_channel:opts.central_channel

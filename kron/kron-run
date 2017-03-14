@@ -215,7 +215,10 @@ function run_pipeline(pipeline,dataset,callback) {
 	}
 
 	if ('_force_run' in CLP.namedParameters) {
-		args+=' --_force_run='+CLP.namedParameters['_force_run'];
+		args+=' --_force_run';
+	}
+	if ('_preserve_tempdir' in CLP.namedParameters) {
+		args+=' --_preserve_tempdir';
 	}
 	if ('_nodaemon' in CLP.namedParameters) {
 		args+=' --_nodaemon';

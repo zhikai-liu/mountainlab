@@ -29,6 +29,8 @@
 #include "p_concat_firings.h"
 #include "p_compute_templates.h"
 #include "p_load_test.h"
+#include "p_compute_amplitudes.h"
+
 #include "omp.h"
 
 QJsonObject get_spec()
@@ -97,6 +99,7 @@ QJsonObject get_spec()
     {
         ProcessorSpec X("mountainsort.consolidate_clusters", "0.1");
         X.addInputs("clips", "labels");
+        X.addOptionalInputs("amplitudes");
         X.addOutputs("labels_out");
         X.addRequiredParameters("central_channel");
         processors.push_back(X.get_spec());
@@ -104,6 +107,7 @@ QJsonObject get_spec()
     {
         ProcessorSpec X("mountainsort.create_firings", "0.1");
         X.addInputs("event_times", "labels");
+        X.addOptionalInputs("amplitudes");
         X.addOutputs("firings_out");
         X.addRequiredParameters("central_channel");
         processors.push_back(X.get_spec());
@@ -172,6 +176,13 @@ QJsonObject get_spec()
         ProcessorSpec X("mountainsort.load_test", "0.1");
         X.addOutputs("stats_out");
         X.addOptionalParameters("num_read_bytes", "num_write_bytes", "num_cpu_ops");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.compute_amplitudes", "0.1");
+        X.addInputs("timeseries", "event_times");
+        X.addOutputs("amplitudes_out");
+        X.addRequiredParameters("central_channel");
         processors.push_back(X.get_spec());
     }
 
@@ -282,9 +293,10 @@ int main(int argc, char* argv[])
     else if (arg1 == "mountainsort.create_firings") {
         QString event_times = CLP.named_parameters["event_times"].toString();
         QString labels = CLP.named_parameters["labels"].toString();
+        QString amplitudes = CLP.named_parameters["amplitudes"].toString();
         QString firings_out = CLP.named_parameters["firings_out"].toString();
         int central_channel = CLP.named_parameters["central_channel"].toInt();
-        ret = p_create_firings(event_times, labels, firings_out, central_channel);
+        ret = p_create_firings(event_times, labels, amplitudes, firings_out, central_channel);
     }
     else if (arg1 == "mountainsort.combine_firings") {
         QStringList firings_list = MLUtil::toStringList(CLP.named_parameters["firings_list"]);
@@ -357,6 +369,14 @@ int main(int argc, char* argv[])
         opts.num_write_bytes = CLP.named_parameters["num_write_bytes"].toDouble();
         ret = p_load_test(stats_out, opts);
     }
+    else if (arg1 == "mountainsort.compute_amplitudes") {
+        P_compute_amplitudes_opts opts;
+        QString timeseries = CLP.named_parameters["timeseries"].toString();
+        QString event_times = CLP.named_parameters["event_times"].toString();
+        opts.central_channel = CLP.named_parameters["central_channel"].toInt();
+        QString amplitudes_out = CLP.named_parameters["amplitudes_out"].toString();
+        ret = p_compute_amplitudes(timeseries, event_times, amplitudes_out, opts);
+    }
     else {
         qWarning() << "Unexpected processor name: " + arg1;
         return -1;
@@ -373,6 +393,7 @@ QJsonObject ProcessorSpecFile::get_spec()
     QJsonObject ret;
     ret["name"] = name;
     ret["description"] = description;
+    ret["optional"] = optional;
     return ret;
 }
 
@@ -398,6 +419,19 @@ void ProcessorSpec::addInputs(QString name1, QString name2, QString name3, QStri
         addInput(name5);
 }
 
+void ProcessorSpec::addOptionalInputs(QString name1, QString name2, QString name3, QString name4, QString name5)
+{
+    addInput(name1, "", true);
+    if (!name2.isEmpty())
+        addInput(name2, "", true);
+    if (!name3.isEmpty())
+        addInput(name3, "", true);
+    if (!name4.isEmpty())
+        addInput(name4, "", true);
+    if (!name5.isEmpty())
+        addInput(name5, "", true);
+}
+
 void ProcessorSpec::addOutputs(QString name1, QString name2, QString name3, QString name4, QString name5)
 {
     addOutput(name1);
@@ -409,6 +443,19 @@ void ProcessorSpec::addOutputs(QString name1, QString name2, QString name3, QStr
         addOutput(name4);
     if (!name5.isEmpty())
         addOutput(name5);
+}
+
+void ProcessorSpec::addOptionalOutputs(QString name1, QString name2, QString name3, QString name4, QString name5)
+{
+    addOutput(name1, "", true);
+    if (!name2.isEmpty())
+        addOutput(name2, "", true);
+    if (!name3.isEmpty())
+        addOutput(name3, "", true);
+    if (!name4.isEmpty())
+        addOutput(name4, "", true);
+    if (!name5.isEmpty())
+        addOutput(name5, "", true);
 }
 
 void ProcessorSpec::addRequiredParameters(QString name1, QString name2, QString name3, QString name4, QString name5)
@@ -437,19 +484,21 @@ void ProcessorSpec::addOptionalParameters(QString name1, QString name2, QString 
         addOptionalParameter(name5);
 }
 
-void ProcessorSpec::addInput(QString name, QString description)
+void ProcessorSpec::addInput(QString name, QString description, bool optional)
 {
     ProcessorSpecFile X;
     X.name = name;
     X.description = description;
+    X.optional = optional;
     inputs.append(X);
 }
 
-void ProcessorSpec::addOutput(QString name, QString description)
+void ProcessorSpec::addOutput(QString name, QString description, bool optional)
 {
     ProcessorSpecFile X;
     X.name = name;
     X.description = description;
+    X.optional = optional;
     outputs.append(X);
 }
 

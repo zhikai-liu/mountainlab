@@ -24,11 +24,9 @@ TEMPLATE = app
 INCLUDEPATH += plugins views
 VPATH += plugins views
 
-SOURCES += sslongviewmain.cpp \
-    views/correlogramwidget.cpp
+SOURCES += sslongviewmain.cpp
 
-HEADERS += sslvcontext.h \
-    views/correlogramwidget.h
+HEADERS += sslvcontext.h
 SOURCES += sslvcontext.cpp
 
 INCLUDEPATH += controlwidgets
@@ -46,9 +44,12 @@ HEADERS += clusterdetailplugin.h clusterdetailview.h clusterdetailviewproperties
 SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp clusterdetailviewpropertiesdialog.cpp
 FORMS += clusterdetailviewpropertiesdialog.ui
 
-HEADERS += correlogramplugin.h mvhistogramgrid.h mvgridview.h histogramview.h mvgridviewpropertiesdialog.h
-SOURCES += correlogramplugin.cpp mvhistogramgrid.cpp mvgridview.cpp histogramview.cpp mvgridviewpropertiesdialog.cpp
+HEADERS += correlogramplugin.h mvhistogramgrid.h mvgridview.h histogramview.h mvgridviewpropertiesdialog.h correlogramwidget.h
+SOURCES += correlogramplugin.cpp mvhistogramgrid.cpp mvgridview.cpp histogramview.cpp mvgridviewpropertiesdialog.cpp correlogramwidget.cpp
 FORMS += mvgridviewpropertiesdialog.ui
+
+HEADERS += mvfiringeventview2.h mvclusterlegend.h firingeventplugin.h
+SOURCES += mvfiringeventview2.cpp mvclusterlegend.cpp firingeventplugin.cpp
 
 INCLUDEPATH += ../../../mountainsort/src/utils
 VPATH += ../../../mountainsort/src/utils

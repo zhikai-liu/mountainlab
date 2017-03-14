@@ -1,5 +1,6 @@
 #include "p_combine_firings.h"
 
+#include <diskreadmda.h>
 #include <mda.h>
 #include "get_sort_indices.h"
 
@@ -8,6 +9,15 @@ bool p_combine_firings(QStringList firings_list, QString firings_out, bool incre
     QVector<int> all_central_channels;
     QVector<double> all_times;
     QVector<int> all_labels;
+    QVector<double> all_extra_values;
+
+    if (firings_list.count() == 0) {
+        qWarning() << "Firings list is empty.";
+        return false;
+    }
+
+    DiskReadMda firings0(firings_list.value(0));
+    int R = firings0.N1();
 
     int max_label = 0;
     int label_offset = 0;
@@ -19,6 +29,8 @@ bool p_combine_firings(QStringList firings_list, QString firings_out, bool incre
                 all_central_channels << F.value(0, j);
                 all_times << F.value(1, j);
                 all_labels << label_offset + label0;
+                for (int r = 3; r < R; r++)
+                    all_extra_values << F.value(r, j);
                 if (label_offset + label0 > max_label)
                     max_label = label_offset + label0;
             }
@@ -30,11 +42,14 @@ bool p_combine_firings(QStringList firings_list, QString firings_out, bool incre
     int L = all_times.count();
     QList<int> sort_inds = get_sort_indices(all_times);
 
-    Mda ret(3, L);
+    Mda ret(R, L);
     for (int j = 0; j < L; j++) {
         ret.setValue(all_central_channels[sort_inds[j]], 0, j);
         ret.setValue(all_times[sort_inds[j]], 1, j);
         ret.setValue(all_labels[sort_inds[j]], 2, j);
+        for (int r = 3; r < R; r++) {
+            ret.setValue(all_extra_values[sort_inds[j] * (R - 3) + (r - 3)], r, j);
+        }
     }
     return ret.write64(firings_out);
 }

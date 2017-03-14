@@ -218,8 +218,9 @@ exports.CLParams=function(argv) {
 				this.namedParameters[arg0.slice(0,ind)]=arg0.slice(ind+1);
 			}
 			else {
-				this.namedParameters[arg0]=args[i+1]||'';
-				i++;
+				//this.namedParameters[arg0]=args[i+1]||'';
+				//i++;
+				this.namedParameters[arg0]='';
 			}
 		}
 		else if (arg0.indexOf('-')===0) {

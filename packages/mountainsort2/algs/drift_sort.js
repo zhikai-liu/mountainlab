@@ -7,6 +7,7 @@ var os=require('os');
 exports.spec=function() {
 	var spec0=basic_sort.spec();
 	spec0.name='mountainsort.drift_sort';
+	spec0.version='0.1--'+spec0.version;
 	spec0.parameters.push({name:'segment_duration_sec'});
 	spec0.parameters.push({name:'shift_duration_sec'});
 	spec0.parameters.push({name:'num_time_segment_threads',optional:true});

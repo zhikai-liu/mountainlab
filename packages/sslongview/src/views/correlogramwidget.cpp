@@ -32,7 +32,6 @@ QVector<double> compute_cc_data3(const QVector<double>& times1_in, const QVector
 class CorrelogramWidgetComputer {
 public:
     //input
-    QString mlproxy_url;
     DiskReadMda firings;
     CrossCorrelogramOptions3 options;
     int max_dt;
@@ -120,6 +119,7 @@ void CorrelogramWidget::prepareCalculation()
     d->m_computer.options = d->m_options;
     d->m_computer.max_dt = c->option("cc_max_dt_msec", 100).toDouble() / 1000 * c->sampleRate();
     d->m_computer.max_est_data_size = c->option("cc_max_est_data_size", 10000).toDouble();
+    d->m_computer.pair_mode = this->pairMode();
 }
 
 void CorrelogramWidget::runCalculation()
@@ -448,6 +448,7 @@ void CorrelogramWidgetComputer::compute()
     //compute the cross-correlograms
     task.setProgress(0.7);
     for (int j = 0; j < correlograms.count(); j++) {
+        task.setProgress(j * 1.0 / correlograms.count());
         if (MLUtil::threadInterruptRequested()) {
             return;
         }
