@@ -482,7 +482,7 @@ bool read_chunk_from_concat_list(Mda32& chunk, const QList<DiskReadMda32>& list,
         }
         sizes << list[j].totalSize() / N1;
     }
-    QVector<int> start_points, end_points;
+    QVector<bigint> start_points, end_points;
     start_points << 0;
     end_points << sizes.value(0) - 1;
     for (int i = 1; i < sizes.count(); i++) {
@@ -491,7 +491,7 @@ bool read_chunk_from_concat_list(Mda32& chunk, const QList<DiskReadMda32>& list,
     }
 
     bigint ii1 = 0;
-    while ((ii1 < list.count()) && (pos1 > end_points[ii1])) {
+    while ((ii1 + 1 < list.count()) && (pos1 > end_points[ii1])) {
         ii1++;
     }
     bigint ii2 = ii1;

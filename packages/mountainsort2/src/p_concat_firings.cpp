@@ -29,16 +29,21 @@ bool p_concat_firings(QStringList timeseries_list, QStringList firings_list, QSt
         LL += F1.N2();
     }
 
-    DiskWriteMda Y(X0.mdaioHeader().data_type, timeseries_out, M, NN);
+    DiskWriteMda Y;
+    if (!timeseries_out.isEmpty()) {
+        Y.open(X0.mdaioHeader().data_type, timeseries_out, M, NN);
+    }
     Mda G(R, LL);
     bigint n0 = 0;
     bigint i0 = 0;
     for (int i = 0; i < timeseries_list.count(); i++) {
         printf("Timeseries %d of %d\n", i + 1, timeseries_list.count());
         DiskReadMda32 X1(timeseries_list.value(i));
-        Mda32 chunk;
-        X1.readChunk(chunk, 0, 0, M, X1.N2());
-        Y.writeChunk(chunk, 0, n0);
+        if (!timeseries_out.isEmpty()) {
+            Mda32 chunk;
+            X1.readChunk(chunk, 0, 0, M, X1.N2());
+            Y.writeChunk(chunk, 0, n0);
+        }
 
         Mda F1(firings_list.value(i));
         for (int j = 0; j < F1.N2(); j++) {

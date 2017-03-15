@@ -954,10 +954,10 @@ void StatusLayer::paint(QPainter* painter)
     if (d->m_prefs.show_current_timepoint) {
         double samplerate = c->sampleRate();
         if (samplerate) {
-            str = QString("%1 (tp: %2)").arg(d->format_time(c->currentTimepoint())).arg((int)c->currentTimepoint());
+            str = QString("%1 (tp: %2, sec: %3)").arg(d->format_time(c->currentTimepoint())).arg((bigint)c->currentTimepoint()).arg(c->currentTimepoint() / c->sampleRate());
         }
         else {
-            str = QString("Sample rate is null (tp: %2)").arg((int)c->currentTimepoint());
+            str = QString("Sample rate is null (tp: %2)").arg((bigint)c->currentTimepoint());
         }
     }
     paint_status_string(painter, windowSize().width(), windowSize().height(), str);

@@ -1,5 +1,6 @@
 #include "p_compute_templates.h"
 
+#include <QTime>
 #include <diskreadmda.h>
 #include <diskreadmda32.h>
 #include "mlcommon.h"
@@ -52,13 +53,23 @@ bool p_compute_templates(QStringList timeseries_list, QString firings_path, QStr
 
     int Tmid = (int)((T + 1) / 2) - 1;
     printf("computing templates (M=%d,T=%d,K=%d,L=%d)...\n", M, T, K0, times.count());
+    QTime timer;
+    timer.start();
     for (int i = 0; i < times.count(); i++) {
         bigint t1 = times[i] - Tmid;
         //int t2 = t1 + T - 1;
         int k = label_map[labels[i]];
+        if (timer.elapsed() > 3000) {
+            qDebug().noquote() << QString("Compute templates: processing event %1 of %2").arg(i).arg(times.count());
+            timer.restart();
+        }
         {
             Mda32 tmp;
-            X.readChunk(tmp, 0, t1, M, T);
+            tmp.allocate(M, T);
+            if (!X.readChunk(tmp, 0, t1, M, T)) {
+                qWarning() << "Problem reading chunk of timeseries list:" << t1;
+                return false;
+            }
             float* tmp_ptr = tmp.dataPtr();
             bigint offset = M * T * k;
             for (int aa = 0; aa < M * T; aa++) {

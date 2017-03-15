@@ -148,21 +148,21 @@ int mda_write_header(struct MDAIO_HEADER* X, FILE* output_file)
 }
 
 template <typename SourceType, typename TargetType>
-int mdaReadData_impl(TargetType* data, const int size, FILE* inputFile)
+bigint mdaReadData_impl(TargetType* data, const bigint size, FILE* inputFile)
 {
     if (is_same<TargetType, SourceType>::value) {
         return jfread(data, sizeof(SourceType), size, inputFile);
     }
     else {
         std::vector<SourceType> tmp(size);
-        const int ret = jfread(&tmp[0], sizeof(SourceType), size, inputFile);
+        const bigint ret = jfread(&tmp[0], sizeof(SourceType), size, inputFile);
         std::copy(tmp.begin(), tmp.end(), data);
         return ret;
     }
 }
 
 template <typename Type>
-int mdaReadData(Type* data, const struct MDAIO_HEADER* header, const int size, FILE* inputFile)
+bigint mdaReadData(Type* data, const struct MDAIO_HEADER* header, const bigint size, FILE* inputFile)
 {
     if (header->data_type == MDAIO_TYPE_BYTE) {
         return mdaReadData_impl<unsigned char>(data, size, inputFile);
@@ -190,7 +190,7 @@ int mdaReadData(Type* data, const struct MDAIO_HEADER* header, const int size, F
 }
 
 template <typename TargetType, typename DataType>
-int mdaWriteData_impl(DataType* data, const int size, FILE* outputFile)
+bigint mdaWriteData_impl(DataType* data, const bigint size, FILE* outputFile)
 {
     if (is_same<DataType, TargetType>::value) {
         return fwrite(data, sizeof(DataType), size, outputFile);
@@ -203,7 +203,7 @@ int mdaWriteData_impl(DataType* data, const int size, FILE* outputFile)
 }
 
 template <typename DataType>
-int mdaWriteData(DataType* data, const int size, const struct MDAIO_HEADER* header, FILE* outputFile)
+bigint mdaWriteData(DataType* data, const bigint size, const struct MDAIO_HEADER* header, FILE* outputFile)
 {
     if (header->data_type == MDAIO_TYPE_BYTE) {
         return mdaWriteData_impl<unsigned char>(data, size, outputFile);
@@ -230,72 +230,72 @@ int mdaWriteData(DataType* data, const int size, const struct MDAIO_HEADER* head
         return 0;
 }
 
-int mda_read_byte(unsigned char* data, struct MDAIO_HEADER* H, int n, FILE* input_file)
+bigint mda_read_byte(unsigned char* data, struct MDAIO_HEADER* H, bigint n, FILE* input_file)
 {
     return mdaReadData(data, H, n, input_file);
 }
 
-int mda_read_float32(float* data, struct MDAIO_HEADER* H, int n, FILE* input_file)
+bigint mda_read_float32(float* data, struct MDAIO_HEADER* H, bigint n, FILE* input_file)
 {
     return mdaReadData(data, H, n, input_file);
 }
 
-int mda_read_float64(double* data, struct MDAIO_HEADER* H, int n, FILE* input_file)
+bigint mda_read_float64(double* data, struct MDAIO_HEADER* H, bigint n, FILE* input_file)
 {
     return mdaReadData(data, H, n, input_file);
 }
 
-int mda_read_int16(int16_t* data, struct MDAIO_HEADER* H, int n, FILE* input_file)
+bigint mda_read_int16(int16_t* data, struct MDAIO_HEADER* H, bigint n, FILE* input_file)
 {
     return mdaReadData(data, H, n, input_file);
 }
 
-int mda_read_int32(int32_t* data, struct MDAIO_HEADER* H, int n, FILE* input_file)
+bigint mda_read_int32(int32_t* data, struct MDAIO_HEADER* H, bigint n, FILE* input_file)
 {
     return mdaReadData(data, H, n, input_file);
 }
 
-int mda_read_uint16(uint16_t* data, struct MDAIO_HEADER* H, int n, FILE* input_file)
+bigint mda_read_uint16(uint16_t* data, struct MDAIO_HEADER* H, bigint n, FILE* input_file)
 {
     return mdaReadData(data, H, n, input_file);
 }
 
-int mda_read_uint32(uint32_t* data, struct MDAIO_HEADER* H, int n, FILE* input_file)
+bigint mda_read_uint32(uint32_t* data, struct MDAIO_HEADER* H, bigint n, FILE* input_file)
 {
     return mdaReadData(data, H, n, input_file);
 }
 
-int mda_write_byte(unsigned char* data, struct MDAIO_HEADER* H, int n, FILE* output_file)
+bigint mda_write_byte(unsigned char* data, struct MDAIO_HEADER* H, bigint n, FILE* output_file)
 {
     return mdaWriteData(data, n, H, output_file);
 }
 
-int mda_write_float32(const float* data, struct MDAIO_HEADER* H, int n, FILE* output_file)
+bigint mda_write_float32(const float* data, struct MDAIO_HEADER* H, bigint n, FILE* output_file)
 {
     return mdaWriteData(data, n, H, output_file);
 }
 
-int mda_write_int16(int16_t* data, struct MDAIO_HEADER* H, int n, FILE* output_file)
+bigint mda_write_int16(int16_t* data, struct MDAIO_HEADER* H, bigint n, FILE* output_file)
 {
     return mdaWriteData(data, n, H, output_file);
 }
 
-int mda_write_int32(int32_t* data, struct MDAIO_HEADER* H, int n, FILE* output_file)
+bigint mda_write_int32(int32_t* data, struct MDAIO_HEADER* H, bigint n, FILE* output_file)
 {
     return mdaWriteData(data, n, H, output_file);
 }
 
-int mda_write_uint16(uint16_t* data, struct MDAIO_HEADER* H, int n, FILE* output_file)
+bigint mda_write_uint16(uint16_t* data, struct MDAIO_HEADER* H, bigint n, FILE* output_file)
 {
     return mdaWriteData(data, n, H, output_file);
 }
 
-int mda_write_float64(double* data, struct MDAIO_HEADER* H, int n, FILE* output_file)
+bigint mda_write_float64(double* data, struct MDAIO_HEADER* H, bigint n, FILE* output_file)
 {
     return mdaWriteData(data, n, H, output_file);
 }
 
-int mda_write_uint32(uint32_t* data, struct MDAIO_HEADER* H, int n, FILE* output_file)
+bigint mda_write_uint32(uint32_t* data, struct MDAIO_HEADER* H, bigint n, FILE* output_file)
 {
     return mdaWriteData(data, n, H, output_file);
 }
@@ -311,8 +311,8 @@ void transpose_array(char* infile_path, char* outfile_path)
     FILE* infile = fopen(infile_path, "rb");
     FILE* outfile = fopen(outfile_path, "wb");
     struct MDAIO_HEADER H;
-    int M, N;
-    int i, j;
+    bigint M, N;
+    bigint i, j;
     float* data_in, *data_out;
 
     if (!infile)

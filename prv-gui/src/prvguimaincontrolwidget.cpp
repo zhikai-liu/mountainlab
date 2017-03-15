@@ -176,7 +176,7 @@ void PrvGuiMainControlWidget::slot_uploader_finished()
     if (!uploader)
         return;
     QString checksum = uploader->property("checksum").toString();
-    int size = uploader->property("checksum").toLongLong();
+    bigint size = uploader->property("original_size").toLongLong(); //fixed on 3/15/17
     QString original_path = uploader->property("original_path").toString();
     QString server = uploader->property("server").toString();
     d->m_main_window->searchAgain(checksum, size, original_path, server);

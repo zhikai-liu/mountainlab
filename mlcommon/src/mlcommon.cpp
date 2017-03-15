@@ -880,7 +880,7 @@ QString locate_prv(const QJsonObject& obj)
     QString path0 = obj["original_path"].toString();
     QString checksum0 = obj["original_checksum"].toString();
     QString fcs0 = obj["original_fcs"].toString();
-    int size0 = obj["original_size"].toVariant().toLongLong();
+    bigint size0 = obj["original_size"].toVariant().toLongLong();
     QString ret = locate_file_with_checksum(checksum0, fcs0, size0, false);
     if (ret.isEmpty()) {
         if (QFile::exists(path0)) {

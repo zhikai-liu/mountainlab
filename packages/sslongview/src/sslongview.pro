@@ -31,8 +31,12 @@ SOURCES += sslvcontext.cpp
 
 INCLUDEPATH += controlwidgets
 VPATH += controlwidgets
-HEADERS += sslvopenviewscontrol.h sslvprefscontrol.h
-SOURCES += sslvopenviewscontrol.cpp sslvprefscontrol.cpp
+HEADERS += sslvopenviewscontrol.h sslvprefscontrol.h sslvtoolscontrol.h
+SOURCES += sslvopenviewscontrol.cpp sslvprefscontrol.cpp sslvtoolscontrol.cpp
+
+HEADERS += controlwidgets/exporttimeintervaldlg.h
+SOURCES += controlwidgets/exporttimeintervaldlg.cpp
+FORMS += controlwidgets/exporttimeintervaldlg.ui
 
 HEADERS += sslvclustermetricsplugin.h sslvclustermetricsview.h
 SOURCES += sslvclustermetricsplugin.cpp sslvclustermetricsview.cpp

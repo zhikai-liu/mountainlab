@@ -30,6 +30,7 @@
 #include "p_compute_templates.h"
 #include "p_load_test.h"
 #include "p_compute_amplitudes.h"
+#include "p_extract_time_interval.h"
 
 #include "omp.h"
 
@@ -164,10 +165,10 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.concat_firings", "0.11");
+        ProcessorSpec X("mountainsort.concat_firings", "0.12");
         X.addInputs("timeseries_list");
         X.addInputs("firings_list");
-        X.addOutputs("timeseries_out");
+        X.addOptionalOutputs("timeseries_out");
         X.addOutputs("firings_out");
         //X.addRequiredParameters();
         processors.push_back(X.get_spec());
@@ -183,6 +184,13 @@ QJsonObject get_spec()
         X.addInputs("timeseries", "event_times");
         X.addOutputs("amplitudes_out");
         X.addRequiredParameters("central_channel");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.extract_time_interval", "0.1");
+        X.addInputs("timeseries_list", "firings");
+        X.addOutputs("timeseries_out", "firings_out");
+        X.addRequiredParameters("t1", "t2");
         processors.push_back(X.get_spec());
     }
 
@@ -376,6 +384,16 @@ int main(int argc, char* argv[])
         opts.central_channel = CLP.named_parameters["central_channel"].toInt();
         QString amplitudes_out = CLP.named_parameters["amplitudes_out"].toString();
         ret = p_compute_amplitudes(timeseries, event_times, amplitudes_out, opts);
+    }
+    else if (arg1 == "mountainsort.extract_time_interval") {
+        P_compute_amplitudes_opts opts;
+        QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);
+        QString firings = CLP.named_parameters["firings"].toString();
+        QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
+        QString firings_out = CLP.named_parameters["firings_out"].toString();
+        bigint t1 = CLP.named_parameters["t1"].toDouble();
+        bigint t2 = CLP.named_parameters["t2"].toDouble();
+        ret = p_extract_time_interval(timeseries_list, firings, timeseries_out, firings_out, t1, t2);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

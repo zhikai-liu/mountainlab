@@ -68,22 +68,22 @@ int mda_write_header(struct MDAIO_HEADER* H, FILE* output_file);
 void mda_copy_header(struct MDAIO_HEADER* Hdst, const struct MDAIO_HEADER* Hsrc);
 
 //the following can be used no matter what the underlying data type is
-int mda_read_byte(unsigned char* data, struct MDAIO_HEADER* H, int n, FILE* input_file);
-int mda_read_float32(float* data, struct MDAIO_HEADER* H, int n, FILE* input_file);
-int mda_read_int16(int16_t* data, struct MDAIO_HEADER* H, int n, FILE* input_file);
-int mda_read_int32(int32_t* data, struct MDAIO_HEADER* H, int n, FILE* input_file);
-int mda_read_uint16(uint16_t* data, struct MDAIO_HEADER* H, int n, FILE* input_file);
-int mda_read_float64(double* data, struct MDAIO_HEADER* H, int n, FILE* input_file);
-int mda_read_uint32(uint32_t* data, struct MDAIO_HEADER* H, int n, FILE* input_file);
+bigint mda_read_byte(unsigned char* data, struct MDAIO_HEADER* H, bigint n, FILE* input_file);
+bigint mda_read_float32(float* data, struct MDAIO_HEADER* H, bigint n, FILE* input_file);
+bigint mda_read_int16(int16_t* data, struct MDAIO_HEADER* H, bigint n, FILE* input_file);
+bigint mda_read_int32(int32_t* data, struct MDAIO_HEADER* H, bigint n, FILE* input_file);
+bigint mda_read_uint16(uint16_t* data, struct MDAIO_HEADER* H, bigint n, FILE* input_file);
+bigint mda_read_float64(double* data, struct MDAIO_HEADER* H, bigint n, FILE* input_file);
+bigint mda_read_uint32(uint32_t* data, struct MDAIO_HEADER* H, bigint n, FILE* input_file);
 
 //the following can be used no matter what the underlying data type is
-int mda_write_byte(unsigned char* data, struct MDAIO_HEADER* H, int n, FILE* output_file);
-int mda_write_float32(const float* data, struct MDAIO_HEADER* H, int n, FILE* output_file);
-int mda_write_int16(int16_t* data, struct MDAIO_HEADER* H, int n, FILE* output_file);
-int mda_write_int32(int32_t* data, struct MDAIO_HEADER* H, int n, FILE* output_file);
-int mda_write_uint16(uint16_t* data, struct MDAIO_HEADER* H, int n, FILE* output_file);
-int mda_write_float64(double* data, struct MDAIO_HEADER* H, int n, FILE* output_file);
-int mda_write_uint32(uint32_t* data, struct MDAIO_HEADER* H, int n, FILE* output_file);
+bigint mda_write_byte(unsigned char* data, struct MDAIO_HEADER* H, bigint n, FILE* output_file);
+bigint mda_write_float32(const float* data, struct MDAIO_HEADER* H, bigint n, FILE* output_file);
+bigint mda_write_int16(int16_t* data, struct MDAIO_HEADER* H, bigint n, FILE* output_file);
+bigint mda_write_int32(int32_t* data, struct MDAIO_HEADER* H, bigint n, FILE* output_file);
+bigint mda_write_uint16(uint16_t* data, struct MDAIO_HEADER* H, bigint n, FILE* output_file);
+bigint mda_write_float64(double* data, struct MDAIO_HEADER* H, bigint n, FILE* output_file);
+bigint mda_write_uint32(uint32_t* data, struct MDAIO_HEADER* H, bigint n, FILE* output_file);
 
 //here's an example usage function. See top of file for more info.
 void transpose_array(char* infile_path, char* outfile_path);

@@ -271,7 +271,7 @@ QString PrvFile::locate(const PrvFileLocateOptions& opts)
     }
     QString checksum = obj["original_checksum"].toString();
     QString fcs = obj["original_fcs"].toString();
-    int original_size = obj["original_size"].toVariant().toLongLong();
+    bigint original_size = obj["original_size"].toVariant().toLongLong();
     QString fname_or_url = d->find_file(original_size, checksum, fcs, opts);
     if ((fname_or_url.isEmpty()) && (opts.search_locally)) {
         QString original_path = obj["original_path"].toString();
@@ -303,7 +303,7 @@ QString PrvFile::fcs() const
     return d->m_object["original_fcs"].toString();
 }
 
-int PrvFile::size() const
+bigint PrvFile::size() const
 {
     return d->m_object["original_size"].toVariant().toLongLong();
 }
@@ -317,7 +317,7 @@ bool PrvFile::recoverFile(const QString& dst_file_path, const PrvFileRecoverOpti
 {
     QString checksum = d->m_object["original_checksum"].toString();
     QString fcs = d->m_object["original_fcs"].toString();
-    int original_size = d->m_object["original_size"].toVariant().toLongLong();
+    bigint original_size = d->m_object["original_size"].toVariant().toLongLong();
     QString fname_or_url = d->find_file(original_size, checksum, fcs, opts.locate_opts);
     if (fname_or_url.isEmpty()) {
         d->println("Unable to find file: size=" + QString::number(original_size) + " checksum=" + checksum + " fcs=" + fcs);

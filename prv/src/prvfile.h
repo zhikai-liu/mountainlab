@@ -14,6 +14,7 @@
 #include <QStringList>
 #include <QObject>
 #include <functional>
+#include "mlcommon.h"
 
 struct PrvFileCreateOptions {
     bool create_temporary_files = false;
@@ -55,7 +56,7 @@ public:
     QString prvFilePath() const;
     QString checksum() const;
     QString fcs() const;
-    int size() const;
+    bigint size() const;
     QString originalPath() const;
 
 private:

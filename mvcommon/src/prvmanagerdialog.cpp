@@ -164,7 +164,7 @@ void PrvManagerDialogPrivate::refresh_tree()
     for (int i = 0; i < names.count(); i++) {
         QString name = names[i];
         QJsonObject prv_object = m_prv_objects[name];
-        int file_size = prv_object["original_size"].toVariant().toLongLong();
+        bigint file_size = prv_object["original_size"].toVariant().toLongLong();
         QTreeWidgetItem* it = new QTreeWidgetItem();
         it->setText(0, name);
         it->setData(0, Qt::UserRole, name);

@@ -32,14 +32,13 @@
 #include <icounter.h>
 #include <sslvopenviewscontrol.h>
 #include <sslvprefscontrol.h>
+#include <sslvtoolscontrol.h>
 #include <firingeventplugin.h>
 //#include <sslvclustermetricsview.h>
 #include <sslvclustermetricsplugin.h>
 #include <sslvtimespanplugin.h>
 #include <clusterdetailplugin.h>
 #include "correlogramplugin.h"
-
-#include "sslvprefscontrol.h"
 
 void setup_main_window(MVMainWindow* W);
 
@@ -210,6 +209,7 @@ int main(int argc, char* argv[])
         setup_main_window(W);
         W->addControl(new OpenViewsControl(context, W), true);
         W->addControl(new SSLVPrefsControl(context, W), true);
+        W->addControl(new SSLVToolsControl(context, W), true);
 
         a.processEvents();
 

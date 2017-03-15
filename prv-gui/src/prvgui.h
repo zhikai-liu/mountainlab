@@ -11,6 +11,7 @@
 #include <QString>
 #include <QThread>
 #include <QVariantMap>
+#include "mlcommon.h"
 
 QJsonObject get_server_object_for_name(QString server_name);
 QString get_server_url_for_name(QString server_name);
@@ -29,7 +30,7 @@ struct PrvRecord {
     QString label; //not really part of prv, but very useful for display
 
     QString checksum;
-    int size = 0;
+    bigint size = 0;
     QString fcs;
     QString original_path;
 

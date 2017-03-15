@@ -401,8 +401,8 @@ bool extract_time_chunk(QString input_fname, QString output_fname, const QMap<QS
     DiskReadMda X(input_fname);
     Mda Y;
 
-    int t1 = params["t1"].toLongLong();
-    int t2 = params["t2"].toLongLong();
+    bigint t1 = params["t1"].toLongLong();
+    bigint t2 = params["t2"].toLongLong();
 
     if (!X.readChunk(Y, 0, t1, X.N1(), t2 - t1 + 1)) {
         qWarning() << "Problem reading chunk.";

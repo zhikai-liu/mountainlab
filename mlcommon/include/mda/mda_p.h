@@ -47,7 +47,7 @@ public:
     {
         deallocate();
     }
-    bool allocate(T value, int N1, int N2, int N3 = 1, int N4 = 1, int N5 = 1, int N6 = 1)
+    bool allocate(T value, bigint N1, bigint N2, bigint N3 = 1, bigint N4 = 1, bigint N5 = 1, bigint N6 = 1)
     {
         deallocate();
         setDims(N1, N2, N3, N4, N5, N6);
@@ -71,13 +71,14 @@ public:
         return true;
     }
 
-    inline int dim(size_t idx) const { return m_dims.at(idx); }
-    inline int N1() const { return dim(0); }
-    inline int N2() const { return dim(1); }
+    inline bigint dim(bigint idx) const { return m_dims.at(idx); }
+    inline bigint N1() const { return dim(0); }
+    inline bigint N2() const { return dim(1); }
 
-    void allocate(size_t size)
+    void allocate(bigint size)
     {
-        m_data = (value_type*)::allocate(size * sizeof(value_type));
+        //m_data = (value_type*)::allocate(size * sizeof(value_type));
+        m_data = (value_type*)malloc(size * sizeof(value_type));
         if (!m_data)
             return;
         incrementBytesAllocatedCounter(totalSize() * sizeof(value_type));
@@ -90,22 +91,22 @@ public:
         incrementBytesFreedCounter(totalSize() * sizeof(value_type));
         m_data = 0;
     }
-    inline size_t totalSize() const { return total_size; }
-    inline void setTotalSize(size_t ts) { total_size = ts; }
+    inline bigint totalSize() const { return total_size; }
+    inline void setTotalSize(bigint ts) { total_size = ts; }
     inline T* data() { return m_data; }
     inline const T* constData() const { return m_data; }
-    inline T at(size_t idx) const { return *(constData() + idx); }
-    inline T at(size_t i1, size_t i2) const { return at(i1 + dim(0) * i2); }
-    inline void set(T val, size_t idx) { m_data[idx] = val; }
-    inline void set(T val, size_t i1, size_t i2) { set(val, i1 + dim(0) * i2); }
+    inline T at(bigint idx) const { return *(constData() + idx); }
+    inline T at(bigint i1, bigint i2) const { return at(i1 + dim(0) * i2); }
+    inline void set(T val, bigint idx) { m_data[idx] = val; }
+    inline void set(T val, bigint i1, bigint i2) { set(val, i1 + dim(0) * i2); }
 
-    inline int dims(size_t idx) const
+    inline bigint dims(bigint idx) const
     {
-        if (idx < 0 || idx >= m_dims.size())
+        if (idx < 0 || idx >= (bigint)m_dims.size())
             return 0;
         return *(m_dims.data() + idx);
     }
-    void setDims(int n1, int n2, int n3, int n4, int n5, int n6)
+    void setDims(bigint n1, bigint n2, bigint n3, bigint n4, bigint n5, bigint n6)
     {
         m_dims.resize(MDA_MAX_DIMS);
         m_dims[0] = n1;
@@ -116,7 +117,7 @@ public:
         m_dims[5] = n6;
     }
 
-    int determine_num_dims(int N1, int N2, int N3, int N4, int N5, int N6) const
+    int determine_num_dims(bigint N1, bigint N2, bigint N3, bigint N4, bigint N5, bigint N6) const
     {
         Q_UNUSED(N1);
         Q_UNUSED(N2);
@@ -133,19 +134,19 @@ public:
             return 3;
         return 2;
     }
-    bool safe_index(size_t i) const
+    bool safe_index(bigint i) const
     {
         return (i < totalSize());
     }
-    bool safe_index(size_t i1, size_t i2) const
+    bool safe_index(bigint i1, bigint i2) const
     {
-        return (((int)i1 < dims(0)) && ((int)i2 < dims(1)));
+        return (((bigint)i1 < dims(0)) && ((bigint)i2 < dims(1)));
     }
-    bool safe_index(size_t i1, size_t i2, size_t i3) const
+    bool safe_index(bigint i1, bigint i2, bigint i3) const
     {
-        return (((int)i1 < dims(0)) && ((int)i2 < dims(1)) && ((int)i3 < dims(2)));
+        return (((bigint)i1 < dims(0)) && ((bigint)i2 < dims(1)) && ((bigint)i3 < dims(2)));
     }
-    bool safe_index(int i1, int i2, int i3, int i4, int i5, int i6) const
+    bool safe_index(bigint i1, bigint i2, bigint i3, bigint i4, bigint i5, bigint i6) const
     {
         return (
             (0 <= i1) && (i1 < dims(0))
@@ -240,8 +241,8 @@ public:
 
 private:
     pointer m_data;
-    std::vector<int> m_dims;
-    size_t total_size;
+    std::vector<bigint> m_dims;
+    bigint total_size;
     mutable IIntCounter* allocatedCounter = nullptr;
     mutable IIntCounter* freedCounter = nullptr;
     mutable IIntCounter* bytesReadCounter = nullptr;
