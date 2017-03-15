@@ -97,7 +97,7 @@ sudo apt-get install octave
 sudo apt-get install nodejs npm
 ```
 
-Or a one-liner: sudo apt-get install -y libfft23-dev nodejs npm octave
+Or a one-liner: sudo apt-get install -y libfftw3-dev nodejs npm octave
 
 ### Prerequisite: If necessary, install Qt5 from qt.io
 
