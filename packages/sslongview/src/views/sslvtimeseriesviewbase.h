@@ -47,7 +47,7 @@ public:
     virtual void onCalculationFinished() Q_DECL_OVERRIDE;
 
     virtual void paintContent(QPainter* painter) = 0;
-    void setNumTimepoints(int N); //called by subclass
+    void setNumTimepoints(bigint N); //called by subclass
     mvtsv_prefs prefs() const;
     void setPrefs(mvtsv_prefs prefs);
 

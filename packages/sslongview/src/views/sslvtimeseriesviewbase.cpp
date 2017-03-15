@@ -145,7 +145,7 @@ public:
     MVRange m_selected_t_range;
     bool m_activated;
 
-    int m_num_timepoints;
+    bigint m_num_timepoints;
 
     QPointF m_left_click_anchor_pix;
     double m_left_click_anchor_time;
@@ -231,7 +231,7 @@ void SSLVTimeSeriesViewBase::setTimesLabels(const QVector<double>& times, const 
 }
 */
 
-void SSLVTimeSeriesViewBase::setNumTimepoints(int N)
+void SSLVTimeSeriesViewBase::setNumTimepoints(bigint N)
 {
     d->m_num_timepoints = N;
 }
@@ -573,9 +573,9 @@ void TimeAxisLayer::paint_time_axis_unit(QPainter* painter, double W, double H, 
 
     if (d->m_prefs.show_time_axis_ticks) {
         if (pixel_interval >= TS.min_pixel_spacing_between_ticks) {
-            int i1 = (int)ceil(view_t1 / TS.timepoint_interval);
-            int i2 = (int)floor(view_t2 / TS.timepoint_interval);
-            for (int i = i1; i <= i2; i++) {
+            bigint i1 = (bigint)ceil(view_t1 / TS.timepoint_interval);
+            bigint i2 = (bigint)floor(view_t2 / TS.timepoint_interval);
+            for (bigint i = i1; i <= i2; i++) {
                 double x0 = d->time2xpix(i * TS.timepoint_interval);
                 QPointF p1(x0, H - d->m_prefs.mbottom);
                 QPointF p2(x0, H - d->m_prefs.mbottom + TS.tick_height);
@@ -586,10 +586,10 @@ void TimeAxisLayer::paint_time_axis_unit(QPainter* painter, double W, double H, 
     bool ok_to_show_scale = (d->m_prefs.show_time_axis_scale) || (TS.is_1ms);
     if ((TS.show_scale) && (ok_to_show_scale)) {
         int label_height = 10;
-        int j1 = view_t1 + 1;
+        bigint j1 = view_t1 + 1;
         if (j1 < 1)
             j1 = 1;
-        int j2 = j1 + TS.timepoint_interval;
+        bigint j2 = j1 + TS.timepoint_interval;
         double x1 = d->time2xpix(j1);
         double x2 = d->time2xpix(j2);
         QPointF p1(x1, H - d->m_prefs.mbottom + TS.tick_height);
@@ -702,11 +702,11 @@ QString SSLVTimeSeriesViewBasePrivate::format_time(double tp)
 
     double samplerate = c->sampleRate();
     double sec = tp / samplerate;
-    int day = (int)floor(sec / (24 * 60 * 60));
+    bigint day = (bigint)floor(sec / (24 * 60 * 60));
     sec -= day * 24 * 60 * 60;
-    int hour = (int)floor(sec / (60 * 60));
+    bigint hour = (bigint)floor(sec / (60 * 60));
     sec -= hour * 60 * 60;
-    int minute = (int)floor(sec / (60));
+    bigint minute = (bigint)floor(sec / (60));
     sec -= minute * 60;
 
     QString str;
@@ -787,11 +787,11 @@ void EventMarkerLayer::paint(QPainter* painter)
     }
 
     if (d->m_clip_size) {
-        int i1 = view_t1 / d->m_clip_size;
-        int i2 = view_t2 / d->m_clip_size;
+        bigint i1 = view_t1 / d->m_clip_size;
+        bigint i2 = view_t2 / d->m_clip_size;
         if (i2 - i1 + 1 < 1000) {
             QVector<double> times0;
-            for (int i = i1; i <= i2; i++) {
+            for (bigint i = i1; i <= i2; i++) {
                 times0 << i * d->m_clip_size;
             }
             paint_clip_dividers(painter, times0, W0, H0);
@@ -960,10 +960,10 @@ void StatusLayer::paint(QPainter* painter)
     if (d->m_prefs.show_current_timepoint) {
         double samplerate = c->sampleRate();
         if (samplerate) {
-            str = QString("%1 (tp: %2)").arg(d->format_time(c->currentTimepoint())).arg((int)c->currentTimepoint());
+            str = QString("%1 (tp: %2)").arg(d->format_time(c->currentTimepoint())).arg((bigint)c->currentTimepoint());
         }
         else {
-            str = QString("Sample rate is null (tp: %2)").arg((int)c->currentTimepoint());
+            str = QString("Sample rate is null (tp: %2)").arg((bigint)c->currentTimepoint());
         }
     }
     paint_status_string(painter, windowSize().width(), windowSize().height(), str);
