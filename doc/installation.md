@@ -99,6 +99,11 @@ sudo apt-get install nodejs npm
 
 Or a one-liner: sudo apt-get install -y libfftw3-dev nodejs npm octave
 
+Note: if the command `./001_generate_synthetic_data.sh` fails with error `/usr/bin/env: nodejs: No such file or directory`, you will need to do the following:
+```bash
+sudo  ln -s /usr/bin/node /usr/bin/nodejs
+```
+
 ### Prerequisite: If necessary, install Qt5 from qt.io
 
 As mentioned above, if you are not using a later version of Ubuntu, you probably won't get a recent enough version from the package manager. In that case follow these directions to install a recent version of Qt5:
@@ -107,4 +112,5 @@ Go to https://www.qt.io/download/ and click through that you want to install the
 
 We recommend installing this in your home directory, which does not require admin privileges.
 
-Once installed you will need to prepend the path to qmake to your PATH environment variable. On my system that is /home/magland/Qt/5.7/gcc_64/bin.
+Once installed you will need to prepend the path to qmake to your PATH environment variable. On my system that is `/home/magland/Qt/5.7/gcc_64/bin`.
+You may instead do `sudo ln -s /home/magland/Qt/5.7/gcc_64/bin/qmake /usr/local/bin/qmake`.
