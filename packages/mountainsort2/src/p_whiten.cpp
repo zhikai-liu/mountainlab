@@ -29,7 +29,7 @@ bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
     int M = X.N1();
     int N = X.N2();
 
-    int processing_chunk_size = 1e6;
+    int processing_chunk_size = 1e7;
 
     Mda XXt(M, M);
     double* XXtptr = XXt.dataPtr();
@@ -144,7 +144,7 @@ bool p_compute_whitening_matrix(QStringList timeseries_list, QString whitening_m
     bigint N = X.N2();
     qDebug() << "M/N" << M << N;
 
-    bigint processing_chunk_size = 1e6;
+    bigint processing_chunk_size = 1e7;
 
     Mda XXt(M, M);
     double* XXtptr = XXt.dataPtr();
@@ -255,7 +255,7 @@ bool p_apply_whitening_matrix(QString timeseries, QString whitening_matrix, QStr
     int M = X.N1();
     int N = X.N2();
 
-    int processing_chunk_size = 1e6;
+    int processing_chunk_size = 1e7;
     int chunk_size = processing_chunk_size;
     if (N < processing_chunk_size) {
         chunk_size = N;

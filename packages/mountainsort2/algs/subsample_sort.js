@@ -404,7 +404,7 @@ exports.run=function(opts,callback) {
 		common.mp_exec_process('mountainsort.compute_whitening_matrix',
 			{timeseries_list:filt_list},
 			{whitening_matrix_out:whitening_matrix},
-			{_request_num_threads:opts.num_intersegment_threads||1},
+			{_request_num_threads:opts.num_intrasegment_threads||1},
 			compute_whitening_matrix_callback
 		);	
 	}
@@ -414,7 +414,7 @@ exports.run=function(opts,callback) {
 		common.mp_exec_process('mountainsort.whiten_clips',
 			{clips:all_clips,whitening_matrix:whitening_matrix},
 			{clips_out:all_whitened_clips},
-			{_request_num_threads:opts.num_intersegment_threads||1},
+			{_request_num_threads:opts.num_intrasegment_threads||1},
 			whiten_all_clips_callback
 		);	
 	}	
@@ -436,7 +436,7 @@ exports.run=function(opts,callback) {
 		common.mp_exec_process('mountainsort.sort_clips',
 			{clips:all_whitened_clips},
 			{labels_out:all_labels},
-			{_request_num_threads:opts.num_intersegment_threads||1},
+			{_request_num_threads:opts.num_intrasegment_threads||1},
 			sort_all_whitened_clips_callback
 		);	
 	}
@@ -520,7 +520,8 @@ exports.run=function(opts,callback) {
 				detect_threshold:opts.detect_threshold,
 				detect_interval:detect_interval,
 				sign:opts.detect_sign,
-				subsample_factor:opts.subsample_factor||1
+				subsample_factor:opts.subsample_factor||1,
+				_request_num_threads:opts.num_intersegment_threads||1	
 			},
 			callback
 		);
@@ -531,7 +532,8 @@ exports.run=function(opts,callback) {
 			{timeseries:timeseries,event_times:event_times},
 			{amplitudes_out:amplitudes_out},
 			{
-				central_channel:central_channel
+				central_channel:central_channel,
+				_request_num_threads:opts.num_intersegment_threads||1
 			},
 			callback
 		);	
@@ -542,7 +544,8 @@ exports.run=function(opts,callback) {
 			{clips:clips,labels:labels},
 			{labels_out:labels_out},
 			{
-				central_channel:opts.central_channel
+				central_channel:opts.central_channel,
+				_request_num_threads:opts.num_intersegment_threads||1
 			},
 			callback
 		);
