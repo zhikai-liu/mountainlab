@@ -6,9 +6,10 @@
 
 namespace P_detect_events {
 QVector<double> detect_events(const QVector<double>& X, double detect_threshold, double detect_interval, int sign);
+QVector<double> subsample_events(const QVector<double>& X, double subsample_factor);
 }
 
-bool p_detect_events(QString timeseries, QString event_times_out, int central_channel, double detect_threshold, double detect_interval, int sign)
+bool p_detect_events(QString timeseries, QString event_times_out, P_detect_events_opts opts)
 {
     DiskReadMda32 X(timeseries);
     int M = X.N1();
@@ -16,9 +17,9 @@ bool p_detect_events(QString timeseries, QString event_times_out, int central_ch
 
     printf("Collecting data vector...\n");
     QVector<double> data(N);
-    if (central_channel > 0) {
+    if (opts.central_channel > 0) {
         for (int i = 0; i < N; i++) {
-            data[i] = X.value(central_channel - 1, i);
+            data[i] = X.value(opts.central_channel - 1, i);
         }
     }
     else {
@@ -27,9 +28,9 @@ bool p_detect_events(QString timeseries, QString event_times_out, int central_ch
             int best_m = 0;
             for (int m = 0; m < M; m++) {
                 double val = X.value(m, i);
-                if (sign < 0)
+                if (opts.sign < 0)
                     val = -val;
-                if (sign == 0)
+                if (opts.sign == 0)
                     val = fabs(val);
                 if (val > best_value) {
                     best_value = val;
@@ -41,9 +42,14 @@ bool p_detect_events(QString timeseries, QString event_times_out, int central_ch
     }
 
     printf("Detecting events...\n");
-    QVector<double> event_times = P_detect_events::detect_events(data, detect_threshold, detect_interval, sign);
+    QVector<double> event_times = P_detect_events::detect_events(data, opts.detect_threshold, opts.detect_interval, opts.sign);
 
     printf("%d events detected.\n", event_times.count());
+
+    if ((opts.subsample_factor)&&(opts.subsample_factor<1)) {
+        printf("Subsampling by factor %g...\n",opts.subsample_factor);
+        event_times=P_detect_events::subsample_events(event_times,opts.subsample_factor);
+    }
 
     printf("Creating result array...\n");
     Mda ret(1, event_times.count());
@@ -97,4 +103,23 @@ QVector<double> detect_events(const QVector<double>& X, double detect_threshold,
     }
     return times;
 }
+
+double pseudorandomnumber(double i)
+{
+    double ret = sin(i + cos(i));
+    ret = (ret + 5) - (int)(ret + 5);
+    return ret;
+}
+
+QVector<double> subsample_events(const QVector<double>& X, double subsample_factor)
+{
+    QVector<double> ret;
+    for (int i = 0; i < X.count(); i++) {
+        double randnum = pseudorandomnumber(i);
+        if (randnum <= subsample_factor)
+            ret << X[i];
+    }
+    return ret;
+}
+
 }

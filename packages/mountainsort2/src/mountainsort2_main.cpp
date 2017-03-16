@@ -73,6 +73,7 @@ QJsonObject get_spec()
         X.addInputs("timeseries");
         X.addOutputs("event_times_out");
         X.addRequiredParameters("central_channel", "detect_threshold", "detect_interval", "sign");
+        X.addOptionalParameter("subsample_factor");
         processors.push_back(X.get_spec());
     }
     {
@@ -264,11 +265,14 @@ int main(int argc, char* argv[])
     else if (arg1 == "mountainsort.detect_events") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString event_times_out = CLP.named_parameters["event_times_out"].toString();
-        int central_channel = CLP.named_parameters["central_channel"].toInt();
-        double detect_threshold = CLP.named_parameters["detect_threshold"].toDouble();
-        double detect_interval = CLP.named_parameters["detect_interval"].toDouble();
-        int sign = CLP.named_parameters["sign"].toInt();
-        ret = p_detect_events(timeseries, event_times_out, central_channel, detect_threshold, detect_interval, sign);
+        P_detect_events_opts opts;
+        opts.central_channel = CLP.named_parameters["central_channel"].toInt();
+        opts.detect_threshold = CLP.named_parameters["detect_threshold"].toDouble();
+        opts.detect_interval = CLP.named_parameters["detect_interval"].toDouble();
+        opts.sign = CLP.named_parameters["sign"].toInt();
+        opts.subsample_factor = CLP.named_parameters["subsample_factor"].toDouble();
+        if (!opts.subsample_factor) opts.subsample_factor=1;
+        ret = p_detect_events(timeseries, event_times_out, opts);
     }
     else if (arg1 == "mountainsort.extract_clips") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries"]);
