@@ -219,8 +219,8 @@ void MdaTest::invalid_readfile()
 {
     Mda mda("invalidfile.mda");
     QCOMPARE(mda.ndims(), 2); // minimum to have a matrix
-    QCOMPARE(mda.N1(), 1L);
-    QCOMPARE(mda.N2(), 1L);
+    QCOMPARE(mda.N1(), 1LL);
+    QCOMPARE(mda.N2(), 1LL);
 }
 
 QTEST_APPLESS_MAIN(MdaTest)
