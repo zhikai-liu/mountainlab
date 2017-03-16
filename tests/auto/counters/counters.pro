@@ -15,9 +15,9 @@ CONFIG   -= app_bundle
 TEMPLATE = app
 
 include(../../../mlcommon/mlcommon.pri)
+include(../../../mvcommon/mvcommon.pri)
 
 
-SOURCES += ../../../mountainview/src/misc/jscounter.cpp
 INCLUDEPATH += ../../../mountainview/src/misc/
 SOURCES += tst_counterstest.cpp
 DEFINES += SRCDIR=\\\"$$PWD/\\\"

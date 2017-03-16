@@ -3,7 +3,7 @@ QT += widgets
 QT += qml
 
 INCLUDEPATH += ../../mlcommon/include ../../mlcommon/include/cachemanager ../../mlcommon/include/componentmanager
-#include(../../mlcommon/mlcommon.pri)
+include(../../mlcommon/mlcommon.pri)
 include(../../mlcommon/taskprogress.pri)
 
 CONFIG += c++11

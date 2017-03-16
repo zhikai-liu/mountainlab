@@ -3,10 +3,10 @@ CONFIG -= app_bundle #Please apple, don't make a bundle
 CONFIG += c++11
 QMAKE_CXXFLAGS += -Wno-reorder #qaccordion
 
-include(../../mlcommon/mlcommon.pri)
 include(../../mlcommon/mlnetwork.pri)
 include(../../mlcommon/taskprogress.pri)
 include(../../mvcommon/mvcommon.pri)
+include(../../mlcommon/mlcommon.pri)
 
 DESTDIR = ../bin
 OBJECTS_DIR = ../build
