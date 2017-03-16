@@ -67,7 +67,7 @@ bool concat_mda_Processor::run(const QMap<QString, QVariant>& params)
                 }
             }
         }
-        printf("INPUT: %lld x %lld x %lld\n", X1.N1(), X1.N2(), X1.N3());
+        printf("INPUT: %ld x %ld x %ld\n", X1.N1(), X1.N2(), X1.N3());
     }
 
     printf("OUTPUT:  %d x %d x %d\n", DIMS[1], DIMS[2], DIMS[3]);

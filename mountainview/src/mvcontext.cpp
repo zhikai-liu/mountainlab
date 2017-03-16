@@ -358,7 +358,7 @@ double MVContext::currentTimepoint() const
 MVRange MVContext::currentTimeRange() const
 {
     if ((d->m_current_time_range.min <= 0) && (d->m_current_time_range.max <= 0)) {
-        return MVRange(0LL, qMax(0LL, this->currentTimeseries().N2() - 1));
+        return MVRange(0LL, qMax(0LL, (long long)this->currentTimeseries().N2() - 1));
     }
     return d->m_current_time_range;
 }

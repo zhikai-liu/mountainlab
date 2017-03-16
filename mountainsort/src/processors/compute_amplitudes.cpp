@@ -21,7 +21,7 @@ bool compute_amplitudes(QString timeseries_path, QString firings_path, QString f
     }
     Mda32 templates = compute_templates_0(X, times, labels, opts.clip_size);
     int K = MLCompute::max(labels);
-    int A = qMax(firings.N1(), 4LL);
+    int A = qMax((long long)firings.N1(), 4LL);
     Mda firings_out(A, firings.N2());
     for (int i = 0; i < firings.N2(); i++) {
         for (int a = 0; a < A; a++) {

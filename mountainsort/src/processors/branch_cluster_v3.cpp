@@ -174,7 +174,7 @@ bool branch_cluster_v3(const QString& timeseries_path, const QString& detect_pat
 
     firings.write64(output_firings_path);
 
-    printf("Found %d clusters and %lld events\n", K, firings.N2());
+    printf("Found %d clusters and %ld events\n", K, firings.N2());
 
     //QStringList keys=s_timers.keys();
     //foreach (QString key,keys) {
@@ -519,7 +519,7 @@ QVector<int> split_clusters_v3(ClipsGroupV3 clips, const QVector<int>& original_
 
 QVector<int> do_branch_cluster_v3(ClipsGroupV3 clips, const Branch_Cluster_V3_Opts& opts, int channel_for_display)
 {
-    printf("do_branch_cluster_v3 %lldx%lldx%d (channel %d)\n", clips.clips->N1(), clips.clips->N2(), clips.inds.count(), channel_for_display + 1);
+    printf("do_branch_cluster_v3 %ldx%ldx%d (channel %d)\n", clips.clips->N1(), clips.clips->N2(), clips.inds.count(), channel_for_display + 1);
     //int M = clips.clips->N1();
     //int T = clips.clips->N2();
     int L = clips.inds.count();

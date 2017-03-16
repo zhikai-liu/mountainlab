@@ -718,7 +718,7 @@ bool isocluster_drift_v1(const QString& timeseries_path, const QString& detect_p
         }
     }
     if ((AM.N1() != M) || (AM.N2() != M)) {
-        printf("Error: incompatible dimensions between AM and X %lldx%lld %d, %s\n", AM.N1(), AM.N2(), M, adjacency_matrix_path.toLatin1().data());
+        printf("Error: incompatible dimensions between AM and X %ldx%ld %d, %s\n", AM.N1(), AM.N2(), M, adjacency_matrix_path.toLatin1().data());
         return false;
     }
 

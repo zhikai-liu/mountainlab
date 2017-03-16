@@ -144,7 +144,7 @@ bool merge_across_channels_v2(const QString& timeseries_path, const QString& fir
         }
     }
 
-    printf("Using %lld of %lld events after %d redundant clusters removed\n", firings_out.N2(), firings.N2(), num_removed);
+    printf("Using %ld of %ld events after %d redundant clusters removed\n", firings_out.N2(), firings.N2(), num_removed);
 
     firings_out.write64(firings_out_path);
 

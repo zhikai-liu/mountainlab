@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
             }
             DiskReadMda check(fname + ".tmp");
             if (check.totalSize() != size) {
-                printf("Unexpected dimension of output file: %lld<>%ld (%lldx%lldx%lld)\n", check.totalSize(), size, X.N1(), X.N2(), X.N3());
+                printf("Unexpected dimension of output file: %ld<>%ld (%ldx%ldx%ld)\n", check.totalSize(), size, X.N1(), X.N2(), X.N3());
                 QFile::remove(fname + ".tmp");
                 return -1;
             }

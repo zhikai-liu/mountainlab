@@ -108,7 +108,7 @@ bool merge_across_channels(const QString& timeseries_path, const QString& firing
     int maxdt = 5;
     firings_out = remove_redundant_events(firings_out, maxdt);
 
-    printf("Using %lld of %lld events\n", firings_out.N2(), firings.N2());
+    printf("Using %ld of %ld events\n", firings_out.N2(), firings.N2());
 
     firings_out.write64(firings_out_path);
 

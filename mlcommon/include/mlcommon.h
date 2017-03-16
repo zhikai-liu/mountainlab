@@ -12,7 +12,7 @@
 #include <QJsonValue>
 #include <QByteArray>
 
-typedef long long bigint;
+typedef int64_t bigint;
 
 namespace TextFile {
 QString read(const QString& fname, QTextCodec* codec = 0);

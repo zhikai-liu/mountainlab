@@ -99,7 +99,7 @@ bool detect(const QString& timeseries_path, const QString& detect_path, const De
     }
     output.write64(detect_path);
 
-    printf("Detected %lld events.\n", output.N2());
+    printf("Detected %ld events.\n", output.N2());
 
     return true;
 }

@@ -386,7 +386,7 @@ QString get_json_header_string(const DiskReadMda& X)
     ret["num_dims"] = H.num_dims;
     QJsonArray dims0;
     for (int i = 0; i < H.num_dims; i++) {
-        dims0.push_back(H.dims[i]);
+        dims0.push_back((long long)H.dims[i]);
     }
     ret["dims"] = dims0;
     ret["num_bytes_per_entry"] = H.num_bytes_per_entry;

@@ -438,7 +438,7 @@ Mda32 grab_clips_subset(const Mda32& clips, const QVector<int>& inds)
 
 QVector<int> do_branch_cluster_v2(Mda& clips, const Branch_Cluster_V2_Opts& opts, int channel_for_display)
 {
-    printf("do_branch_cluster_v2 %lldx%lldx%lld (channel %d)\n", clips.N1(), clips.N2(), clips.N3(), channel_for_display + 1);
+    printf("do_branch_cluster_v2 %ldx%ldx%ld (channel %d)\n", clips.N1(), clips.N2(), clips.N3(), channel_for_display + 1);
     int M = clips.N1();
     int T = clips.N2();
     int L = clips.N3();

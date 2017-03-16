@@ -99,7 +99,7 @@ bool remove_noise_clusters_Processor::run(const QMap<QString, QVariant>& params)
         firings_out.setValue(label2, 2, i);
     }
 
-    printf("Using %d of %d clusters and %lld of %lld events.\n", num_clusters_to_use, K, firings_out.N2(), firings.N2());
+    printf("Using %d of %d clusters and %ld of %ld events.\n", num_clusters_to_use, K, firings_out.N2(), firings.N2());
 
     return firings_out.write64(firings_out_path);
 }

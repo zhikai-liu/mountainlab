@@ -161,7 +161,7 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
                 }
                 num_timepoints_handled += qMin((bigint)chunk_size, N - timepoint);
                 if ((timer_status.elapsed() > 5000) || (num_timepoints_handled == N) || (timepoint == 0)) {
-                    printf("%lld/%lld (%d%%) -- using %d threads.\n",
+                    printf("%ld/%ld (%d%%) -- using %d threads.\n",
                         num_timepoints_handled, N,
                         (int)(num_timepoints_handled * 1.0 / N * 100),
                         omp_get_num_threads());

@@ -165,7 +165,7 @@ QVector<double> compute_cluster_scores(const DiskReadMda32& timeseries, const Md
     }
     QVector<double> ret;
     ret << num_err * 1.0 / clips.N3();
-    printf("%d/%lld (%g%%)\n", num_err, clips.N3(), num_err * 1.0 / clips.N3() * 100);
+    printf("%d/%ld (%g%%)\n", num_err, clips.N3(), num_err * 1.0 / clips.N3() * 100);
     return ret;
 }
 

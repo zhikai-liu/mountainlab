@@ -6,7 +6,8 @@
 #ifndef MDAIO_H
 #define MDAIO_H
 
-typedef long long bigint;
+#include <stdlib.h>
+typedef int64_t bigint;
 
 #include "mlcommon.h"
 

@@ -478,7 +478,7 @@ QVector<int> do_isocluster_v2(ClipsGroup clips, const isocluster_v2_opts& opts, 
     else if (sign_for_display == +1)
         sgn = " positives";
     if (opts._internal_verbose)
-        printf("ISOCLUSTER.v2 channel %d%s: %lldx%lldx%d\n", channel_for_display + 1, sgn.toLatin1().data(), clips.clips->N1(), clips.clips->N2(), clips.inds.count());
+        printf("ISOCLUSTER.v2 channel %d%s: %ldx%ldx%d\n", channel_for_display + 1, sgn.toLatin1().data(), clips.clips->N1(), clips.clips->N2(), clips.inds.count());
 
     //First we simply cluster all of the events
     QTime timer;
@@ -621,7 +621,7 @@ bool isocluster_v2_with_time_segments(const QString& timeseries_path, const QStr
             return false;
         }
         DiskReadMda tmp(output_firings_path2);
-        printf("Processed %lld events (%d clusters)\n", tmp.N2(), get_number_of_clusters_from_firings_file(output_firings_path2));
+        printf("Processed %ld events (%d clusters)\n", tmp.N2(), get_number_of_clusters_from_firings_file(output_firings_path2));
     }
     bool ret = concatenate_output_firings_files(tmp_output_fnames, output_firings_path);
     //clean up
@@ -691,7 +691,7 @@ bool isocluster_v2(const QString& timeseries_path, const QString& detect_path, c
         }
     }
     if ((AM.N1() != M) || (AM.N2() != M)) {
-        printf("Error: incompatible dimensions between AM and X %lldx%lld %d, %s\n", AM.N1(), AM.N2(), M, adjacency_matrix_path.toLatin1().data());
+        printf("Error: incompatible dimensions between AM and X %ldx%ld %d, %s\n", AM.N1(), AM.N2(), M, adjacency_matrix_path.toLatin1().data());
         return false;
     }
 

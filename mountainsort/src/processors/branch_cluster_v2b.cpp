@@ -61,7 +61,7 @@ bool branch_cluster_v2b(const QString& timeseries_path, const QString& detect_pa
     }
 
     if ((AM.N1() != M) || (AM.N2() != M)) {
-        printf("Error: incompatible dimensions between AM and X %lldx%lld %d, %s\n", AM.N1(), AM.N2(), M, adjacency_matrix_path.toLatin1().data());
+        printf("Error: incompatible dimensions between AM and X %ldx%ld %d, %s\n", AM.N1(), AM.N2(), M, adjacency_matrix_path.toLatin1().data());
         return false;
     }
 
@@ -173,7 +173,7 @@ bool branch_cluster_v2b(const QString& timeseries_path, const QString& detect_pa
 
     firings.write64(output_firings_path);
 
-    printf("Found %d clusters and %lld events\n", K, firings.N2());
+    printf("Found %d clusters and %ld events\n", K, firings.N2());
 
     //QStringList keys=s_timers.keys();
     //foreach (QString key,keys) {
@@ -518,7 +518,7 @@ QVector<int> split_clusters(ClipsGroup clips, const QVector<int>& original_label
 
 QVector<int> do_branch_cluster_v2b(ClipsGroup clips, const Branch_Cluster_V2_Opts& opts, int channel_for_display)
 {
-    printf("do_branch_cluster_v2 %lldx%lldx%d (channel %d)\n", clips.clips->N1(), clips.clips->N2(), clips.inds.count(), channel_for_display + 1);
+    printf("do_branch_cluster_v2 %ldx%ldx%d (channel %d)\n", clips.clips->N1(), clips.clips->N2(), clips.inds.count(), channel_for_display + 1);
     int M = clips.clips->N1();
     int T = clips.clips->N2();
     int L = clips.inds.count();

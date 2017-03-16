@@ -120,7 +120,7 @@ bool compute_detectability_scores(QString timeseries_path, QString firings_path,
     }
 
     Mda firings_out;
-    int N1_new = qMax(firings.N1(), 6LL);
+    int N1_new = qMax((long long)firings.N1(), 6LL);
     firings_out.allocate(N1_new, firings.N2());
     for (int j = 0; j < firings.N2(); j++) {
         for (int i = 0; i < firings.N1(); i++) {

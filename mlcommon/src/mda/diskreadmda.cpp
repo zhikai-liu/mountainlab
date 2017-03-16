@@ -556,7 +556,7 @@ bool DiskReadMda::readChunk(Mda& X, bigint i, bigint size) const
         if (d->bytesReadCounter)
             d->bytesReadCounter->add(bytes_read);
         if (bytes_read != size_to_read) {
-            printf("Warning problem reading chunk in diskreadmda: %lld<>%lld\n", (bigint)bytes_read, (bigint)size_to_read);
+            printf("Warning problem reading chunk in diskreadmda: %ld<>%ld\n", (bigint)bytes_read, (bigint)size_to_read);
             return false;
         }
     }
@@ -591,7 +591,7 @@ bool DiskReadMda::readChunk(Mda& X, bigint i1, bigint i2, bigint size1, bigint s
             if (d->bytesReadCounter)
                 d->bytesReadCounter->add(bytes_read);
             if (bytes_read != size1 * size2_to_read) {
-                printf("Warning problem reading 2d chunk in diskreadmda: %lld<>%lld\n", (bigint)bytes_read, (bigint)(size1 * size2));
+                printf("Warning problem reading 2d chunk in diskreadmda: %ld<>%ld\n", (bigint)bytes_read, (bigint)(size1 * size2));
                 return false;
             }
         }
@@ -636,7 +636,7 @@ bool DiskReadMda::readChunk(Mda& X, bigint i1, bigint i2, bigint i3, bigint size
             if (d->bytesReadCounter)
                 d->bytesReadCounter->add(bytes_read);
             if (bytes_read != size1 * size2 * size3_to_read) {
-                printf("Warning problem reading 3d chunk in diskreadmda: %lld<>%lld\n", (bigint)bytes_read, (bigint)(size1 * size2 * size3_to_read));
+                printf("Warning problem reading 3d chunk in diskreadmda: %ld<>%ld\n", (bigint)bytes_read, (bigint)(size1 * size2 * size3_to_read));
                 return false;
             }
         }

@@ -63,12 +63,12 @@ bool concat_timeseries_Processor::run(const QMap<QString, QVariant>& params)
     for (int i = 0; i < timeseries.count(); i++) {
         DiskReadMda32 X1(timeseries[i]);
         Mda32 chunk;
-        printf("Reading %d x %lld\n", M, X1.N2());
+        printf("Reading %d x %ld\n", M, X1.N2());
         if (!X1.readChunk(chunk, 0, 0, M, X1.N2())) {
             qWarning() << "Error reading chunk.";
             return false;
         }
-        printf("Writing %d x %lld\n", M, X1.N2());
+        printf("Writing %d x %ld\n", M, X1.N2());
         if (!Y.writeChunk(chunk, 0, N_offset)) {
             qWarning() << "Error writing chunk.";
             return false;
@@ -128,12 +128,12 @@ bool split_timeseries_Processor::run(const QMap<QString, QVariant>& params)
             return false;
         }
         Mda32 chunk;
-        printf("Reading %d x %lld...\n", M, R.N2());
+        printf("Reading %d x %ld...\n", M, R.N2());
         if (!X.readChunk(chunk, 0, N_offset, M, R.N2())) {
             qWarning() << "Problem reading chunk.";
             return false;
         }
-        printf("Writing %d x %lld...\n", M, R.N2());
+        printf("Writing %d x %ld...\n", M, R.N2());
         if (!chunk.write32(timeseries_split[i])) {
             qWarning() << "Problem writing chunk.";
             return false;
@@ -207,7 +207,7 @@ bool split_firings_Processor::run(const QMap<QString, QVariant>& params)
             }
             F2.setValue(F2.value(1, j) - N_offset, 1, j);
         }
-        printf("Writing %lld x %lld\n", F2.N1(), F2.N2());
+        printf("Writing %ld x %ld\n", F2.N1(), F2.N2());
         F2.write64(firings_split[i]);
 
         N_offset += R.N2();

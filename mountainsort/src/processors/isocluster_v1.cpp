@@ -475,7 +475,7 @@ QVector<int> do_isocluster_v1(ClipsGroup clips, const isocluster_v1_opts& opts, 
         sgn = " negatives";
     else if (sign_for_display == +1)
         sgn = " positives";
-    printf("ISOCLUSTER.v1 channel %d%s: %lldx%lldx%d\n", channel_for_display + 1, sgn.toLatin1().data(), clips.clips->N1(), clips.clips->N2(), clips.inds.count());
+    printf("ISOCLUSTER.v1 channel %d%s: %ldx%ldx%d\n", channel_for_display + 1, sgn.toLatin1().data(), clips.clips->N1(), clips.clips->N2(), clips.inds.count());
 
     //First we simply cluster all of the events
     QTime timer;
@@ -545,7 +545,7 @@ bool isocluster_v1(const QString& timeseries_path, const QString& detect_path, c
         }
     }
     if ((AM.N1() != M) || (AM.N2() != M)) {
-        printf("Error: incompatible dimensions between AM and X %lldx%lld %d, %s\n", AM.N1(), AM.N2(), M, adjacency_matrix_path.toLatin1().data());
+        printf("Error: incompatible dimensions between AM and X %ldx%ld %d, %s\n", AM.N1(), AM.N2(), M, adjacency_matrix_path.toLatin1().data());
         return false;
     }
 

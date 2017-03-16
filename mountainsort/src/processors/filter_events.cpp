@@ -35,7 +35,7 @@ bool filter_events(QString firings_path, QString firings_out_path, filter_events
     }
 
     int pct = (int)((F2.N2() * 1.0 / F1.N2()) * 100);
-    printf("Using %lld of %lld events (%d%%).\n", F2.N2(), F1.N2(), pct);
+    printf("Using %ld of %ld events (%d%%).\n", F2.N2(), F1.N2(), pct);
 
     F2.write64(firings_out_path);
 

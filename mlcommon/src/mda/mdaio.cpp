@@ -74,7 +74,7 @@ int mda_read_header(struct MDAIO_HEADER* HH, FILE* input_file)
     }
 
     if ((totsize < 0) || (totsize > MDAIO_MAX_SIZE)) { // changed to <0 rather than <= 0 on 2/21/17 by jfm
-        printf("mda_read_header: Problem with total size: %lld\n", totsize);
+        printf("mda_read_header: Problem with total size: %ld\n", totsize);
         return 0;
     }
 
@@ -132,7 +132,7 @@ int mda_write_header(struct MDAIO_HEADER* X, FILE* output_file)
     //the dimensions
     for (i = 0; i < X->num_dims; i++) {
         if (X->dims[i] >= max_int32) {
-            printf("Dimensions is too large to save in .mda header: %lld >= %lld\n", X->dims[i], max_int32);
+            printf("Dimensions is too large to save in .mda header: %ld >= %ld\n", X->dims[i], max_int32);
             return 0;
         }
         int32_t dim0 = X->dims[i];

@@ -53,6 +53,13 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
+        ProcessorSpec X("mountainsort.extract_segment_firings", "0.1");
+        X.addInputs("firings");
+        X.addOutputs("firings_out");
+        X.addRequiredParameters("t1", "t2");
+        processors.push_back(X.get_spec());
+    }
+    {
         ProcessorSpec X("mountainsort.bandpass_filter", "0.18");
         X.addInputs("timeseries");
         X.addOutputs("timeseries_out");
@@ -64,6 +71,27 @@ QJsonObject get_spec()
     {
         ProcessorSpec X("mountainsort.whiten", "0.1");
         X.addInputs("timeseries");
+        X.addOutputs("timeseries_out");
+        //X.addRequiredParameters();
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.compute_whitening_matrix", "0.1");
+        X.addInputs("timeseries_list");
+        X.addOutputs("whitening_matrix_out");
+        //X.addRequiredParameters();
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.whiten_clips", "0.1");
+        X.addInputs("clips","whitening_matrix");
+        X.addOutputs("clips_out");
+        //X.addRequiredParameters();
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.apply_whitening_matrix", "0.1");
+        X.addInputs("timeseries","whitening_matrix");
         X.addOutputs("timeseries_out");
         //X.addRequiredParameters();
         processors.push_back(X.get_spec());
@@ -166,11 +194,18 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.concat_firings", "0.12");
-        X.addInputs("timeseries_list");
+        ProcessorSpec X("mountainsort.concat_firings", "0.13");
         X.addInputs("firings_list");
-        X.addOptionalOutputs("timeseries_out");
+        X.addOptionalInputs("timeseries_list");
         X.addOutputs("firings_out");
+        X.addOptionalOutputs("timeseries_out");
+        //X.addRequiredParameters();
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.concat_event_times", "0.1");
+        X.addInputs("event_times_list");
+        X.addOutputs("event_times_out");
         //X.addRequiredParameters();
         processors.push_back(X.get_spec());
     }
@@ -243,6 +278,13 @@ int main(int argc, char* argv[])
             ret = p_extract_segment_timeseries_from_concat_list(timeseries_list, timeseries_out, t1, t2);
         }
     }
+    else if (arg1 == "mountainsort.extract_segment_firings") {
+        QString firings = CLP.named_parameters["firings"].toString();
+        QString firings_out = CLP.named_parameters["firings_out"].toString();
+        bigint t1 = CLP.named_parameters["t1"].toDouble(); //to double to handle scientific notation
+        bigint t2 = CLP.named_parameters["t2"].toDouble(); //to double to handle scientific notation
+        ret = p_extract_segment_firings(firings,firings_out, t1, t2);
+    }
     else if (arg1 == "mountainsort.bandpass_filter") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
@@ -261,6 +303,26 @@ int main(int argc, char* argv[])
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
         Whiten_opts opts;
         ret = p_whiten(timeseries, timeseries_out, opts);
+    }
+    else if (arg1 == "mountainsort.compute_whitening_matrix") {
+        QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);
+        QString whitening_matrix_out = CLP.named_parameters["whitening_matrix_out"].toString();
+        Whiten_opts opts;
+        ret = p_compute_whitening_matrix(timeseries_list, whitening_matrix_out, opts);
+    }
+    else if (arg1 == "mountainsort.whiten_clips") {
+        QString clips = CLP.named_parameters["clips"].toString();
+        QString whitening_matrix = CLP.named_parameters["whitening_matrix"].toString();
+        QString clips_out = CLP.named_parameters["clips_out"].toString();
+        Whiten_opts opts;
+        ret = p_whiten_clips(clips,whitening_matrix,clips_out,opts);
+    }
+    else if (arg1 == "mountainsort.apply_whitening_matrix") {
+        QString timeseries = CLP.named_parameters["timeseries"].toString();
+        QString whitening_matrix = CLP.named_parameters["whitening_matrix"].toString();
+        QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
+        Whiten_opts opts;
+        ret = p_apply_whitening_matrix(timeseries,whitening_matrix,timeseries_out,opts);
     }
     else if (arg1 == "mountainsort.detect_events") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
@@ -372,6 +434,11 @@ int main(int argc, char* argv[])
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
         QString firings_out = CLP.named_parameters["firings_out"].toString();
         ret = p_concat_firings(timeseries_list, firings_list, timeseries_out, firings_out);
+    }
+    else if (arg1 == "mountainsort.concat_event_times") {
+        QStringList event_times_list = MLUtil::toStringList(CLP.named_parameters["event_times_list"]);
+        QString event_times_out = CLP.named_parameters["event_times_out"].toString();
+        ret = p_concat_event_times(event_times_list, event_times_out);
     }
     else if (arg1 == "mountainsort.load_test") {
         QString stats_out = CLP.named_parameters["stats_out"].toString();
