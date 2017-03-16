@@ -60,7 +60,7 @@ This will use matlab if you have it installed, otherwise it will use octave. It 
 Run the standard mountainsort processing pipeline
 
 ```bash
-kron-run ms2 example1
+kron-run ms2 example1 --_nodaemon
 ```
 
 Finally, launch the viewer:
