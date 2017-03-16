@@ -5,6 +5,7 @@
 #include <diskwritemda.h>
 #include <mda.h>
 #include "pca.h"
+#include "omp.h"
 
 namespace P_whiten {
 
@@ -139,9 +140,9 @@ bool p_compute_whitening_matrix(QStringList timeseries_list, QString whitening_m
 {
     (void)opts;
 
-    DiskReadMda32 X(2,timeseries_list);
-    int M = X.N1();
-    bigint N = X.N2();
+    DiskReadMda32 X0(2,timeseries_list);
+    int M = X0.N1();
+    bigint N = X0.N2();
     qDebug() << "M/N" << M << N;
 
     bigint processing_chunk_size = 1e7;
@@ -153,48 +154,54 @@ bool p_compute_whitening_matrix(QStringList timeseries_list, QString whitening_m
         chunk_size = N;
     }
 
-    {
-        QTime timer;
-        timer.start();
-        bigint num_timepoints_handled = 0;
-#pragma omp parallel for
-        for (bigint timepoint = 0; timepoint < N; timepoint += chunk_size) {
-            qDebug() << "timepoint:" << timepoint;
-            Mda32 chunk;
-#pragma omp critical(lock1)
-            {
-                X.readChunk(chunk, 0, timepoint, M, qMin(chunk_size, N - timepoint));
-            }
-            float* chunkptr = chunk.dataPtr();
-            Mda XXt0(M, M);
-            double* XXt0ptr = XXt0.dataPtr();
-            for (bigint i = 0; i < chunk.N2(); i++) {
-                bigint aa = M * i;
-                int bb = 0;
-                for (int m1 = 0; m1 < M; m1++) {
-                    for (int m2 = 0; m2 < M; m2++) {
-                        XXt0ptr[bb] += chunkptr[aa + m1] * chunkptr[aa + m2];
-                        bb++;
+    bigint timepoint=0;
+    while (timepoint<N) {
+        QList<Mda32> chunks;
+        qDebug() << "---------------------" << omp_get_num_threads();
+        while ((timepoint<N)&&(chunks.count()<omp_get_max_threads())) {
+            Mda32 chunk0;
+            X0.readChunk(chunk0,0,timepoint,M,qMin(chunk_size,N-timepoint));
+            chunks << chunk0;
+            timepoint+=chunk_size;
+        }
+        int num_chunks=chunks.count();
+        qDebug() << QString("Processing %1 chunks. timepoint %2. (%3%)").arg(num_chunks).arg(timepoint).arg((int)(timepoint*1.0/N*100));
+#pragma omp parallel
+        {
+#pragma omp for
+            for (int i=0; i<num_chunks; i++) {
+                Mda32 chunk0;
+#pragma omp critical
+                {
+                    chunk0=chunks[i];
+                }
+                Mda XXt0(M,M);
+                double* XXt0ptr = XXt0.dataPtr();
+                float* chunkptr = chunk0.dataPtr();
+                for (bigint i = 0; i < chunk0.N2(); i++) {
+                    bigint aa = M * i;
+                    int bb = 0;
+                    for (int m1 = 0; m1 < M; m1++) {
+                        for (int m2 = 0; m2 < M; m2++) {
+                            XXt0ptr[bb] += chunkptr[aa + m1] * chunkptr[aa + m2];
+                            bb++;
+                        }
                     }
                 }
-            }
 #pragma omp critical(lock2)
-            {
-                int bb = 0;
-                for (int m1 = 0; m1 < M; m1++) {
-                    for (int m2 = 0; m2 < M; m2++) {
-                        XXtptr[bb] += XXt0ptr[bb];
-                        bb++;
+                {
+                    int bb = 0;
+                    for (int m1 = 0; m1 < M; m1++) {
+                        for (int m2 = 0; m2 < M; m2++) {
+                            XXtptr[bb] += XXt0ptr[bb];
+                            bb++;
+                        }
                     }
-                }
-                num_timepoints_handled += qMin(chunk_size, N - timepoint);
-                if ((timer.elapsed() > 5000) || (num_timepoints_handled == N)) {
-                    printf("%ld/%ld (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
-                    timer.restart();
                 }
             }
         }
     }
+
     if (N > 1) {
         for (int ii = 0; ii < M * M; ii++) {
             XXtptr[ii] /= (N - 1);

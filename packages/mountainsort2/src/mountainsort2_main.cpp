@@ -255,6 +255,7 @@ int main(int argc, char* argv[])
     if (CLP.named_parameters.contains("_request_num_threads")) {
         int num_threads = CLP.named_parameters.value("_request_num_threads", 0).toInt();
         if (num_threads) {
+            qDebug().noquote() << "Setting num threads:" << num_threads;
             omp_set_num_threads(num_threads);
         }
     }
