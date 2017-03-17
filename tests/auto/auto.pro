@@ -5,4 +5,6 @@ SUBDIRS =    mda mlcompute taskprogress \
 	     objectregistry \
 	     mlprivate \
 	     componentmanager \
-    counters
+    counters \
+    processmanager \
+    signalhandler
