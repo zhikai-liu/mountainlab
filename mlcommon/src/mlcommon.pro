@@ -23,7 +23,8 @@ HEADERS += mlcommon.h sumit.h \
     ../include/mda/mdareader_p.h \
     ../include/objectregistry.h \
     ../include/mlprivate.h \
-    ../include/icounter.h
+    ../include/icounter.h \
+    ../include/qprocessmanager.h
 
 SOURCES += \
     mlcommon.cpp sumit.cpp \
@@ -32,7 +33,8 @@ SOURCES += \
     objectregistry.cpp \
     mda/mdareader.cpp \
     componentmanager/icomponent.cpp \
-    icounter.cpp
+    icounter.cpp \
+    qprocessmanager.cpp
 
 INCLUDEPATH += ../include/mda
 VPATH += ../include/mda
