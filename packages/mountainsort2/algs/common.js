@@ -214,6 +214,15 @@ common.copy_file=function(src,dst,callback) {
 	rs.pipe(ws);
 };
 
+common.copy_file=function(src,dst,callback) {
+	common.foreach(src,{},function(ii,fname,cb) {
+		console.log ('Copying file: '+src[ii]+' --> '+dst[ii]);
+		common.copy_file(src[ii],dst[ii],cb);
+	},function() {
+		callback();
+	});
+};
+
 common.clone=function(obj) {
 	return JSON.parse(JSON.stringify(obj));
 }

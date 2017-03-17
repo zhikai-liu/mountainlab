@@ -8,6 +8,8 @@ register_processor(require('./basic_sort.js'));
 register_processor(require('./multichannel_sort.js'));
 register_processor(require('./drift_sort.js'));
 register_processor(require('./subsample_sort.js'));
+register_processor(require('./ms2_detection.js'));
+
 
 function register_processor(P) {
 	var spec0=P.spec();
