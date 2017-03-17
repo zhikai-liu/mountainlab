@@ -30,14 +30,14 @@ MdaTest::MdaTest()
 
 void MdaTest::mda_constructor()
 {
-    QFETCH(int, N1);
-    QFETCH(int, N2);
-    QFETCH(int, N3);
-    QFETCH(int, N4);
-    QFETCH(int, N5);
-    QFETCH(int, N6);
+    QFETCH(bigint, N1);
+    QFETCH(bigint, N2);
+    QFETCH(bigint, N3);
+    QFETCH(bigint, N4);
+    QFETCH(bigint, N5);
+    QFETCH(bigint, N6);
     QFETCH(int, ndims);
-    QFETCH(int, totalSize);
+    QFETCH(bigint, totalSize);
 
     Mda mda(N1, N2, N3, N4, N5, N6);
 
@@ -69,38 +69,38 @@ void MdaTest::mda_constructor()
 
 void MdaTest::mda_constructor_data()
 {
-    QTest::addColumn<int>("N1");
-    QTest::addColumn<int>("N2");
-    QTest::addColumn<int>("N3");
-    QTest::addColumn<int>("N4");
-    QTest::addColumn<int>("N5");
-    QTest::addColumn<int>("N6");
+    QTest::addColumn<bigint>("N1");
+    QTest::addColumn<bigint>("N2");
+    QTest::addColumn<bigint>("N3");
+    QTest::addColumn<bigint>("N4");
+    QTest::addColumn<bigint>("N5");
+    QTest::addColumn<bigint>("N6");
     QTest::addColumn<int>("ndims");
-    QTest::addColumn<int>("totalSize");
+    QTest::addColumn<bigint>("totalSize");
 
     QTest::newRow("111111")
-        << 1L << 1L << 1L << 1L << 1L << 1L
-        << 2 << 1L;
+        << bigint(1) << bigint(1) << bigint(1) << bigint(1) << bigint(1) << bigint(1)
+        << 2 << bigint(1);
     QTest::newRow("123456")
-        << 1L << 2L << 3L << 4L << 5L << 6L
-        << 6 << 720L;
+        << bigint(1) << bigint(2) << bigint(3) << bigint(4) << bigint(5) << bigint(6)
+        << 6 << bigint(720);
     QTest::newRow("123451")
-        << 1L << 2L << 3L << 4L << 5L << 1L
-        << 5 << 120L;
+        << bigint(1) << bigint(2) << bigint(3) << bigint(4) << bigint(5) << bigint(1)
+        << 5 << bigint(120);
     QTest::newRow("222212")
-        << 2L << 2L << 2L << 2L << 1L << 2L
-        << 6 << 32L;
+        << bigint(2) << bigint(2) << bigint(2) << bigint(2) << bigint(1) << bigint(2)
+        << 6 << bigint(32);
 
     // 0 and negative values do not make any sense, total size should be 0
     QTest::newRow("000000")
-        << 0L << 0L << 0L << 0L << 0L << 0L
-        << 0 << 0L;
+        << bigint(0) << bigint(0) << bigint(0) << bigint(0) << bigint(0) << bigint(0)
+        << 0 << bigint(0);
     QTest::newRow("negative")
-        << -1L << -1L << -1L << -1L << -1L << -1L
-        << 0 << 0L;
+        << -bigint(1) << -bigint(1) << -bigint(1) << -bigint(1) << -bigint(1) << -bigint(1)
+        << 0 << bigint(0);
     QTest::newRow("negative total size")
-        << 1L << 2L << 3L << -4L << 5L << 6L
-        << 0 << 0L;
+        << bigint(1) << bigint(2) << bigint(3) << -bigint(4) << bigint(5) << bigint(6)
+        << 0 << bigint(0);
 }
 
 void MdaTest::allocate()
@@ -117,14 +117,14 @@ void MdaTest::allocate()
 
     // reallocate a different configuration
 
-    QFETCH(int, N1);
-    QFETCH(int, N2);
-    QFETCH(int, N3);
-    QFETCH(int, N4);
-    QFETCH(int, N5);
-    QFETCH(int, N6);
+    QFETCH(bigint, N1);
+    QFETCH(bigint, N2);
+    QFETCH(bigint, N3);
+    QFETCH(bigint, N4);
+    QFETCH(bigint, N5);
+    QFETCH(bigint, N6);
     QFETCH(int, ndims);
-    QFETCH(int, totalSize);
+    QFETCH(bigint, totalSize);
 
     QCOMPARE(mda.allocate(N1, N2, N3, N4, N5, N6), true);
 
@@ -157,38 +157,38 @@ void MdaTest::allocate()
 
 void MdaTest::allocate_data()
 {
-    QTest::addColumn<int>("N1");
-    QTest::addColumn<int>("N2");
-    QTest::addColumn<int>("N3");
-    QTest::addColumn<int>("N4");
-    QTest::addColumn<int>("N5");
-    QTest::addColumn<int>("N6");
+    QTest::addColumn<bigint>("N1");
+    QTest::addColumn<bigint>("N2");
+    QTest::addColumn<bigint>("N3");
+    QTest::addColumn<bigint>("N4");
+    QTest::addColumn<bigint>("N5");
+    QTest::addColumn<bigint>("N6");
     QTest::addColumn<int>("ndims");
-    QTest::addColumn<int>("totalSize");
+    QTest::addColumn<bigint>("totalSize");
 
     //    QTest::newRow("111111")
-    //            << 1L << 1L << 1L << 1L << 1L << 1L
-    //            << 2 << 1L;
+    //            << bigint(1) << bigint(1) << bigint(1) << bigint(1) << bigint(1) << bigint(1)
+    //            << 2 << bigint(1);
     QTest::newRow("123456")
-        << 1L << 2L << 3L << 4L << 5L << 6L
-        << 6 << 720L;
+        << bigint(1) << bigint(2) << bigint(3) << bigint(4) << bigint(5) << bigint(6)
+        << 6 << bigint(720);
     QTest::newRow("123451")
-        << 1L << 2L << 3L << 4L << 5L << 1L
-        << 5 << 120L;
+        << bigint(1) << bigint(2) << bigint(3) << bigint(4) << bigint(5) << bigint(1)
+        << 5 << bigint(120);
     QTest::newRow("222212")
-        << 2L << 2L << 2L << 2L << 1L << 2L
-        << 6 << 32L;
+        << bigint(2) << bigint(2) << bigint(2) << bigint(2) << bigint(1) << bigint(2)
+        << 6 << bigint(32);
 
     // 0 and negative values do not make any sense, total size should be 0
     QTest::newRow("000000")
-        << 0L << 0L << 0L << 0L << 0L << 0L
-        << 0 << 0L;
+        << bigint(0) << bigint(0) << bigint(0) << bigint(0) << bigint(0) << bigint(0)
+        << 0 << bigint(0);
     QTest::newRow("negative")
-        << -1L << -1L << -1L << -1L << -1L << -1L
-        << 0 << 0L;
+        << -bigint(1) << -bigint(1) << -bigint(1) << -bigint(1) << -bigint(1) << -bigint(1)
+        << 0 << bigint(0);
     QTest::newRow("negative total size")
-        << 1L << 2L << 3L << -4L << 5L << 6L
-        << 0 << 0L;
+        << bigint(1) << bigint(2) << bigint(3) << -bigint(4) << bigint(5) << bigint(6)
+        << 0 << bigint(0);
 }
 
 void MdaTest::get1()
@@ -219,8 +219,8 @@ void MdaTest::invalid_readfile()
 {
     Mda mda("invalidfile.mda");
     QCOMPARE(mda.ndims(), 2); // minimum to have a matrix
-    QCOMPARE(mda.N1(), 1LL);
-    QCOMPARE(mda.N2(), 1LL);
+    QCOMPARE(mda.N1(), bigint(1));
+    QCOMPARE(mda.N2(), bigint(1));
 }
 
 QTEST_APPLESS_MAIN(MdaTest)
