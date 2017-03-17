@@ -23,7 +23,9 @@ ObjectRegistry::ObjectRegistry(QObject* parent)
 {
 #ifndef GLOBAL_REGISTRY
     if (_ml_object_registry) {
-        qWarning("ObjectRegistry already exists");
+#ifdef SHOW_OBJECT_REGISTRY_WARNINGS
+        qWarning("No ObjectRegistry instance present");
+#endif
         return;
     }
     _ml_object_registry = this;
@@ -54,7 +56,9 @@ void ObjectRegistry::addObject(QObject* o)
     if (!o)
         return;
     if (!instance()) {
+#ifdef SHOW_OBJECT_REGISTRY_WARNINGS
         qWarning("No ObjectRegistry instance present");
+#endif
         return;
     }
     QWriteLocker lock(listMutex());
@@ -73,7 +77,9 @@ void ObjectRegistry::addAutoReleasedObject(QObject* o)
     if (!o)
         return;
     if (!instance()) {
+#ifdef SHOW_OBJECT_REGISTRY_WARNINGS
         qWarning("No ObjectRegistry instance present");
+#endif
         return;
     }
     QWriteLocker lock(listMutex());
@@ -92,7 +98,9 @@ void ObjectRegistry::removeObject(QObject* o)
     if (!o)
         return;
     if (!instance()) {
+#ifdef SHOW_OBJECT_REGISTRY_WARNINGS
         qWarning("No ObjectRegistry instance present");
+#endif
         return;
     }
     QWriteLocker lock(listMutex());
@@ -118,7 +126,9 @@ QReadWriteLock* ObjectRegistry::listMutex()
 QObjectList ObjectRegistry::allObjects()
 {
     if (!instance()) {
+#ifdef SHOW_OBJECT_REGISTRY_WARNINGS
         qWarning("No ObjectRegistry instance present");
+#endif
         return QObjectList();
     }
     return instance()->d->allObjects;
@@ -127,7 +137,9 @@ QObjectList ObjectRegistry::allObjects()
 QObject* ObjectRegistry::getObjectByName(const QString& name)
 {
     if (!instance()) {
+#ifdef SHOW_OBJECT_REGISTRY_WARNINGS
         qWarning("No ObjectRegistry instance present");
+#endif
         return nullptr;
         ;
     }
@@ -143,7 +155,9 @@ QObject* ObjectRegistry::getObjectByName(const QString& name)
 QObject* ObjectRegistry::getObjectByClassName(const QString& className)
 {
     if (!instance()) {
+#ifdef SHOW_OBJECT_REGISTRY_WARNINGS
         qWarning("No ObjectRegistry instance present");
+#endif
         return nullptr;
     }
     QReadLocker lock(listMutex());

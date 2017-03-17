@@ -61,6 +61,7 @@ If anything crashes along the way, every involved QProcess is killed.
 #include "cachemanager.h"
 #include "mlcommon.h"
 #include "scriptcontroller2.h"
+#include <objectregistry.h>
 #include <unistd.h>
 
 #ifndef Q_OS_LINUX
