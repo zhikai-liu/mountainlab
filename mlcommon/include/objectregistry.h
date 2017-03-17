@@ -29,7 +29,7 @@ public:
     static T* getObject()
     {
         if (!instance()) {
-            //qWarning("No ObjectRegistry instance present");
+            qWarning("No ObjectRegistry instance present");
             return nullptr;
         }
         QReadLocker locker(listMutex());
@@ -44,7 +44,7 @@ public:
     static QList<T*> getObjects()
     {
         if (!instance()) {
-            //qWarning("No ObjectRegistry instance present");
+            qWarning("No ObjectRegistry instance present");
             return QList<T*>();
         }
         QReadLocker locker(listMutex());
@@ -61,7 +61,7 @@ public:
     static T* getObject(P pred)
     {
         if (!instance()) {
-            //qWarning("No ObjectRegistry instance present");
+            qWarning("No ObjectRegistry instance present");
             return nullptr;
         }
         QReadLocker locker(listMutex());
@@ -79,7 +79,7 @@ public:
     static QList<T*> getObjects(P pred)
     {
         if (!instance()) {
-            //qWarning("No ObjectRegistry instance present");
+            qWarning("No ObjectRegistry instance present");
             return QList<T*>();
         }
         QReadLocker locker(listMutex());
