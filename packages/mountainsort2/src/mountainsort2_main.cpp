@@ -84,14 +84,14 @@ QJsonObject get_spec()
     }
     {
         ProcessorSpec X("mountainsort.whiten_clips", "0.1");
-        X.addInputs("clips","whitening_matrix");
+        X.addInputs("clips", "whitening_matrix");
         X.addOutputs("clips_out");
         //X.addRequiredParameters();
         processors.push_back(X.get_spec());
     }
     {
         ProcessorSpec X("mountainsort.apply_whitening_matrix", "0.1");
-        X.addInputs("timeseries","whitening_matrix");
+        X.addInputs("timeseries", "whitening_matrix");
         X.addOutputs("timeseries_out");
         //X.addRequiredParameters();
         processors.push_back(X.get_spec());
@@ -284,7 +284,7 @@ int main(int argc, char* argv[])
         QString firings_out = CLP.named_parameters["firings_out"].toString();
         bigint t1 = CLP.named_parameters["t1"].toDouble(); //to double to handle scientific notation
         bigint t2 = CLP.named_parameters["t2"].toDouble(); //to double to handle scientific notation
-        ret = p_extract_segment_firings(firings,firings_out, t1, t2);
+        ret = p_extract_segment_firings(firings, firings_out, t1, t2);
     }
     else if (arg1 == "mountainsort.bandpass_filter") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
@@ -316,14 +316,14 @@ int main(int argc, char* argv[])
         QString whitening_matrix = CLP.named_parameters["whitening_matrix"].toString();
         QString clips_out = CLP.named_parameters["clips_out"].toString();
         Whiten_opts opts;
-        ret = p_whiten_clips(clips,whitening_matrix,clips_out,opts);
+        ret = p_whiten_clips(clips, whitening_matrix, clips_out, opts);
     }
     else if (arg1 == "mountainsort.apply_whitening_matrix") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString whitening_matrix = CLP.named_parameters["whitening_matrix"].toString();
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
         Whiten_opts opts;
-        ret = p_apply_whitening_matrix(timeseries,whitening_matrix,timeseries_out,opts);
+        ret = p_apply_whitening_matrix(timeseries, whitening_matrix, timeseries_out, opts);
     }
     else if (arg1 == "mountainsort.detect_events") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
@@ -334,7 +334,8 @@ int main(int argc, char* argv[])
         opts.detect_interval = CLP.named_parameters["detect_interval"].toDouble();
         opts.sign = CLP.named_parameters["sign"].toInt();
         opts.subsample_factor = CLP.named_parameters["subsample_factor"].toDouble();
-        if (!opts.subsample_factor) opts.subsample_factor=1;
+        if (!opts.subsample_factor)
+            opts.subsample_factor = 1;
         ret = p_detect_events(timeseries, event_times_out, opts);
     }
     else if (arg1 == "mountainsort.extract_clips") {

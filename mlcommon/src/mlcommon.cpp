@@ -323,7 +323,7 @@ QVariant clp_string_to_variant(const QString& str)
     if (clp_is_int(str))
         return str.toInt();
     if (clp_is_float(str))
-	return str.toFloat();
+        return str.toFloat();
     if ((str.startsWith("[")) && (str.endsWith("]"))) {
         QString str2 = str.mid(1, str.count() - 2);
         QStringList list = str2.split("][");

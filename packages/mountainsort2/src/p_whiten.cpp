@@ -140,7 +140,7 @@ bool p_compute_whitening_matrix(QStringList timeseries_list, QString whitening_m
 {
     (void)opts;
 
-    DiskReadMda32 X0(2,timeseries_list);
+    DiskReadMda32 X0(2, timeseries_list);
     int M = X0.N1();
     bigint N = X0.N2();
     qDebug() << "M/N" << M << N;
@@ -154,28 +154,28 @@ bool p_compute_whitening_matrix(QStringList timeseries_list, QString whitening_m
         chunk_size = N;
     }
 
-    bigint timepoint=0;
-    while (timepoint<N) {
+    bigint timepoint = 0;
+    while (timepoint < N) {
         QList<Mda32> chunks;
         qDebug() << "---------------------" << omp_get_num_threads();
-        while ((timepoint<N)&&(chunks.count()<omp_get_max_threads())) {
+        while ((timepoint < N) && (chunks.count() < omp_get_max_threads())) {
             Mda32 chunk0;
-            X0.readChunk(chunk0,0,timepoint,M,qMin(chunk_size,N-timepoint));
+            X0.readChunk(chunk0, 0, timepoint, M, qMin(chunk_size, N - timepoint));
             chunks << chunk0;
-            timepoint+=chunk_size;
+            timepoint += chunk_size;
         }
-        int num_chunks=chunks.count();
-        qDebug() << QString("Processing %1 chunks. timepoint %2. (%3%)").arg(num_chunks).arg(timepoint).arg((int)(timepoint*1.0/N*100));
+        int num_chunks = chunks.count();
+        qDebug() << QString("Processing %1 chunks. timepoint %2. (%3%)").arg(num_chunks).arg(timepoint).arg((int)(timepoint * 1.0 / N * 100));
 #pragma omp parallel
         {
 #pragma omp for
-            for (int i=0; i<num_chunks; i++) {
+            for (int i = 0; i < num_chunks; i++) {
                 Mda32 chunk0;
 #pragma omp critical
                 {
-                    chunk0=chunks[i];
+                    chunk0 = chunks[i];
                 }
-                Mda XXt0(M,M);
+                Mda XXt0(M, M);
                 double* XXt0ptr = XXt0.dataPtr();
                 float* chunkptr = chunk0.dataPtr();
                 for (bigint i = 0; i < chunk0.N2(); i++) {
@@ -213,7 +213,6 @@ bool p_compute_whitening_matrix(QStringList timeseries_list, QString whitening_m
     whitening_matrix_from_XXt(WW, XXt); // the result is symmetric (assumed below)
 
     return WW.write64(whitening_matrix_out);
-
 }
 
 bool p_whiten_clips(QString clips_path, QString whitening_matrix, QString clips_out_path, Whiten_opts opts)
@@ -222,26 +221,26 @@ bool p_whiten_clips(QString clips_path, QString whitening_matrix, QString clips_
     Mda WW(whitening_matrix);
     Mda32 clips(clips_path);
 
-    double *WWptr=WW.dataPtr();
-    float *clips_ptr=clips.dataPtr();
+    double* WWptr = WW.dataPtr();
+    float* clips_ptr = clips.dataPtr();
 
     int M = clips.N1();
     int T = clips.N2();
     int L = clips.N3();
 
-    Mda32 clips_out(M,T,L);
-    float *clips_out_ptr=clips_out.dataPtr();
+    Mda32 clips_out(M, T, L);
+    float* clips_out_ptr = clips_out.dataPtr();
 
-    for (int i=0; i<L; i++) {
-        for (int t=0; t<T; t++) {
-            int aa=M*T*i+M*t;
-            int bb=0;
+    for (int i = 0; i < L; i++) {
+        for (int t = 0; t < T; t++) {
+            int aa = M * T * i + M * t;
+            int bb = 0;
             for (int m1 = 0; m1 < M; m1++) {
-                 for (int m2 = 0; m2 < M; m2++) {
-                     clips_out_ptr[aa + m1] += clips_ptr[aa + m2] * WWptr[bb]; // actually this does dgemm w/ WW^T
-                     bb++; // but since symmetric, doesn't matter.
-                 }
-             }
+                for (int m2 = 0; m2 < M; m2++) {
+                    clips_out_ptr[aa + m1] += clips_ptr[aa + m2] * WWptr[bb]; // actually this does dgemm w/ WW^T
+                    bb++; // but since symmetric, doesn't matter.
+                }
+            }
         }
     }
 
@@ -270,7 +269,7 @@ bool p_apply_whitening_matrix(QString timeseries, QString whitening_matrix, QStr
 
     Mda WW(whitening_matrix);
 
-    double *WWptr=WW.dataPtr();
+    double* WWptr = WW.dataPtr();
 
     DiskWriteMda Y;
     Y.open(MDAIO_TYPE_FLOAT32, timeseries_out, M, N);

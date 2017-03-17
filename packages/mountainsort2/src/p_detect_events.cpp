@@ -46,9 +46,9 @@ bool p_detect_events(QString timeseries, QString event_times_out, P_detect_event
 
     printf("%d events detected.\n", event_times.count());
 
-    if ((opts.subsample_factor)&&(opts.subsample_factor<1)) {
-        printf("Subsampling by factor %g...\n",opts.subsample_factor);
-        event_times=P_detect_events::subsample_events(event_times,opts.subsample_factor);
+    if ((opts.subsample_factor) && (opts.subsample_factor < 1)) {
+        printf("Subsampling by factor %g...\n", opts.subsample_factor);
+        event_times = P_detect_events::subsample_events(event_times, opts.subsample_factor);
     }
 
     printf("Creating result array...\n");
@@ -121,5 +121,4 @@ QVector<double> subsample_events(const QVector<double>& X, double subsample_fact
     }
     return ret;
 }
-
 }

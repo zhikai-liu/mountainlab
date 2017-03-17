@@ -58,17 +58,17 @@ bool p_concat_firings(QStringList timeseries_list, QStringList firings_list, QSt
 
 bool p_concat_event_times(QStringList event_times_list, QString event_times_out)
 {
-    bigint NN=0;
-    foreach (QString fname,event_times_list) {
+    bigint NN = 0;
+    foreach (QString fname, event_times_list) {
         DiskReadMda ET(fname);
-        NN+=ET.totalSize();
+        NN += ET.totalSize();
     }
-    Mda ret(1,NN);
-    bigint offset=0;
-    foreach (QString fname,event_times_list) {
+    Mda ret(1, NN);
+    bigint offset = 0;
+    foreach (QString fname, event_times_list) {
         Mda ET(fname);
-        ret.setChunk(ET,offset);
-        offset+=ET.totalSize();
+        ret.setChunk(ET, offset);
+        offset += ET.totalSize();
     }
     return ret.write64(event_times_out);
 }

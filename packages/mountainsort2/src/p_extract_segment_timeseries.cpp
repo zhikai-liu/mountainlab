@@ -126,18 +126,19 @@ bool p_extract_segment_firings(QString firings_path, QString firings_out_path, b
 {
     Mda firings(firings_path);
     QVector<int> inds;
-    for (int i=0; i<firings.N2(); i++) {
-        double t0=firings.value(1,i);
-        if ((t1<=t0)&&(t0<=t2))
+    for (int i = 0; i < firings.N2(); i++) {
+        double t0 = firings.value(1, i);
+        if ((t1 <= t0) && (t0 <= t2))
             inds << i;
     }
-    Mda ret(firings.N1(),inds.count());
-    for (int i=0; i<inds.count(); i++) {
-        int j=inds[i];
-        for (int r=0; r<firings.N1(); r++) {
-            ret.setValue(firings.value(r,j),r,i);
+    Mda ret(firings.N1(), inds.count());
+    for (int i = 0; i < inds.count(); i++) {
+        int j = inds[i];
+        for (int r = 0; r < firings.N1(); r++) {
+            ret.setValue(firings.value(r, j), r, i);
         }
-        ret.setValue(ret.value(1,i)-t1,1,i);;
+        ret.setValue(ret.value(1, i) - t1, 1, i);
+        ;
     }
     return ret.write64(firings_out_path);
 }
