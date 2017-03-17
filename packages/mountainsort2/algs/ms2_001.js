@@ -185,14 +185,14 @@ exports.run=function(opts,callback) {
 				cb();
 			});
 		});
-		///////////////////////////////////////////////////////////////
-		steps.push(function(cb) {
-			//write output files
-			STEP_write_output_files(function() {
-				cb();
-			});
-		});
 	}
+	///////////////////////////////////////////////////////////////
+	steps.push(function(cb) {
+		//write output files
+		STEP_write_output_files(function() {
+			cb();
+		});
+	});
 	///////////////////////////////////////////////////////////////
 	steps.push(function(cb) {
 		//remove the temporary files
