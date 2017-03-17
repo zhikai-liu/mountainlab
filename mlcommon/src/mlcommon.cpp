@@ -48,7 +48,7 @@ QString TextFile::read(const QString& fname, QTextCodec* codec)
     return ret;
 }
 
-bool TextFile::write(const QString& fname, const QString& txt, QTextCodec* codec)
+bool TextFile::write_single_try(const QString& fname, const QString& txt, QTextCodec* codec)
 {
     /*
      * Modification on 5/23/16 by jfm
@@ -97,6 +97,16 @@ bool TextFile::write(const QString& fname, const QString& txt, QTextCodec* codec
     }
 
     return true;
+}
+
+bool TextFile::write(const QString& fname, const QString& txt, QTextCodec* codec) {
+    int num_tries=5;
+    for (int i=0; i<num_tries; i++) {
+        if (TextFile::write_single_try(fname,txt,codec)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 QChar make_random_alphanumeric()
