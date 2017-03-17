@@ -254,7 +254,7 @@ int main(int argc, char* argv[])
     }
     else if ((arg1 == "run-process") || (arg1 == "exec-process")) { //Run a process synchronously
         bool exec_mode = (arg1 == "exec-process");
-        printf("Initializing process manager...\n");
+        //printf("Initializing process manager...\n");
         if (!initialize_process_manager()) { // load the processor plugins etc
             //log_end();
             return -1;
@@ -890,10 +890,10 @@ bool initialize_process_manager()
     ProcessManager* PM = ProcessManager::globalInstance();
     foreach (QString processor_path, processor_paths) {
         //printf("Searching for processors in %s\n", p0.toLatin1().data());
-        int previous_num_processors = PM->processorNames().count();
+        //int previous_num_processors = PM->processorNames().count();
         PM->loadProcessors(processor_path);
-        int num_processors = PM->processorNames().count() - previous_num_processors;
-        qDebug().noquote() << QString("Loaded %1 processors in %2").arg(num_processors).arg(processor_path);
+        //int num_processors = PM->processorNames().count() - previous_num_processors;
+        //qDebug().noquote() << QString("Loaded %1 processors in %2").arg(num_processors).arg(processor_path);
     }
 
     return true;

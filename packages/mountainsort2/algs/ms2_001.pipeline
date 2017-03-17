@@ -6,9 +6,9 @@ function main(params) {
 		detect_interval_msec:1, //min separation between two events on same channel
 		detect_threshold:3.5, //stdevs away from noise
 		detect_sign:0, //-1,0,1
-		whiten:1, //boolean
+		whiten:'true', //boolean
 		//consolidate_clusters:1, //boolean
-		fit_stage:1, //boolean
+		fit_stage:'false', //boolean
 		segment_duration_sec:3600, //duration of a single time segment for processing
 		num_threads:0, //number of time segments to process in parallel
 		subsample_factor:1
@@ -17,42 +17,51 @@ function main(params) {
 	var inpath=params.inpath;
 	var outpath=params.outpath;
 
-	var raw=inpath+'/raw.mda.prv';
+	var filt;
+	var raw;
 	var sessions=[];
-	if (!file_exists(raw)) {
+	if (file_exists(inpath+'/raw.mda.prv')) {
+		raw=inpath+'/raw.mda.prv';
+		filt=bandpass_filter(raw,params.samplerate,params.freq_min,params.freq_max,params.freq_wid);
+	}
+	else {
 		sessions=find_all_sessions(inpath);
 		console.log('sessions:');
 		console.log(JSON.stringify(sessions));
 		raw=[];
+		filt=[];
 		for (var i in sessions) {
 			var session_path=sessions[i].path;
 			var fname=session_path+'/raw.mda.prv';
 			if (file_exists(fname)) {
 				raw.push(fname);
+				var fname2=bandpass_filter(fname,params.samplerate,params.freq_min,params.freq_max,params.freq_wid);
+				console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ '+fname2);
+				filt.push(fname2);
+				sessions[i].filt=fname2;
 				console.log('mkdir: '+sessions[i].relpath);
 				mkdir(outpath+'/'+sessions[i].relpath);
 			}
 		}
 	}
-	if (raw.length===0) {
+	if (filt.length===0) {
 		console.err('No raw files or sessions found.');
 		return;
 	}
-	console.log(JSON.stringify(raw));
 
 	var params2=clone(params);
 
 	//pre-sort processing
 	var outputs1={event_times_out:'',amplitudes_out:'',clips_out:'',whitening_matrix_out:''}; //specify which outputs to create
 	var results1=Process('mountainsort.ms2_001',
-			{raw:raw},params2,outputs1
+			{timeseries:filt},params2,outputs1
 	);
 
 	//the actual sorting
 	var outputs2={firings_out:'',cluster_metrics_out:''};
 	var results2=Process('mountainsort.ms2_001',
 			{
-				raw:raw,
+				timeseries:filt,
 				clips:results1.clips_out,
 				event_times:results1.event_times_out,
 				amplitudes:results1.amplitudes_out
@@ -68,28 +77,45 @@ function main(params) {
 	write_file(cluster_metrics,params.outpath+'/cluster_metrics.json');
 	if (typeof(raw)=='string') {
 		write_prv(raw,params.outpath+'/raw.mda.prv');
+		write_prv(filt,params.outpath+'/filt.mda.prv');
 	}
 	else {
 		remove_file(params.outpath+'/raw.mda.prv'); //to be safe
+		remove_file(params.outpath+'/filt.mda.prv'); //to be safe
 	}
 
 	if (sessions.length>0) {
 		//split the firings
 		var firings_out_list=[];
-		for (var i in sessions) {
-			write_prv(sessions[i].path+'/raw.mda.prv',params.outpath+'/'+sessions[i].relpath+'/raw.mda.prv');
-			write_file(cluster_metrics,params.outpath+'/'+sessions[i].relpath+'/cluster_metrics.json');
-			var tmp=outpath+'/'+sessions[i].relpath+'/firings.mda';
+		for (var jj in sessions) {
+			write_prv(sessions[jj].path+'/raw.mda.prv',params.outpath+'/'+sessions[jj].relpath+'/raw.mda.prv');
+			write_prv(sessions[jj].filt,params.outpath+'/'+sessions[jj].relpath+'/filt.mda.prv');
+			write_file(cluster_metrics,params.outpath+'/'+sessions[jj].relpath+'/cluster_metrics.json');
+			var tmp=outpath+'/'+sessions[jj].relpath+'/firings.mda';
 			firings_out_list.push(tmp);
 		}
 		Process('mountainsort.split_firings',
-				{timeseries_list:raw,firings:params.outpath+'/firings.mda'},
+				{timeseries_list:filt,firings:params.outpath+'/firings.mda'},
 				{},
 				{firings_out_list:firings_out_list}
 			);
 	}
 
 	run_pipeline();
+}
+
+function bandpass_filter(raw,samplerate,freq_min,freq_max,freq_wid) {
+	console.log('bandpass_filter: '+raw);
+	if ((!freq_min)&&(!freq_max)) {
+		return raw;
+	}
+	else {
+		var filt=Process('mountainsort.bandpass_filter',
+			{timeseries:raw},
+			{samplerate:samplerate,freq_min:freq_min,freq_max:freq_max,freq_wid:freq_wid}
+		).timeseries_out;
+		return filt;
+	}
 }
 
 function find_all_sessions(inpath,relpath) {

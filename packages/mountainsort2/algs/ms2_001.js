@@ -6,10 +6,10 @@ var os=require('os');
 exports.spec=function() {
 	var spec0={};
 	spec0.name='mountainsort.ms2_001';
-	spec0.version='0.1';
+	spec0.version='0.11';
 
 	spec0.inputs=[
-        {name:"raw",description:"raw timeseries (M x N)",optional:false},
+        {name:"timeseries",description:"preprocessed timeseries (M x N)",optional:false},
         {name:"event_times",description:"Timestamps for all events",optional:true},
         {name:"amplitudes",description:"Amplitudes for all events",optional:true},
         {name:"clips",description:"Event clips (perhaps whitened)",optional:true}
@@ -28,9 +28,6 @@ exports.spec=function() {
 	spec0.parameters.push({name:'segment_duration_sec',optional:true});
 	spec0.parameters.push({name:'num_threads',optional:true});
 	spec0.parameters.push({name:"central_channel",optional:true});
-	spec0.parameters.push({name:"freq_min",optional:true});
-	spec0.parameters.push({name:"freq_max",optional:true});
-	spec0.parameters.push({name:"freq_wid",optional:true});
 	spec0.parameters.push({name:"clip_size_msec",optional:true});
 	spec0.parameters.push({name:"detect_interval_msec",optional:true});
 	spec0.parameters.push({name:"detect_threshold",optional:true});
@@ -53,7 +50,8 @@ exports.run=function(opts,callback) {
 	if (!opts.detect_interval_msec) opts.detect_interval_msec=1;
 	if (!opts.detect_threshold) opts.detect_threshold=3.5;
 	if (!opts.detect_sign) opts.detect_sign=0;
-	if (!opts.whiten) opts.whiten=0;
+	if (!opts.whiten) opts.whiten='false';
+	if (!opts.fit_stage) opts.fit_stage='false';
 	if (!opts.subsample_factor) opts.subsample_factor=1;
 
 	if (opts.clips) {
@@ -106,7 +104,6 @@ exports.run=function(opts,callback) {
 	});
 	///////////////////////////////////////////////////////////////
 	steps.push(function(cb) {
-		//bandpass filter each segment
 		//detect events for each segment (if not provided in input)
 		//compute the amplitudes
 		STEP_pre_sort_process_segments(function() {
@@ -135,7 +132,7 @@ exports.run=function(opts,callback) {
 				cb();
 			});
 		});
-		if (opts.whiten) {
+		if (opts.whiten=='true') {
 			///////////////////////////////////////////////////////////////
 			steps.push(function(cb) {
 				//compute a single whitening matrix for entire dataset
@@ -206,7 +203,7 @@ exports.run=function(opts,callback) {
 	////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////
 	//Run all steps
-	common.foreach(steps,{},function(ii,step,cb) {
+	common.foreach(steps,{label:'<processing steps>'},function(ii,step,cb) {
 		console.log ('');
 		console.log ('--------------------------- SORTING STEP '+(ii+1)+' of '+steps.length +' -----------');
 		var timer=new Date();
@@ -229,7 +226,6 @@ exports.run=function(opts,callback) {
 		function add_process1_step(iseg) {
 			var segment=segments[iseg];
 			segment.timeseries0=mktmp('timeseries_segment_'+iseg+'.mda'); //will be removed after event times obtained
-			segment.filt0=mktmp('filt_segment_'+iseg+'.mda');
 			segment.event_times0=mktmp('event_times0_segment_'+iseg+'.mda');
 			segment.event_times1=mktmp('event_times1_segment_'+iseg+'.mda'); //after applying timestamp offset
 			segment.amplitudes0=mktmp('amplitudes_segment_'+iseg+'.mda'); //the amplitudes corresponding to the event times
@@ -238,30 +234,19 @@ exports.run=function(opts,callback) {
 				if (!opts.clips) {
 					intersegment_steps.push(function(cb2) {
 						console.log ('>>>>>>>>>>>> pre-sort: Extracting timeseries for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-						extract_segment_timeseries(opts.raw,segment.timeseries0,segment.t1,segment.t2,function() {
+						extract_segment_timeseries(opts.timeseries,segment.timeseries0,segment.t1,segment.t2,function() {
 							cb2();
 						});
 					});
-					if ((opts.freq_min)||(opts.freq_max)) {
-						intersegment_steps.push(function(cb2) {
-							console.log ('>>>>>>>>>>>> pre-sort: Bandpass filter for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-							bandpass_filter(segment.timeseries0,segment.filt0,function() {
-								cb2();
-							});
-						});
-					}
-					else {
-						segment.filt0=segment.timeseries0;
-					}
 					intersegment_steps.push(function(cb2) {
 						console.log ('>>>>>>>>>>>> pre-sort: Detect events for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-						detect_events(segment.filt0,segment.event_times0,function() {
+						detect_events(segment.timeseries0,segment.event_times0,function() {
 							cb2();
 						});
 					});
 					intersegment_steps.push(function(cb2) {
 						console.log ('>>>>>>>>>>>> pre-sort: Compute amplitudes for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-						compute_amplitudes(segment.filt0,segment.event_times0,opts.central_channel||0,segment.amplitudes0,function() {
+						compute_amplitudes(segment.timeseries0,segment.event_times0,opts.central_channel||0,segment.amplitudes0,function() {
 							cb2();
 						});
 					});
@@ -272,27 +257,27 @@ exports.run=function(opts,callback) {
 						});
 					});
 					intersegment_steps.push(function(cb2) {
-						console.log ('>>>>>>>>>>>> pre-sort: Removing timeseries and filtered data to preserve disk space for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-						common.remove_temporary_files([segment.timeseries0,segment.filt0],function() {
+						console.log ('>>>>>>>>>>>> pre-sort: Removing timeseries data to preserve disk space for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						common.remove_temporary_files([segment.timeseries0],function() {
 							segment.timeseries0='';
-							segment.filt0='';
 							cb2();
 						});
 					});
 				}
 				//Run all intersegment steps
-				common.foreach(intersegment_steps,{num_parallel:1},function(ii,step0,cb0) {
-					var timer=new Date();
+				common.foreach(intersegment_steps,{num_parallel:1,label:'<pre-sort intersegment steps>'},function(ii,step0,cb0) {
 					step0(function() {
 						cb0();
 					});
 				},function() {
+					console.log('CALLING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
 					cb();
 				});
 			});
 		}
 		//Run all process1 steps
-		common.foreach(process1_steps,{num_parallel:opts.num_threads},function(ii,step,cb) {
+		console.log('################################################ '+process1_steps.length);
+		common.foreach(process1_steps,{num_parallel:opts.num_threads,label:'<process1 steps>'},function(ii,step,cb) {
 			console.log ('');
 			console.log ('--------------------------- PRE-SORT PROCESS SEGMENT '+(ii+1)+' of '+process1_steps.length +' -----------');
 			var timer=new Date();
@@ -315,29 +300,19 @@ exports.run=function(opts,callback) {
 		}
 		function add_process2_step(iseg) {
 			var segment=segments[iseg];
-			segment.firings0=mktmp('firings_segment_'+iseg+'.mda');
-			segment.firings_fit0=mktmp('firings_fit0_segment_'+iseg+'.mda');
-			segment.firings_fit1=mktmp('firings_fit1_segment_'+iseg+'.mda'); //after timestamp offset applied
 			var intersegment_steps=[];
 			process2_steps.push(function(cb) {
-				if (opts.fit_stage) {
+				if (opts.fit_stage=='true') {
+					segment.timeseries0=mktmp('timeseries_segment_'+iseg+'.mda'); //will be removed after fit
+					segment.firings0=mktmp('firings_segment_'+iseg+'.mda');
+					segment.firings_fit0=mktmp('firings_fit0_segment_'+iseg+'.mda');
+					segment.firings_fit1=mktmp('firings_fit1_segment_'+iseg+'.mda'); //after timestamp offset applied
 					intersegment_steps.push(function(cb2) {
-						console.log ('>>>>>>>>>>>> post-sort: Extracting timeseries for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-						extract_segment_timeseries(opts.raw,segment.timeseries0,segment.t1,segment.t2,function() {
+						console.log ('>>>>>>>>>>>> post-sort----: Extracting timeseries for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						extract_segment_timeseries(opts.timeseries,segment.timeseries0,segment.t1,segment.t2,function() {
 							cb2();
 						});
 					});
-					if ((opts.freq_min)||(opts.freq_max)) {
-						intersegment_steps.push(function(cb2) {
-							console.log ('>>>>>>>>>>>> post-sort: Bandpass filter for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-							bandpass_filter(segment.timeseries0,segment.filt0,function() {
-								cb2();
-							});
-						});
-					}
-					else {
-						segment.filt0=segment.timeseries0;
-					}
 					intersegment_steps.push(function(cb2) {
 						console.log ('>>>>>>>>>>>> post-sort: Extracting firings for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
 						extract_segment_firings(firings,segment.firings0,segment.t1,segment.t2,function() {
@@ -346,7 +321,7 @@ exports.run=function(opts,callback) {
 					});
 					intersegment_steps.push(function(cb2) {
 						console.log ('>>>>>>>>>>>> post-sort: Fit stage for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-						fit_stage(segment.filt0,segment.firings0,segment.firings_fit0,function() {
+						fit_stage(segment.timeseries0,segment.firings0,segment.firings_fit0,function() {
 							cb2();
 						});
 					});
@@ -357,10 +332,9 @@ exports.run=function(opts,callback) {
 						});
 					});
 					intersegment_steps.push(function(cb2) {
-						console.log ('>>>>>>>>>>>> post-sort: Removing timeseries and filtered data to preserve disk space for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-						common.remove_temporary_files([segment.timeseries0,segment.filt0],function() {
+						console.log ('>>>>>>>>>>>> post-sort: Removing timeseries data to preserve disk space for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						common.remove_temporary_files([segment.timeseries0],function() {
 							segment.timeseries0='';
-							segment.filt0='';
 							cb2();
 						});
 					});
@@ -370,8 +344,7 @@ exports.run=function(opts,callback) {
 				}
 				
 				//Run all intersegment steps
-				common.foreach(intersegment_steps,{num_parallel:1},function(ii,step0,cb0) {
-					var timer=new Date();
+				common.foreach(intersegment_steps,{num_parallel:1,label:'<post-sort intersegment steps>'},function(ii,step0,cb0) {
 					step0(function() {
 						cb0();
 					});
@@ -381,7 +354,7 @@ exports.run=function(opts,callback) {
 			});
 		}
 		//Run all process2 steps
-		common.foreach(process2_steps,{num_parallel:opts.num_threads},function(ii,step,cb) {
+		common.foreach(process2_steps,{num_parallel:opts.num_threads,label:'<process2 steps>'},function(ii,step,cb) {
 			console.log ('');
 			console.log ('--------------------------- POST-SORT PROCESS SEGMENT '+(ii+1)+' of '+process2_steps.length +' -----------');
 			var timer=new Date();
@@ -446,13 +419,8 @@ exports.run=function(opts,callback) {
 	function STEP_extract_clips(extract_clips_callback) {
 		console.log ('-------------------- EXTRACTING CLIPS -------------------');
 		var clip_size=Math.ceil(opts.clip_size_msec/1000*opts.samplerate);
-		var filt_list=[];
-		for (var ii in segments) {
-			var segment=segments[ii];
-			filt_list.push(segment.filt0);
-		}
 		common.mp_exec_process('mountainsort.extract_clips',
-			{timeseries:filt_list,event_times:event_times},
+			{timeseries:opts.timeseries,event_times:event_times},
 			{clips_out:clips_unwhitened},
 			{clip_size:clip_size},
 			extract_clips_callback
@@ -461,13 +429,8 @@ exports.run=function(opts,callback) {
 
 	function STEP_compute_whitening_matrix(compute_whitening_matrix_callback) {
 		console.log ('-------------------- COMPUTING WHITENING MATRIX -------------------');
-		var filt_list=[];
-		for (var ii in segments) {
-			var segment=segments[ii];
-			filt_list.push(segment.filt0);
-		}
 		common.mp_exec_process('mountainsort.compute_whitening_matrix',
-			{timeseries_list:filt_list},
+			{timeseries_list:opts.timeseries},
 			{whitening_matrix_out:whitening_matrix},
 			{_request_num_threads:opts.num_threads},
 			compute_whitening_matrix_callback
@@ -545,9 +508,9 @@ exports.run=function(opts,callback) {
 		////////////////////////////////////////////////////////
 		//cluster metrics
 		if (opts.cluster_metrics_out) {
-			console.log ('>>>>> Cluster metrics -> '+opts.cluster_metrics_out);
+			console.log ('>>>>> Cluster metrics');
 			common.mp_exec_process('mountainsort.cluster_metrics',
-					{timeseries:opts.raw,firings:firings_fit},
+					{timeseries:opts.timeseries,firings:firings_fit},
 					{cluster_metrics_out:cluster_metrics},
 					{samplerate:opts.samplerate,_request_num_threads:opts.num_threads},
 					function() {
@@ -564,22 +527,6 @@ exports.run=function(opts,callback) {
 
 	function STEP_cleanup(callback) {
 		common.remove_temporary_files(tmpfiles,callback);
-	}
-
-	function bandpass_filter(timeseries,timeseries_out,callback) {
-		common.mp_exec_process('mountainsort.bandpass_filter',
-			{timeseries:timeseries},
-			{timeseries_out:timeseries_out},
-			{
-				samplerate:opts.samplerate,
-				freq_min:opts.freq_min||0,
-				freq_max:opts.freq_max||0,
-				freq_wid:opts.freq_wid||0,
-				//testcode:'noread,nowrite',
-				_request_num_threads:num_intersegment_threads
-			},
-			callback
-		);
 	}
 
 	function detect_events(timeseries,event_times_out,callback) {
@@ -647,16 +594,16 @@ exports.run=function(opts,callback) {
 	}
 
 	function STEP_read_info_from_input_files(callback) {
-		console.log('Reading info from input files...');
-		if (typeof(opts.raw)!='object') {
-			common.read_mda_header(opts.raw,function (header) { // Read the .mda header for the timeseries
+		console.log ('Reading info from input files...');
+		if (typeof(opts.timeseries)!='object') {
+			common.read_mda_header(opts.timeseries,function (header) { // Read the .mda header for the timeseries
 				info.M=header.dims[0];
 				info.N=header.dims[1];
 				do_create_segments();
 			});
 		}
 		else {
-			get_header_for_concatenation_of_timeseries(opts.raw,function(header) {
+			get_header_for_concatenation_of_timeseries(opts.timeseries,function(header) {
 				info.M=header.dims[0];
 				info.N=header.dims[1];
 				do_create_segments();
@@ -721,7 +668,6 @@ function get_header_for_concatenation_of_timeseries(ts_list,callback) {
 		process.exit(-1);
 	}
 	common.read_mda_header(ts_list[0],function(header0) {
-		console.log('########### '+JSON.stringify(header0));
 		header0.dims[1]=0;
 		common.foreach(ts_list,{},function(ii,ts,cb) {
 			common.read_mda_header(ts,function(header1) {

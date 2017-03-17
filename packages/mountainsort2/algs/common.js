@@ -18,7 +18,7 @@ common.remove_temporary_files=function(paths,callback) {
 };
 
 common.remove_temporary_file=function(path,callback) {
-	console.log('removing: '+path);
+	console.log ('removing: '+path);
 	fs.unlink(path,callback);
 };
 
@@ -26,12 +26,16 @@ common.foreach=function(array,opts,step_function,end_function) {
 	var num_parallel=opts.num_parallel||1;
 	var num_running=0;
 	var num_finished=0;
+	var already_called_end=false;
 	var ii=0;
 	next_step();
 	function next_step() {
 		if (num_finished>=array.length) {
 			setTimeout(function() { //important to do it this way so we don't accumulate a call stack
-				end_function();
+				if (!already_called_end) { 
+					already_called_end=true;
+					end_function();
+				}
 			},0);
 			return;
 		}
@@ -193,7 +197,7 @@ common.make_system_call=function(cmd,args,opts,callback) {
 				return;
 			}
 			else {
-				console.log('***************\n'+all_stderr+'****************\n');
+				console.log ('***************\n'+all_stderr+'****************\n');
 				console.error('Error in system call: '+cmd+' '+args.join(' '));
 				process.exit(-1);
 			}

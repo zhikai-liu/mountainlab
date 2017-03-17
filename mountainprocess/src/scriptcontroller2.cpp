@@ -186,7 +186,7 @@ QString ScriptController2::addProcess(QString processor_name, QString inputs_jso
         /// TODO: check to see if outputs are consistent with PP_outputs
     }
 
-    if (outputs_json.isEmpty()) {
+    if ((outputs_json.isEmpty())||(outputs_json=="\"\"")) {
         // any outputs that have not been specified will be marked as an empty string
         // later we will handle these cases by creating temporary files, and then returning this info from the function call
         QStringList output_pnames = PP_outputs.keys();
