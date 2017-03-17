@@ -206,6 +206,15 @@ void delete_tempdir(QString tempdir)
     QDir(QFileInfo(tempdir).path()).rmdir(QFileInfo(tempdir).fileName());
 }
 
+bool do_mkdir(QString path,int num_tries=1) {
+    if (!QDir(QFileInfo(path).path()).mkdir(QFileInfo(path).fileName())) {
+        if (num_tries>1) {
+            do_mkdir(path,num_tries-1);
+        }
+    }
+    return true;
+}
+
 QString ProcessManager::startProcess(const QString& processor_name, const QVariantMap& parameters_in, const RequestProcessResources& RPR, bool exec_mode, bool preserve_tempdir)
 {
     QVariantMap parameters = d->resolve_file_names_in_parameters(processor_name, parameters_in);
@@ -224,9 +233,9 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     QString id = MLUtil::makeRandomId();
 
     QString tempdir = CacheManager::globalInstance()->makeLocalFile("tempdir_" + id, CacheManager::ShortTerm);
-    if (!QDir(QFileInfo(tempdir).path()).mkdir(QFileInfo(tempdir).fileName())) {
+    if (!do_mkdir(tempdir,3)) {
         qWarning() << "Error creating temporary directory for process: " + tempdir;
-        return "";
+        QCoreApplication::exit(-1);
     }
 
     QString exe_command = P.exe_command;

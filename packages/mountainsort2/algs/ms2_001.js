@@ -99,20 +99,21 @@ exports.run=function(opts,callback) {
 	///////////////////////////////////////////////////////////////
 	steps.push(function(cb) {
 		//get the info about the size of the concatenated dataset
+		//and set up the segments
 		STEP_read_info_from_input_files(function() {
 			cb();
 		});		
 	});
-	if (!opts.clips) {
-		///////////////////////////////////////////////////////////////
-		steps.push(function(cb) {
-			//bandpass filter each segment
-			//detect events for each segment
-			//compute the amplitudes
-			STEP_pre_sort_process_segments(function() {
-				cb();
-			});
+	///////////////////////////////////////////////////////////////
+	steps.push(function(cb) {
+		//bandpass filter each segment
+		//detect events for each segment (if not provided in input)
+		//compute the amplitudes
+		STEP_pre_sort_process_segments(function() {
+			cb();
 		});
+	});
+	if (!opts.clips) {
 		///////////////////////////////////////////////////////////////
 		steps.push(function(cb) {
 			//combine all the event times
@@ -222,14 +223,6 @@ exports.run=function(opts,callback) {
 
 	function STEP_pre_sort_process_segments(step_callback) {
 		var process1_steps=[];
-		var segment_duration=Math.ceil(opts.segment_duration_sec*opts.samplerate);
-		segments=create_segments(info.N,segment_duration,segment_duration);
-		if (segments.length==0) {
-			console.log ('Error: no segments created (N='+info.N+')');
-			process.exit(-1);
-		}
-		num_intersegment_threads=Math.floor(opts.num_threads/segments.length);
-		if (num_intersegment_threads<1) num_intersegment_threads=1;
 		for (var iseg=0; iseg<segments.length; iseg++) {
 			add_process1_step(iseg);
 		}
@@ -242,44 +235,48 @@ exports.run=function(opts,callback) {
 			segment.amplitudes0=mktmp('amplitudes_segment_'+iseg+'.mda'); //the amplitudes corresponding to the event times
 			var intersegment_steps=[];
 			process1_steps.push(function(cb) {
-				intersegment_steps.push(function(cb2) {
-					console.log ('>>>>>>>>>>>> Extracting timeseries for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-					extract_segment_timeseries(opts.raw,segment.timeseries0,segment.t1,segment.t2,function() {
-						cb2();
-					});
-				});
-				if ((opts.freq_min)||(opts.freq_max)) {
+				if ((!opts.clips)||(opts.fit_stage)) {
 					intersegment_steps.push(function(cb2) {
-						console.log ('>>>>>>>>>>>> Bandpass filter for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-						bandpass_filter(segment.timeseries0,segment.filt0,function() {
+						console.log ('>>>>>>>>>>>> Extracting timeseries for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						extract_segment_timeseries(opts.raw,segment.timeseries0,segment.t1,segment.t2,function() {
 							cb2();
 						});
 					});
+					if ((opts.freq_min)||(opts.freq_max)) {
+						intersegment_steps.push(function(cb2) {
+							console.log ('>>>>>>>>>>>> Bandpass filter for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+							bandpass_filter(segment.timeseries0,segment.filt0,function() {
+								cb2();
+							});
+						});
+					}
+					else {
+						segment.filt0=segment.timeseries0;
+					}
 				}
-				else {
-					segment.filt0=segment.timeseries0;
-				}
-				intersegment_steps.push(function(cb2) {
-					console.log ('>>>>>>>>>>>> Detect events for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-					detect_events(segment.filt0,segment.event_times0,function() {
-						cb2();
-					});
-				});
-				intersegment_steps.push(function(cb2) {
-					console.log ('>>>>>>>>>>>> Compute amplitudes for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-					compute_amplitudes(segment.filt0,segment.event_times0,opts.central_channel||0,segment.amplitudes0,function() {
-						cb2();
-					});
-				});
-				intersegment_steps.push(function(cb2) {
-					console.log ('>>>>>>>>>>>> Applying timestamp offset for events in segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-					apply_timestamp_offset(segment.event_times0,segment.event_times1,segment.t1,function() {
-						//save disk space by removing filt0 and timeseries0!
-						common.remove_temporary_files([segment.timeseries0],function() {
+				if (!opts.clips) {
+					intersegment_steps.push(function(cb2) {
+						console.log ('>>>>>>>>>>>> Detect events for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						detect_events(segment.filt0,segment.event_times0,function() {
 							cb2();
 						});
 					});
-				});
+					intersegment_steps.push(function(cb2) {
+						console.log ('>>>>>>>>>>>> Compute amplitudes for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						compute_amplitudes(segment.filt0,segment.event_times0,opts.central_channel||0,segment.amplitudes0,function() {
+							cb2();
+						});
+					});
+					intersegment_steps.push(function(cb2) {
+						console.log ('>>>>>>>>>>>> Applying timestamp offset for events in segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						apply_timestamp_offset(segment.event_times0,segment.event_times1,segment.t1,function() {
+							//save disk space by removing filt0 and timeseries0!
+							common.remove_temporary_files([segment.timeseries0],function() {
+								cb2();
+							});
+						});
+					});
+				}
 				//Run all intersegment steps
 				common.foreach(intersegment_steps,{num_parallel:1},function(ii,step0,cb0) {
 					var timer=new Date();
@@ -626,15 +623,26 @@ exports.run=function(opts,callback) {
 			common.read_mda_header(opts.raw,function (header) { // Read the .mda header for the timeseries
 				info.M=header.dims[0];
 				info.N=header.dims[1];
-				callback();
+				do_create_segments();
 			});
 		}
 		else {
 			get_header_for_concatenation_of_timeseries(opts.raw,function(header) {
 				info.M=header.dims[0];
 				info.N=header.dims[1];
-				callback();
+				do_create_segments();
 			});
+		}
+		function do_create_segments() {
+			var segment_duration=Math.ceil(opts.segment_duration_sec*opts.samplerate);
+			segments=create_segments(info.N,segment_duration,segment_duration);
+			if (segments.length==0) {
+				console.log ('Error: no segments created (N='+info.N+')');
+				process.exit(-1);
+			}
+			num_intersegment_threads=Math.floor(opts.num_threads/segments.length);
+			if (num_intersegment_threads<1) num_intersegment_threads=1;
+			callback();
 		}
 	}
 

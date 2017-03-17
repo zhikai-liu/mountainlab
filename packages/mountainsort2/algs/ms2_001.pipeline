@@ -43,12 +43,25 @@ function main(params) {
 	var params2=clone(params);
 
 	//pre-sort processing
-	var outputs={firings_out:'',cluster_metrics_out:''}; //specify which outputs to create
-	var results=Process('mountainsort.ms2_001',
-			{raw:raw},params2,outputs
+	var outputs1={event_times_out:'',amplitudes_out:'',clips_out:'',whitening_matrix_out:''}; //specify which outputs to create
+	var results1=Process('mountainsort.ms2_001',
+			{raw:raw},params2,outputs1
 	);
-	var firings=results.firings_out;
-	var cluster_metrics=results.cluster_metrics_out;
+
+	//the actual sorting
+	var outputs2={firings_out:'',cluster_metrics_out:''};
+	var results2=Process('mountainsort.ms2_001',
+			{
+				raw:raw,
+				clips:results1.clips_out,
+				event_times:results1.event_times_out,
+				amplitudes:results1.amplitudes_out
+			},
+			params2,
+			outputs2
+	);
+	var firings=results2.firings_out;
+	var cluster_metrics=results2.cluster_metrics_out;
 
 	// Write the output
 	write_file(firings,params.outpath+'/firings.mda');	
