@@ -14,7 +14,7 @@ bool p_extract_clips(QStringList timeseries_list, QString event_times, QString c
     DiskReadMda ET(event_times);
 
     int M = X.N1();
-    //int N = X.N2();
+    //bigint N = X.N2();
     int T = params["clip_size"].toInt();
     int L = ET.totalSize();
 
@@ -27,8 +27,8 @@ bool p_extract_clips(QStringList timeseries_list, QString event_times, QString c
     printf("Extracting clips (%d,%d,%d)...\n", M, T, L);
     Mda32 clips(M, T, L);
     for (int i = 0; i < L; i++) {
-        int t1 = ET.value(i) - Tmid;
-        //int t2 = t1 + T - 1;
+        bigint t1 = ET.value(i) - Tmid;
+        //bigint t2 = t1 + T - 1;
         Mda32 tmp;
         X.readChunk(tmp, 0, t1, M, T);
         clips.setChunk(tmp, 0, 0, i);

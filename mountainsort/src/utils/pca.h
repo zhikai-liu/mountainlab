@@ -11,12 +11,12 @@
 #include "mda32.h"
 
 // see info below
-void pca(Mda& components, Mda& features, Mda& sigma, const Mda& X, int num_features, bool subtract_mean);
-void pca(Mda32& components, Mda32& features, Mda32& sigma, const Mda32& X, int num_features, bool subtract_mean);
+void pca(Mda& components, Mda& features, Mda& sigma, const Mda& X, bigint num_features, bool subtract_mean);
+void pca(Mda32& components, Mda32& features, Mda32& sigma, const Mda32& X, bigint num_features, bool subtract_mean);
 
 // same as pca, except input it X*X', and features are not computed (because how could they be?)
-void pca_from_XXt(Mda& components, Mda& sigma, const Mda& XXt, int num_features);
-void pca_from_XXt(Mda32& components, Mda32& sigma, const Mda32& XXt, int num_features);
+void pca_from_XXt(Mda& components, Mda& sigma, const Mda& XXt, bigint num_features);
+void pca_from_XXt(Mda32& components, Mda32& sigma, const Mda32& XXt, bigint num_features);
 
 // get the whitening matrix as described below
 void whitening_matrix_from_XXt(Mda& W, const Mda& XXt);

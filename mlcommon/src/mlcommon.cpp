@@ -412,24 +412,24 @@ double MLCompute::correlation(const QVector<double>& X1, const QVector<double>& 
         return 0;
     QVector<double> Y1(N);
     QVector<double> Y2(N);
-    for (int i = 0; i < N; i++) {
+    for (bigint i = 0; i < N; i++) {
         Y1[i] = (X1[i] - mean1) / stdev1;
         Y2[i] = (X2[i] - mean2) / stdev2;
     }
     return dotProduct(Y1, Y2);
 }
 
-double MLCompute::norm(int N, const double* X)
+double MLCompute::norm(bigint N, const double* X)
 {
     return sqrt(dotProduct(N, X, X));
 }
 
-double MLCompute::dotProduct(int N, const double* X1, const double* X2)
+double MLCompute::dotProduct(bigint N, const double* X1, const double* X2)
 {
     return std::inner_product(X1, X1 + N, X2, 0.0);
 }
 
-double MLCompute::dotProduct(int N, const float* X1, const float* X2)
+double MLCompute::dotProduct(bigint N, const float* X1, const float* X2)
 {
 
     return std::inner_product(X1, X1 + N, X2, 0.0);
@@ -442,24 +442,24 @@ QString MLUtil::computeSha1SumOfString(const QString& str)
     return QString(hash.result().toHex());
 }
 
-double MLCompute::sum(int N, const double* X)
+double MLCompute::sum(bigint N, const double* X)
 {
     return std::accumulate(X, X + N, 0.0);
 }
 
-double MLCompute::mean(int N, const double* X)
+double MLCompute::mean(bigint N, const double* X)
 {
     if (!N)
         return 0;
     return sum(N, X) / N;
 }
 
-double MLCompute::max(int N, const double* X)
+double MLCompute::max(bigint N, const double* X)
 {
     return N ? *std::max_element(X, X + N) : 0;
 }
 
-double MLCompute::min(int N, const double* X)
+double MLCompute::min(bigint N, const double* X)
 {
     return N ? *std::min_element(X, X + N) : 0;
 }
@@ -599,29 +599,29 @@ bool MLUtil::writeByteArray(const QString& path, const QByteArray& X)
     return true;
 }
 
-double MLCompute::min(int N, const float* X)
+double MLCompute::min(bigint N, const float* X)
 {
     return N ? *std::min_element(X, X + N) : 0;
 }
 
-double MLCompute::max(int N, const float* X)
+double MLCompute::max(bigint N, const float* X)
 {
     return N ? *std::max_element(X, X + N) : 0;
 }
 
-double MLCompute::sum(int N, const float* X)
+double MLCompute::sum(bigint N, const float* X)
 {
     return std::accumulate(X, X + N, 0.0);
 }
 
-double MLCompute::mean(int N, const float* X)
+double MLCompute::mean(bigint N, const float* X)
 {
     if (!N)
         return 0;
     return sum(N, X) / N;
 }
 
-double MLCompute::norm(int N, const float* X)
+double MLCompute::norm(bigint N, const float* X)
 {
     return sqrt(dotProduct(N, X, X));
 }

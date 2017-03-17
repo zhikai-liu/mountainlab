@@ -68,18 +68,18 @@ double dotProduct(const QVector<float>& X1, const QVector<float>& X2);
 
 template <typename T>
 T max(const QVector<T>& X);
-double min(int N, const double* X);
-double max(int N, const double* X);
-double sum(int N, const double* X);
-double mean(int N, const double* X);
-double dotProduct(int N, const double* X1, const double* X2);
-double norm(int N, const double* X);
-double min(int N, const float* X);
-double max(int N, const float* X);
-double sum(int N, const float* X);
-double mean(int N, const float* X);
-double dotProduct(int N, const float* X1, const float* X2);
-double norm(int N, const float* X);
+double min(bigint N, const double* X);
+double max(bigint N, const double* X);
+double sum(bigint N, const double* X);
+double mean(bigint N, const double* X);
+double dotProduct(bigint N, const double* X1, const double* X2);
+double norm(bigint N, const double* X);
+double min(bigint N, const float* X);
+double max(bigint N, const float* X);
+double sum(bigint N, const float* X);
+double mean(bigint N, const float* X);
+double dotProduct(bigint N, const float* X1, const float* X2);
+double norm(bigint N, const float* X);
 }
 
 class CLParams {
