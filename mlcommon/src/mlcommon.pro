@@ -24,7 +24,8 @@ HEADERS += mlcommon.h sumit.h \
     ../include/objectregistry.h \
     ../include/mlprivate.h \
     ../include/icounter.h \
-    ../include/qprocessmanager.h
+    ../include/qprocessmanager.h \
+    ../include/signalhandler.h
 
 SOURCES += \
     mlcommon.cpp sumit.cpp \
@@ -34,7 +35,8 @@ SOURCES += \
     mda/mdareader.cpp \
     componentmanager/icomponent.cpp \
     icounter.cpp \
-    qprocessmanager.cpp
+    qprocessmanager.cpp \
+    signalhandler.cpp
 
 INCLUDEPATH += ../include/mda
 VPATH += ../include/mda
