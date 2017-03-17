@@ -86,7 +86,7 @@ bool TextFile::write(const QString& fname, const QString& txt, QTextCodec* codec
     QString txt_test = TextFile::read(tmp_fname, codec);
     if (txt_test != txt) {
         QFile::remove(tmp_fname);
-        qWarning() << "Problem in TextFile::write. The contents of the file do not match what was expected." << fname;
+        qWarning() << "Problem in TextFile::write. The contents of the file do not match what was expected." << tmp_fname << txt_test.count() << txt.count();
         return false;
     }
 
