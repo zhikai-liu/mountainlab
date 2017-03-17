@@ -7,11 +7,10 @@ function main(params) {
 		detect_threshold:3.5, //stdevs away from noise
 		detect_sign:0, //-1,0,1
 		whiten:1, //boolean
-		consolidate_clusters:1, //boolean
+		//consolidate_clusters:1, //boolean
 		fit_stage:1, //boolean
-		segment_duration_sec:3600, //duration of a single time segment
-		num_intrasegment_threads:1, //number of time segments to process in parallel
-		num_intersegment_threads:0, // 0 means do the default, based on choice for num_intrasegment_threads
+		segment_duration_sec:3600, //duration of a single time segment for processing
+		num_threads:0, //number of time segments to process in parallel
 		subsample_factor:1
 	});
 
@@ -27,7 +26,7 @@ function main(params) {
 		raw=[];
 		for (var i in sessions) {
 			var session_path=sessions[i].path;
-			var fname=session_path+'/raw.mda.prv'
+			var fname=session_path+'/raw.mda.prv';
 			if (file_exists(fname)) {
 				raw.push(fname);
 				console.log('mkdir: '+sessions[i].relpath);
@@ -35,32 +34,21 @@ function main(params) {
 			}
 		}
 	}
-	if (raw.length==0) {
+	if (raw.length===0) {
 		console.err('No raw files or sessions found.');
 		return;
 	}
 	console.log(JSON.stringify(raw));
 
 	var params2=clone(params);
-	var outputs={clips_out:'',event_times_out:'',amplitudes_out:''}; //generate temporary output files for these
-	if (params.generate_filt) outputs.filt_out='';
-	if (params.generate_pre) outputs.pre_out='';
-	var results=Process('mountainsort.ms2_detection',
-			{raw:raw},
-			params2,
-			outputs
-	);
-	var whitened_clips=results.clips_out;
-	var event_times=results.event_times_out;
-	var amplitudes=results.amplitudes_out;
 
-	var results=Process('mountainsort.ms2_sorting',
-		{raw:raw,clips:whitened_clips,event_times:event_times,amplitudes:amplitudes},
-		params2,
-		{firings_out:'',cluster_metrics_out};
+	//pre-sort processing
+	var outputs={firings_out:'',cluster_metrics_out:''}; //specify which outputs to create
+	var results=Process('mountainsort.ms2_001',
+			{raw:raw},params2,outputs
 	);
 	var firings=results.firings_out;
-	var cluster_metrics=results.cluster_metrics;
+	var cluster_metrics=results.cluster_metrics_out;
 
 	// Write the output
 	write_file(firings,params.outpath+'/firings.mda');	
@@ -69,10 +57,11 @@ function main(params) {
 		write_prv(raw,params.outpath+'/raw.mda.prv');
 	}
 	else {
-		remove_file(params.outpath+'/raw.mda.prv');
+		remove_file(params.outpath+'/raw.mda.prv'); //to be safe
 	}
 
 	if (sessions.length>0) {
+		//split the firings
 		var firings_out_list=[];
 		for (var i in sessions) {
 			write_prv(sessions[i].path+'/raw.mda.prv',params.outpath+'/'+sessions[i].relpath+'/raw.mda.prv');

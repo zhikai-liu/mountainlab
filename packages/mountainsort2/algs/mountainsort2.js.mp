@@ -8,7 +8,7 @@ register_processor(require('./basic_sort.js'));
 register_processor(require('./multichannel_sort.js'));
 register_processor(require('./drift_sort.js'));
 register_processor(require('./subsample_sort.js'));
-register_processor(require('./ms2_detection.js'));
+register_processor(require('./ms2_001.js'));
 
 
 function register_processor(P) {
