@@ -100,7 +100,7 @@ bool TextFile::write_single_try(const QString& fname, const QString& txt, QTextC
 }
 
 bool TextFile::write(const QString& fname, const QString& txt, QTextCodec* codec) {
-    int num_tries=5;
+    int num_tries=2;
     for (int i=0; i<num_tries; i++) {
         if (TextFile::write_single_try(fname,txt,codec)) {
             return true;

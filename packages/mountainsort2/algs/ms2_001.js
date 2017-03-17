@@ -235,16 +235,16 @@ exports.run=function(opts,callback) {
 			segment.amplitudes0=mktmp('amplitudes_segment_'+iseg+'.mda'); //the amplitudes corresponding to the event times
 			var intersegment_steps=[];
 			process1_steps.push(function(cb) {
-				if ((!opts.clips)||(opts.fit_stage)) {
+				if (!opts.clips) {
 					intersegment_steps.push(function(cb2) {
-						console.log ('>>>>>>>>>>>> Extracting timeseries for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						console.log ('>>>>>>>>>>>> pre-sort: Extracting timeseries for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
 						extract_segment_timeseries(opts.raw,segment.timeseries0,segment.t1,segment.t2,function() {
 							cb2();
 						});
 					});
 					if ((opts.freq_min)||(opts.freq_max)) {
 						intersegment_steps.push(function(cb2) {
-							console.log ('>>>>>>>>>>>> Bandpass filter for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+							console.log ('>>>>>>>>>>>> pre-sort: Bandpass filter for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
 							bandpass_filter(segment.timeseries0,segment.filt0,function() {
 								cb2();
 							});
@@ -253,27 +253,30 @@ exports.run=function(opts,callback) {
 					else {
 						segment.filt0=segment.timeseries0;
 					}
-				}
-				if (!opts.clips) {
 					intersegment_steps.push(function(cb2) {
-						console.log ('>>>>>>>>>>>> Detect events for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						console.log ('>>>>>>>>>>>> pre-sort: Detect events for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
 						detect_events(segment.filt0,segment.event_times0,function() {
 							cb2();
 						});
 					});
 					intersegment_steps.push(function(cb2) {
-						console.log ('>>>>>>>>>>>> Compute amplitudes for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						console.log ('>>>>>>>>>>>> pre-sort: Compute amplitudes for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
 						compute_amplitudes(segment.filt0,segment.event_times0,opts.central_channel||0,segment.amplitudes0,function() {
 							cb2();
 						});
 					});
 					intersegment_steps.push(function(cb2) {
-						console.log ('>>>>>>>>>>>> Applying timestamp offset for events in segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						console.log ('>>>>>>>>>>>> pre-sort: Applying timestamp offset for events in segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
 						apply_timestamp_offset(segment.event_times0,segment.event_times1,segment.t1,function() {
-							//save disk space by removing filt0 and timeseries0!
-							common.remove_temporary_files([segment.timeseries0],function() {
-								cb2();
-							});
+							cb2();
+						});
+					});
+					intersegment_steps.push(function(cb2) {
+						console.log ('>>>>>>>>>>>> pre-sort: Removing timeseries and filtered data to preserve disk space for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						common.remove_temporary_files([segment.timeseries0,segment.filt0],function() {
+							segment.timeseries0='';
+							segment.filt0='';
+							cb2();
 						});
 					});
 				}
@@ -317,29 +320,55 @@ exports.run=function(opts,callback) {
 			segment.firings_fit1=mktmp('firings_fit1_segment_'+iseg+'.mda'); //after timestamp offset applied
 			var intersegment_steps=[];
 			process2_steps.push(function(cb) {
-				intersegment_steps.push(function(cb2) {
-					console.log ('>>>>>>>>>>>> Extracting firings for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-					extract_segment_firings(firings,segment.firings0,segment.t1,segment.t2,function() {
-						cb2();
-					});
-				});
 				if (opts.fit_stage) {
 					intersegment_steps.push(function(cb2) {
-						console.log ('>>>>>>>>>>>> Fit stage for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						console.log ('>>>>>>>>>>>> post-sort: Extracting timeseries for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						extract_segment_timeseries(opts.raw,segment.timeseries0,segment.t1,segment.t2,function() {
+							cb2();
+						});
+					});
+					if ((opts.freq_min)||(opts.freq_max)) {
+						intersegment_steps.push(function(cb2) {
+							console.log ('>>>>>>>>>>>> post-sort: Bandpass filter for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+							bandpass_filter(segment.timeseries0,segment.filt0,function() {
+								cb2();
+							});
+						});
+					}
+					else {
+						segment.filt0=segment.timeseries0;
+					}
+					intersegment_steps.push(function(cb2) {
+						console.log ('>>>>>>>>>>>> post-sort: Extracting firings for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						extract_segment_firings(firings,segment.firings0,segment.t1,segment.t2,function() {
+							cb2();
+						});
+					});
+					intersegment_steps.push(function(cb2) {
+						console.log ('>>>>>>>>>>>> post-sort: Fit stage for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
 						fit_stage(segment.filt0,segment.firings0,segment.firings_fit0,function() {
+							cb2();
+						});
+					});
+					intersegment_steps.push(function(cb2) {
+						console.log ('>>>>>>>>>>>> post-sort: Applying timestamp offsets for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						apply_timestamp_offset(segment.firings_fit0,segment.firings_fit1,segment.t1,function() {
+							cb2();
+						});
+					});
+					intersegment_steps.push(function(cb2) {
+						console.log ('>>>>>>>>>>>> post-sort: Removing timeseries and filtered data to preserve disk space for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+						common.remove_temporary_files([segment.timeseries0,segment.filt0],function() {
+							segment.timeseries0='';
+							segment.filt0='';
 							cb2();
 						});
 					});
 				}
 				else {
-					segment.firings_fit0=segment.firings0;
+					segment.firings_fit1=segment.firings0;
 				}
-				intersegment_steps.push(function(cb2) {
-					console.log ('>>>>>>>>>>>> Applying timestamp offsets for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-					apply_timestamp_offset(segment.firings_fit0,segment.firings_fit1,segment.t1,function() {
-						cb2();
-					});
-				});
+				
 				//Run all intersegment steps
 				common.foreach(intersegment_steps,{num_parallel:1},function(ii,step0,cb0) {
 					var timer=new Date();
