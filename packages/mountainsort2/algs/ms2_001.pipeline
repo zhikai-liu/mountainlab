@@ -1,0 +1,180 @@
+function main(params) {
+	set_default_parameters(params,{
+		samplerate:30000, //Hz
+		freq_min:300,freq_max:6000,freq_wid:1000, //bandpass filter
+		clip_size_msec:2, //clip size for event extraction
+		detect_interval_msec:1, //min separation between two events on same channel
+		detect_threshold:3.5, //stdevs away from noise
+		detect_sign:0, //-1,0,1
+		whiten:1, //boolean
+		consolidate_clusters:1, //boolean
+		fit_stage:1, //boolean
+		segment_duration_sec:3600, //duration of a single time segment
+		num_intrasegment_threads:1, //number of time segments to process in parallel
+		num_intersegment_threads:0, // 0 means do the default, based on choice for num_intrasegment_threads
+		subsample_factor:1
+	});
+
+	var inpath=params.inpath;
+	var outpath=params.outpath;
+
+	var raw=inpath+'/raw.mda.prv';
+	var sessions=[];
+	if (!file_exists(raw)) {
+		sessions=find_all_sessions(inpath);
+		console.log('sessions:');
+		console.log(JSON.stringify(sessions));
+		raw=[];
+		for (var i in sessions) {
+			var session_path=sessions[i].path;
+			var fname=session_path+'/raw.mda.prv'
+			if (file_exists(fname)) {
+				raw.push(fname);
+				console.log('mkdir: '+sessions[i].relpath);
+				mkdir(outpath+'/'+sessions[i].relpath);
+			}
+		}
+	}
+	if (raw.length==0) {
+		console.err('No raw files or sessions found.');
+		return;
+	}
+	console.log(JSON.stringify(raw));
+
+	var params2=clone(params);
+	var outputs={clips_out:'',event_times_out:'',amplitudes_out:''}; //generate temporary output files for these
+	if (params.generate_filt) outputs.filt_out='';
+	if (params.generate_pre) outputs.pre_out='';
+	var results=Process('mountainsort.ms2_detection',
+			{raw:raw},
+			params2,
+			outputs
+	);
+	var whitened_clips=results.clips_out;
+	var event_times=results.event_times_out;
+	var amplitudes=results.amplitudes_out;
+
+	var results=Process('mountainsort.ms2_sorting',
+		{raw:raw,clips:whitened_clips,event_times:event_times,amplitudes:amplitudes},
+		params2,
+		{firings_out:'',cluster_metrics_out};
+	);
+	var firings=results.firings_out;
+	var cluster_metrics=results.cluster_metrics;
+
+	// Write the output
+	write_file(firings,params.outpath+'/firings.mda');	
+	write_file(cluster_metrics,params.outpath+'/cluster_metrics.json');
+	if (typeof(raw)=='string') {
+		write_prv(raw,params.outpath+'/raw.mda.prv');
+	}
+	else {
+		remove_file(params.outpath+'/raw.mda.prv');
+	}
+
+	if (sessions.length>0) {
+		var firings_out_list=[];
+		for (var i in sessions) {
+			write_prv(sessions[i].path+'/raw.mda.prv',params.outpath+'/'+sessions[i].relpath+'/raw.mda.prv');
+			write_file(cluster_metrics,params.outpath+'/'+sessions[i].relpath+'/cluster_metrics.json');
+			var tmp=outpath+'/'+sessions[i].relpath+'/firings.mda';
+			firings_out_list.push(tmp);
+		}
+		Process('mountainsort.split_firings',
+				{timeseries_list:raw,firings:params.outpath+'/firings.mda'},
+				{},
+				{firings_out_list:firings_out_list}
+			);
+	}
+
+	run_pipeline();
+}
+
+function find_all_sessions(inpath,relpath) {
+	if (!relpath) relpath='';
+	var ret=[];
+	var dir0=dir(inpath);
+	var folders0=dir0.folders||[];
+	for (var i in folders0) {
+		var fname=inpath+'/'+folders0[i].name+'/raw.mda.prv';
+		if (file_exists(fname)) {
+			ret.push({path:inpath+'/'+folders0[i].name,relpath:relpath+'/'+folders0[i].name});
+		}
+		else {
+			var ret0=find_all_sessions(inpath+'/'+folders0[i].name,relpath+'/'+folders0[i].name);
+			for (var j in ret0)
+				ret.push(ret0[j]);
+		}
+	}
+	return ret;
+}
+
+function run_pipeline() {
+	_MP2.runPipeline();
+}
+
+function Process(processor_name,inputs,parameters,outputs) {
+	if (!parameters) parameters={};
+	if (!outputs) outputs=''; // empty outputs means that they will be created as temporary files and the return object will contain the paths to these temporary files
+	var ret=_MP2.addProcess(
+		processor_name,
+		JSON.stringify(inputs),
+		JSON.stringify(parameters),
+		JSON.stringify(outputs)
+	);
+	return JSON.parse(ret);
+}
+
+function setNumThreads(num_threads) {
+	_MP2.setNumThreads(num_threads);
+}
+
+function write_file(input,output) {
+	_MP2.addCopyFile(input,output);
+	/*
+	_MP2.addProcess(
+		'copy',
+		JSON.stringify({input:input}),
+		JSON.stringify({}),
+		JSON.stringify({output:output})
+	);
+	*/
+}
+
+function write_prv(input,output) {
+	_MP2.addPrv(input,output);
+}
+
+function remove_file(path) {
+	_MP2.removeFile(path);
+}
+
+function clone(obj) {
+	return JSON.parse(JSON.stringify(obj));
+}
+
+var console={
+	log:function(msg) {_MP2.log(msg);},
+	err:function(msg) {_MP2.log('Pipeline error: '+msg);}
+};
+
+function set_default_parameters(params,defaults) {
+	for (var pname in defaults) {
+		if (!(pname in params)) {
+			params[pname]=defaults[pname];
+		}
+	}
+}
+
+
+function file_exists(path) {
+	return _MP2.fileExists(path);
+}
+
+function dir(path) {
+	return JSON.parse(_MP2.dir(path));
+}
+
+function mkdir(path) {
+	_MP2.mkdir(path);
+}
