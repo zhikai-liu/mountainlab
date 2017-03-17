@@ -736,10 +736,12 @@ bool ProcessManagerPrivate::all_input_and_output_files_exist(MLProcessor P, cons
     foreach (QString pname, file_pnames) {
         QStringList fnames = MLUtil::toStringList(parameters.value(pname));
         foreach (QString fname0, fnames) {
-            QString fname = resolve_file_name_p(fname0);
-            if (!fname.isEmpty()) {
-                if (!QFile::exists(fname))
-                    return false;
+            if (!fname0.isEmpty()) {
+                QString fname = resolve_file_name_p(fname0);
+                if (!fname.isEmpty()) {
+                    if (!QFile::exists(fname))
+                        return false;
+                }
             }
         }
     }
