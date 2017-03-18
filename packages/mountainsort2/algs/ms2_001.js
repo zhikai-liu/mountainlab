@@ -270,13 +270,11 @@ exports.run=function(opts,callback) {
 						cb0();
 					});
 				},function() {
-					console.log('CALLING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
 					cb();
 				});
 			});
 		}
 		//Run all process1 steps
-		console.log('################################################ '+process1_steps.length);
 		common.foreach(process1_steps,{num_parallel:opts.num_threads,label:'<process1 steps>'},function(ii,step,cb) {
 			console.log ('');
 			console.log ('--------------------------- PRE-SORT PROCESS SEGMENT '+(ii+1)+' of '+process1_steps.length +' -----------');
@@ -363,17 +361,22 @@ exports.run=function(opts,callback) {
 				cb();
 			});
 		},function() {
-			var firings_fit_list=[];
-			for (var iseg=0; iseg<segments.length; iseg++) {
-				firings_fit_list.push(segments[iseg].firings_fit1);
+			if (opts.fit_stage=='true') {
+				var firings_fit_list=[];
+				for (var iseg=0; iseg<segments.length; iseg++) {
+					firings_fit_list.push(segments[iseg].firings_fit1);
+				}
+				console.log ('Concatenating firings...');
+				common.mp_exec_process('mountainsort.concat_firings',
+					{firings_list:firings_fit_list},
+					{firings_out:firings_fit},
+					{},
+					step_callback
+				);
 			}
-			console.log ('Concatenating firings...');
-			common.mp_exec_process('mountainsort.concat_firings',
-				{firings_list:firings_fit_list},
-				{firings_out:firings_fit},
-				{},
-				step_callback
-			);
+			else {
+				firings_fit=firings;
+			}
 		});
 	}
 
