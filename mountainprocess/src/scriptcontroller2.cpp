@@ -86,13 +86,14 @@ public:
     //QString m_server_base_path;
     bool m_force_run = false;
     QString m_working_path;
+    bool m_preserve_tempdir = false;
     QJsonObject m_results;
     int m_num_threads = 0;
 
     QList<PipelineNode2> m_pipeline_nodes;
 
-    QProcess* queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, QString process_output_fname, int request_num_threads);
-    QProcess* run_process(QString processor_name, const QVariantMap& parameters, bool force_run, QString process_output_fname, int request_num_threads);
+    QProcess* queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, bool preserve_tempdir, QString process_output_fname, int request_num_threads);
+    QProcess* run_process(QString processor_name, const QVariantMap& parameters, bool force_run, bool preserve_tempdir, QString process_output_fname, int request_num_threads);
 
     void make_absolute_paths(QVariantMap& fnames);
     QString make_absolute_path(QString fname);
@@ -140,6 +141,11 @@ void ScriptController2::setForceRun(bool force_run)
 void ScriptController2::setWorkingPath(QString working_path)
 {
     d->m_working_path = working_path;
+}
+
+void ScriptController2::setPreserveTempdir(bool tempdir)
+{
+    d->m_preserve_tempdir = tempdir;
 }
 
 QJsonObject ScriptController2::getResults()
@@ -410,7 +416,7 @@ void ScriptController2::removeFile(const QString& path)
     QFile::remove(path);
 }
 
-QProcess* ScriptController2Private::queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, QString process_output_fname, int request_num_threads)
+QProcess* ScriptController2Private::queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, bool preserve_tempdir, QString process_output_fname, int request_num_threads)
 {
     QString exe = qApp->applicationFilePath();
     QStringList args;
@@ -432,6 +438,9 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
     if (force_run) {
         args << "--_force_run";
     }
+    if (preserve_tempdir) {
+        args << "--_preserve_tempdir";
+    }
     args << "--_process_output=" + process_output_fname;
     if (request_num_threads)
         args << QString("--_request_num_threads=%1").arg(request_num_threads);
@@ -447,9 +456,9 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
     return P1;
 }
 
-QProcess* ScriptController2Private::run_process(QString processor_name, const QVariantMap& parameters, bool force_run, QString process_output_fname, int request_num_threads)
+QProcess* ScriptController2Private::run_process(QString processor_name, const QVariantMap& parameters, bool force_run, bool preserve_tempdir, QString process_output_fname, int request_num_threads)
 {
-    return ScriptController2Private::queue_process(processor_name, parameters, true, force_run, process_output_fname, request_num_threads);
+    return ScriptController2Private::queue_process(processor_name, parameters, true, force_run, preserve_tempdir, process_output_fname, request_num_threads);
 }
 
 void ScriptController2Private::make_absolute_paths(QVariantMap& fnames)
@@ -623,7 +632,7 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
         node->process_output_fname = CacheManager::globalInstance()->makeLocalFile() + ".process_output";
         if (m_nodaemon) {
             printf("Launching process %s\n", node->processor_name.toLatin1().data());
-            P1 = run_process(node->processor_name, parameters0, m_force_run, node->process_output_fname, m_num_threads);
+            P1 = run_process(node->processor_name, parameters0, m_force_run, m_preserve_tempdir, node->process_output_fname, m_num_threads);
             if (!P1) {
                 qWarning() << "Unable to launch process: " + node->processor_name;
                 return false;
@@ -631,7 +640,7 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
         }
         else {
             printf("Queuing process from script controller: %s\n", node->processor_name.toLatin1().data());
-            P1 = queue_process(node->processor_name, parameters0, false, m_force_run, node->process_output_fname, m_num_threads);
+            P1 = queue_process(node->processor_name, parameters0, false, m_force_run, m_preserve_tempdir, node->process_output_fname, m_num_threads);
             if (!P1) {
                 qWarning() << "Unable to queue process: " + node->processor_name;
                 return false;

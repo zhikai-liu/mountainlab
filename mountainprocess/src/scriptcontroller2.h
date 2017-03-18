@@ -21,6 +21,7 @@ public:
     void setServerBasePath(const QString& path);
     void setForceRun(bool force_run);
     void setWorkingPath(QString working_path);
+    void setPreserveTempdir(bool tempdir);
     QJsonObject getResults();
 
     Q_INVOKABLE QString addProcess(QString processor_name, QString inputs_json, QString parameters_json, QString outputs_json); //returns json

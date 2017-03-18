@@ -108,6 +108,7 @@ struct run_script_opts {
     //QString server_base_path;
     bool force_run;
     QString working_path;
+    bool preserve_tempdir=false;
 };
 
 QJsonArray monitor_stats_to_json_array(const QList<MonitorStats>& stats);
@@ -432,6 +433,7 @@ int main(int argc, char* argv[])
         opts.nodaemon = CLP.named_parameters.contains("_nodaemon");
         opts.force_run = CLP.named_parameters.contains("_force_run");
         opts.working_path = QDir::currentPath(); // this should get passed through to the processors
+        opts.preserve_tempdir=CLP.named_parameters.contains("_preserve_tempdir");
         QJsonObject results;
         // actually run the script
         if (!run_script(script_fnames, params, opts, error_message, results)) {
@@ -971,6 +973,7 @@ bool run_script(const QStringList& script_fnames, const QVariantMap& params, con
     //Controller2.setServerBasePath(opts.server_base_path);
     Controller2.setForceRun(opts.force_run);
     Controller2.setWorkingPath(opts.working_path);
+    Controller2.setPreserveTempdir(opts.preserve_tempdir);
     QJSValue MP2 = engine.newQObject(&Controller2);
     engine.globalObject().setProperty("_MP2", MP2);
 

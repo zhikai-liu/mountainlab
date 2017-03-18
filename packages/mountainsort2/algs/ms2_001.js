@@ -6,7 +6,7 @@ var os=require('os');
 exports.spec=function() {
 	var spec0={};
 	spec0.name='mountainsort.ms2_001';
-	spec0.version='0.11';
+	spec0.version='0.20';
 
 	spec0.inputs=[
         {name:"timeseries",description:"preprocessed timeseries (M x N)",optional:false},
@@ -376,6 +376,7 @@ exports.run=function(opts,callback) {
 			}
 			else {
 				firings_fit=firings;
+				step_callback();
 			}
 		});
 	}
@@ -615,7 +616,7 @@ exports.run=function(opts,callback) {
 		function do_create_segments() {
 			var segment_duration=Math.ceil(opts.segment_duration_sec*opts.samplerate);
 			segments=create_segments(info.N,segment_duration,segment_duration);
-			if (segments.length==0) {
+			if (segments.length===0) {
 				console.log ('Error: no segments created (N='+info.N+')');
 				process.exit(-1);
 			}
