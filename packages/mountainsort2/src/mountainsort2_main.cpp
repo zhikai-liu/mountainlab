@@ -65,6 +65,7 @@ QJsonObject get_spec()
         X.addOutputs("timeseries_out");
         X.addRequiredParameters("samplerate", "freq_min", "freq_max");
         X.addOptionalParameter("freq_wid");
+        X.addOptionalParameter("quantization_unit");
         X.addOptionalParameter("testcode");
         processors.push_back(X.get_spec());
     }
@@ -180,7 +181,7 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.split_firings", "0.13");
+        ProcessorSpec X("mountainsort.split_firings", "0.14");
         X.addInputs("timeseries_list", "firings");
         X.addOutputs("firings_out_list");
         //X.addRequiredParameters();
@@ -294,6 +295,7 @@ int main(int argc, char* argv[])
         opts.freq_min = CLP.named_parameters["freq_min"].toDouble();
         opts.freq_max = CLP.named_parameters["freq_max"].toDouble();
         opts.freq_wid = CLP.named_parameters.value("freq_wid").toDouble();
+        opts.quantization_unit = CLP.named_parameters.value("quantization_unit").toDouble();
         if (!opts.freq_wid)
             opts.freq_wid = 1000;
         opts.testcode = CLP.named_parameters.value("testcode", "").toString();

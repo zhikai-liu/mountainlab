@@ -33,7 +33,7 @@ exports.spec=function() {
 	spec0.parameters.push({name:"detect_threshold",optional:true});
 	spec0.parameters.push({name:"detect_sign",optional:true});
 	spec0.parameters.push({name:"whiten",optional:true});
-	//spec0.parameters.push({name:"consolidate_clusters",optional:true});
+	spec0.parameters.push({name:"consolidate_clusters",optional:true});
 	spec0.parameters.push({name:"fit_stage",optional:true});
 	spec0.parameters.push({name:'subsample_factor',optional:true});
 	return common.clone(spec0);
@@ -51,6 +51,7 @@ exports.run=function(opts,callback) {
 	if (!opts.detect_threshold) opts.detect_threshold=3.5;
 	if (!opts.detect_sign) opts.detect_sign=0;
 	if (!opts.whiten) opts.whiten='false';
+	if (!opts.consolidate_clusters) opts.consolidate_clusters='false';
 	if (!opts.fit_stage) opts.fit_stage='false';
 	if (!opts.subsample_factor) opts.subsample_factor=1;
 
@@ -88,6 +89,7 @@ exports.run=function(opts,callback) {
 	var clips=opts.clips||mktmp('clips.mda'); //across all segments (subsampled collection)
 	var clips_unwhitened=mktmp('clips_unwhitened.mda');
 	var labels=mktmp('labels.mda'); //across all segments
+	var labels2=mktmp('labels2.mda'); //across all segments, after consolidation (labels to remove marked as 0)
 	var firings=mktmp('firings.mda'); //across all segments
 	var firings_fit=mktmp('firings_fit.mda'); //after fit stage
 	var cluster_metrics=mktmp('cluster_metrics.json');
@@ -161,6 +163,17 @@ exports.run=function(opts,callback) {
 				cb();
 			});
 		});
+		if (opts.consolidate_clusters=='true') {
+			///////////////////////////////////////////////////////////////
+			steps.push(function(cb) {
+				STEP_consolidate_clusters(function() {
+					cb();
+				});
+			});
+		}
+		else {
+			labels2=labels;
+		}
 		///////////////////////////////////////////////////////////////
 		steps.push(function(cb) {
 			//create firings file
@@ -461,10 +474,23 @@ exports.run=function(opts,callback) {
 		);	
 	}
 
+	function STEP_consolidate_clusters(consolidate_clusters_callback) {
+		console.log ('-------------------- CONSOLIDATING CLUSTERS -------------------');
+		common.mp_exec_process('mountainsort.consolidate_clusters',
+			{clips:clips,labels:labels},
+			{labels_out:labels2},
+			{
+				central_channel:opts.central_channel,
+				_request_num_threads:opts.num_threads
+			},
+			consolidate_clusters_callback
+		);	
+	}
+
 	function STEP_create_firings(create_firings_callback) {
 		console.log ('-------------------- CREATING FIRINGS -------------------');
 		common.mp_exec_process('mountainsort.create_firings',
-			{event_times:event_times,labels:labels,amplitudes:(amplitudes||'')},
+			{event_times:event_times,labels:labels2,amplitudes:(amplitudes||'')},
 			{firings_out:firings},
 			{central_channel:opts.central_channel,_request_num_threads:opts.num_threads},
 			create_firings_callback
@@ -562,21 +588,6 @@ exports.run=function(opts,callback) {
 		);	
 	}
 
-	/*
-	function consolidate_clusters(clips,labels,labels_out,callback) {
-		common.mp_exec_process('mountainsort.consolidate_clusters',
-			{clips:clips,labels:labels},
-			{labels_out:labels_out},
-			{
-				central_channel:opts.central_channel,
-				_request_num_threads:opts.num_intersegment_threads||1
-			},
-			callback
-		);
-	}
-	*/
-	
-	
 	////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////

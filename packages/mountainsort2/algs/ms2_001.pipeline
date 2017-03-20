@@ -1,7 +1,7 @@
 function main(params) {
 	set_default_parameters(params,{
 		samplerate:30000, //Hz
-		freq_min:300,freq_max:6000,freq_wid:1000, //bandpass filter
+		freq_min:300,freq_max:6000,freq_wid:1000,quantization_unit:0.2, //bandpass filter
 		clip_size_msec:2, //clip size for event extraction
 		detect_interval_msec:1, //min separation between two events on same channel
 		detect_threshold:3.5, //stdevs away from noise
@@ -22,12 +22,10 @@ function main(params) {
 	var sessions=[];
 	if (file_exists(inpath+'/raw.mda.prv')) {
 		raw=inpath+'/raw.mda.prv';
-		filt=bandpass_filter(raw,params.samplerate,params.freq_min,params.freq_max,params.freq_wid);
+		filt=bandpass_filter(raw,params.samplerate,params.freq_min,params.freq_max,params.freq_wid,params.quantization_unit);
 	}
 	else {
 		sessions=find_all_sessions(inpath);
-		console.log('sessions:');
-		console.log(JSON.stringify(sessions));
 		raw=[];
 		filt=[];
 		for (var i in sessions) {
@@ -35,11 +33,9 @@ function main(params) {
 			var fname=session_path+'/raw.mda.prv';
 			if (file_exists(fname)) {
 				raw.push(fname);
-				var fname2=bandpass_filter(fname,params.samplerate,params.freq_min,params.freq_max,params.freq_wid);
-				console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ '+fname2);
+				var fname2=bandpass_filter(fname,params.samplerate,params.freq_min,params.freq_max,params.freq_wid,params.quantization_unit);
 				filt.push(fname2);
 				sessions[i].filt=fname2;
-				console.log('mkdir: '+sessions[i].relpath);
 				mkdir(outpath+'/'+sessions[i].relpath);
 			}
 		}
@@ -104,15 +100,15 @@ function main(params) {
 	run_pipeline();
 }
 
-function bandpass_filter(raw,samplerate,freq_min,freq_max,freq_wid) {
-	console.log('bandpass_filter: '+raw);
+function bandpass_filter(raw,samplerate,freq_min,freq_max,freq_wid,quantization_unit) {
+	console.log ('bandpass_filter: '+raw);
 	if ((!freq_min)&&(!freq_max)) {
 		return raw;
 	}
 	else {
 		var filt=Process('mountainsort.bandpass_filter',
 			{timeseries:raw},
-			{samplerate:samplerate,freq_min:freq_min,freq_max:freq_max,freq_wid:freq_wid}
+			{samplerate:samplerate,freq_min:freq_min,freq_max:freq_max,freq_wid:freq_wid,quantization_unit:quantization_unit}
 		).timeseries_out;
 		return filt;
 	}

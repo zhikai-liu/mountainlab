@@ -9,6 +9,7 @@
 
 namespace P_bandpass_filter {
 void define_kernel(bigint N, double* kernel, double samplefreq, double freq_min, double freq_max, double freq_wid);
+void multiply_by_factor(bigint N, float* X, double factor);
 struct Kernel_runner {
     Kernel_runner()
     {
@@ -109,7 +110,11 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
     const int M = X.N1();
     const bigint N = X.N2();
 
-    DiskWriteMda Y(MDAIO_TYPE_FLOAT32, timeseries_out, M, N);
+    int dtype=MDAIO_TYPE_FLOAT32;
+    if (opts.quantization_unit) {
+        dtype=MDAIO_TYPE_INT16;
+    }
+    DiskWriteMda Y(dtype, timeseries_out, M, N);
 
     QTime timer_status;
     timer_status.start();
@@ -156,8 +161,11 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
 #pragma omp critical(lock1)
             {
                 {
-                    if (do_write)
-                        Y.writeChunk(chunk2, 0, timepoint);
+                    if (do_write) {
+                        if (opts.quantization_unit) {
+                            P_bandpass_filter::multiply_by_factor(chunk2.totalSize(),chunk2.dataPtr(),1.0/opts.quantization_unit);
+                        }
+                        Y.writeChunk(chunk2, 0, timepoint);                    }
                 }
                 num_timepoints_handled += qMin((bigint)chunk_size, N - timepoint);
                 if ((timer_status.elapsed() > 5000) || (num_timepoints_handled == N) || (timepoint == 0)) {
