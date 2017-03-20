@@ -11,7 +11,7 @@
 #include "get_sort_indices.h"
 
 namespace P_link_segments {
-QMap<int, int> get_label_map(const QVector<double>& times, const QVector<int>& labels, const QVector<double>& times_prev, const QVector<int>& labels_prev);
+QMap<bigint, bigint> get_label_map(const QVector<double>& times, const QVector<bigint>& labels, const QVector<double>& times_prev, const QVector<bigint>& labels_prev);
 }
 
 bool p_link_segments(QString firings_path, QString firings_prev_path, QString Kmax_prev_path, QString firings_out_path, QString firings_subset_out_path, QString Kmax_out_path, double t1, double t2, double t1_prev, double t2_prev)
@@ -19,14 +19,14 @@ bool p_link_segments(QString firings_path, QString firings_prev_path, QString Km
     Mda firings(firings_path);
     Mda firings_prev(firings_prev_path);
     Mda Kmax_prev0(Kmax_prev_path);
-    int Kmax_prev = Kmax_prev0.value(0);
+    bigint Kmax_prev = Kmax_prev0.value(0);
 
     double t1_intersect = qMax(t1, t1_prev);
     double t2_intersect = qMin(t2, t2_prev);
 
     QVector<double> times_intersect;
-    QVector<int> labels_intersect;
-    for (int i = 0; i < firings.N2(); i++) {
+    QVector<bigint> labels_intersect;
+    for (bigint i = 0; i < firings.N2(); i++) {
         double t0 = firings.value(1, i);
         if ((t1_intersect <= t0) && (t0 <= t2_intersect)) {
             times_intersect << t0;
@@ -34,8 +34,8 @@ bool p_link_segments(QString firings_path, QString firings_prev_path, QString Km
         }
     }
     QVector<double> times_intersect_prev;
-    QVector<int> labels_intersect_prev;
-    for (int i = 0; i < firings_prev.N2(); i++) {
+    QVector<bigint> labels_intersect_prev;
+    for (bigint i = 0; i < firings_prev.N2(); i++) {
         double t0 = firings_prev.value(1, i);
         if ((t1_intersect <= t0) && (t0 <= t2_intersect)) {
             times_intersect_prev << t0;
@@ -43,31 +43,31 @@ bool p_link_segments(QString firings_path, QString firings_prev_path, QString Km
         }
     }
 
-    QMap<int, int> label_map = P_link_segments::get_label_map(times_intersect, labels_intersect, times_intersect_prev, labels_intersect_prev);
+    QMap<bigint, bigint> label_map = P_link_segments::get_label_map(times_intersect, labels_intersect, times_intersect_prev, labels_intersect_prev);
     // Careful! Some labels may not have been included because the intersection may not contain them!
-    int new_Kmax = Kmax_prev;
-    for (int i = 0; i < firings_prev.N2(); i++) {
+    bigint new_Kmax = Kmax_prev;
+    for (bigint i = 0; i < firings_prev.N2(); i++) {
         //important! in case Kmax_prev was not provided
         if (firings_prev.value(2, i) > new_Kmax)
             new_Kmax = firings_prev.value(2, i);
     }
 
-    for (int i = 0; i < firings.N2(); i++) {
-        int label0 = firings.value(2, i);
+    for (bigint i = 0; i < firings.N2(); i++) {
+        bigint label0 = firings.value(2, i);
         if ((!label_map.contains(label0)) || (label_map[label0] == 0)) {
             label_map[label0] = new_Kmax + 1;
             new_Kmax++;
         }
     }
 
-    QVector<int> inds_subset;
-    QVector<int> labels_out;
-    for (int i = 0; i < firings.N2(); i++) {
+    QVector<bigint> inds_subset;
+    QVector<bigint> labels_out;
+    for (bigint i = 0; i < firings.N2(); i++) {
         double t0 = firings.value(1, i);
         if (t0 > t2_prev) {
             inds_subset << i;
         }
-        int label0 = firings.value(2, i);
+        bigint label0 = firings.value(2, i);
         labels_out << label_map.value(label0);
     }
 
@@ -77,8 +77,8 @@ bool p_link_segments(QString firings_path, QString firings_prev_path, QString Km
         return false;
 
     Mda firings_out(firings.N1(), firings.N2());
-    for (int j = 0; j < firings.N2(); j++) {
-        for (int r = 0; r < firings.N1(); r++) {
+    for (bigint j = 0; j < firings.N2(); j++) {
+        for (bigint r = 0; r < firings.N1(); r++) {
             firings_out.setValue(firings.value(r, j), r, j);
         }
         firings_out.setValue(labels_out[j], 2, j);
@@ -87,8 +87,8 @@ bool p_link_segments(QString firings_path, QString firings_prev_path, QString Km
         return false;
 
     Mda firings_subset_out(firings.N1(), inds_subset.count());
-    for (int j = 0; j < inds_subset.count(); j++) {
-        for (int r = 0; r < firings.N1(); r++) {
+    for (bigint j = 0; j < inds_subset.count(); j++) {
+        for (bigint r = 0; r < firings.N1(); r++) {
             firings_subset_out.setValue(firings.value(r, inds_subset[j]), r, j);
         }
         firings_subset_out.setValue(labels_out[inds_subset[j]], 2, j);
@@ -101,34 +101,34 @@ bool p_link_segments(QString firings_path, QString firings_prev_path, QString Km
 
 namespace P_link_segments {
 typedef QString LabelPair;
-int k1(LabelPair pair) { return pair.split(",").value(0).toLong(); }
-int k2(LabelPair pair) { return pair.split(",").value(1).toLong(); }
+bigint k1(LabelPair pair) { return pair.split(",").value(0).toLong(); }
+bigint k2(LabelPair pair) { return pair.split(",").value(1).toLong(); }
 
-QVector<int> condense_labels(const QVector<int>& labels, QMap<int, int>& k_map_out)
+QVector<bigint> condense_labels(const QVector<bigint>& labels, QMap<bigint, bigint>& k_map_out)
 {
-    QSet<int> label_set;
-    for (int i = 0; i < labels.count(); i++)
+    QSet<bigint> label_set;
+    for (bigint i = 0; i < labels.count(); i++)
         label_set.insert(labels[i]);
-    QList<int> label_list = label_set.toList();
+    QList<bigint> label_list = label_set.toList();
     qSort(label_list);
-    QMap<int, int> inv_label_map;
-    for (int i = 0; i < label_list.count(); i++) {
+    QMap<bigint, bigint> inv_label_map;
+    for (bigint i = 0; i < label_list.count(); i++) {
         inv_label_map[label_list[i]] = i;
         k_map_out[i] = label_list[i];
     }
-    QVector<int> ret(labels.count());
-    for (int i = 0; i < labels.count(); i++) {
+    QVector<bigint> ret(labels.count());
+    for (bigint i = 0; i < labels.count(); i++) {
         ret[i] = inv_label_map[labels[i]];
     }
     return ret;
 }
 
-void sort_times_labels(QVector<double>& times, QVector<int>& labels)
+void sort_times_labels(QVector<double>& times, QVector<bigint>& labels)
 {
-    QList<int> sort_inds = get_sort_indices(times);
+    QList<bigint> sort_inds = get_sort_indices_bigint(times);
     QVector<double> times2(times.count());
-    QVector<int> labels2(times.count());
-    for (int i = 0; i < times.count(); i++) {
+    QVector<bigint> labels2(times.count());
+    for (bigint i = 0; i < times.count(); i++) {
         times2[i] = times[sort_inds[i]];
         labels2[i] = labels[sort_inds[i]];
     }
@@ -136,15 +136,15 @@ void sort_times_labels(QVector<double>& times, QVector<int>& labels)
     labels = labels2;
 }
 
-bool should_link(const Mda& CM, const QVector<int>& counts1, const QVector<int>& counts2, int i1, int i2, double link_threshold)
+bool should_link(const Mda& CM, const QVector<bigint>& counts1, const QVector<bigint>& counts2, bigint i1, bigint i2, double link_threshold)
 {
-    int best_i1 = 0;
-    for (int j1 = 0; j1 < CM.N1(); j1++) {
+    bigint best_i1 = 0;
+    for (bigint j1 = 0; j1 < CM.N1(); j1++) {
         if (CM.value(j1, i2) > CM.value(best_i1, i2))
             best_i1 = j1;
     }
-    int best_i2 = 0;
-    for (int j2 = 0; j2 < CM.N2(); j2++) {
+    bigint best_i2 = 0;
+    for (bigint j2 = 0; j2 < CM.N2(); j2++) {
         if (CM.value(i1, j2) > CM.value(i1, best_i2))
             best_i2 = j2;
     }
@@ -159,24 +159,24 @@ bool should_link(const Mda& CM, const QVector<int>& counts1, const QVector<int>&
     return true;
 }
 
-QVector<int> get_counts(const QVector<int>& labels, int K)
+QVector<bigint> get_counts(const QVector<bigint>& labels, bigint K)
 {
-    QVector<int> ret(K);
+    QVector<bigint> ret(K);
     ret.fill(0);
-    for (int i = 0; i < labels.count(); i++) {
+    for (bigint i = 0; i < labels.count(); i++) {
         ret[labels[i]]++;
     }
     return ret;
 }
 
-Mda get_loose_confusion_matrix(const QVector<double>& times1, const QVector<int>& labels1, const QVector<double>& times2, const QVector<int>& labels2, int K1, int K2, int time_offset_tolerance)
+Mda get_loose_confusion_matrix(const QVector<double>& times1, const QVector<bigint>& labels1, const QVector<double>& times2, const QVector<bigint>& labels2, bigint K1, bigint K2, bigint time_offset_tolerance)
 {
     Mda CM(K1, K2);
     QVector<double> times1_sorted = times1, times2_sorted = times2;
-    QVector<int> labels1_sorted = labels1, labels2_sorted = labels2;
+    QVector<bigint> labels1_sorted = labels1, labels2_sorted = labels2;
     sort_times_labels(times1_sorted, labels1_sorted);
     sort_times_labels(times2_sorted, labels2_sorted);
-    int i1 = 0, i2 = 0;
+    bigint i1 = 0, i2 = 0;
     while ((i1 < times1_sorted.count()) && (i2 < times2_sorted.count())) {
         double t1 = times1_sorted[i1];
         double t2 = times2_sorted[i2];
@@ -197,25 +197,25 @@ Mda get_loose_confusion_matrix(const QVector<double>& times1, const QVector<int>
     return CM;
 }
 
-QMap<int, int> get_label_map(const QVector<double>& times, const QVector<int>& labels, const QVector<double>& times_prev, const QVector<int>& labels_prev)
+QMap<bigint, bigint> get_label_map(const QVector<double>& times, const QVector<bigint>& labels, const QVector<double>& times_prev, const QVector<bigint>& labels_prev)
 {
-    int time_offset_tolerance = 10;
+    bigint time_offset_tolerance = 10;
     double link_threshold = 0.7;
 
-    QMap<int, int> ret;
+    QMap<bigint, bigint> ret;
 
-    QMap<int, int> k1_map, k2_map;
-    QVector<int> labels_con = condense_labels(labels, k1_map);
-    QVector<int> labels_con_prev = condense_labels(labels_prev, k2_map);
-    int K1 = MLCompute::max(labels_con) + 1;
-    int K2 = MLCompute::max(labels_con_prev) + 1;
+    QMap<bigint, bigint> k1_map, k2_map;
+    QVector<bigint> labels_con = condense_labels(labels, k1_map);
+    QVector<bigint> labels_con_prev = condense_labels(labels_prev, k2_map);
+    bigint K1 = MLCompute::max(labels_con) + 1;
+    bigint K2 = MLCompute::max(labels_con_prev) + 1;
 
     Mda CM = get_loose_confusion_matrix(times, labels_con, times_prev, labels_con_prev, K1, K2, time_offset_tolerance);
-    QVector<int> counts1 = get_counts(labels_con, K1);
-    QVector<int> counts2 = get_counts(labels_con_prev, K2);
+    QVector<bigint> counts1 = get_counts(labels_con, K1);
+    QVector<bigint> counts2 = get_counts(labels_con_prev, K2);
 
-    for (int i1 = 0; i1 < K1; i1++) {
-        for (int i2 = 0; i2 < K2; i2++) {
+    for (bigint i1 = 0; i1 < K1; i1++) {
+        for (bigint i2 = 0; i2 < K2; i2++) {
             if (should_link(CM, counts1, counts2, i1, i2, link_threshold)) {
                 ret[k1_map[i1]] = k2_map[i2];
             }

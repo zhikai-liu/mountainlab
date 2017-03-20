@@ -23,7 +23,7 @@ struct Kernel_runner {
         //delete p_fft;
         //delete p_ifft;
     }
-    void init(int M_in, bigint N_in, double samplerate, double freq_min, double freq_max, double freq_wid)
+    void init(bigint M_in, bigint N_in, double samplerate, double freq_min, double freq_max, double freq_wid)
     {
         M = M_in;
         N = N_in;
@@ -39,15 +39,15 @@ struct Kernel_runner {
 
         define_kernel(N, kernel0, samplerate, freq_min, freq_max, freq_wid);
 
-        int rank = 1;
+        bigint rank = 1;
         int n[] = { (int)N };
-        int howmany = M;
+        bigint howmany = M;
         int* inembed = n;
-        int istride = M;
-        int idist = 1;
+        bigint istride = M;
+        bigint idist = 1;
         int* onembed = n;
-        int ostride = M;
-        int odist = 1;
+        bigint ostride = M;
+        bigint odist = 1;
         unsigned flags = FFTW_ESTIMATE;
         p_fft = fftw_plan_many_dft(rank, n, howmany, data_in, inembed, istride, idist, data_out, onembed, ostride, odist, FFTW_FORWARD, flags);
         p_ifft = fftw_plan_many_dft(rank, n, howmany, data_out, inembed, istride, idist, data_in, onembed, ostride, odist, FFTW_BACKWARD, flags);
@@ -65,7 +65,7 @@ struct Kernel_runner {
         double factor = 1.0 / N;
         bigint aa = 0;
         for (bigint i = 0; i < N; i++) {
-            for (int m = 0; m < M; m++) {
+            for (bigint m = 0; m < M; m++) {
                 data_out[aa][0] *= kernel0[i] * factor;
                 data_out[aa][1] *= kernel0[i] * factor;
                 aa++;
@@ -78,7 +78,7 @@ struct Kernel_runner {
         }
     }
 
-    int M;
+    bigint M;
     bigint N, MN;
     fftw_complex* data_in;
     fftw_complex* data_out;
@@ -107,10 +107,10 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
         Mda32 tmp(A.N1(), A.N2());
         X = DiskReadMda32(tmp);
     }
-    const int M = X.N1();
+    const bigint M = X.N1();
     const bigint N = X.N2();
 
-    int dtype=MDAIO_TYPE_FLOAT32;
+    bigint dtype=MDAIO_TYPE_FLOAT32;
     if (opts.quantization_unit) {
         dtype=MDAIO_TYPE_INT16;
     }
@@ -119,16 +119,16 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
     QTime timer_status;
     timer_status.start();
 
-    int num_threads = omp_get_max_threads();
+    bigint num_threads = omp_get_max_threads();
 
-    //int memory_size = 0.1 * 1e9;
-    //int chunk_size = memory_size * 1.0 / (M * 4 * num_threads);
+    //bigint memory_size = 0.1 * 1e9;
+    //bigint chunk_size = memory_size * 1.0 / (M * 4 * num_threads);
     //chunk_size = qMin(N * 1.0, qMax(1e4 * 1.0, chunk_size * 1.0));
-    //int overlap_size = chunk_size / 5;
+    //bigint overlap_size = chunk_size / 5;
 
-    int chunk_size = 20000;
-    int overlap_size = 2000;
-    printf("************+++ Using chunk size / overlap size: %d / %d (num threads=%d)\n", chunk_size, overlap_size, num_threads);
+    bigint chunk_size = 20000;
+    bigint overlap_size = 2000;
+    printf("************+++ Using chunk size / overlap size: %ld / %ld (num threads=%ld)\n", chunk_size, overlap_size, num_threads);
     qDebug().noquote() << "samplerate/freq_min/freq_max/freq_wid:" << opts.samplerate << opts.freq_min << opts.freq_max << opts.freq_wid;
 
 #pragma omp parallel
@@ -186,7 +186,7 @@ namespace P_bandpass_filter {
 
 void multiply_by_factor(bigint N, float* X, double factor)
 {
-    /*int start = 0;
+    /*bigint start = 0;
 #ifdef USE_SSE2
     __m128d factor_m128 = _mm_load_pd1(&factor);
     for (; start < (N / 2) * 2; start += 2) {
@@ -201,7 +201,7 @@ void multiply_by_factor(bigint N, float* X, double factor)
         X[i] *= factor;
 }
 
-bool do_fft_1d_r2c(int M, int N, float* out, float* in)
+bool do_fft_1d_r2c(bigint M, bigint N, float* out, float* in)
 {
     /*
     if (num_threads>1) {
@@ -210,11 +210,11 @@ bool do_fft_1d_r2c(int M, int N, float* out, float* in)
     }
     */
 
-    int MN = M * N;
+    bigint MN = M * N;
 
     fftw_complex* in2 = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * MN);
     fftw_complex* out2 = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * MN);
-    for (int ii = 0; ii < MN; ii++) {
+    for (bigint ii = 0; ii < MN; ii++) {
         //in2[ii][0]=in[ii*2];
         //in2[ii][1]=in[ii*2+1];
         in2[ii][0] = in[ii];
@@ -255,23 +255,23 @@ bool do_fft_1d_r2c(int M, int N, float* out, float* in)
      * of 1.)
      */
     fftw_plan p;
-    int rank = 1;
+    bigint rank = 1;
     int n[] = { (int)N };
-    int howmany = M;
+    bigint howmany = M;
     int* inembed = n;
-    int istride = M;
-    int idist = 1;
+    bigint istride = M;
+    bigint idist = 1;
     int* onembed = n;
-    int ostride = M;
-    int odist = 1;
-    int sign = FFTW_FORWARD;
+    bigint ostride = M;
+    bigint odist = 1;
+    bigint sign = FFTW_FORWARD;
     unsigned flags = FFTW_ESTIMATE;
 #pragma omp critical
     p = fftw_plan_many_dft(rank, n, howmany, in2, inembed, istride, idist, out2, onembed, ostride, odist, sign, flags);
     //p=fftw_plan_dft_1d(N,in2,out2,FFTW_FORWARD,FFTW_ESTIMATE);
 
     fftw_execute(p);
-    for (int ii = 0; ii < MN; ii++) {
+    for (bigint ii = 0; ii < MN; ii++) {
         out[ii * 2] = out2[ii][0];
         out[ii * 2 + 1] = out2[ii][1];
     }
@@ -290,7 +290,7 @@ bool do_fft_1d_r2c(int M, int N, float* out, float* in)
     return true;
 }
 
-bool do_ifft_1d_c2r(int M, int N, float* out, float* in)
+bool do_ifft_1d_c2r(bigint M, bigint N, float* out, float* in)
 {
     /*
     if (num_threads>1) {
@@ -299,33 +299,33 @@ bool do_ifft_1d_c2r(int M, int N, float* out, float* in)
     }
     */
 
-    int MN = M * N;
+    bigint MN = M * N;
 
     fftw_complex* in2 = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * MN);
     fftw_complex* out2 = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * MN);
-    for (int ii = 0; ii < MN; ii++) {
+    for (bigint ii = 0; ii < MN; ii++) {
         in2[ii][0] = in[ii * 2];
         in2[ii][1] = in[ii * 2 + 1];
     }
 
     fftw_plan p;
-    int rank = 1;
+    bigint rank = 1;
     int n[] = { (int)N };
-    int howmany = M;
+    bigint howmany = M;
     int* inembed = n;
-    int istride = M;
-    int idist = 1;
+    bigint istride = M;
+    bigint idist = 1;
     int* onembed = n;
-    int ostride = M;
-    int odist = 1;
-    int sign = FFTW_BACKWARD;
+    bigint ostride = M;
+    bigint odist = 1;
+    bigint sign = FFTW_BACKWARD;
     unsigned flags = FFTW_ESTIMATE;
 #pragma omp critical
     p = fftw_plan_many_dft(rank, n, howmany, in2, inembed, istride, idist, out2, onembed, ostride, odist, sign, flags);
     //p=fftw_plan_dft_1d(N,in2,out2,FFTW_BACKWARD,FFTW_ESTIMATE);
 
     fftw_execute(p);
-    for (int ii = 0; ii < MN; ii++) {
+    for (bigint ii = 0; ii < MN; ii++) {
         out[ii] = out2[ii][0];
     }
     fftw_free(in2);
@@ -343,7 +343,7 @@ bool do_ifft_1d_c2r(int M, int N, float* out, float* in)
     return true;
 }
 
-void multiply_complex_by_real_kernel(int M, bigint N, float* Y, double* kernel)
+void multiply_complex_by_real_kernel(bigint M, bigint N, float* Y, double* kernel)
 {
     bigint bb = 0;
     bigint aa = 0;
@@ -404,7 +404,7 @@ Mda32 bandpass_filter_kernel(Mda32& X, double samplerate, double freq_min, doubl
 {
     QTime timer;
     timer.start();
-    int M = X.N1();
+    bigint M = X.N1();
     bigint N = X.N2();
     bigint MN = M * N;
     Mda32 Y(M, N);

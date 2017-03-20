@@ -16,9 +16,9 @@ Mda32 extract_neighborhood(const Mda32& X, QList<int> channels);
 bool p_extract_neighborhood_timeseries(QString timeseries, QString timeseries_out, QList<int> channels)
 {
     DiskReadMda32 X(timeseries);
-    int M = X.N1();
-    int N = X.N2();
-    int M2 = channels.count();
+    bigint M = X.N1();
+    bigint N = X.N2();
+    bigint M2 = channels.count();
 
     DiskWriteMda Y;
     Y.open(X.mdaioHeader().data_type, timeseries_out, M2, N);
@@ -36,12 +36,12 @@ bool p_extract_neighborhood_timeseries(QString timeseries, QString timeseries_ou
 namespace P_extract_neighborhood_timeseries {
 Mda32 extract_neighborhood(const Mda32& X, QList<int> channels)
 {
-    int M2 = channels.count();
-    int N = X.N2();
+    bigint M2 = channels.count();
+    bigint N = X.N2();
     Mda32 ret(M2, N);
-    for (int i = 0; i < N; i++) {
-        for (int m = 0; m < M2; m++) {
-            int m2 = channels[m] - 1;
+    for (bigint i = 0; i < N; i++) {
+        for (bigint m = 0; m < M2; m++) {
+            bigint m2 = channels[m] - 1;
             ret.setValue(X.value(m2, i), m, i);
         }
     }

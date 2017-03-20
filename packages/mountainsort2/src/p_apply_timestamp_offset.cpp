@@ -12,12 +12,12 @@ bool p_apply_timestamp_offset(QString firings_path, QString firings_out_path, do
     Mda firings(firings_path);
     if ((firings.N1() == 1) || (firings.N2() == 1)) {
         //event times
-        for (int i = 0; i < firings.totalSize(); i++) {
+        for (bigint i = 0; i < firings.totalSize(); i++) {
             firings.set(firings.get(i) + timestamp_offset, i);
         }
     }
     else {
-        for (int i = 0; i < firings.N2(); i++) {
+        for (bigint i = 0; i < firings.N2(); i++) {
             firings.setValue(firings.value(1, i) + timestamp_offset, 1, i);
         }
     }

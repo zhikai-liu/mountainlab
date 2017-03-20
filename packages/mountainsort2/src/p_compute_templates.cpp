@@ -10,11 +10,11 @@ bool p_compute_templates(QStringList timeseries_list, QString firings_path, QStr
     DiskReadMda32 X(2, timeseries_list);
     DiskReadMda firings(firings_path);
 
-    int M = X.N1();
-    //int N = X.N2();
-    int T = clip_size;
+    bigint M = X.N1();
+    //bigint N = X.N2();
+    bigint T = clip_size;
     QVector<double> times;
-    QVector<int> labels;
+    QVector<bigint> labels;
 
     if (!T) {
         qWarning() << "Unexpected: Clip size is zero.";
@@ -26,7 +26,7 @@ bool p_compute_templates(QStringList timeseries_list, QString firings_path, QStr
         return false;
     }
 
-    int Kmax = MLCompute::max(clusters.toVector());
+    bigint Kmax = MLCompute::max(clusters.toVector());
     QVector<int> label_map(Kmax + 1);
     label_map.fill(-1);
     for (int c = 0; c < clusters.count(); c++) {
@@ -35,7 +35,7 @@ bool p_compute_templates(QStringList timeseries_list, QString firings_path, QStr
 
     QSet<int> clusters_set = clusters.toSet();
 
-    for (int i = 0; i < firings.N2(); i++) {
+    for (bigint i = 0; i < firings.N2(); i++) {
         int label0 = firings.value(2, i);
         if (clusters_set.contains(label0)) {
             times << firings.value(1, i);
@@ -43,7 +43,7 @@ bool p_compute_templates(QStringList timeseries_list, QString firings_path, QStr
         }
     }
 
-    int K0 = clusters.count();
+    bigint K0 = clusters.count();
 
     Mda templates(M, T, K0);
     QVector<double> counts(K0);
@@ -51,13 +51,13 @@ bool p_compute_templates(QStringList timeseries_list, QString firings_path, QStr
 
     double* templates_ptr = templates.dataPtr();
 
-    int Tmid = (int)((T + 1) / 2) - 1;
-    printf("computing templates (M=%d,T=%d,K=%d,L=%d)...\n", M, T, K0, times.count());
+    bigint Tmid = (bigint)((T + 1) / 2) - 1;
+    printf("computing templates (M=%ld,T=%ld,K=%ld,L=%d)...\n", M, T, K0, times.count());
     QTime timer;
     timer.start();
-    for (int i = 0; i < times.count(); i++) {
+    for (bigint i = 0; i < times.count(); i++) {
         bigint t1 = times[i] - Tmid;
-        //int t2 = t1 + T - 1;
+        //bigint t2 = t1 + T - 1;
         int k = label_map[labels[i]];
         if (timer.elapsed() > 3000) {
             qDebug().noquote() << QString("Compute templates: processing event %1 of %2").arg(i).arg(times.count());
@@ -72,15 +72,15 @@ bool p_compute_templates(QStringList timeseries_list, QString firings_path, QStr
             }
             float* tmp_ptr = tmp.dataPtr();
             bigint offset = M * T * k;
-            for (int aa = 0; aa < M * T; aa++) {
+            for (bigint aa = 0; aa < M * T; aa++) {
                 templates_ptr[offset + aa] += tmp_ptr[aa];
             }
             counts[k]++;
         }
     }
-    int bb = 0;
-    for (int k = 0; k < K0; k++) {
-        for (int aa = 0; aa < M * T; aa++) {
+    bigint bb = 0;
+    for (bigint k = 0; k < K0; k++) {
+        for (bigint aa = 0; aa < M * T; aa++) {
             if (counts[k])
                 templates_ptr[bb] /= counts[k];
             bb++;

@@ -7,13 +7,13 @@
 bool p_concat_firings(QStringList timeseries_list, QStringList firings_list, QString timeseries_out, QString firings_out)
 {
     DiskReadMda32 X0(timeseries_list.value(0));
-    int M = X0.N1();
+    bigint M = X0.N1();
     DiskReadMda F0(firings_list.value(0));
-    int R = F0.N1();
+    bigint R = F0.N1();
 
-    int NN = 0;
-    int LL = 0;
-    for (int i = 0; i < firings_list.count(); i++) {
+    bigint NN = 0;
+    bigint LL = 0;
+    for (bigint i = 0; i < firings_list.count(); i++) {
         if (!timeseries_list.isEmpty()) {
             DiskReadMda32 X1(timeseries_list.value(i));
             NN += X1.N2();
@@ -29,11 +29,11 @@ bool p_concat_firings(QStringList timeseries_list, QStringList firings_list, QSt
     Mda G(R, LL);
     bigint n0 = 0;
     bigint i0 = 0;
-    for (int i = 0; i < firings_list.count(); i++) {
-        printf("Firings %d of %d\n", i + 1, firings_list.count());
+    for (bigint i = 0; i < firings_list.count(); i++) {
+        printf("Firings %ld of %d\n", i + 1, firings_list.count());
         Mda F1(firings_list.value(i));
-        for (int j = 0; j < F1.N2(); j++) {
-            for (int r = 0; r < R; r++) {
+        for (bigint j = 0; j < F1.N2(); j++) {
+            for (bigint r = 0; r < R; r++) {
                 G.setValue(F1.value(r, j), r, i0 + j);
             }
             G.setValue(G.value(1, i0 + j) + n0, 1, i0 + j);

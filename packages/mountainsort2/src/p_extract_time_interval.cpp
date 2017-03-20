@@ -8,19 +8,19 @@ bool p_extract_time_interval(QStringList timeseries_list, QString firings, QStri
 {
     Mda firings0(firings);
 
-    QVector<int> event_inds_to_use;
-    for (int i = 0; i < firings0.N2(); i++) {
+    QVector<bigint> event_inds_to_use;
+    for (bigint i = 0; i < firings0.N2(); i++) {
         double t0 = firings0.value(1, i);
         if ((t1 <= t0) && (t0 <= t2)) {
             event_inds_to_use << i;
         }
     }
     qDebug() << "p_extract_time_interval" << t1 << t2 << event_inds_to_use.count() << firings;
-    int L2 = event_inds_to_use.count();
+    bigint L2 = event_inds_to_use.count();
     Mda firings2(firings0.N1(), L2);
-    for (int i = 0; i < L2; i++) {
-        int j = event_inds_to_use[i];
-        for (int r = 0; r < firings0.N1(); r++) {
+    for (bigint i = 0; i < L2; i++) {
+        bigint j = event_inds_to_use[i];
+        for (bigint r = 0; r < firings0.N1(); r++) {
             firings2.setValue(firings0.value(r, j), r, i);
         }
         firings2.setValue(firings2.value(1, i) - t1, 1, i);

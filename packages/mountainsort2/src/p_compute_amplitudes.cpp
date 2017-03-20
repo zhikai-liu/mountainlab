@@ -12,9 +12,9 @@ bool p_compute_amplitudes(QString timeseries, QString event_times, QString ampli
 {
     DiskReadMda32 X(timeseries);
     Mda ET(event_times);
-    int L = ET.totalSize();
+    bigint L = ET.totalSize();
     Mda32 A(1, L);
-    for (int i = 0; i < L; i++) {
+    for (bigint i = 0; i < L; i++) {
         double amp = 0;
         bigint time0 = ET.value(i);
         if (opts.central_channel) {
@@ -22,7 +22,7 @@ bool p_compute_amplitudes(QString timeseries, QString event_times, QString ampli
         }
         else {
             double maxval = 0;
-            for (int m = 0; m < X.N1(); m++) {
+            for (bigint m = 0; m < X.N1(); m++) {
                 double val = X.value(m, time0);
                 if (qAbs(val) > qAbs(maxval))
                     maxval = val;

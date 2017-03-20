@@ -27,11 +27,11 @@ bool p_load_test(QString stats_out, P_load_test_opts opts)
             qWarning() << "Unable to open file for reading: /dev/zero";
             return false;
         }
-        int bufsize = 10000;
+        bigint bufsize = 10000;
         char buffer[bufsize];
         bigint i = 0;
         while (i < opts.num_read_bytes) {
-            int numread = fread(buffer, 1, bufsize, f);
+            bigint numread = fread(buffer, 1, bufsize, f);
             (void)numread;
             i += bufsize;
         }
@@ -48,11 +48,11 @@ bool p_load_test(QString stats_out, P_load_test_opts opts)
             qWarning() << "Unable to open file for writing: /dev/null";
             return false;
         }
-        int bufsize = 10000;
+        bigint bufsize = 10000;
         char buffer[bufsize];
         bigint i = 0;
         while (i < opts.num_write_bytes) {
-            for (int j = 0; j < bufsize; j++)
+            for (bigint j = 0; j < bufsize; j++)
                 buffer[j] = j % 256;
             fwrite(buffer, 1, bufsize, f);
             i += bufsize;

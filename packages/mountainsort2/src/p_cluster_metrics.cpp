@@ -19,13 +19,13 @@ bool p_cluster_metrics(QString timeseries_path, QString firings_path, QString me
 
     QVector<double> times(firings.N2());
     QVector<int> labels(firings.N2());
-    for (int i = 0; i < firings.N2(); i++) {
+    for (bigint i = 0; i < firings.N2(); i++) {
         times[i] = firings.value(1, i);
         labels[i] = firings.value(2, i);
     }
 
     QSet<int> used_labels_set;
-    for (int i = 0; i < labels.count(); i++) {
+    for (bigint i = 0; i < labels.count(); i++) {
         used_labels_set.insert(labels[i]);
     }
     QList<int> used_labels = used_labels_set.toList();
@@ -48,7 +48,7 @@ QJsonObject get_cluster_metrics(const DiskReadMda32& X, const QVector<double>& t
 {
     (void)X;
     QVector<double> times_k;
-    for (int i = 0; i < labels.count(); i++) {
+    for (bigint i = 0; i < labels.count(); i++) {
         if (labels[i] == k)
             times_k << times[i];
     }

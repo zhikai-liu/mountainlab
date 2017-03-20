@@ -10,7 +10,7 @@ bool p_create_firings(QString event_times, QString labels, QString amplitudes, Q
     Mda LA(labels);
     Mda32 AM;
 
-    int L = ET.totalSize();
+    bigint L = ET.totalSize();
 
     int R = 3;
     if (!amplitudes.isEmpty()) {
@@ -18,7 +18,7 @@ bool p_create_firings(QString event_times, QString labels, QString amplitudes, Q
         AM.read(amplitudes);
     }
     Mda firings(R, L);
-    for (int i = 0; i < L; i++) {
+    for (bigint i = 0; i < L; i++) {
         firings.setValue(central_channel, 0, i);
         firings.setValue(ET.value(i), 1, i);
         firings.setValue(LA.value(i), 2, i);
