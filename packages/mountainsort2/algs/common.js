@@ -129,8 +129,25 @@ common.read_mda_header=function(path,callback) {
 	var exe='mdaconvert';
 	var args=[path,'--readheader'];
 	common.make_system_call(exe,args,{num_tries:5},function(aa) {
-		callback(JSON.parse(aa.stdout));
+		var ret=JSON.parse(aa.stdout);
+		callback(ret);
 	});
+};
+
+common.locks={};
+common.grab_lock=function(lock_name,callback) {
+	if (!common.locks[lock_name]) {
+		common.locks[lock_name]=1;
+		callback();
+	}
+	else {
+		setTimeout(function() {
+			common.grab_lock(lock_name,callback);
+		},100);
+	}
+};
+common.release_lock=function(lock_name) {
+	common.locks[lock_name]=null;
 };
 
 /*

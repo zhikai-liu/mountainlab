@@ -12,14 +12,19 @@
 
 namespace P_extract_segment_timeseries {
 QVector<bigint> get_durations(QStringList timeseries_list);
+Mda32 extract_channels_from_chunk(const Mda32 &chunk,const QList<int> &channels);
 }
 
-bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, bigint t1, bigint t2)
+bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, bigint t1, bigint t2,const QList<int> &channels)
 {
     DiskReadMda32 X(timeseries);
     int M = X.N1();
     //bigint N=X.N2();
     bigint N2 = t2 - t1 + 1;
+
+    if (!channels.isEmpty()) {
+        M=channels.count();
+    }
 
     //do it this way so we can specify the datatype
     DiskWriteMda Y;
@@ -33,6 +38,9 @@ bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, bi
             sz = N2 - t;
         Mda32 chunk;
         X.readChunk(chunk, 0, t1 + t, M, sz);
+        if (!channels.isEmpty()) {
+            chunk=P_extract_segment_timeseries::extract_channels_from_chunk(chunk,channels);
+        }
         Y.writeChunk(chunk, 0, t);
         Y.close();
     }
@@ -40,11 +48,14 @@ bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, bi
     return true;
 }
 
-bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, QString timeseries_out, bigint t1, bigint t2)
+bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, QString timeseries_out, bigint t1, bigint t2,const QList<int> &channels)
 {
     QString ts0 = timeseries_list.value(0);
     DiskReadMda32 X(ts0);
     int M = X.N1();
+    if (!channels.isEmpty()) {
+        M=channels.count();
+    }
     QVector<bigint> durations = P_extract_segment_timeseries::get_durations(timeseries_list);
     QVector<bigint> start_timepoints, end_timepoints;
     start_timepoints << 0;
@@ -94,7 +105,10 @@ bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, 
             ssA = start_timepoints[ii] - t1;
         }
 
-        Y.readChunk(chunk, 0, ttA, M, ttB - ttA + 1);
+        Y.readChunk(chunk, 0, ttA, Y.N1(), ttB - ttA + 1);
+        if (!channels.isEmpty()) {
+            chunk=P_extract_segment_timeseries::extract_channels_from_chunk(chunk,channels);
+        }
         out.setChunk(chunk, 0, ssA);
     }
 
@@ -117,6 +131,15 @@ QVector<bigint> get_durations(QStringList timeseries_list)
     foreach (QString ts, timeseries_list) {
         DiskReadMda32 X(ts);
         ret << X.N2();
+    }
+    return ret;
+}
+Mda32 extract_channels_from_chunk(const Mda32 &chunk,const QList<int> &channels) {
+    Mda32 ret(channels.count(),chunk.N2());
+    for (bigint i=0; i<chunk.N2(); i++) {
+        for (int j=0; j<channels.count(); j++) {
+            ret.setValue(chunk.value(channels[j]-1,i),j,i);
+        }
     }
     return ret;
 }

@@ -1,7 +1,7 @@
 function main(params) {
 	set_default_parameters(params,{
 		samplerate:30000, //Hz
-		freq_min:300,freq_max:6000,freq_wid:1000,quantization_unit:0.2, //bandpass filter
+		freq_min:300,freq_max:6000,freq_wid:1000,quantization_unit:0, //bandpass filter
 		clip_size_msec:2, //clip size for event extraction
 		detect_interval_msec:1, //min separation between two events on same channel
 		detect_threshold:3.5, //stdevs away from noise
@@ -11,12 +11,15 @@ function main(params) {
 		fit_stage:'false', //boolean
 		segment_duration_sec:3600, //duration of a single time segment for processing
 		num_threads:0, //number of time segments to process in parallel
-		subsample_factor:1
+		subsample_factor:1,
+		multichannel:'false',
+		adjacency_radius:0
 	});
 
 	var inpath=params.inpath;
 	var outpath=params.outpath;
 
+	//bandpass filter each session
 	var filt;
 	var raw;
 	var sessions=[];
@@ -47,26 +50,42 @@ function main(params) {
 
 	var params2=clone(params);
 
-	//pre-sort processing
-	var outputs1={event_times_out:'',amplitudes_out:'',clips_out:'',whitening_matrix_out:''}; //specify which outputs to create
-	var results1=Process('mountainsort.ms2_001',
-			{timeseries:filt},params2,outputs1
-	);
+	var firings;
+	if (params.multichannel=='true') {
+		var outputs0={firings_out:''};
+		var results0=Process('mountainsort.ms2_001_multichannel',
+				{timeseries:filt,geom:params.geom},
+				params2,
+				outputs0
+		);
+		firings=results0.firings_out;
+	}
+	else {
+		//pre-sort processing
+		var outputs1={event_times_out:'',amplitudes_out:'',clips_out:'',whitening_matrix_out:''}; //specify which outputs to create
+		var results1=Process('mountainsort.ms2_001',
+				{timeseries:filt},params2,outputs1
+		);
 
-	//the actual sorting
-	var outputs2={firings_out:'',cluster_metrics_out:''};
-	var results2=Process('mountainsort.ms2_001',
-			{
-				timeseries:filt,
-				clips:results1.clips_out,
-				event_times:results1.event_times_out,
-				amplitudes:results1.amplitudes_out
-			},
-			params2,
-			outputs2
-	);
-	var firings=results2.firings_out;
-	var cluster_metrics=results2.cluster_metrics_out;
+		//the actual sorting
+		var outputs2={firings_out:''};
+		var results2=Process('mountainsort.ms2_001',
+				{
+					timeseries:filt,
+					clips:results1.clips_out,
+					event_times:results1.event_times_out,
+					amplitudes:results1.amplitudes_out
+				},
+				params2,
+				outputs2
+		);
+		firings=results2.firings_out;
+	}
+
+	var cluster_metrics=Process('mountainsort.cluster_metrics',
+			{timeseries:filt,firings:firings},
+			{samplerate:params.samplerate,_request_num_threads:params.num_threads}
+	).cluster_metrics_out;
 
 	// Write the output
 	write_file(firings,params.outpath+'/firings.mda');	

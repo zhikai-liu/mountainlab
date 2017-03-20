@@ -48,6 +48,11 @@ make_system_call(cmd,args,function(tmp) {
 
 var params0={samplerate:30000,sign:1};
 write_text_file(dspath0+'/params.json',JSON.stringify(params0));
+var geom0='';
+for (var m=1; m<=M0; m++) {
+	geom0+='0,'+m+'\n';
+}
+write_text_file(dspath0+'/geom.csv',geom0);
 
 function create_session(num) {
 	var session_path=dspath0+'/session_'+num;

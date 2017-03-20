@@ -50,6 +50,7 @@ QJsonObject get_spec()
         X.addInputs("timeseries");
         X.addOutputs("timeseries_out");
         X.addRequiredParameters("t1", "t2");
+        X.addOptionalParameter("channels");
         processors.push_back(X.get_spec());
     }
     {
@@ -273,11 +274,13 @@ int main(int argc, char* argv[])
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
         bigint t1 = CLP.named_parameters["t1"].toDouble(); //to double to handle scientific notation
         bigint t2 = CLP.named_parameters["t2"].toDouble(); //to double to handle scientific notation
+        QStringList channels_str = CLP.named_parameters["channels"].toString().split(",",QString::SkipEmptyParts);
+        QList<int> channels=MLUtil::stringListToIntList(channels_str);
         if (timeseries_list.count() <= 1) {
-            ret = p_extract_segment_timeseries(timeseries_list.value(0), timeseries_out, t1, t2);
+            ret = p_extract_segment_timeseries(timeseries_list.value(0), timeseries_out, t1, t2, channels);
         }
         else {
-            ret = p_extract_segment_timeseries_from_concat_list(timeseries_list, timeseries_out, t1, t2);
+            ret = p_extract_segment_timeseries_from_concat_list(timeseries_list, timeseries_out, t1, t2,channels);
         }
     }
     else if (arg1 == "mountainsort.extract_segment_firings") {
