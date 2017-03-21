@@ -78,3 +78,37 @@ QJsonObject get_cluster_metrics(const DiskReadMda32& X, const QVector<double>& t
     return obj;
 }
 }
+
+bool p_combine_cluster_metrics(QStringList metrics_list, QString metrics_out)
+{
+    QMap<int,QJsonObject> all_clusters_metrics;
+    foreach (QString fname,metrics_list) {
+        QString json=TextFile::read(fname);
+        QJsonObject obj=QJsonDocument::fromJson(json.toUtf8()).object();
+        QJsonArray clusters=obj["clusters"].toArray();
+        for (int i=0; i<clusters.count(); i++) {
+            QJsonObject tmp=clusters[i].toObject();
+            int label=tmp["label"].toInt();
+            if (!all_clusters_metrics.contains(label)) {
+                all_clusters_metrics[label]=QJsonObject();
+            }
+            QStringList names=tmp["metrics"].toObject().keys();
+            foreach (QString name,names) {
+                QJsonValue val=tmp["metrics"].toObject()[name];
+                all_clusters_metrics[label][name]=val;
+            }
+        }
+    }
+    QJsonArray ret_clusters;
+    QList<int> labels=all_clusters_metrics.keys();
+    qSort(labels);
+    foreach (int k,labels) {
+        QJsonObject C;
+        C["label"]=k;
+        C["metrics"]=all_clusters_metrics[k];
+        ret_clusters << C;
+    }
+    QJsonObject ret;
+    ret["clusters"]=ret_clusters;
+    return TextFile::write(metrics_out,QJsonDocument(ret).toJson(QJsonDocument::Indented));
+}

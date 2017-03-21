@@ -143,7 +143,7 @@ bool p_compute_whitening_matrix(QStringList timeseries_list, QString whitening_m
     DiskReadMda32 X0(2, timeseries_list);
     bigint M = X0.N1();
     bigint N = X0.N2();
-    qDebug() << "M/N" << M << N;
+    qDebug().noquote() << "Computing whitening matrix: M/N" << M << N;
 
     bigint processing_chunk_size = 1e7;
 

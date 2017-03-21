@@ -198,7 +198,8 @@ bool DiskWriteMda::writeChunk(Mda& X, bigint i1, bigint i2)
         return writeChunk(X, i1 + this->N1() * i2);
     }
     else {
-        qWarning() << "This case not yet supported in 2d writeSubArray" << X.N1() << X.N2() << N1() << N2() << i1 << i2;
+        qWarning() << "dims:" << d->m_header.dims[0] << d->m_header.dims[1] << d->m_file;
+        qWarning() << "This case not yet supported in 2d writeChunk" << X.N1() << X.N2() << N1() << N2() << i1 << i2;
         return false;
     }
 }
@@ -239,6 +240,7 @@ bool DiskWriteMda::writeChunk(Mda32& X, bigint i1, bigint i2)
         return writeChunk(X, i1 + this->N1() * i2);
     }
     else {
+        qWarning() << "dims:" << d->m_header.dims[0] << d->m_header.dims[1] << d->m_file;
         qWarning() << "This case not yet supported in 2d writeSubArray" << X.N1() << X.N2() << N1() << N2() << i1 << i2;
         return false;
     }

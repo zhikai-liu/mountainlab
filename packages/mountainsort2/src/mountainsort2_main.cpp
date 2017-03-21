@@ -185,7 +185,14 @@ QJsonObject get_spec()
     {
         ProcessorSpec X("mountainsort.isolation_metrics", "0.1");
         X.addInputs("timeseries", "firings");
-        X.addOutputs("metrics_out","pair_metrics_out");
+        X.addOutputs("metrics_out");
+        X.addOptionalOutputs("pair_metrics_out");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.combine_cluster_metrics", "0.1");
+        X.addInputs("metrics_list");
+        X.addOutputs("metrics_out");
         processors.push_back(X.get_spec());
     }
     {
@@ -438,6 +445,11 @@ int main(int argc, char* argv[])
         QString pair_metrics_out = CLP.named_parameters["pair_metrics_out"].toString();
         P_isolation_metrics_opts opts;
         ret = p_isolation_metrics(timeseries, firings, metrics_out, pair_metrics_out, opts);
+    }
+    else if (arg1 == "mountainsort.combine_cluster_metrics") {
+        QStringList metrics_list = MLUtil::toStringList(CLP.named_parameters["metrics_list"]);
+        QString metrics_out = CLP.named_parameters["metrics_out"].toString();
+        ret = p_combine_cluster_metrics(metrics_list,metrics_out);
     }
     else if (arg1 == "mountainsort.split_firings") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);

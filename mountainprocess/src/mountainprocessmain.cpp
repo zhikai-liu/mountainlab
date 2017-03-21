@@ -90,7 +90,7 @@ bool load_parameter_file(QVariantMap& params, const QString& fname);
 bool run_script(const QStringList& script_fnames, const QVariantMap& params, const run_script_opts& opts, QString& error_message, QJsonObject& results);
 bool initialize_process_manager();
 void remove_system_parameters(QVariantMap& params);
-bool queue_pript(PriptType prtype, const CLParams& CLP);
+bool queue_pript(PriptType prtype, const CLParams& CLP, QString working_path);
 QString get_daemon_state_summary(const QJsonObject& state);
 
 #define EXIT_ON_CRITICAL_ERROR
@@ -118,7 +118,7 @@ double compute_avg_cpu_pct(const QList<MonitorStats>& stats);
 //void log_begin(int argc,char* argv[]);
 //void //log_end();
 
-bool get_missing_prvs(const QVariantMap& clparams, QJsonObject& missing_prvs);
+bool get_missing_prvs(const QVariantMap& clparams, QJsonObject& missing_prvs, QString working_path);
 QString get_default_daemon_id();
 void set_default_daemon_id(QString daemon_id);
 void print_default_daemon_id();
@@ -139,6 +139,16 @@ int main(int argc, char* argv[])
 
     bool detach_mode = CLP.named_parameters.contains("_detach");
 
+    // If _working_path is specified then we change the current directory
+    QString working_path = CLP.named_parameters.value("_working_path").toString();
+    if (working_path.isEmpty())
+        working_path=QDir::currentPath();
+    if (!working_path.isEmpty()) {
+        if (!QDir::setCurrent(working_path)) {
+            qWarning() << "Unable to set working path to: " << working_path;
+        }
+    }
+
     //log_begin(argc,argv);
 
     // Do not allow downloads or *processing* to resolve prv files
@@ -147,7 +157,7 @@ int main(int argc, char* argv[])
 
     // Find .prv files that are missing, and handle that situation accordingly.
     QJsonObject missing_prvs;
-    if (!get_missing_prvs(CLP.named_parameters, missing_prvs)) {
+    if (!get_missing_prvs(CLP.named_parameters, missing_prvs, working_path)) {
         if (missing_prvs.keys().isEmpty())
             return -1;
         if (CLP.named_parameters.contains("_prvgui")) {
@@ -207,14 +217,6 @@ int main(int argc, char* argv[])
     ProcessManager* PM = ProcessManager::globalInstance();
 
     setbuf(stdout, NULL);
-
-    // If _working_path is specified then we change the current directory
-    QString working_path = CLP.named_parameters.value("_working_path").toString();
-    if (!working_path.isEmpty()) {
-        if (!QDir::setCurrent(working_path)) {
-            qWarning() << "Unable to set working path to: " << working_path;
-        }
-    }
 
     if (arg1 == "list-processors") { //Provide a human-readable list of the available processors
         if (!initialize_process_manager()) { //load the processor plugins etc
@@ -532,7 +534,7 @@ int main(int argc, char* argv[])
             return -1;
         }
 
-        if (queue_pript(ScriptType, CLP)) {
+        if (queue_pript(ScriptType, CLP, working_path)) {
             //log_end();
             return 0;
         }
@@ -555,7 +557,7 @@ int main(int argc, char* argv[])
             return -1;
         }
 
-        if (queue_pript(ProcessType, CLP)) {
+        if (queue_pript(ProcessType, CLP, working_path)) {
             //log_end();
             return 0;
         }
@@ -1048,7 +1050,7 @@ void remove_system_parameters(QVariantMap& params)
 }
 
 // Queue a script or process
-bool queue_pript(PriptType prtype, const CLParams& CLP)
+bool queue_pript(PriptType prtype, const CLParams& CLP, QString working_path)
 {
     MPDaemonPript PP;
 
@@ -1138,7 +1140,7 @@ bool queue_pript(PriptType prtype, const CLParams& CLP)
     }
 
     PP.force_run = CLP.named_parameters.contains("_force_run"); // do not check if processes have already run
-    PP.working_path = QDir::currentPath(); // all processes and scripts should be run in this working path
+    PP.working_path = working_path; // all processes and scripts should be run in this working path
 
     MPDaemonClient client;
     if (!client.isConnected()) {
@@ -1345,7 +1347,8 @@ QJsonObject read_prv_file(QString path)
 {
     QString txt = TextFile::read(path);
     if (txt.isEmpty()) {
-        qWarning() << "Unable to read .prv file: " + path;
+        qWarning() << "Working directory: "+QDir::currentPath();
+        qWarning() << QString("Unable to read .prv file: ") + "["+path+"]";
         return QJsonObject();
     }
     QJsonParseError err;
@@ -1357,20 +1360,21 @@ QJsonObject read_prv_file(QString path)
     return obj;
 }
 
-void get_missing_prvs(QString key, QVariant clparam, QJsonObject& missing_prvs)
+void get_missing_prvs(QString key, QVariant clparam, QJsonObject& missing_prvs, QString working_path)
 {
     if (clparam.type() == QVariant::List) {
         //handle the case of multiple values
         QVariantList list = clparam.toList();
         for (int i = 0; i < list.count(); i++) {
             QVariant val = list[i];
-            get_missing_prvs(QString("%1-%2").arg(key).arg(i), val, missing_prvs);
+            get_missing_prvs(QString("%1-%2").arg(key).arg(i), val, missing_prvs, working_path);
         }
         return;
     }
     else {
         QString val = clparam.toString();
         if (val.endsWith(".prv")) {
+            val=MLUtil::resolvePath(working_path,val);
             QJsonObject obj = read_prv_file(val);
             QString path0 = locate_prv(obj);
             if (path0.isEmpty()) {
@@ -1380,11 +1384,11 @@ void get_missing_prvs(QString key, QVariant clparam, QJsonObject& missing_prvs)
     }
 }
 
-bool get_missing_prvs(const QVariantMap& clparams, QJsonObject& missing_prvs)
+bool get_missing_prvs(const QVariantMap& clparams, QJsonObject& missing_prvs, QString working_path)
 {
     QStringList keys = clparams.keys();
     foreach (QString key, keys) {
-        get_missing_prvs(key, clparams[key], missing_prvs);
+        get_missing_prvs(key, clparams[key], missing_prvs, working_path);
     }
     if (!missing_prvs.isEmpty()) {
         return false;

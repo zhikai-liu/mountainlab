@@ -276,6 +276,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
         }
         ppp += QString("--_tempdir=%1 ").arg(tempdir);
 
+
         exe_command.replace(QRegExp("\\$\\(arguments\\)"), ppp);
     }
 

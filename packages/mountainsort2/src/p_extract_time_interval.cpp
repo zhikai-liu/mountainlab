@@ -15,7 +15,7 @@ bool p_extract_time_interval(QStringList timeseries_list, QString firings, QStri
             event_inds_to_use << i;
         }
     }
-    qDebug() << "p_extract_time_interval" << t1 << t2 << event_inds_to_use.count() << firings;
+    qDebug().noquote() << "p_extract_time_interval" << t1 << t2 << event_inds_to_use.count() << firings;
     bigint L2 = event_inds_to_use.count();
     Mda firings2(firings0.N1(), L2);
     for (bigint i = 0; i < L2; i++) {

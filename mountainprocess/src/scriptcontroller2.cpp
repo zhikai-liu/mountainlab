@@ -441,6 +441,9 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
     if (preserve_tempdir) {
         args << "--_preserve_tempdir";
     }
+    if (!m_working_path.isEmpty()) {
+        args << "--_working_path="+m_working_path;
+    }
     args << "--_process_output=" + process_output_fname;
     if (request_num_threads)
         args << QString("--_request_num_threads=%1").arg(request_num_threads);

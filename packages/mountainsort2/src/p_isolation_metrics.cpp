@@ -15,7 +15,7 @@
 #include "compute_templates_0.h"
 
 namespace P_isolation_metrics {
-Mda32 extract_clips(const DiskReadMda32 &X,QVector<double> &times,int clip_size);
+Mda32 extract_clips(const DiskReadMda32 &X,const QVector<double> &times,int clip_size);
 Mda32 compute_mean_clip(const Mda32 &clips);
 QJsonObject get_cluster_metrics(const DiskReadMda32 &X,const QVector<double> &times,P_isolation_metrics_opts opts);
 QJsonObject get_pair_metrics(const DiskReadMda32 &X,const QVector<double> &times_k1,const QVector<double> &times_k2,P_isolation_metrics_opts opts);
@@ -24,6 +24,8 @@ double compute_overlap(const DiskReadMda32& X, const QVector<double>& times1, co
 struct ClusterData {
     QVector<double> times;
     QJsonObject cluster_metrics;
+    double isolation=1;
+    int overlap_cluster=0;
 };
 }
 
@@ -47,24 +49,31 @@ bool p_isolation_metrics(QString timeseries_path,QString firings_path,QString me
     QList<int> used_labels = used_labels_set.toList();
     qSort(used_labels);
 
-    foreach (int k, used_labels) {
+#pragma omp parallel for
+    for (int jj=0; jj<used_labels.count(); jj++) {
+        DiskReadMda32 X0;
         QVector<double> times_k;
-        for (bigint i=0; i<labels.count(); i++) {
-            if (labels[i]==k) times_k << times[i];
+        int k;
+        P_isolation_metrics_opts opts0;
+#pragma omp critical
+        {
+            X0=X;
+            k=used_labels[jj];
+            for (bigint i=0; i<labels.count(); i++) {
+                if (labels[i]==k) times_k << times[i];
+            }
+            opts0=opts;
         }
-        QJsonObject tmp = P_isolation_metrics::get_cluster_metrics(X, times, opts);
-        P_isolation_metrics::ClusterData CD;
-        CD.times=times_k;
-        CD.cluster_metrics=tmp;
-        cluster_data[k]=CD;
-    }
 
-    QJsonArray clusters;
-    foreach (int k,used_labels) {
-        QJsonObject tmp;
-        tmp["label"]=k;
-        tmp["metrics"]=cluster_data[k].cluster_metrics;
-        clusters.push_back(tmp);
+        QJsonObject tmp = P_isolation_metrics::get_cluster_metrics(X0, times_k, opts0);
+
+#pragma omp critical
+        {
+            P_isolation_metrics::ClusterData CD;
+            CD.times=times_k;
+            CD.cluster_metrics=tmp;
+            cluster_data[k]=CD;
+        }
     }
 
     QJsonArray cluster_pairs;
@@ -72,19 +81,52 @@ bool p_isolation_metrics(QString timeseries_path,QString firings_path,QString me
     QSet<QString> pairs_to_compare=P_isolation_metrics::get_pairs_to_compare(X,firings,num_comparisons_per_cluster,opts);
     QList<QString> pairs_to_compare_list=pairs_to_compare.toList();
     qSort(pairs_to_compare_list);
-    foreach (QString pairstr,pairs_to_compare_list) {
-        QStringList vals = pairstr.split("-");
-        int k1 = vals[0].toInt();
-        int k2 = vals[1].toInt();
-        if ((cluster_data.contains(k1))&&(cluster_data.contains(k2))) {
-            QVector<double> times_k1=cluster_data[k1].times;
-            QVector<double> times_k2=cluster_data[k2].times;
-            QJsonObject pair_metrics=P_isolation_metrics::get_pair_metrics(X,times_k1,times_k2,opts);
+    for (int jj=0; jj<pairs_to_compare_list.count(); jj++) {
+        QString pairstr;
+        int k1,k2;
+        QVector<double> times_k1,times_k2;
+        P_isolation_metrics_opts opts0;
+        DiskReadMda32 X0;
+#pragma omp critical
+        {
+            QStringList vals = pairstr.split("-");
+            k1 = vals[0].toInt();
+            k2 = vals[1].toInt();
+            pairstr=pairs_to_compare_list[jj];
+            times_k1=cluster_data.value(k1).times;
+            times_k2=cluster_data.value(k2).times;
+            opts0=opts;
+            X0=X;
+        }
+
+        QJsonObject pair_metrics=P_isolation_metrics::get_pair_metrics(X0,times_k1,times_k2,opts0);
+
+#pragma omp critical
+        {
             QJsonObject tmp;
             tmp["label"]=QString("%1,%2").arg(k1).arg(k2);
             tmp["metrics"]=pair_metrics;
+            double overlap=pair_metrics["overlap"].toDouble();
+            if (1-overlap<cluster_data[k1].isolation) {
+                cluster_data[k1].isolation=1-overlap;
+                cluster_data[k1].overlap_cluster=k2;
+            }
+            if (1-overlap<cluster_data[k2].isolation) {
+                cluster_data[k2].isolation=1-overlap;
+                cluster_data[k2].overlap_cluster=k1;
+            }
             cluster_pairs.push_back(tmp);
         }
+    }
+
+    QJsonArray clusters;
+    foreach (int k,used_labels) {
+        QJsonObject tmp;
+        tmp["label"]=k;
+        cluster_data[k].cluster_metrics["isolation"]=cluster_data[k].isolation;
+        cluster_data[k].cluster_metrics["overlap_cluster"]=cluster_data[k].overlap_cluster;
+        tmp["metrics"]=cluster_data[k].cluster_metrics;
+        clusters.push_back(tmp);
     }
 
     {
@@ -95,7 +137,7 @@ bool p_isolation_metrics(QString timeseries_path,QString firings_path,QString me
             return false;
     }
 
-    {
+    if (!pair_metrics_out_path.isEmpty()) {
         QJsonObject obj;
         obj["cluster_pairs"] = clusters;
         QString json = QJsonDocument(obj).toJson(QJsonDocument::Indented);
@@ -401,7 +443,7 @@ QSet<QString> get_pairs_to_compare(const DiskReadMda32& X, const DiskReadMda& F,
     return ret;
 }
 
-Mda32 extract_clips(const DiskReadMda32 &X,QVector<double> &times,int clip_size)
+Mda32 extract_clips(const DiskReadMda32 &X,const QVector<double> &times,int clip_size)
 {
     int M=X.N1();
     int T=clip_size;
@@ -444,8 +486,59 @@ Mda32 compute_mean_clip(const Mda32& clips)
     }
     return ret;
 }
-QJsonObject get_cluster_metrics(const DiskReadMda32 &X,const QVector<double> &times,P_isolation_metrics_opts opts) {
+Mda32 compute_stdev_clip(const Mda32& clips)
+{
+    int M = clips.N1();
+    int T = clips.N2();
+    int L = clips.N3();
 
+    Mda32 stdevs(M, T);
+    float* stdevs_ptr = stdevs.dataPtr();
+
+    const float* clips_ptr = clips.constDataPtr();
+    Mda sums(M, T);
+    Mda sumsqrs(M, T);
+    double* sums_ptr = sums.dataPtr();
+    double* sumsqrs_ptr = sumsqrs.dataPtr();
+    double count = 0;
+    for (int i = 0; i < L; i++) {
+        const float* Xptr = &clips_ptr[M * T * i];
+        for (int i = 0; i < M * T; i++) {
+            sums_ptr[i] += Xptr[i];
+            sumsqrs_ptr[i] += Xptr[i] * Xptr[i];
+        }
+        count++;
+    }
+
+    for (int i = 0; i < M * T; i++) {
+        double sum0 = sums_ptr[i];
+        double sumsqr0 = sumsqrs_ptr[i];
+        if (count) {
+            stdevs_ptr[i] = sqrt(sumsqr0 / count - (sum0 * sum0) / (count * count));
+        }
+    }
+    return stdevs;
+}
+QJsonObject get_cluster_metrics(const DiskReadMda32 &X,const QVector<double> &times,P_isolation_metrics_opts opts) {
+    QJsonObject ret;
+    Mda32 clips_k = extract_clips(X, times, opts.clip_size);
+    Mda32 template_k = compute_mean_clip(clips_k);
+    Mda32 stdev_k = compute_stdev_clip(clips_k);
+    double noise_overlap0 = compute_noise_overlap(X, times, opts, false);
+    {
+        double min0 = template_k.minimum();
+        double max0 = template_k.maximum();
+        ret["peak_amp"]=qMax(qAbs(min0), qAbs(max0));
+    }
+    {
+        double min0 = stdev_k.minimum();
+        double max0 = stdev_k.maximum();
+        ret["peak_noise"] = qMax(qAbs(min0), qAbs(max0));
+    }
+    {
+        ret["noise_overlap"] = noise_overlap0;
+    }
+    return ret;
 }
 QJsonObject get_pair_metrics(const DiskReadMda32 &X,const QVector<double> &times_k1,const QVector<double> &times_k2,P_isolation_metrics_opts opts) {
     QJsonObject pair_metrics;

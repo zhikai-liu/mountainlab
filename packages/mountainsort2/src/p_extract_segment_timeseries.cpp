@@ -22,6 +22,8 @@ bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, bi
     //bigint N=X.N2();
     bigint N2 = t2 - t1 + 1;
 
+    qDebug().noquote() << QString("Extracting segment timeseries M=%1, N2=%2").arg(M).arg(N2);
+
     if (!channels.isEmpty()) {
         M=channels.count();
     }
@@ -37,12 +39,17 @@ bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, bi
         if (t + sz > N2)
             sz = N2 - t;
         Mda32 chunk;
-        X.readChunk(chunk, 0, t1 + t, M, sz);
+        if (!X.readChunk(chunk, 0, t1 + t, M, sz)) {
+            qWarning() << "Problem reading chunk.";
+            return false;
+        }
         if (!channels.isEmpty()) {
             chunk=P_extract_segment_timeseries::extract_channels_from_chunk(chunk,channels);
         }
-        Y.writeChunk(chunk, 0, t);
-        Y.close();
+        if (!Y.writeChunk(chunk, 0, t)) {
+            qWarning() << "Problem writing chunk.";
+            return false;
+        }
     }
 
     return true;
