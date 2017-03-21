@@ -13,6 +13,7 @@
 // see info below
 void pca(Mda& components, Mda& features, Mda& sigma, const Mda& X, bigint num_features, bool subtract_mean);
 void pca(Mda32& components, Mda32& features, Mda32& sigma, const Mda32& X, bigint num_features, bool subtract_mean);
+void pca_subsampled(Mda32& components, Mda32& features, Mda32& sigma, const Mda32& X, bigint num_features, bool subtract_mean, bigint max_samples);
 
 // same as pca, except input it X*X', and features are not computed (because how could they be?)
 void pca_from_XXt(Mda& components, Mda& sigma, const Mda& XXt, bigint num_features);

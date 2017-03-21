@@ -72,7 +72,7 @@ void pca(Mda32& C, Mda32& F, Mda32& sigma, const Mda32& X, bigint num_features, 
     sigma.allocate(K, 1);
 
     for (bigint k = 0; k < K; k++) {
-        qDebug().noquote() << QString("k=%1/%2").arg(k).arg(K);
+        //qDebug().noquote() << QString("k=%1/%2").arg(k).arg(K);
         // C will be Mx1, F will be 1xN
         Mda32 C0;
         double sigma0;
@@ -85,6 +85,36 @@ void pca(Mda32& C, Mda32& F, Mda32& sigma, const Mda32& X, bigint num_features, 
     }
 
     F = mult_AtransB(C, X);
+}
+
+void pca_subsampled(Mda32 &components, Mda32 &features, Mda32 &sigma, const Mda32 &X, bigint num_features, bool subtract_mean, bigint max_samples)
+{
+    bigint M=X.N1();
+    bigint N=X.N2();
+
+    qDebug().noquote() << QString("PCA %1x%2x%3 (max_samples=%4)").arg(M).arg(N).arg(num_features).arg(max_samples);
+
+    if (N<=max_samples) {
+        pca(components,features,sigma,X,num_features,subtract_mean);
+        return;
+    }
+    double increment=N*1.0/max_samples;
+    QVector<bigint> indices_to_use;
+    for (double i=0; i<N; i+=increment) {
+        indices_to_use << (bigint)i;
+    }
+    bigint N2=indices_to_use.count();
+    Mda32 X2(M,N2);
+    for (bigint j=0; j<indices_to_use.count(); j++) {
+        for (bigint m=0; m<M; m++) {
+            X2.setValue(X.value(m,indices_to_use[j]),m,j);
+        }
+    }
+    Mda32 features2;
+    pca(components,features2,sigma,X2,num_features,subtract_mean);
+
+    // (MxK)' * MxN -> KxN
+    features = mult_AtransB(components, X);
 }
 
 void pca_subtract_mean(Mda& X)
@@ -626,3 +656,5 @@ void whitening_matrix_from_XXt(Mda32& W, const Mda32& XXt)
     Mda32 tmp = mult_AB(components, D);
     W = mult_ABtrans(tmp, components); // output U.D.U^T is symmetric
 }
+
+

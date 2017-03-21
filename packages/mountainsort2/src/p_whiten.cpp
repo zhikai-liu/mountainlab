@@ -219,38 +219,50 @@ bool p_whiten_clips(QString clips_path, QString whitening_matrix, QString clips_
 {
     (void)opts;
     Mda WW(whitening_matrix);
-    Mda32 clips(clips_path);
+    DiskReadMda32 clips(clips_path);
 
     double* WWptr = WW.dataPtr();
-    float* clips_ptr = clips.dataPtr();
 
     bigint M = clips.N1();
     bigint T = clips.N2();
     bigint L = clips.N3();
 
-    Mda32 clips_out(M, T, L);
-    float* clips_out_ptr = clips_out.dataPtr();
+    DiskWriteMda clips_out(MDAIO_TYPE_FLOAT32,clips_out_path,M, T, L);
 
     for (bigint i = 0; i < L; i++) {
-        for (bigint t = 0; t < T; t++) {
-            bigint aa = M * T * i + M * t;
+        Mda32 chunk;
+        if (!clips.readChunk(chunk,0,0,i,M,T,1)) {
+            qWarning() << "Problem reading chunk" << i;
+            return false;
+        }
+        float *chunk_ptr=chunk.dataPtr();
+
+        Mda32 chunk_out(M,T);
+        float *chunk_out_ptr=chunk_out.dataPtr();
+        {
             bigint bb = 0;
             for (bigint m1 = 0; m1 < M; m1++) {
                 for (bigint m2 = 0; m2 < M; m2++) {
-                    clips_out_ptr[aa + m1] += clips_ptr[aa + m2] * WWptr[bb]; // actually this does dgemm w/ WW^T
+                    chunk_out_ptr[m1] += chunk_ptr[m2] * WWptr[bb]; // actually this does dgemm w/ WW^T
                     bb++; // but since symmetric, doesn't matter.
                 }
             }
         }
+        if (!clips_out.writeChunk(chunk_out,0,0,i)) {
+            qWarning() << "Problem writing chunk";
+            return false;
+        }
     }
 
+    /*
     {
         // The following is needed to make the output deterministic, due to a very tricky floating-point problem that I honestly could not track down
         // It has something to do with multiplying by very small values of WWptr[bb]. But I truly could not pinpoint the exact problem.
         P_whiten::quantize(clips_out.totalSize(), clips_out.dataPtr(), 0.0001);
     }
+    */
 
-    return clips_out.write32(clips_out_path);
+    return true;
 }
 
 bool p_apply_whitening_matrix(QString timeseries, QString whitening_matrix, QString timeseries_out, Whiten_opts opts)

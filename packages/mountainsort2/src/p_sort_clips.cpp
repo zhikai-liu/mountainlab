@@ -8,7 +8,7 @@
 
 namespace P_sort_clips {
 QVector<int> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indices, Sort_clips_opts opts);
-Mda32 dimension_reduce_clips(const Mda32& clips, bigint num_features_per_channel);
+Mda32 dimension_reduce_clips(Mda32& clips, bigint num_features_per_channel, bigint max_samples);
 }
 
 bool p_sort_clips(QString clips_path, QString labels_out, Sort_clips_opts opts)
@@ -17,7 +17,7 @@ bool p_sort_clips(QString clips_path, QString labels_out, Sort_clips_opts opts)
     {
         QTime timer;
         timer.start();
-        clips = P_sort_clips::dimension_reduce_clips(clips, opts.num_features);
+        clips = P_sort_clips::dimension_reduce_clips(clips, opts.num_features, opts.max_samples);
         qDebug().noquote() << QString("Time elapsed for dimension reduction per channel (%1x%2x%3): %4 sec").arg(clips.N1()).arg(clips.N2()).arg(clips.N3()).arg(timer.elapsed() * 1.0 / 1000);
     }
     //bigint M=clips.N1();
@@ -41,25 +41,41 @@ bool p_sort_clips(QString clips_path, QString labels_out, Sort_clips_opts opts)
 
 namespace P_sort_clips {
 
-Mda32 dimension_reduce_clips(const Mda32& clips, bigint num_features_per_channel)
+Mda32 dimension_reduce_clips(Mda32& clips, bigint num_features_per_channel, bigint max_samples)
 {
     bigint M = clips.N1();
     bigint T = clips.N2();
     bigint L = clips.N3();
+    float *clips_ptr=clips.dataPtr();
 
     Mda32 ret(M, num_features_per_channel, L);
+    float *retptr=ret.dataPtr();
     for (bigint m = 0; m < M; m++) {
         Mda32 reshaped(T, L);
+        float *reshaped_ptr=reshaped.dataPtr();
+        bigint aa=0;
+        bigint bb=m;
         for (bigint i = 0; i < L; i++) {
             for (bigint t = 0; t < T; t++) {
-                reshaped.setValue(clips.value(m, t, i), t, i);
+                //reshaped.set(clips.get(bb),aa);
+                reshaped_ptr[aa]=clips_ptr[bb];
+                aa++;
+                bb+=M;
+                //reshaped.setValue(clips.value(m, t, i), t, i);
             }
         }
         Mda32 CC, FF, sigma;
-        pca(CC, FF, sigma, reshaped, num_features_per_channel, false);
+        pca_subsampled(CC, FF, sigma, reshaped, num_features_per_channel, false, max_samples);
+        float *FF_ptr=FF.dataPtr();
+        aa=0;
+        bb=m;
         for (bigint i = 0; i < L; i++) {
             for (bigint a = 0; a < num_features_per_channel; a++) {
-                ret.setValue(FF.value(a, i), m, a, i);
+                //ret.setValue(FF.value(a, i), m, a, i);
+                //ret.set(FF.get(aa),bb);
+                retptr[bb]=FF_ptr[aa];
+                aa++;
+                bb+=M;
             }
         }
     }
@@ -91,7 +107,7 @@ QVector<int> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indice
         Mda32 CC, sigma;
         QTime timer;
         timer.start();
-        pca(CC, FF, sigma, clips_reshaped, opts.num_features, false); //should we subtract the mean?
+        pca_subsampled(CC, FF, sigma, clips_reshaped, opts.num_features, false, opts.max_samples); //should we subtract the mean?
         qDebug().noquote() << QString("Time elapsed for pca (%1x%2x%3): %4 sec").arg(M).arg(T).arg(L0).arg(timer.elapsed() * 1.0 / 1000);
     }
 
