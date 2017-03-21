@@ -12,6 +12,8 @@
 #include <QJsonValue>
 #include <QByteArray>
 
+#include <math.h>
+
 typedef int64_t bigint;
 
 namespace TextFile {
