@@ -45,7 +45,9 @@ SOURCES += \
     p_compute_templates.cpp \
     p_load_test.cpp \
     p_compute_amplitudes.cpp \
-    p_extract_time_interval.cpp
+    p_extract_time_interval.cpp \
+    p_isolation_metrics.cpp \
+    kdtree.cpp
 
 HEADERS += \
     p_extract_clips.h \
@@ -69,7 +71,9 @@ HEADERS += \
     p_compute_templates.h \
     p_load_test.h \
     p_compute_amplitudes.h \
-    p_extract_time_interval.h
+    p_extract_time_interval.h \
+    p_isolation_metrics.h \
+    kdtree.h
 
 INCLUDEPATH += ../../../mountainsort/src/isosplit5
 VPATH += ../../../mountainsort/src/isosplit5
@@ -78,5 +82,5 @@ SOURCES += isosplit5.cpp isocut5.cpp jisotonic5.cpp
 
 INCLUDEPATH += ../../../mountainsort/src/utils
 VPATH += ../../../mountainsort/src/utils
-HEADERS += pca.h get_sort_indices.h
-SOURCES += pca.cpp get_sort_indices.cpp
+HEADERS += pca.h get_sort_indices.h compute_templates_0.h
+SOURCES += pca.cpp get_sort_indices.cpp compute_templates_0.cpp

@@ -31,6 +31,7 @@
 #include "p_load_test.h"
 #include "p_compute_amplitudes.h"
 #include "p_extract_time_interval.h"
+#include "p_isolation_metrics.h"
 
 #include "omp.h"
 
@@ -179,6 +180,12 @@ QJsonObject get_spec()
         X.addInputs("timeseries", "firings");
         X.addOutputs("cluster_metrics_out");
         X.addRequiredParameters("samplerate");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.isolation_metrics", "0.1");
+        X.addInputs("timeseries", "firings");
+        X.addOutputs("metrics_out","pair_metrics_out");
         processors.push_back(X.get_spec());
     }
     {
@@ -423,6 +430,14 @@ int main(int argc, char* argv[])
         Cluster_metrics_opts opts;
         opts.samplerate = CLP.named_parameters["samplerate"].toDouble();
         ret = p_cluster_metrics(timeseries, firings, cluster_metrics_out, opts);
+    }
+    else if (arg1 == "mountainsort.isolation_metrics") {
+        QString timeseries = CLP.named_parameters["timeseries"].toString();
+        QString firings = CLP.named_parameters["firings"].toString();
+        QString metrics_out = CLP.named_parameters["metrics_out"].toString();
+        QString pair_metrics_out = CLP.named_parameters["pair_metrics_out"].toString();
+        P_isolation_metrics_opts opts;
+        ret = p_isolation_metrics(timeseries, firings, metrics_out, pair_metrics_out, opts);
     }
     else if (arg1 == "mountainsort.split_firings") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);

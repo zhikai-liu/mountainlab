@@ -11,7 +11,7 @@ struct isosplit5_opts {
     int max_iterations_per_pass = 500;
 };
 
-void isosplit5(int* labels_out, int M, int N, float* X, isosplit5_opts opts);
+void isosplit5(int* labels_out, bigint M, bigint N, float* X, isosplit5_opts opts);
 
 /*
  * MCWRAP [ labels_out[1,N] ] = isosplit5_mex(X[M,N])
