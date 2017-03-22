@@ -62,7 +62,8 @@ function main(params) {
 	}
 	else {
 		//pre-sort processing
-		var outputs1={event_times_out:'',amplitudes_out:'',clips_out:'',whitening_matrix_out:''}; //specify which outputs to create
+		var outputs1={event_times_out:'',amplitudes_out:'',clips_out:''}; //specify which outputs to create
+		if (params.whiten=='true') outputs1.whitening_matrix_out='';
 		var results1=Process('mountainsort.ms2_001',
 				{timeseries:filt},params2,outputs1
 		);

@@ -5,4 +5,4 @@ ms_nf3 mountainsort_001.pipeline --curation=curation.script --num_features=3 --n
 ms_nf10 mountainsort_001.pipeline --curation=curation.script --num_features=10 --num_features2=10
 ms_nf30 mountainsort_001.pipeline --curation=curation.script --num_features=30 --num_features2=30
 
-ms2_001 ms2_001.pipeline
+ms2_001 ms2_001.pipeline --whiten=true

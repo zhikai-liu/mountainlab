@@ -227,6 +227,8 @@ bool p_whiten_clips(QString clips_path, QString whitening_matrix, QString clips_
     bigint T = clips.N2();
     bigint L = clips.N3();
 
+    qDebug().noquote() << "Whitening..." << M << T << L;
+
     DiskWriteMda clips_out(MDAIO_TYPE_FLOAT32,clips_out_path,M, T, L);
 
     for (bigint i = 0; i < L; i++) {
@@ -240,11 +242,15 @@ bool p_whiten_clips(QString clips_path, QString whitening_matrix, QString clips_
         Mda32 chunk_out(M,T);
         float *chunk_out_ptr=chunk_out.dataPtr();
         {
-            bigint bb = 0;
-            for (bigint m1 = 0; m1 < M; m1++) {
-                for (bigint m2 = 0; m2 < M; m2++) {
-                    chunk_out_ptr[m1] += chunk_ptr[m2] * WWptr[bb]; // actually this does dgemm w/ WW^T
-                    bb++; // but since symmetric, doesn't matter.
+
+            for (bigint t=0; t<T; t++) {
+                bigint aa = 0;
+                bigint bb = M*t;
+                for (bigint m1 = 0; m1 < M; m1++) {
+                    for (bigint m2 = 0; m2 < M; m2++) {
+                        chunk_out_ptr[bb+m1] += chunk_ptr[bb+m2] * WWptr[aa]; // actually this does dgemm w/ WW^T
+                        aa++; // but since symmetric, doesn't matter.
+                    }
                 }
             }
         }
