@@ -230,6 +230,22 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     }
     MLProcessor P = d->m_processors[processor_name];
 
+    {
+        // set default values
+        QStringList keys = P.parameters.keys();
+        foreach (QString key, keys) {
+            if (!parameters.contains(key)) {
+                if (!P.parameters[key].optional) {
+                    qWarning() << QString("Missing required parameter in processor %1: %2").arg(P.name).arg(key);
+                    return "";
+                }
+                if (P.parameters[key].default_value.isValid()) {
+                    parameters[key]=P.parameters[key].default_value;
+                }
+            }
+        }
+    }
+
     QString id = MLUtil::makeRandomId();
 
     QString tempdir = CacheManager::globalInstance()->makeLocalFile("tempdir_" + id, CacheManager::ShortTerm);

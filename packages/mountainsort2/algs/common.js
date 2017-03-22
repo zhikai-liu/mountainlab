@@ -99,6 +99,7 @@ common.CLParams=function(argv) {
 			if (ind>=0) {
 				var key0=arg0.slice(0,ind);
 				var val0=arg0.slice(ind+1);
+				val0=convert_to_number_if_appropriate(val0);
 				if (!(key0 in this.namedParameters)) {
 					this.namedParameters[key0]=val0;
 				}
@@ -111,17 +112,24 @@ common.CLParams=function(argv) {
 				}
 			}
 			else {
-				this.namedParameters[arg0]=args[i+1]||'';
-				i++;
+				//this.namedParameters[arg0]=args[i+1]||'';
+				//i++;
+				this.namedParameters[arg0]='';
 			}
 		}
-		else if (arg0.indexOf('-')===0) {
-			arg0=arg0.slice(1);
-			this.namedParameters[arg0]='';
-		}
+		//else if (arg0.indexOf('-')===0) {
+		//	arg0=arg0.slice(1);
+		//	this.namedParameters[arg0]='';
+		//}
 		else {
 			this.unnamedParameters.push(arg0);
 		}
+	}
+	function convert_to_number_if_appropriate(val) {
+		if (!isNaN(val))
+			return Number(val);
+		else
+			return val;
 	}
 };
 
@@ -154,9 +162,9 @@ common.release_lock=function(lock_name) {
 //this does not seem to be working as intended
 var _all_spawned=[];
 function kill_spawned_processes() {
-	console.log('Killing '+_all_spawned.length+' spawned processes');
+	console.log ('Killing '+_all_spawned.length+' spawned processes');
 	for (var i in _all_spawned) {
-		console.log('Terminating process with pid = '+pp.pid);
+		console.log ('Terminating process with pid = '+pp.pid);
 		var pp=_all_spawned[i];
 		process.kill(pp.pid, 'SIGTERM');
 	}

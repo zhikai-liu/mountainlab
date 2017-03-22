@@ -25,37 +25,26 @@ exports.spec=function() {
 
 	spec0.parameters=[];
 	spec0.parameters.push({name:"samplerate",description:"sample rate for timeseries",optional:false});
-	spec0.parameters.push({name:'segment_duration_sec',optional:true});
-	spec0.parameters.push({name:'num_threads',optional:true});
-	spec0.parameters.push({name:"central_channel",optional:true});
-	spec0.parameters.push({name:"clip_size_msec",optional:true});
-	spec0.parameters.push({name:"detect_interval_msec",optional:true});
-	spec0.parameters.push({name:"detect_threshold",optional:true});
-	spec0.parameters.push({name:"detect_sign",optional:true});
-	spec0.parameters.push({name:"whiten",optional:true});
-	spec0.parameters.push({name:"consolidate_clusters",optional:true});
-	spec0.parameters.push({name:"fit_stage",optional:true});
-	spec0.parameters.push({name:'subsample_factor',optional:true});
-	spec0.parameters.push({name:'channels',optional:true});
+	spec0.parameters.push({name:'segment_duration_sec',optional:true,default_value:3600});
+	spec0.parameters.push({name:'num_threads',optional:true,default_value:0});
+	spec0.parameters.push({name:"central_channel",optional:true,default_value:0});
+	spec0.parameters.push({name:"clip_size_msec",optional:true,default_value:2});
+	spec0.parameters.push({name:"detect_interval_msec",optional:true,default_value:1});
+	spec0.parameters.push({name:"detect_threshold",optional:true,default_value:3.5});
+	spec0.parameters.push({name:"detect_sign",optional:true,default_value:0});
+	spec0.parameters.push({name:"whiten",optional:true,default_value:'false'});
+	spec0.parameters.push({name:"consolidate_clusters",optional:true,default_value:'false'});
+	spec0.parameters.push({name:"fit_stage",optional:true,default_value:'false'});
+	spec0.parameters.push({name:'subsample_factor',optional:true,default_value:1});
+	spec0.parameters.push({name:'channels',optional:true,default_value:''});
 	return common.clone(spec0);
 };
 
 exports.run=function(opts,callback) {
 	var tmpfiles=[]; //all the temporary files to get removed at the end
 	opts.temp_prefix=opts.temp_prefix||'00'; //in case the user has specified the temp_prefix
-	opts.num_threads=Number(opts.num_threads||0);
 	if (!opts.num_threads) opts.num_threads=os.cpus().length;
-	if (!opts.segment_duration_sec) opts.segment_duration_sec=3600;
-	if (!opts.central_channel) opts.central_channel=0;
-	if (!opts.clip_size_msec) opts.clip_size_msec=2;
-	if (!opts.detect_interval_msec) opts.detect_interval_msec=1;
-	if (!opts.detect_threshold) opts.detect_threshold=3.5;
-	if (!opts.detect_sign) opts.detect_sign=0;
-	if (!opts.whiten) opts.whiten='false';
-	if (!opts.consolidate_clusters) opts.consolidate_clusters='false';
-	if (!opts.fit_stage) opts.fit_stage='false';
-	if (!opts.subsample_factor) opts.subsample_factor=1;
-
+	
 	if (opts.clips) {
 		if (!opts.event_times) {
 			console.error('If you specify clips as input, then you must also provide event_times');

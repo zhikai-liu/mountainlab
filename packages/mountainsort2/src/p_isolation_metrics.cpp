@@ -29,10 +29,12 @@ struct ClusterData {
 };
 }
 
-bool p_isolation_metrics(QString timeseries_path,QString firings_path,QString metrics_out_path,QString pair_metrics_out_path,P_isolation_metrics_opts opts) {
-    DiskReadMda32 X(timeseries_path);
+bool p_isolation_metrics(QStringList timeseries_list,QString firings_path,QString metrics_out_path,QString pair_metrics_out_path,P_isolation_metrics_opts opts) {
+    qDebug() << __FILE__ << __LINE__ ;
+    DiskReadMda32 X(2,timeseries_list);
     Mda firings(firings_path);
 
+    qDebug() << __FILE__ << __LINE__;
     QMap<int,P_isolation_metrics::ClusterData> cluster_data;
 
     QVector<double> times(firings.N2());
@@ -49,6 +51,7 @@ bool p_isolation_metrics(QString timeseries_path,QString firings_path,QString me
     QList<int> used_labels = used_labels_set.toList();
     qSort(used_labels);
 
+    qDebug() << __FILE__ << __LINE__;
 #pragma omp parallel for
     for (int jj=0; jj<used_labels.count(); jj++) {
         DiskReadMda32 X0;
@@ -76,6 +79,7 @@ bool p_isolation_metrics(QString timeseries_path,QString firings_path,QString me
         }
     }
 
+    qDebug() << __FILE__ << __LINE__;
     QJsonArray cluster_pairs;
     int num_comparisons_per_cluster=10;
     QSet<QString> pairs_to_compare=P_isolation_metrics::get_pairs_to_compare(X,firings,num_comparisons_per_cluster,opts);
@@ -265,11 +269,14 @@ double compute_noise_overlap(const DiskReadMda32& X, const QVector<double>& time
     //Mda32 noise_clips = extract_clips(X, noise_times, opts.clip_size);
     Mda32 all_clips = extract_clips(X, all_times, opts.clip_size);
 
+    qDebug() << all_clips.N1() << all_clips.N2() << all_clips.N3() << X.N1() << X.N2();
+
     elapsed_times << timer.restart();
 
     //Mda32 noise_shape = compute_noise_shape(noise_clips, compute_mean_clip(clips));
     Mda32 noise_shape = compute_noise_shape_2(X, compute_mean_clip(clips), opts);
     elapsed_times << timer.restart();
+
     if (debug)
         noise_shape.write32("/tmp/noise_shape.mda");
     if (debug)
@@ -315,10 +322,12 @@ double compute_noise_overlap(const DiskReadMda32& X, const QVector<double>& time
         }
     }
 
+    qDebug() << "###################" << num_correct << num_total << times.count() << times_subset.count();
+
     elapsed_times << timer.restart();
 
     if (false)
-        qDebug().noquote() << "TIMES:" << elapsed_times;
+        qDebug().noquote() << "Elapsed times:" << elapsed_times;
 
     if (!num_total)
         return 0;
