@@ -67,3 +67,15 @@ bool p_load_test(QString stats_out, P_load_test_opts opts)
     printf("%s\n", json.toUtf8().data());
     return TextFile::write(stats_out, json);
 }
+
+bool p_misc_test()
+{
+    bigint M = 4;
+    bigint T = 50;
+    bigint L = 1000;
+
+    //Mda32 clip0(M,T);
+
+    //Mda32 X(M,T,L);
+    return true;
+}

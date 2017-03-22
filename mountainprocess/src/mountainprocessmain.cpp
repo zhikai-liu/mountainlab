@@ -686,6 +686,7 @@ int main(int argc, char* argv[])
         Q_UNUSED(dup2(devnull, STDERR_FILENO));
 #endif
 #endif
+        qDebug().noquote() << "Initializing process manager...";
         if (!initialize_process_manager()) { // load the processor plugins etc
             //log_end();
             return -1;
@@ -713,6 +714,7 @@ int main(int argc, char* argv[])
         RR.memory_gb = 0;
         RR.num_processes = MLUtil::configValue("mountainprocess", "max_num_simultaneous_processes").toDouble();
         server.setTotalResourcesAvailable(RR);
+        qDebug().noquote() << "Starting server...";
         if (!server.start())
             return -1;
         return 0;

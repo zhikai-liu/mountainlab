@@ -3,11 +3,11 @@
 
 #include "mlcommon.h"
 
-static int num_files_open = 0;
+static bigint num_files_open = 0;
 static int64_t num_bytes_allocated = 0;
-static int malloc_count = 0;
-static int num_bytes_read = 0;
-static int num_bytes_written = 0;
+static bigint malloc_count = 0;
+static bigint num_bytes_read = 0;
+static bigint num_bytes_written = 0;
 
 FILE* jfopen(const char* path, const char* mode)
 {
@@ -28,28 +28,28 @@ void jfclose(FILE* F)
     num_files_open--;
 }
 
-int jfread(void* data, size_t sz, int num, FILE* F)
+bigint jfread(void* data, size_t sz, bigint num, FILE* F)
 {
-    int ret = fread(data, sz, num, F);
+    bigint ret = fread(data, sz, num, F);
     num_bytes_read += ret;
     return ret;
 }
 
-int jfwrite(void* data, size_t sz, int num, FILE* F)
+bigint jfwrite(void* data, size_t sz, bigint num, FILE* F)
 {
-    int ret = fwrite(data, sz, num, F);
+    bigint ret = fwrite(data, sz, num, F);
     num_bytes_written += ret;
     return ret;
 }
 
-int jnumfilesopen()
+bigint jnumfilesopen()
 {
     return num_files_open;
 }
 
 void* jmalloc(size_t num_bytes)
 {
-    //printf("jmalloc %d.\n",(int)num_bytes);
+    //printf("jmalloc %d.\n",(bigint)num_bytes);
     if (!num_bytes)
         return 0;
     void* ret = malloc(num_bytes + 8); //add some space to track the number of bytes
@@ -71,7 +71,7 @@ void jfree(void* ptr)
     num_bytes_allocated -= num_bytes;
     malloc_count--;
 }
-int jmalloccount()
+bigint jmalloccount()
 {
     return malloc_count;
 }
@@ -81,12 +81,12 @@ int64_t jbytesallocated()
     return num_bytes_allocated;
 }
 
-int jnumbytesread()
+bigint jnumbytesread()
 {
     return num_bytes_read;
 }
 
-int jnumbyteswritten()
+bigint jnumbyteswritten()
 {
     return num_bytes_written;
 }

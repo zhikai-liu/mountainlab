@@ -12,15 +12,15 @@
 
 FILE* jfopen(const char* path, const char* mode);
 void jfclose(FILE* F);
-int jfread(void* data, size_t sz, int num, FILE* F);
-int jfwrite(void* data, size_t sz, int num, FILE* F);
-int jnumfilesopen();
+bigint jfread(void* data, size_t sz, bigint num, FILE* F);
+bigint jfwrite(void* data, size_t sz, bigint num, FILE* F);
+bigint jnumfilesopen();
 
 void* jmalloc(size_t num_bytes);
 void jfree(void* ptr);
-int jmalloccount();
+bigint jmalloccount();
 int64_t jbytesallocated();
-int jnumbytesread();
-int jnumbyteswritten();
+bigint jnumbytesread();
+bigint jnumbyteswritten();
 
 #endif // USAGETRACKING

@@ -17,10 +17,10 @@ struct is_same<T, T> {
     };
 };
 
-int mda_read_header(struct MDAIO_HEADER* HH, FILE* input_file)
+bigint mda_read_header(struct MDAIO_HEADER* HH, FILE* input_file)
 {
-    int num_read = 0;
-    int i;
+    bigint num_read = 0;
+    bigint i;
     bigint totsize;
 
     //initialize
@@ -84,10 +84,10 @@ int mda_read_header(struct MDAIO_HEADER* HH, FILE* input_file)
     return 1;
 }
 
-int mda_write_header(struct MDAIO_HEADER* X, FILE* output_file)
+bigint mda_write_header(struct MDAIO_HEADER* X, FILE* output_file)
 {
-    int num_bytes;
-    int i;
+    bigint num_bytes;
+    bigint i;
 
     //make sure we have the right number of bytes per entry in case the programmer forgot to set this!
     if (X->data_type == MDAIO_TYPE_BYTE)

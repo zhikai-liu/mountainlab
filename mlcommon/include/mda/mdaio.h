@@ -48,6 +48,9 @@ typedef int64_t bigint;
 #define MDAIO_TYPE_UINT16 -6
 #define MDAIO_TYPE_FLOAT64 -7
 #define MDAIO_TYPE_UINT32 -8
+//FUTURE:
+//#define MDAIO_TYPE_INT64 -9
+//#define MDAIO_TYPE_UINT64 -10
 
 #include <stdint.h>
 
@@ -60,12 +63,12 @@ struct MDAIO_HEADER {
 
     //the following make sense for reading but not writing -- purposes of info
     //note that the header size will always be (3+num_dims)x4
-    int header_size; //the size of the header in bytes
+    bigint header_size; //the size of the header in bytes
 };
 
 //simply read, write or copy the mda header
-int mda_read_header(struct MDAIO_HEADER* H, FILE* input_file);
-int mda_write_header(struct MDAIO_HEADER* H, FILE* output_file);
+bigint mda_read_header(struct MDAIO_HEADER* H, FILE* input_file);
+bigint mda_write_header(struct MDAIO_HEADER* H, FILE* output_file);
 void mda_copy_header(struct MDAIO_HEADER* Hdst, const struct MDAIO_HEADER* Hsrc);
 
 //the following can be used no matter what the underlying data type is

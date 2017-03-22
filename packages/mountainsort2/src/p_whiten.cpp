@@ -157,7 +157,6 @@ bool p_compute_whitening_matrix(QStringList timeseries_list, QString whitening_m
     bigint timepoint = 0;
     while (timepoint < N) {
         QList<Mda32> chunks;
-        qDebug() << "---------------------" << omp_get_num_threads();
         while ((timepoint < N) && (chunks.count() < omp_get_max_threads())) {
             Mda32 chunk0;
             X0.readChunk(chunk0, 0, timepoint, M, qMin(chunk_size, N - timepoint));
@@ -165,7 +164,6 @@ bool p_compute_whitening_matrix(QStringList timeseries_list, QString whitening_m
             timepoint += chunk_size;
         }
         bigint num_chunks = chunks.count();
-        qDebug() << QString("Processing %1 chunks. timepoint %2. (%3%)").arg(num_chunks).arg(timepoint).arg((int)(timepoint * 1.0 / N * 100));
 #pragma omp parallel
         {
 #pragma omp for

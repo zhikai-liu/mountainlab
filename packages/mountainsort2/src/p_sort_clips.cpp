@@ -5,6 +5,7 @@
 #include "pca.h"
 #include "isosplit5.h"
 #include "mlcommon.h"
+#include <QCoreApplication>
 
 namespace P_sort_clips {
 QVector<int> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indices, Sort_clips_opts opts);
@@ -13,6 +14,7 @@ Mda32 dimension_reduce_clips(Mda32& clips, bigint num_features_per_channel, bigi
 
 bool p_sort_clips(QString clips_path, QString labels_out, Sort_clips_opts opts)
 {
+    qDebug().noquote() << "p_sort_clips";
     Mda32 clips(clips_path);
     {
         QTime timer;
@@ -47,6 +49,8 @@ Mda32 dimension_reduce_clips(Mda32& clips, bigint num_features_per_channel, bigi
     bigint T = clips.N2();
     bigint L = clips.N3();
     float* clips_ptr = clips.dataPtr();
+
+    qDebug().noquote() << QString("Dimension reduce clips %1x%2x%3").arg(M).arg(T).arg(L);
 
     Mda32 ret(M, num_features_per_channel, L);
     float* retptr = ret.dataPtr();
