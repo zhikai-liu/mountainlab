@@ -4,7 +4,6 @@
 #include <mda.h>
 #include "get_sort_indices.h"
 
-
 bool p_combine_firings(QStringList firings_list, QString firings_out, bool increment_labels)
 {
     QVector<int> all_central_channels;

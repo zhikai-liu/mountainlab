@@ -49,7 +49,7 @@ struct ProcessorSpec {
     void addRequiredParameters(QString name1, QString name2 = "", QString name3 = "", QString name4 = "", QString name5 = "");
     void addOptionalParameters(QString name1, QString name2 = "", QString name3 = "", QString name4 = "", QString name5 = "");
     void addRequiredParameter(QString name, QString description = "");
-    void addOptionalParameter(QString name, QString description = "", QVariant default_value=QVariant());
+    void addOptionalParameter(QString name, QString description = "", QVariant default_value = QVariant());
 
     void addInput(QString name, QString description = "", bool optional = false);
     void addOutput(QString name, QString description = "", bool optional = false);

@@ -51,7 +51,7 @@ QJsonObject get_spec()
         X.addInputs("timeseries");
         X.addOutputs("timeseries_out");
         X.addRequiredParameters("t1", "t2");
-        X.addOptionalParameter("channels","Comma-separated list of channels to extract","");
+        X.addOptionalParameter("channels", "Comma-separated list of channels to extract", "");
         processors.push_back(X.get_spec());
     }
     {
@@ -66,9 +66,9 @@ QJsonObject get_spec()
         X.addInputs("timeseries");
         X.addOutputs("timeseries_out");
         X.addRequiredParameters("samplerate", "freq_min", "freq_max");
-        X.addOptionalParameter("freq_wid","",1000);
-        X.addOptionalParameter("quantization_unit","",0);
-        X.addOptionalParameter("testcode","","");
+        X.addOptionalParameter("freq_wid", "", 1000);
+        X.addOptionalParameter("quantization_unit", "", 0);
+        X.addOptionalParameter("testcode", "", "");
         processors.push_back(X.get_spec());
     }
     {
@@ -104,7 +104,7 @@ QJsonObject get_spec()
         X.addInputs("timeseries");
         X.addOutputs("event_times_out");
         X.addRequiredParameters("central_channel", "detect_threshold", "detect_interval", "sign");
-        X.addOptionalParameter("subsample_factor","",1);
+        X.addOptionalParameter("subsample_factor", "", 1);
         processors.push_back(X.get_spec());
     }
     {
@@ -119,7 +119,7 @@ QJsonObject get_spec()
         X.addInputs("timeseries", "firings");
         X.addOutputs("templates_out");
         X.addRequiredParameters("clip_size");
-        X.addOptionalParameter("clusters","Comma-separated list of clusters to inclue","");
+        X.addOptionalParameter("clusters", "Comma-separated list of clusters to inclue", "");
         processors.push_back(X.get_spec());
     }
     {
@@ -150,7 +150,7 @@ QJsonObject get_spec()
         X.addInputs("firings_list");
         X.addOutputs("firings_out");
         //X.addRequiredParameters();
-        X.addOptionalParameters("increment_labels","","true");
+        X.addOptionalParameters("increment_labels", "", "true");
         processors.push_back(X.get_spec());
     }
     {
@@ -288,13 +288,13 @@ int main(int argc, char* argv[])
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
         bigint t1 = CLP.named_parameters["t1"].toDouble(); //to double to handle scientific notation
         bigint t2 = CLP.named_parameters["t2"].toDouble(); //to double to handle scientific notation
-        QStringList channels_str = CLP.named_parameters["channels"].toString().split(",",QString::SkipEmptyParts);
-        QList<int> channels=MLUtil::stringListToIntList(channels_str);
+        QStringList channels_str = CLP.named_parameters["channels"].toString().split(",", QString::SkipEmptyParts);
+        QList<int> channels = MLUtil::stringListToIntList(channels_str);
         if (timeseries_list.count() <= 1) {
             ret = p_extract_segment_timeseries(timeseries_list.value(0), timeseries_out, t1, t2, channels);
         }
         else {
-            ret = p_extract_segment_timeseries_from_concat_list(timeseries_list, timeseries_out, t1, t2,channels);
+            ret = p_extract_segment_timeseries_from_concat_list(timeseries_list, timeseries_out, t1, t2, channels);
         }
     }
     else if (arg1 == "mountainsort.extract_segment_firings") {
@@ -443,7 +443,7 @@ int main(int argc, char* argv[])
     else if (arg1 == "mountainsort.combine_cluster_metrics") {
         QStringList metrics_list = MLUtil::toStringList(CLP.named_parameters["metrics_list"]);
         QString metrics_out = CLP.named_parameters["metrics_out"].toString();
-        ret = p_combine_cluster_metrics(metrics_list,metrics_out);
+        ret = p_combine_cluster_metrics(metrics_list, metrics_out);
     }
     else if (arg1 == "mountainsort.split_firings") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);

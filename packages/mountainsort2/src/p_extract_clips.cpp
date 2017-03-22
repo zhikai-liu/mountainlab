@@ -34,7 +34,7 @@ bool p_extract_clips(QStringList timeseries_list, QString event_times, QString c
         //bigint t2 = t1 + T - 1;
         Mda32 tmp;
         X.readChunk(tmp, 0, t1, M, T);
-        if (!clips.writeChunk(tmp,0,0,i)) {
+        if (!clips.writeChunk(tmp, 0, 0, i)) {
             qWarning() << "Problem writing chunk" << i;
             return false;
         }

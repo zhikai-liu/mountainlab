@@ -3,8 +3,7 @@
 #include <QCoreApplication>
 #include "qprocessmanager.h"
 
-class ProcessManagerTest : public QObject
-{
+class ProcessManagerTest : public QObject {
     Q_OBJECT
 
 public:
@@ -30,7 +29,8 @@ void ProcessManagerTest::testEmpty()
     QCOMPARE(manager.count(), 0);
 }
 
-void ProcessManagerTest::testFinished() {
+void ProcessManagerTest::testFinished()
+{
     QProcessManager manager;
     QSharedPointer<QProcess> process = manager.start("/bin/true");
     QSignalSpy spy(process.data(), SIGNAL(finished(int)));
@@ -67,7 +67,7 @@ void ProcessManagerTest::testDestroyWithParent()
 void ProcessManagerTest::testKill()
 {
     QProcessManager manager;
-    QSharedPointer<QProcess> process = manager.start("/bin/sleep", {"500"});
+    QSharedPointer<QProcess> process = manager.start("/bin/sleep", { "500" });
     QSignalSpy spy(process.data(), SIGNAL(finished(int)));
     QCOMPARE(manager.count(), 1);
     QTest::qWait(10);
@@ -81,8 +81,8 @@ void ProcessManagerTest::testKill()
 void ProcessManagerTest::testKillLast()
 {
     QProcessManager manager;
-    manager.start("/bin/sleep", {"500"});
-    manager.start("/bin/sleep", {"500"});
+    manager.start("/bin/sleep", { "500" });
+    manager.start("/bin/sleep", { "500" });
     QCOMPARE(manager.count(), 2);
     QTest::qWait(10);
     manager.closeLast();
@@ -96,8 +96,8 @@ void ProcessManagerTest::testKillLast()
 void ProcessManagerTest::testKillAll()
 {
     QProcessManager manager;
-    QSharedPointer<QProcess> p1 = manager.start("/bin/sleep", {"500"});
-    QSharedPointer<QProcess> p2 = manager.start("/bin/sleep", {"500"});
+    QSharedPointer<QProcess> p1 = manager.start("/bin/sleep", { "500" });
+    QSharedPointer<QProcess> p2 = manager.start("/bin/sleep", { "500" });
     QCOMPARE(manager.count(), 2);
     QTest::qWait(10);
     manager.closeAll();

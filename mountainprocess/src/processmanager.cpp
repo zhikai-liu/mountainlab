@@ -206,10 +206,11 @@ void delete_tempdir(QString tempdir)
     QDir(QFileInfo(tempdir).path()).rmdir(QFileInfo(tempdir).fileName());
 }
 
-bool do_mkdir(QString path,int num_tries=1) {
+bool do_mkdir(QString path, int num_tries = 1)
+{
     if (!QDir(QFileInfo(path).path()).mkdir(QFileInfo(path).fileName())) {
-        if (num_tries>1) {
-            do_mkdir(path,num_tries-1);
+        if (num_tries > 1) {
+            do_mkdir(path, num_tries - 1);
         }
     }
     return true;
@@ -240,7 +241,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
                     return "";
                 }
                 if (P.parameters[key].default_value.isValid()) {
-                    parameters[key]=P.parameters[key].default_value;
+                    parameters[key] = P.parameters[key].default_value;
                 }
             }
         }
@@ -249,7 +250,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     QString id = MLUtil::makeRandomId();
 
     QString tempdir = CacheManager::globalInstance()->makeLocalFile("tempdir_" + id, CacheManager::ShortTerm);
-    if (!do_mkdir(tempdir,3)) {
+    if (!do_mkdir(tempdir, 3)) {
         qWarning() << "Error creating temporary directory for process: " + tempdir;
         QCoreApplication::exit(-1);
     }
@@ -291,7 +292,6 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
             ppp += QString("--_request_num_threads=%1 ").arg(RPR.request_num_threads);
         }
         ppp += QString("--_tempdir=%1 ").arg(tempdir);
-
 
         exe_command.replace(QRegExp("\\$\\(arguments\\)"), ppp);
     }

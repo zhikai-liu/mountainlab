@@ -14,6 +14,6 @@ struct P_isolation_metrics_opts {
     bool do_not_compute_pair_metrics = false;
 };
 
-bool p_isolation_metrics(QStringList timeseries_list,QString firings,QString metrics_out,QString pair_metrics_out,P_isolation_metrics_opts opts);
+bool p_isolation_metrics(QStringList timeseries_list, QString firings, QString metrics_out, QString pair_metrics_out, P_isolation_metrics_opts opts);
 
 #endif // P_ISOLATION_METRICS_H

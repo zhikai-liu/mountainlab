@@ -17,12 +17,14 @@ struct Handler {
 struct SlotHandler : public Handler {
     QObject* receiver;
     const char* member;
-    void execute() {
+    void execute()
+    {
         if (member && member[0] == '1') {
-            int methodIndex = receiver->metaObject()->indexOfMethod(member+1);
+            int methodIndex = receiver->metaObject()->indexOfMethod(member + 1);
             QMetaMethod method = receiver->metaObject()->method(methodIndex);
             method.invoke(receiver, Qt::DirectConnection);
-        } else if (member && member[0] == '2') {
+        }
+        else if (member && member[0] == '2') {
             qWarning("Emitting signals from SignalHandler is not supported");
         }
     }
@@ -30,12 +32,15 @@ struct SlotHandler : public Handler {
 
 struct FunctionHandler : public Handler {
     std::function<void(void)> callback;
-    void execute() {
-        if (callback) callback();
+    void execute()
+    {
+        if (callback)
+            callback();
     }
 };
 
-SignalHandler::SignalHandler(QObject *parent) : QObject(parent)
+SignalHandler::SignalHandler(QObject* parent)
+    : QObject(parent)
 {
     if (!slot_handler_instance)
         slot_handler_instance = this;
@@ -48,13 +53,14 @@ SignalHandler::~SignalHandler()
         slot_handler_instance = nullptr;
 }
 
-bool HandlerCompare(Handler* h1, Handler* h2) {
+bool HandlerCompare(Handler* h1, Handler* h2)
+{
     if (h1->priority > h2->priority)
         return true;
     return false;
 }
 
-size_t SignalHandler::installHandler(int sig, QObject *receiver, const char *member, int priority)
+size_t SignalHandler::installHandler(int sig, QObject* receiver, const char* member, int priority)
 {
     SlotHandler* sh = new SlotHandler;
     sh->receiver = receiver;
@@ -66,9 +72,9 @@ size_t SignalHandler::installHandler(int sig, QObject *receiver, const char *mem
 
     auto iter = qUpperBound(m_handlers.begin(), m_handlers.end(), sh, HandlerCompare);
     m_handlers.insert(iter, sh);
-//    if (!m_installedHandlers.contains(sig)) {
-        sigaction_set(QSet<int>({sig}));
-//    }
+    //    if (!m_installedHandlers.contains(sig)) {
+    sigaction_set(QSet<int>({ sig }));
+    //    }
     return sh->id;
 }
 
@@ -82,13 +88,13 @@ size_t SignalHandler::installHandler(int sig, SignalHandler::Closure cl, int pri
 
     auto iter = qUpperBound(m_handlers.begin(), m_handlers.end(), fh, HandlerCompare);
     m_handlers.insert(iter, fh);
-//    if (!m_installedHandlers.contains(sig)) {
-        sigaction_set(QSet<int>({sig}));
-//    }
+    //    if (!m_installedHandlers.contains(sig)) {
+    sigaction_set(QSet<int>({ sig }));
+    //    }
     return fh->id;
 }
 
-size_t SignalHandler::installHandler(Signals set, QObject *receiver, const char *member, int priority)
+size_t SignalHandler::installHandler(Signals set, QObject* receiver, const char* member, int priority)
 {
     SlotHandler* sh = new SlotHandler;
     sh->receiver = receiver;
@@ -119,7 +125,7 @@ size_t SignalHandler::installHandler(Signals set, SignalHandler::Closure cl, int
 
 void SignalHandler::uninstallHandler(size_t id)
 {
-    for(int i = 0; i < m_handlers.size(); ++i) {
+    for (int i = 0; i < m_handlers.size(); ++i) {
         if (m_handlers.at(i)->id == id) {
             Signals sigset = m_handlers.at(i)->set;
             delete m_handlers.at(i);
@@ -132,22 +138,37 @@ void SignalHandler::uninstallHandler(size_t id)
 
 SignalHandler::Signal SignalHandler::flagForSignal(int signum)
 {
-    switch(signum) {
-    case SIGHUP: return SigHangUp;
-    case SIGINT: return SigInterrupt;
-    case SIGQUIT: return SigQuit;
-    case SIGABRT: return SigAbort;
-    case SIGFPE: return SigFloatingPoint;
-    case SIGKILL: return SigKill;
-    case SIGUSR1: return SigUser1;
-    case SIGSEGV: return SigSegmentationFault;
-    case SIGUSR2: return SigUser2;
-    case SIGPIPE: return SigBrokenPipe;
-    case SIGALRM: return SigAlarm;
-    case SIGTERM: return SigTermination;
-    case SIGCONT: return SigContinue;
-    case SIGSTOP: return SigStop;
-    case SIGPWR: return SigPowerFailure;
+    switch (signum) {
+    case SIGHUP:
+        return SigHangUp;
+    case SIGINT:
+        return SigInterrupt;
+    case SIGQUIT:
+        return SigQuit;
+    case SIGABRT:
+        return SigAbort;
+    case SIGFPE:
+        return SigFloatingPoint;
+    case SIGKILL:
+        return SigKill;
+    case SIGUSR1:
+        return SigUser1;
+    case SIGSEGV:
+        return SigSegmentationFault;
+    case SIGUSR2:
+        return SigUser2;
+    case SIGPIPE:
+        return SigBrokenPipe;
+    case SIGALRM:
+        return SigAlarm;
+    case SIGTERM:
+        return SigTermination;
+    case SIGCONT:
+        return SigContinue;
+    case SIGSTOP:
+        return SigStop;
+    case SIGPWR:
+        return SigPowerFailure;
     }
     return SigNone;
 }
@@ -170,10 +191,11 @@ void SignalHandler::sigaction_set(QSet<int> signumset)
     new_action.sa_flags = 0;
     sigemptyset(&new_action.sa_mask);
 
-    foreach(int signum, signumset) {
+    foreach (int signum, signumset) {
         if (m_installedHandlers.contains(signum)) {
             m_installedHandlers[signum]++;
-        } else {
+        }
+        else {
             sigaction(signum, &new_action, &old_action);
             m_oldHandlers.insert(signum, old_action);
             m_installedHandlers.insert(signum, 1);
@@ -189,12 +211,13 @@ void SignalHandler::sigaction_set(Signals signumset)
     new_action.sa_flags = 0;
     sigemptyset(&new_action.sa_mask);
 
-    for(int signum = 1; signum <= _NSIG; ++signum) {
+    for (int signum = 1; signum <= _NSIG; ++signum) {
         if (!signumset.testFlag(flagForSignal(signum)))
             continue;
         if (m_installedHandlers.contains(signum)) {
             m_installedHandlers[signum]++;
-        } else {
+        }
+        else {
             sigaction(signum, &new_action, &old_action);
             m_oldHandlers.insert(signum, old_action);
             m_installedHandlers.insert(signum, 1);
@@ -204,8 +227,9 @@ void SignalHandler::sigaction_set(Signals signumset)
 
 void SignalHandler::sigaction_unset(QSet<int> signumset)
 {
-    foreach(int signum, signumset) {
-        if (!m_installedHandlers.contains(signum)) continue;
+    foreach (int signum, signumset) {
+        if (!m_installedHandlers.contains(signum))
+            continue;
         if (--m_installedHandlers[signum] == 0) {
             sigaction(signum, &m_oldHandlers[signum], NULL);
             m_oldHandlers.remove(signum);
@@ -216,10 +240,11 @@ void SignalHandler::sigaction_unset(QSet<int> signumset)
 
 void SignalHandler::sigaction_unset(Signals signumset)
 {
-    for(int signum = 1; signum <= _NSIG; ++signum) {
+    for (int signum = 1; signum <= _NSIG; ++signum) {
         if (!signumset.testFlag(flagForSignal(signum)))
             continue;
-        if (!m_installedHandlers.contains(signum)) continue;
+        if (!m_installedHandlers.contains(signum))
+            continue;
         if (--m_installedHandlers[signum] == 0) {
             sigaction(signum, &m_oldHandlers[signum], NULL);
             m_oldHandlers.remove(signum);
@@ -231,7 +256,7 @@ void SignalHandler::sigaction_unset(Signals signumset)
 void SignalHandler::execute(int signum)
 {
     Signal sigFlag = flagForSignal(signum);
-    foreach(Handler* h, m_handlers) {
+    foreach (Handler* h, m_handlers) {
         if (h->set & sigFlag)
             h->execute();
     }

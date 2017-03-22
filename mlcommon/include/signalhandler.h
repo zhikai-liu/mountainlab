@@ -9,8 +9,7 @@
 #include <QSet>
 
 class Handler;
-class SignalHandler : public QObject
-{
+class SignalHandler : public QObject {
     Q_OBJECT
 public:
     using Closure = std::function<void(void)>;
@@ -34,7 +33,7 @@ public:
 
     };
     Q_DECLARE_FLAGS(Signals, Signal)
-    explicit SignalHandler(QObject *parent = 0);
+    explicit SignalHandler(QObject* parent = 0);
     ~SignalHandler();
 
     size_t installHandler(int sig, QObject*, const char*, int priority = 0);
@@ -52,17 +51,19 @@ signals:
 public slots:
     void pause();
     void resume();
+
 protected:
     void sigaction_set(QSet<int> signum);
     void sigaction_set(Signals signum);
     void sigaction_unset(QSet<int> signum);
     void sigaction_unset(Signals signum);
     void execute(int signum);
+
 private:
     static void __handler(int);
     QVector<Handler*> m_handlers;
-    QMap<int,int> m_installedHandlers;
-    QMap<int,struct sigaction> m_oldHandlers;
+    QMap<int, int> m_installedHandlers;
+    QMap<int, struct sigaction> m_oldHandlers;
     size_t m_id = 0;
 };
 

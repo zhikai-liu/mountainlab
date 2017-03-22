@@ -229,32 +229,32 @@ bool p_whiten_clips(QString clips_path, QString whitening_matrix, QString clips_
 
     qDebug().noquote() << "Whitening..." << M << T << L;
 
-    DiskWriteMda clips_out(MDAIO_TYPE_FLOAT32,clips_out_path,M, T, L);
+    DiskWriteMda clips_out(MDAIO_TYPE_FLOAT32, clips_out_path, M, T, L);
 
     for (bigint i = 0; i < L; i++) {
         Mda32 chunk;
-        if (!clips.readChunk(chunk,0,0,i,M,T,1)) {
+        if (!clips.readChunk(chunk, 0, 0, i, M, T, 1)) {
             qWarning() << "Problem reading chunk" << i;
             return false;
         }
-        float *chunk_ptr=chunk.dataPtr();
+        float* chunk_ptr = chunk.dataPtr();
 
-        Mda32 chunk_out(M,T);
-        float *chunk_out_ptr=chunk_out.dataPtr();
+        Mda32 chunk_out(M, T);
+        float* chunk_out_ptr = chunk_out.dataPtr();
         {
 
-            for (bigint t=0; t<T; t++) {
+            for (bigint t = 0; t < T; t++) {
                 bigint aa = 0;
-                bigint bb = M*t;
+                bigint bb = M * t;
                 for (bigint m1 = 0; m1 < M; m1++) {
                     for (bigint m2 = 0; m2 < M; m2++) {
-                        chunk_out_ptr[bb+m1] += chunk_ptr[bb+m2] * WWptr[aa]; // actually this does dgemm w/ WW^T
+                        chunk_out_ptr[bb + m1] += chunk_ptr[bb + m2] * WWptr[aa]; // actually this does dgemm w/ WW^T
                         aa++; // but since symmetric, doesn't matter.
                     }
                 }
             }
         }
-        if (!clips_out.writeChunk(chunk_out,0,0,i)) {
+        if (!clips_out.writeChunk(chunk_out, 0, 0, i)) {
             qWarning() << "Problem writing chunk";
             return false;
         }

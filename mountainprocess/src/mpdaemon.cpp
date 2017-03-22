@@ -836,7 +836,7 @@ bool MountainProcessServer::launch_pript(QString pript_id)
         if (!S->output_fname.isEmpty()) {
             args << "--_script_output=" + S->output_fname;
         }
-        args << "--_working_path="+S->working_path;
+        args << "--_working_path=" + S->working_path;
         for (int ii = 0; ii < S->script_paths.count(); ii++) {
             QString fname = S->script_paths[ii];
             if (!QFile::exists(fname)) {

@@ -6,12 +6,11 @@
 #include <QSharedPointer>
 #include <QStack>
 
-class QProcessManager : public QObject
-{
+class QProcessManager : public QObject {
     Q_OBJECT
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 public:
-    explicit QProcessManager(QObject *parent = 0);
+    explicit QProcessManager(QObject* parent = 0);
     ~QProcessManager();
     int count() const;
 
@@ -28,10 +27,11 @@ public slots:
 private slots:
     void processDestroyed(QObject*);
     void processFinished();
+
 private:
     QSharedPointer<QProcess> registerProcess(QProcess*);
     void unregisterProcess(QProcess*);
-    QStack<QSharedPointer<QProcess>> m_stack;
+    QStack<QSharedPointer<QProcess> > m_stack;
     mutable QMutex m_lock;
 };
 

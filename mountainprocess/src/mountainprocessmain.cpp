@@ -108,7 +108,7 @@ struct run_script_opts {
     //QString server_base_path;
     bool force_run;
     QString working_path;
-    bool preserve_tempdir=false;
+    bool preserve_tempdir = false;
 };
 
 QJsonArray monitor_stats_to_json_array(const QList<MonitorStats>& stats);
@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
     // If _working_path is specified then we change the current directory
     QString working_path = CLP.named_parameters.value("_working_path").toString();
     if (working_path.isEmpty())
-        working_path=QDir::currentPath();
+        working_path = QDir::currentPath();
     if (!working_path.isEmpty()) {
         if (!QDir::setCurrent(working_path)) {
             qWarning() << "Unable to set working path to: " << working_path;
@@ -435,7 +435,7 @@ int main(int argc, char* argv[])
         opts.nodaemon = CLP.named_parameters.contains("_nodaemon");
         opts.force_run = CLP.named_parameters.contains("_force_run");
         opts.working_path = QDir::currentPath(); // this should get passed through to the processors
-        opts.preserve_tempdir=CLP.named_parameters.contains("_preserve_tempdir");
+        opts.preserve_tempdir = CLP.named_parameters.contains("_preserve_tempdir");
         QJsonObject results;
         // actually run the script
         if (!run_script(script_fnames, params, opts, error_message, results)) {
@@ -1347,8 +1347,8 @@ QJsonObject read_prv_file(QString path)
 {
     QString txt = TextFile::read(path);
     if (txt.isEmpty()) {
-        qWarning() << "Working directory: "+QDir::currentPath();
-        qWarning() << QString("Unable to read .prv file: ") + "["+path+"]";
+        qWarning() << "Working directory: " + QDir::currentPath();
+        qWarning() << QString("Unable to read .prv file: ") + "[" + path + "]";
         return QJsonObject();
     }
     QJsonParseError err;
@@ -1374,7 +1374,7 @@ void get_missing_prvs(QString key, QVariant clparam, QJsonObject& missing_prvs, 
     else {
         QString val = clparam.toString();
         if (val.endsWith(".prv")) {
-            val=MLUtil::resolvePath(working_path,val);
+            val = MLUtil::resolvePath(working_path, val);
             QJsonObject obj = read_prv_file(val);
             QString path0 = locate_prv(obj);
             if (path0.isEmpty()) {

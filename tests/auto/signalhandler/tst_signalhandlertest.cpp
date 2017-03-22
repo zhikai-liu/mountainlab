@@ -5,23 +5,27 @@
 class SignalCatcher : public QObject, public QObjectList {
     Q_OBJECT
 public:
-    SignalCatcher(QObject* parent = nullptr) : QObject(parent) {}
+    SignalCatcher(QObject* parent = nullptr)
+        : QObject(parent)
+    {
+    }
 signals:
     void triggered();
 public slots:
-    void trigger() {
+    void trigger()
+    {
         append(sender());
         emit triggered();
     }
 };
 
-class SignalHandlerTest : public QObject
-{
+class SignalHandlerTest : public QObject {
     Q_OBJECT
 
 public:
     SignalHandlerTest();
-    void kill(int sig) {
+    void kill(int sig)
+    {
         ::kill(QCoreApplication::applicationPid(), sig);
     }
 
@@ -43,8 +47,6 @@ private Q_SLOTS:
 SignalHandlerTest::SignalHandlerTest()
 {
 }
-
-
 
 void SignalHandlerTest::basicFunction()
 {
@@ -77,7 +79,7 @@ void SignalHandlerTest::setFunction()
 {
     SignalHandler handler;
     bool fired = false;
-    handler.installHandler(SignalHandler::SigHangUp|SignalHandler::SigUser1, [&fired]() { fired = true; });
+    handler.installHandler(SignalHandler::SigHangUp | SignalHandler::SigUser1, [&fired]() { fired = true; });
     kill(SIGHUP);
     QVERIFY(fired);
     fired = false;
@@ -89,7 +91,7 @@ void SignalHandlerTest::setSlot()
 {
     SignalHandler handler;
     SignalCatcher catcher;
-    handler.installHandler(SignalHandler::SigHangUp|SignalHandler::SigUser1, &catcher, SLOT(trigger()));
+    handler.installHandler(SignalHandler::SigHangUp | SignalHandler::SigUser1, &catcher, SLOT(trigger()));
     kill(SIGHUP);
     QVERIFY(catcher.size() == 1);
     kill(SIGUSR1);

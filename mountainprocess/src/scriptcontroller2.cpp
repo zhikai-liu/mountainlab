@@ -192,7 +192,7 @@ QString ScriptController2::addProcess(QString processor_name, QString inputs_jso
         /// TODO: check to see if outputs are consistent with PP_outputs
     }
 
-    if ((outputs_json.isEmpty())||(outputs_json=="\"\"")) {
+    if ((outputs_json.isEmpty()) || (outputs_json == "\"\"")) {
         // any outputs that have not been specified will be marked as an empty string
         // later we will handle these cases by creating temporary files, and then returning this info from the function call
         QStringList output_pnames = PP_outputs.keys();
@@ -442,7 +442,7 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
         args << "--_preserve_tempdir";
     }
     if (!m_working_path.isEmpty()) {
-        args << "--_working_path="+m_working_path;
+        args << "--_working_path=" + m_working_path;
     }
     args << "--_process_output=" + process_output_fname;
     if (request_num_threads)

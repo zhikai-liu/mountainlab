@@ -46,36 +46,36 @@ Mda32 dimension_reduce_clips(Mda32& clips, bigint num_features_per_channel, bigi
     bigint M = clips.N1();
     bigint T = clips.N2();
     bigint L = clips.N3();
-    float *clips_ptr=clips.dataPtr();
+    float* clips_ptr = clips.dataPtr();
 
     Mda32 ret(M, num_features_per_channel, L);
-    float *retptr=ret.dataPtr();
+    float* retptr = ret.dataPtr();
     for (bigint m = 0; m < M; m++) {
         Mda32 reshaped(T, L);
-        float *reshaped_ptr=reshaped.dataPtr();
-        bigint aa=0;
-        bigint bb=m;
+        float* reshaped_ptr = reshaped.dataPtr();
+        bigint aa = 0;
+        bigint bb = m;
         for (bigint i = 0; i < L; i++) {
             for (bigint t = 0; t < T; t++) {
                 //reshaped.set(clips.get(bb),aa);
-                reshaped_ptr[aa]=clips_ptr[bb];
+                reshaped_ptr[aa] = clips_ptr[bb];
                 aa++;
-                bb+=M;
+                bb += M;
                 //reshaped.setValue(clips.value(m, t, i), t, i);
             }
         }
         Mda32 CC, FF, sigma;
         pca_subsampled(CC, FF, sigma, reshaped, num_features_per_channel, false, max_samples);
-        float *FF_ptr=FF.dataPtr();
-        aa=0;
-        bb=m;
+        float* FF_ptr = FF.dataPtr();
+        aa = 0;
+        bb = m;
         for (bigint i = 0; i < L; i++) {
             for (bigint a = 0; a < num_features_per_channel; a++) {
                 //ret.setValue(FF.value(a, i), m, a, i);
                 //ret.set(FF.get(aa),bb);
-                retptr[bb]=FF_ptr[aa];
+                retptr[bb] = FF_ptr[aa];
                 aa++;
-                bb+=M;
+                bb += M;
             }
         }
     }

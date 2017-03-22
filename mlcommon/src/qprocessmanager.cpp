@@ -13,18 +13,20 @@
  * it calls QProcessManager::closeAll() on the manager instance.
  */
 
-static void processDeleter(QProcess* process) {
+static void processDeleter(QProcess* process)
+{
     if (!process->parent())
         process->deleteLater();
 }
 
-QProcessManager::QProcessManager(QObject *parent)
-    : QObject(parent), m_lock(QMutex::Recursive)
+QProcessManager::QProcessManager(QObject* parent)
+    : QObject(parent)
+    , m_lock(QMutex::Recursive)
 {
-
 }
 
-QProcessManager::~QProcessManager() {
+QProcessManager::~QProcessManager()
+{
     closeAll();
 }
 
@@ -34,28 +36,28 @@ int QProcessManager::count() const
     return m_stack.size();
 }
 
-QSharedPointer<QProcess> QProcessManager::start(const QString &program, const QStringList &arguments, QIODevice::OpenMode mode)
+QSharedPointer<QProcess> QProcessManager::start(const QString& program, const QStringList& arguments, QIODevice::OpenMode mode)
 {
     QSharedPointer<QProcess> ptr = registerProcess(new QProcess);
     ptr->start(program, arguments, mode);
     return ptr;
 }
 
-QSharedPointer<QProcess> QProcessManager::start(const QString &command, QIODevice::OpenMode mode)
+QSharedPointer<QProcess> QProcessManager::start(const QString& command, QIODevice::OpenMode mode)
 {
     QSharedPointer<QProcess> ptr = registerProcess(new QProcess);
     ptr->start(command, mode);
     return ptr;
 }
 
-QSharedPointer<QProcess> QProcessManager::start(QProcess *process, QIODevice::OpenMode mode)
+QSharedPointer<QProcess> QProcessManager::start(QProcess* process, QIODevice::OpenMode mode)
 {
     QSharedPointer<QProcess> ptr = registerProcess(process);
     ptr->open(mode);
     return ptr;
 }
 
-void QProcessManager::remove(const QSharedPointer<QProcess> &ptr)
+void QProcessManager::remove(const QSharedPointer<QProcess>& ptr)
 {
     QMutexLocker locker(&m_lock);
 
@@ -69,16 +71,15 @@ void QProcessManager::remove(const QSharedPointer<QProcess> &ptr)
 void QProcessManager::closeAll()
 {
     QMutexLocker locker(&m_lock);
-    QStack<QSharedPointer<QProcess>> processes;
+    QStack<QSharedPointer<QProcess> > processes;
     qSwap(m_stack, processes);
     emit countChanged(m_stack.size());
     locker.unlock();
-    foreach(QSharedPointer<QProcess> process, processes) {
+    foreach (QSharedPointer<QProcess> process, processes) {
         unregisterProcess(process.data());
         process->kill();
     }
 }
-
 
 QSharedPointer<QProcess> QProcessManager::closeLast()
 {
@@ -93,11 +94,11 @@ QSharedPointer<QProcess> QProcessManager::closeLast()
     return process;
 }
 
-void QProcessManager::processDestroyed(QObject *o)
+void QProcessManager::processDestroyed(QObject* o)
 {
     QProcess* process = static_cast<QProcess*>(o);
     QMutexLocker locker(&m_lock);
-    for(int i = 0; i < m_stack.size(); ++i) {
+    for (int i = 0; i < m_stack.size(); ++i) {
         if (m_stack.at(i) == process) {
             unregisterProcess(process);
             m_stack.removeAt(i);
@@ -110,7 +111,7 @@ void QProcessManager::processFinished()
 {
     QProcess* process = qobject_cast<QProcess*>(sender());
     QMutexLocker locker(&m_lock);
-    for(int i = 0; i < m_stack.size(); ++i) {
+    for (int i = 0; i < m_stack.size(); ++i) {
         if (m_stack.at(i) == process) {
             unregisterProcess(process);
             m_stack.removeAt(i);
@@ -119,7 +120,7 @@ void QProcessManager::processFinished()
     }
 }
 
-QSharedPointer<QProcess> QProcessManager::registerProcess(QProcess *process)
+QSharedPointer<QProcess> QProcessManager::registerProcess(QProcess* process)
 {
     connect(process, SIGNAL(destroyed(QObject*)), this, SLOT(processDestroyed(QObject*)));
     connect(process, SIGNAL(finished(int)), this, SLOT(processFinished()));
