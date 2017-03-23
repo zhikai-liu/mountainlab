@@ -88,11 +88,13 @@ function main(params) {
 			{samplerate:params.samplerate,_request_num_threads:params.num_threads}
 	).cluster_metrics_out;
 
-	var isolation_metrics=Process('mountainsort.isolation_metrics',
+	var im_out=Process('mountainsort.isolation_metrics',
 			{timeseries:filt,firings:firings},
 			{_request_num_threads:params.num_threads},
-			{metrics_out:''}
-	).metrics_out;
+			{metrics_out:'',pair_metrics_out:''}
+	);
+	var isolation_metrics=im_out.metrics_out;
+	var pair_metrics=im_out.pair_metrics_out;
 
 	cluster_metrics=Process('mountainsort.combine_cluster_metrics',
 			{metrics_list:[cluster_metrics,isolation_metrics]},
@@ -102,6 +104,7 @@ function main(params) {
 	// Write the output
 	write_file(firings,params.outpath+'/firings.mda');	
 	write_file(cluster_metrics,params.outpath+'/cluster_metrics.json');
+	write_file(pair_metrics,params.outpath+'/cluster_pair_metrics.json');
 	if (typeof(raw)=='string') {
 		write_prv(raw,params.outpath+'/raw.mda.prv');
 		write_prv(filt,params.outpath+'/filt.mda.prv');

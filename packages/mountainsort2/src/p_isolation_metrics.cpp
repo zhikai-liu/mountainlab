@@ -19,7 +19,7 @@ Mda32 extract_clips(const DiskReadMda32& X, const QVector<double>& times, int cl
 Mda32 compute_mean_clip(const Mda32& clips);
 QJsonObject get_cluster_metrics(const DiskReadMda32& X, const QVector<double>& times, P_isolation_metrics_opts opts);
 QJsonObject get_pair_metrics(const DiskReadMda32& X, const QVector<double>& times_k1, const QVector<double>& times_k2, P_isolation_metrics_opts opts);
-QSet<QString> get_pairs_to_compare(const DiskReadMda32& X, const DiskReadMda& F, bigint num_comparisons_per_cluster, P_isolation_metrics_opts opts);
+QSet<QString> get_pairs_to_compare(const DiskReadMda32& X, const DiskReadMda& F, bigint num_comparisons_per_cluster, const QList<int>& cluster_numbers, P_isolation_metrics_opts opts);
 double compute_overlap(const DiskReadMda32& X, const QVector<double>& times1, const QVector<double>& times2, P_isolation_metrics_opts opts);
 struct ClusterData {
     QVector<double> times;
@@ -45,24 +45,27 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
         labels[i] = firings.value(2, i);
     }
 
-    QSet<int> used_labels_set;
+    QSet<int> used_cluster_numbers_set;
     for (bigint i = 0; i < labels.count(); i++) {
-        used_labels_set.insert(labels[i]);
+        used_cluster_numbers_set.insert(labels[i]);
     }
-    QList<int> used_labels = used_labels_set.toList();
-    qSort(used_labels);
+    if (!opts.cluster_numbers.isEmpty()) {
+        used_cluster_numbers_set = used_cluster_numbers_set.intersect(opts.cluster_numbers.toSet());
+    }
+    QList<int> cluster_numbers = used_cluster_numbers_set.toList();
+    qSort(cluster_numbers);
 
 #pragma omp parallel for
-    for (int jj = 0; jj < used_labels.count(); jj++) {
+    for (int jj = 0; jj < cluster_numbers.count(); jj++) {
         DiskReadMda32 X0;
         QVector<double> times_k;
         int k;
         P_isolation_metrics_opts opts0;
 #pragma omp critical
         {
-            qDebug().noquote() << "begin processing label" << used_labels[jj];
+            qDebug().noquote() << "begin processing cluster" << cluster_numbers[jj];
             X0 = X;
-            k = used_labels[jj];
+            k = cluster_numbers[jj];
             for (bigint i = 0; i < labels.count(); i++) {
                 if (labels[i] == k)
                     times_k << times[i];
@@ -74,7 +77,7 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
 
 #pragma omp critical
         {
-            qDebug().noquote() << "end processing label" << used_labels[jj];
+            qDebug().noquote() << "end processing cluster" << cluster_numbers[jj];
             P_isolation_metrics::ClusterData CD;
             CD.times = times_k;
             CD.cluster_metrics = tmp;
@@ -85,9 +88,10 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
     qDebug().noquote() << "processing cluster pairs";
     QJsonArray cluster_pairs;
     int num_comparisons_per_cluster = 10;
-    QSet<QString> pairs_to_compare = P_isolation_metrics::get_pairs_to_compare(X, firings, num_comparisons_per_cluster, opts);
+    QSet<QString> pairs_to_compare = P_isolation_metrics::get_pairs_to_compare(X, firings, num_comparisons_per_cluster, cluster_numbers, opts);
     QList<QString> pairs_to_compare_list = pairs_to_compare.toList();
     qSort(pairs_to_compare_list);
+    qDebug() << "pairs_to_compare: " << pairs_to_compare_list;
     for (int jj = 0; jj < pairs_to_compare_list.count(); jj++) {
         QString pairstr;
         int k1, k2;
@@ -96,11 +100,12 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
         DiskReadMda32 X0;
 #pragma omp critical
         {
-            qDebug().noquote() << "begin processing pair" << k1 << k2;
+            pairstr = pairs_to_compare_list[jj];
+            qDebug() << pairstr;
             QStringList vals = pairstr.split("-");
             k1 = vals[0].toInt();
             k2 = vals[1].toInt();
-            pairstr = pairs_to_compare_list[jj];
+            qDebug().noquote() << "begin processing pair" << k1 << k2;
             times_k1 = cluster_data.value(k1).times;
             times_k2 = cluster_data.value(k2).times;
             opts0 = opts;
@@ -130,7 +135,7 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
 
     qDebug().noquote() << "preparing clusters array";
     QJsonArray clusters;
-    foreach (int k, used_labels) {
+    foreach (int k, cluster_numbers) {
         QJsonObject tmp;
         tmp["label"] = k;
         cluster_data[k].cluster_metrics["isolation"] = cluster_data[k].isolation;
@@ -149,7 +154,7 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
 
     if (!pair_metrics_out_path.isEmpty()) {
         QJsonObject obj;
-        obj["cluster_pairs"] = clusters;
+        obj["cluster_pairs"] = cluster_pairs;
         QString json = QJsonDocument(obj).toJson(QJsonDocument::Indented);
         if (!TextFile::write(pair_metrics_out_path, json))
             return false;
@@ -411,14 +416,11 @@ double distsqr_between_templates(const Mda32& X, const Mda32& Y)
     return ret;
 }
 
-QSet<QString> get_pairs_to_compare(const DiskReadMda32& X, const DiskReadMda& F, bigint num_comparisons_per_cluster, P_isolation_metrics_opts opts)
+QSet<QString> get_pairs_to_compare(const DiskReadMda32& X, const DiskReadMda& F, bigint num_comparisons_per_cluster, const QList<int>& cluster_numbers, P_isolation_metrics_opts opts)
 {
     QSet<QString> ret;
 
-    QSet<bigint> cluster_numbers_set;
-    for (bigint i = 0; i < opts.cluster_numbers.count(); i++) {
-        cluster_numbers_set.insert(opts.cluster_numbers[i]);
-    }
+    QSet<int> cluster_numbers_set = cluster_numbers.toSet();
 
     QVector<double> times;
     QVector<int> labels;
@@ -433,20 +435,28 @@ QSet<QString> get_pairs_to_compare(const DiskReadMda32& X, const DiskReadMda& F,
 
     Mda32 templates0 = compute_templates_0(X, times, labels, opts.clip_size);
 
-    for (bigint i1 = 0; i1 < opts.cluster_numbers.count(); i1++) {
-        bigint k1 = opts.cluster_numbers[i1];
+    qDebug() << "---------------------------------" << cluster_numbers_set;
+    qDebug() << templates0.write32("/home/magland/dev/debug/debug_templates.mda");
+
+    for (bigint i1 = 0; i1 < cluster_numbers.count(); i1++) {
+        bigint k1 = cluster_numbers[i1];
         Mda32 template1;
         templates0.getChunk(template1, 0, 0, k1 - 1, template1.N1(), template1.N2(), 1);
         QVector<double> dists;
-        for (bigint i2 = 0; i2 < opts.cluster_numbers.count(); i2++) {
+        for (bigint i2 = 0; i2 < cluster_numbers.count(); i2++) {
             Mda32 template2;
-            bigint k2 = opts.cluster_numbers[i2];
+            bigint k2 = cluster_numbers[i2];
             templates0.getChunk(template2, 0, 0, k2 - 1, template2.N1(), template2.N2(), 1);
             dists << distsqr_between_templates(template1, template2);
         }
         QList<bigint> inds = get_sort_indices_bigint(dists);
-        for (bigint a = 0; (a < inds.count()) && (a < num_comparisons_per_cluster); a++) {
-            ret.insert(QString("%1-%2").arg(k1).arg(opts.cluster_numbers[inds[a]]));
+        int num0 = 0;
+        for (bigint a = 0; (a < inds.count()) && (num0 < num_comparisons_per_cluster); a++) {
+            int k2 = cluster_numbers[inds[a]];
+            if (k2 != k1) {
+                ret.insert(QString("%1-%2").arg(k1).arg(k2));
+                num0++;
+            }
         }
     }
 

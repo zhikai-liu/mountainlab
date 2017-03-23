@@ -31,6 +31,7 @@ bool p_sort_clips(QString clips_path, QString labels_out, Sort_clips_opts opts)
         indices[i] = i;
     }
 
+    qDebug().noquote() << "Sorting clips...";
     QVector<int> labels = P_sort_clips::sort_clips_subset(clips, indices, opts);
 
     Mda ret(1, L);
@@ -157,4 +158,10 @@ QVector<int> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indice
         return labels_new;
     }
 }
+}
+
+bool p_reorder_labels(QString templates_path, QString firings_path, QString firings_out_path)
+{
+    Mda32 templates(templates_path);
+    Mda firings(firings_path);
 }

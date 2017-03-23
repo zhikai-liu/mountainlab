@@ -124,6 +124,10 @@ bool ms_metrics(QString timeseries, QString firings, QString cluster_metrics_pat
         int k = opts.cluster_numbers[i];
         cluster_metrics["peak_amp"].values << peak_amp[k];
         cluster_metrics["peak_noise"].values << peak_noise[k];
+        if (peak_noise[k])
+            cluster_metrics["peak_snr"].values << peak_amp[k] / peak_noise[k];
+        else
+            cluster_metrics["peak_snr"].values << 0;
         cluster_metrics["noise_overlap"].values << noise_overlap[k];
     }
 

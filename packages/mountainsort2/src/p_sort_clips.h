@@ -11,6 +11,7 @@ struct Sort_clips_opts {
     bigint max_samples = 10000; //for subsampled pca
 };
 
-bool p_sort_clips(QString clips, QString labels_out, Sort_clips_opts opts);
+bool p_sort_clips(QString clips, QString firings_out, Sort_clips_opts opts);
+bool p_reorder_labels(QString templates, QString firings, QString firings_out);
 
 #endif // P_SORT_CLIPS_H
