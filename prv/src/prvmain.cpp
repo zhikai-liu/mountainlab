@@ -509,7 +509,7 @@ private:
         PrvFile PF;
         PrvFileCreateOptions opts;
         opts.create_temporary_files = params.contains("create-temporary-files");
-        PF.createFromFolder(src_path, opts);
+        PF.createFromDirectory(src_path, opts);
         if (!PF.write(dst_path))
             return -1;
         return 0;
@@ -680,8 +680,8 @@ public:
                 download_file(obj, params);
         }
         else {
-            printf("Only files can be found using 'locate' or 'download'.\n");
-            return -1;
+            //it must be a directory
+            locate_directory(obj, verbose);
         }
         return 0;
     }
@@ -713,6 +713,20 @@ private:
 
         opts.verbose = verbose;
         QString fname_or_url = prvf.locate(opts);
+        if (fname_or_url.isEmpty())
+            return -1;
+        println(fname_or_url);
+        return 0;
+    }
+
+    int locate_directory(const QJsonObject& obj, bool verbose) const
+    {
+        PrvFile prvf(obj);
+        PrvFileLocateOptions opts;
+        opts.search_locally = true;
+        opts.search_remotely = false;
+        opts.verbose = verbose;
+        QString fname_or_url = prvf.locateDirectory(opts);
         if (fname_or_url.isEmpty())
             return -1;
         println(fname_or_url);

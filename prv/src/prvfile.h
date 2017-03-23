@@ -6,7 +6,7 @@
 #ifndef PRVFILE_H
 #define PRVFILE_H
 
-#define PRV_VERSION 0.1
+#define PRV_VERSION "0.11"
 
 #include <QJsonArray>
 #include <QJsonObject>
@@ -48,10 +48,11 @@ public:
     bool representsFile() const;
     bool representsFolder() const;
     bool createFromFile(const QString& file_path, const PrvFileCreateOptions& opts);
-    bool createFromFolder(const QString& folder_path, const PrvFileCreateOptions& opts);
+    bool createFromDirectory(const QString& folder_path, const PrvFileCreateOptions& opts);
     bool recoverFile(const QString& dst_file_path, const PrvFileRecoverOptions& opts);
     bool recoverFolder(const QString& dst_folder_path, const PrvFileRecoverOptions& opts);
     QString locate(const PrvFileLocateOptions& opts);
+    QString locateDirectory(const PrvFileLocateOptions& opts);
 
     QString prvFilePath() const;
     QString checksum() const;
