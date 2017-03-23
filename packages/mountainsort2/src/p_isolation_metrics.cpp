@@ -31,6 +31,8 @@ struct ClusterData {
 
 bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QString metrics_out_path, QString pair_metrics_out_path, P_isolation_metrics_opts opts)
 {
+    qDebug().noquote() << "p_isolation_metrics";
+
     DiskReadMda32 X(2, timeseries_list);
     Mda firings(firings_path);
 
@@ -58,6 +60,7 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
         P_isolation_metrics_opts opts0;
 #pragma omp critical
         {
+            qDebug().noquote() << "begin processing label" << used_labels[jj];
             X0 = X;
             k = used_labels[jj];
             for (bigint i = 0; i < labels.count(); i++) {
@@ -71,6 +74,7 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
 
 #pragma omp critical
         {
+            qDebug().noquote() << "end processing label" << used_labels[jj];
             P_isolation_metrics::ClusterData CD;
             CD.times = times_k;
             CD.cluster_metrics = tmp;
@@ -78,6 +82,7 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
         }
     }
 
+    qDebug().noquote() << "processing cluster pairs";
     QJsonArray cluster_pairs;
     int num_comparisons_per_cluster = 10;
     QSet<QString> pairs_to_compare = P_isolation_metrics::get_pairs_to_compare(X, firings, num_comparisons_per_cluster, opts);
@@ -91,6 +96,7 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
         DiskReadMda32 X0;
 #pragma omp critical
         {
+            qDebug().noquote() << "begin processing pair" << k1 << k2;
             QStringList vals = pairstr.split("-");
             k1 = vals[0].toInt();
             k2 = vals[1].toInt();
@@ -105,6 +111,7 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
 
 #pragma omp critical
         {
+            qDebug().noquote() << "end processing pair" << k1 << k2;
             QJsonObject tmp;
             tmp["label"] = QString("%1,%2").arg(k1).arg(k2);
             tmp["metrics"] = pair_metrics;
@@ -121,6 +128,7 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
         }
     }
 
+    qDebug().noquote() << "preparing clusters array";
     QJsonArray clusters;
     foreach (int k, used_labels) {
         QJsonObject tmp;
