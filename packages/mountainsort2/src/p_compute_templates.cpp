@@ -5,8 +5,9 @@
 #include <diskreadmda32.h>
 #include "mlcommon.h"
 
-bool p_compute_templates(QStringList timeseries_list, QString firings_path, QString templates_out, int clip_size, const QList<int>& clusters)
+bool p_compute_templates(QStringList timeseries_list, QString firings_path, QString templates_out, int clip_size, const QList<int>& clusters_in)
 {
+    QList<int> clusters=clusters_in;
     DiskReadMda32 X(2, timeseries_list);
     DiskReadMda firings(firings_path);
 
@@ -21,7 +22,16 @@ bool p_compute_templates(QStringList timeseries_list, QString firings_path, QStr
         return false;
     }
 
-    if (clusters.count() == 0) {
+    if (clusters.isEmpty()) {
+        int Kmax=0;
+        for (bigint i=0; i<firings.N2(); i++) {
+            int label0=firings.value(2,i);
+            if (label0>Kmax) Kmax=label0;
+        }
+        for (int kk=1; kk<=Kmax; kk++)
+            clusters << kk;
+    }
+    if (clusters.isEmpty()) {
         qWarning() << "Unexpected: Clusters is empty.";
         return false;
     }

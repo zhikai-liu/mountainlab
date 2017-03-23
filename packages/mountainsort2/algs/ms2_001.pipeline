@@ -83,6 +83,15 @@ function main(params) {
 		firings=results2.firings_out;
 	}
 
+	var templates=Process('mountainsort.compute_templates',
+		{timeseries:filt,firings:firings},
+		{clip_size:Math.floor(params.clip_size_msec/1000*params.samplerate)}
+	).templates_out;
+	firings=Process('mountainsort.reorder_labels',
+		{templates:templates,firings:firings},
+		{}
+	).firings_out;
+
 	var cluster_metrics=Process('mountainsort.cluster_metrics',
 			{timeseries:filt,firings:firings},
 			{samplerate:params.samplerate,_request_num_threads:params.num_threads}

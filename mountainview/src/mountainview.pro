@@ -21,6 +21,8 @@ MOC_DIR=../build
 TARGET = mountainview
 TEMPLATE = app
 
+RESOURCES += mountainview.qrc
+
 INCLUDEPATH += msv/plugins msv/views
 VPATH += msv/plugins msv/views
 

@@ -63,7 +63,6 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
         P_isolation_metrics_opts opts0;
 #pragma omp critical
         {
-            qDebug().noquote() << "begin processing cluster" << cluster_numbers[jj];
             X0 = X;
             k = cluster_numbers[jj];
             for (bigint i = 0; i < labels.count(); i++) {
@@ -77,7 +76,6 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
 
 #pragma omp critical
         {
-            qDebug().noquote() << "end processing cluster" << cluster_numbers[jj];
             P_isolation_metrics::ClusterData CD;
             CD.times = times_k;
             CD.cluster_metrics = tmp;
@@ -85,13 +83,11 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
         }
     }
 
-    qDebug().noquote() << "processing cluster pairs";
     QJsonArray cluster_pairs;
     int num_comparisons_per_cluster = 10;
     QSet<QString> pairs_to_compare = P_isolation_metrics::get_pairs_to_compare(X, firings, num_comparisons_per_cluster, cluster_numbers, opts);
     QList<QString> pairs_to_compare_list = pairs_to_compare.toList();
     qSort(pairs_to_compare_list);
-    qDebug() << "pairs_to_compare: " << pairs_to_compare_list;
     for (int jj = 0; jj < pairs_to_compare_list.count(); jj++) {
         QString pairstr;
         int k1, k2;
@@ -101,11 +97,9 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
 #pragma omp critical
         {
             pairstr = pairs_to_compare_list[jj];
-            qDebug() << pairstr;
             QStringList vals = pairstr.split("-");
             k1 = vals[0].toInt();
             k2 = vals[1].toInt();
-            qDebug().noquote() << "begin processing pair" << k1 << k2;
             times_k1 = cluster_data.value(k1).times;
             times_k2 = cluster_data.value(k2).times;
             opts0 = opts;
@@ -116,7 +110,6 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
 
 #pragma omp critical
         {
-            qDebug().noquote() << "end processing pair" << k1 << k2;
             QJsonObject tmp;
             tmp["label"] = QString("%1,%2").arg(k1).arg(k2);
             tmp["metrics"] = pair_metrics;
@@ -435,9 +428,6 @@ QSet<QString> get_pairs_to_compare(const DiskReadMda32& X, const DiskReadMda& F,
 
     Mda32 templates0 = compute_templates_0(X, times, labels, opts.clip_size);
 
-    qDebug() << "---------------------------------" << cluster_numbers_set;
-    qDebug() << templates0.write32("/home/magland/dev/debug/debug_templates.mda");
-
     for (bigint i1 = 0; i1 < cluster_numbers.count(); i1++) {
         bigint k1 = cluster_numbers[i1];
         Mda32 template1;
@@ -465,9 +455,9 @@ QSet<QString> get_pairs_to_compare(const DiskReadMda32& X, const DiskReadMda& F,
 
 Mda32 extract_clips(const DiskReadMda32& X, const QVector<double>& times, int clip_size)
 {
-    int M = X.N1();
-    int T = clip_size;
-    int Tmid = (bigint)((T + 1) / 2) - 1;
+    bigint M = X.N1();
+    bigint T = clip_size;
+    bigint Tmid = (bigint)((T + 1) / 2) - 1;
     bigint L = times.count();
     Mda32 clips(M, T, L);
     for (bigint i = 0; i < L; i++) {
@@ -481,16 +471,16 @@ Mda32 extract_clips(const DiskReadMda32& X, const QVector<double>& times, int cl
 }
 Mda32 compute_mean_clip(const Mda32& clips)
 {
-    int M = clips.N1();
-    int T = clips.N2();
-    int L = clips.N3();
+    bigint M = clips.N1();
+    bigint T = clips.N2();
+    bigint L = clips.N3();
     Mda32 ret;
     ret.allocate(M, T);
-    int aaa = 0;
-    for (int i = 0; i < L; i++) {
-        int bbb = 0;
-        for (int t = 0; t < T; t++) {
-            for (int m = 0; m < M; m++) {
+    bigint aaa = 0;
+    for (bigint i = 0; i < L; i++) {
+        bigint bbb = 0;
+        for (bigint t = 0; t < T; t++) {
+            for (bigint m = 0; m < M; m++) {
                 ret.set(ret.get(bbb) + clips.get(aaa), bbb);
                 aaa++;
                 bbb++;
@@ -498,8 +488,8 @@ Mda32 compute_mean_clip(const Mda32& clips)
         }
     }
     if (L) {
-        for (int t = 0; t < T; t++) {
-            for (int m = 0; m < M; m++) {
+        for (bigint t = 0; t < T; t++) {
+            for (bigint m = 0; m < M; m++) {
                 ret.set(ret.get(m, t) / L, m, t);
             }
         }
@@ -508,9 +498,9 @@ Mda32 compute_mean_clip(const Mda32& clips)
 }
 Mda32 compute_stdev_clip(const Mda32& clips)
 {
-    int M = clips.N1();
-    int T = clips.N2();
-    int L = clips.N3();
+    bigint M = clips.N1();
+    bigint T = clips.N2();
+    bigint L = clips.N3();
 
     Mda32 stdevs(M, T);
     float* stdevs_ptr = stdevs.dataPtr();
@@ -521,16 +511,16 @@ Mda32 compute_stdev_clip(const Mda32& clips)
     double* sums_ptr = sums.dataPtr();
     double* sumsqrs_ptr = sumsqrs.dataPtr();
     double count = 0;
-    for (int i = 0; i < L; i++) {
+    for (bigint i = 0; i < L; i++) {
         const float* Xptr = &clips_ptr[M * T * i];
-        for (int i = 0; i < M * T; i++) {
+        for (bigint i = 0; i < M * T; i++) {
             sums_ptr[i] += Xptr[i];
             sumsqrs_ptr[i] += Xptr[i] * Xptr[i];
         }
         count++;
     }
 
-    for (int i = 0; i < M * T; i++) {
+    for (bigint i = 0; i < M * T; i++) {
         double sum0 = sums_ptr[i];
         double sumsqr0 = sumsqrs_ptr[i];
         if (count) {
@@ -555,6 +545,15 @@ QJsonObject get_cluster_metrics(const DiskReadMda32& X, const QVector<double>& t
         double min0 = stdev_k.minimum();
         double max0 = stdev_k.maximum();
         ret["peak_noise"] = qMax(qAbs(min0), qAbs(max0));
+    }
+    {
+        if (ret["peak_noise"].toDouble()) {
+            ret["peak_snr"]=ret["peak_amp"].toDouble()/ret["peak_noise"].toDouble();
+
+        }
+        else {
+            ret["peak_snr"]=0;
+        }
     }
     {
         ret["noise_overlap"] = noise_overlap0;

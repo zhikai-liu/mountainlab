@@ -10,21 +10,8 @@ mp-daemon-start admin
 This will create two folders: examples and BIGFILES
 
 *** Run sorting and view results
-kron-run ms2 example1
-kron-view results ms2 example1 --curation=curation.script
-kron-view ground_truth example1
-kron-view compare_truth ms2 example1
-kron-view table_truth ms2 example1
+kron-run ms2_001 example1
+kron-view results ms2_001 example1
 
 *** Repeat this with example1 replaced by example2...example5
 
-*** Run processing with different sorting parameters
-kron-run ms_nf3 example1
-kron-run ms_nf30 example1
-(see pipelines.txt)
-
-*** Run batch processing
-kron-run ms,ms_nf3,ms_nf30 example1,example2,example5 --all_pairs
-
-*** View more result tables
-kron-view table_truth ms,ms_nf3,ms_nf30 example1,example2,example5 --all_pairs

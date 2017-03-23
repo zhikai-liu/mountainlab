@@ -232,7 +232,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     MLProcessor P = d->m_processors[processor_name];
 
     {
-        // set default values
+        // check that we have the required parameters
         QStringList keys = P.parameters.keys();
         foreach (QString key, keys) {
             if (!parameters.contains(key)) {
@@ -240,12 +240,10 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
                     qWarning() << QString("Missing required parameter in processor %1: %2").arg(P.name).arg(key);
                     return "";
                 }
-                if (P.parameters[key].default_value.isValid()) {
-                    parameters[key] = P.parameters[key].default_value;
-                }
             }
         }
     }
+    this->setDefaultParameters(processor_name,parameters);
 
     QString id = MLUtil::makeRandomId();
 
@@ -381,6 +379,26 @@ bool ProcessManager::checkParameters(const QString& processor_name, const QVaria
         }
     }
     return true;
+}
+
+void ProcessManager::setDefaultParameters(const QString &processor_name, QVariantMap &parameters)
+{
+    if (processor_name.isEmpty())
+        return;
+    if (!d->m_processors.contains(processor_name)) {
+        return;
+    }
+    MLProcessor P = d->m_processors[processor_name];
+    {
+        QStringList keys = P.parameters.keys();
+        foreach (QString key, keys) {
+            if (P.parameters[key].optional) {
+                if (!parameters.contains(key)) {
+                    parameters[key]=P.parameters[key].default_value;
+                }
+            }
+        }
+    }
 }
 
 bool ProcessManager::processAlreadyCompleted(const QString& processor_name, const QVariantMap& parameters)

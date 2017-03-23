@@ -130,6 +130,13 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
+        ProcessorSpec X("mountainsort.reorder_labels", "0.1");
+        X.addInputs("templates","firings");
+        X.addOutputs("firings_out");
+        //X.addRequiredParameters();
+        processors.push_back(X.get_spec());
+    }
+    {
         ProcessorSpec X("mountainsort.consolidate_clusters", "0.1");
         X.addInputs("clips", "labels");
         X.addOptionalInputs("amplitudes");
@@ -364,7 +371,7 @@ int main(int argc, char* argv[])
         QString firings = CLP.named_parameters["firings"].toString();
         QString templates_out = CLP.named_parameters["templates_out"].toString();
         int clip_size = CLP.named_parameters["clip_size"].toInt();
-        QList<int> clusters = MLUtil::stringListToIntList(CLP.named_parameters["clusters"].toString().split(","));
+        QList<int> clusters = MLUtil::stringListToIntList(CLP.named_parameters["clusters"].toString().split(",",QString::SkipEmptyParts));
         ret = p_compute_templates(timeseries_list, firings, templates_out, clip_size, clusters);
     }
     else if (arg1 == "mountainsort.sort_clips") {
@@ -372,6 +379,12 @@ int main(int argc, char* argv[])
         QString labels_out = CLP.named_parameters["labels_out"].toString();
         Sort_clips_opts opts;
         ret = p_sort_clips(clips, labels_out, opts);
+    }
+    else if (arg1 == "mountainsort.reorder_labels") {
+        QString templates=CLP.named_parameters["templates"].toString();
+        QString firings=CLP.named_parameters["firings"].toString();
+        QString firings_out=CLP.named_parameters["firings_out"].toString();
+        ret = p_reorder_labels(templates,firings,firings_out);
     }
     else if (arg1 == "mountainsort.consolidate_clusters") {
         QString clips = CLP.named_parameters["clips"].toString();
