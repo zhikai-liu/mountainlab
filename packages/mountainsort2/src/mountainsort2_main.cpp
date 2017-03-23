@@ -183,7 +183,7 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.isolation_metrics", "0.1");
+        ProcessorSpec X("mountainsort.isolation_metrics", "0.11");
         X.addInputs("timeseries", "firings");
         X.addOutputs("metrics_out");
         X.addOptionalOutputs("pair_metrics_out");
