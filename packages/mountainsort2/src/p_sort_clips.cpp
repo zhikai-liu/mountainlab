@@ -183,23 +183,24 @@ struct template_comparer {
             return false;
     }
 };
-template_comparer_struct compute_comparer(const Mda32 &template0,int index) {
+template_comparer_struct compute_comparer(const Mda32& template0, int index)
+{
     QList<double> abs_peak_values;
     template_comparer_struct ret;
-    int peak_channel=1;
-    double abs_peak_value=0;
-    for (int t=0; t<template0.N2(); t++) {
-        for (int m=0; m<template0.N1(); m++) {
-            double val=template0.get(m,t);
-            if (fabs(val)>abs_peak_value) {
-                abs_peak_value=fabs(val);
-                peak_channel=m+1;
+    int peak_channel = 1;
+    double abs_peak_value = 0;
+    for (int t = 0; t < template0.N2(); t++) {
+        for (int m = 0; m < template0.N1(); m++) {
+            double val = template0.get(m, t);
+            if (fabs(val) > abs_peak_value) {
+                abs_peak_value = fabs(val);
+                peak_channel = m + 1;
             }
         }
     }
-    ret.index=index;
-    ret.channel=peak_channel;
-    ret.template_peak=abs_peak_value;
+    ret.index = index;
+    ret.channel = peak_channel;
+    ret.template_peak = abs_peak_value;
     return ret;
 }
 }
@@ -210,24 +211,24 @@ bool p_reorder_labels(QString templates_path, QString firings_path, QString firi
     Mda firings(firings_path);
     qDebug().noquote() << "p_reorder_labels" << templates.N1() << templates.N2() << templates.N3() << firings.N1() << firings.N2();
     QList<P_reorder_labels::template_comparer_struct> list;
-    for (int i=0; i<templates.N3(); i++) {
+    for (int i = 0; i < templates.N3(); i++) {
         Mda32 template0;
-        templates.getChunk(template0,0,0,i,templates.N1(),templates.N2(),1);
-        list << P_reorder_labels::compute_comparer(template0,i);
+        templates.getChunk(template0, 0, 0, i, templates.N1(), templates.N2(), 1);
+        list << P_reorder_labels::compute_comparer(template0, i);
     }
     qSort(list.begin(), list.end(), P_reorder_labels::template_comparer());
     QList<int> sort_indices;
-    QMap<int,int> label_map;
+    QMap<int, int> label_map;
     for (int i = 0; i < list.count(); i++) {
-        label_map[list[i].index+1]=i+1;
+        label_map[list[i].index + 1] = i + 1;
     }
     qDebug().noquote() << "label_map" << label_map;
-    for (bigint i=0; i<firings.N2(); i++) {
-        int label0=firings.value(2,i);
+    for (bigint i = 0; i < firings.N2(); i++) {
+        int label0 = firings.value(2, i);
         if (label_map.contains(label0)) {
-            label0=label_map[label0];
+            label0 = label_map[label0];
         }
-        firings.setValue(label0,2,i);
+        firings.setValue(label0, 2, i);
     }
     return firings.write64(firings_out_path);
 }

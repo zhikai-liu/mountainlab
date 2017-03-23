@@ -243,7 +243,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
             }
         }
     }
-    this->setDefaultParameters(processor_name,parameters);
+    this->setDefaultParameters(processor_name, parameters);
 
     QString id = MLUtil::makeRandomId();
 
@@ -381,7 +381,7 @@ bool ProcessManager::checkParameters(const QString& processor_name, const QVaria
     return true;
 }
 
-void ProcessManager::setDefaultParameters(const QString &processor_name, QVariantMap &parameters)
+void ProcessManager::setDefaultParameters(const QString& processor_name, QVariantMap& parameters)
 {
     if (processor_name.isEmpty())
         return;
@@ -394,7 +394,7 @@ void ProcessManager::setDefaultParameters(const QString &processor_name, QVarian
         foreach (QString key, keys) {
             if (P.parameters[key].optional) {
                 if (!parameters.contains(key)) {
-                    parameters[key]=P.parameters[key].default_value;
+                    parameters[key] = P.parameters[key].default_value;
                 }
             }
         }

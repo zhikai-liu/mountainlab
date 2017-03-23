@@ -278,7 +278,7 @@ int main(int argc, char* argv[])
 
         bool force_run = CLP.named_parameters.contains("_force_run"); // do not check for already computed
         int request_num_threads = CLP.named_parameters.value("_request_num_threads", 0).toInt(); // the processor may or may not respect this request. But mountainsort/omp does.
-        PM->setDefaultParameters(processor_name,process_parameters);
+        PM->setDefaultParameters(processor_name, process_parameters);
         if ((!force_run) && (!exec_mode) && (PM->processAlreadyCompleted(processor_name, process_parameters))) {
             // We have a record of this procesor already completed. If so, we save a lot of time by not re-running
             printf("Process already completed: %s\n", processor_name.toLatin1().data());

@@ -548,11 +548,10 @@ QJsonObject get_cluster_metrics(const DiskReadMda32& X, const QVector<double>& t
     }
     {
         if (ret["peak_noise"].toDouble()) {
-            ret["peak_snr"]=ret["peak_amp"].toDouble()/ret["peak_noise"].toDouble();
-
+            ret["peak_snr"] = ret["peak_amp"].toDouble() / ret["peak_noise"].toDouble();
         }
         else {
-            ret["peak_snr"]=0;
+            ret["peak_snr"] = 0;
         }
     }
     {

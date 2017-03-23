@@ -450,7 +450,7 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
     QProcess* P1 = new QProcess;
     P1->setReadChannelMode(QProcess::MergedChannels);
     //P1->start(exe, args);
-    qDebug().noquote() << exe+" "+args.join(" ");
+    qDebug().noquote() << exe + " " + args.join(" ");
     MPDaemon::start_bash_command_and_kill_when_pid_is_gone(P1, exe, args, QCoreApplication::applicationPid());
     if (!P1->waitForStarted()) {
         qWarning() << "Error waiting for process to start: " + processor_name;
