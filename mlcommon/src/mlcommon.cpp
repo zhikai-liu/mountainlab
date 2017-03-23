@@ -239,7 +239,7 @@ QString MLUtil::computeSha1SumOfFile(const QString& path)
     return ret;
     */
 }
-QString MLUtil::computeSha1SumOfFileHead(const QString& path, int num_bytes)
+QString MLUtil::computeSha1SumOfFileHead(const QString& path, bigint num_bytes)
 {
     return sumit(path, num_bytes, MLUtil::tempPath());
 }

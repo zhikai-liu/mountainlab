@@ -32,7 +32,7 @@ QString mlLogPath();
 QString resolvePath(const QString& basepath, const QString& path);
 void mkdirIfNeeded(const QString& path);
 QString computeSha1SumOfFile(const QString& path);
-QString computeSha1SumOfFileHead(const QString& path, int num_bytes);
+QString computeSha1SumOfFileHead(const QString& path, bigint num_bytes);
 QString computeSha1SumOfString(const QString& str);
 bool matchesFastChecksum(QString path, QString fcs);
 QList<int> stringListToIntList(const QStringList& list);
