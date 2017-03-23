@@ -88,6 +88,7 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
     QSet<QString> pairs_to_compare = P_isolation_metrics::get_pairs_to_compare(X, firings, num_comparisons_per_cluster, cluster_numbers, opts);
     QList<QString> pairs_to_compare_list = pairs_to_compare.toList();
     qSort(pairs_to_compare_list);
+#pragma omp parallel for
     for (int jj = 0; jj < pairs_to_compare_list.count(); jj++) {
         QString pairstr;
         int k1, k2;
@@ -409,9 +410,16 @@ double distsqr_between_templates(const Mda32& X, const Mda32& Y)
     return ret;
 }
 
+double correlation_between_templates(Mda32& X, Mda32& Y)
+{
+    return MLCompute::correlation(X.totalSize(), X.dataPtr(), Y.dataPtr());
+}
+
 QSet<QString> get_pairs_to_compare(const DiskReadMda32& X, const DiskReadMda& F, bigint num_comparisons_per_cluster, const QList<int>& cluster_numbers, P_isolation_metrics_opts opts)
 {
     QSet<QString> ret;
+
+    int min_num_comparisons_per_cluster = 3;
 
     QSet<int> cluster_numbers_set = cluster_numbers.toSet();
 
@@ -433,19 +441,23 @@ QSet<QString> get_pairs_to_compare(const DiskReadMda32& X, const DiskReadMda& F,
         Mda32 template1;
         templates0.getChunk(template1, 0, 0, k1 - 1, template1.N1(), template1.N2(), 1);
         QVector<double> dists;
+        QVector<double> correlations;
         for (bigint i2 = 0; i2 < cluster_numbers.count(); i2++) {
             Mda32 template2;
             bigint k2 = cluster_numbers[i2];
             templates0.getChunk(template2, 0, 0, k2 - 1, template2.N1(), template2.N2(), 1);
             dists << distsqr_between_templates(template1, template2);
+            correlations << correlation_between_templates(template1, template2);
         }
         QList<bigint> inds = get_sort_indices_bigint(dists);
         int num0 = 0;
         for (bigint a = 0; (a < inds.count()) && (num0 < num_comparisons_per_cluster); a++) {
-            int k2 = cluster_numbers[inds[a]];
-            if (k2 != k1) {
-                ret.insert(QString("%1-%2").arg(k1).arg(k2));
-                num0++;
+            if ((a < min_num_comparisons_per_cluster) || (correlations[a] >= 0.9)) {
+                int k2 = cluster_numbers[inds[a]];
+                if (k2 != k1) {
+                    ret.insert(QString("%1-%2").arg(k1).arg(k2));
+                    num0++;
+                }
             }
         }
     }

@@ -945,3 +945,31 @@ bool MLUtil::matchesFastChecksum(QString path, QString fcs)
         return true;
     }
 }
+
+double MLCompute::correlation(bigint N, const float* X1, const float* X2)
+{
+    double mean1 = mean(N, X1);
+    double stdev1 = stdev(N, X1);
+    double mean2 = mean(N, X2);
+    double stdev2 = stdev(N, X2);
+    if ((stdev1 == 0) || (stdev2 == 0))
+        return 0;
+    QVector<double> Y1(N);
+    QVector<double> Y2(N);
+    for (bigint i = 0; i < N; i++) {
+        Y1[i] = (X1[i] - mean1) / stdev1;
+        Y2[i] = (X2[i] - mean2) / stdev2;
+    }
+    return dotProduct(Y1, Y2);
+}
+
+double MLCompute::stdev(bigint N, const float* X)
+{
+    double sumsqr = dotProduct(N, X, X);
+    double sum0 = sum(N, X);
+    if (N >= 2) {
+        return sqrt((sumsqr - sum0 * sum0 / N) / (N - 1));
+    }
+    else
+        return 0;
+}

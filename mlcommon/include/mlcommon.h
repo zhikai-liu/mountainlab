@@ -81,7 +81,9 @@ double min(bigint N, const float* X);
 double max(bigint N, const float* X);
 double sum(bigint N, const float* X);
 double mean(bigint N, const float* X);
+double stdev(bigint N, const float* X);
 double dotProduct(bigint N, const float* X1, const float* X2);
+double correlation(bigint N, const float* X1, const float* X2);
 double norm(bigint N, const float* X);
 }
 
