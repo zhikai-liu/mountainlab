@@ -986,7 +986,7 @@ double MLCompute::stdev(bigint N, const float* X)
 
 QJsonObject MLUtil::createPrvObject(const QString& file_or_dir_path)
 {
-    qDebug().noquote() << "Creating prv object for: "+file_or_dir_path;
+    qDebug().noquote() << "Creating prv object for: " + file_or_dir_path;
     QString path = file_or_dir_path;
     if (QFileInfo(path).isFile()) {
         QJsonObject obj;
