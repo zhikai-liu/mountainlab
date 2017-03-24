@@ -1,10 +1,10 @@
 function main(params) {
 	set_default_parameters(params,{
 		samplerate:30000, //Hz
-		freq_min:300,freq_max:6000,freq_wid:1000,quantization_unit:0, //bandpass filter
+		freq_min:800,freq_max:6000,freq_wid:1000,quantization_unit:0, //bandpass filter
 		clip_size_msec:2, //clip size for event extraction
 		detect_interval_msec:1, //min separation between two events on same channel
-		detect_threshold:3.5, //stdevs away from noise
+		detect_threshold:3.0, //stdevs away from noise
 		detect_sign:0, //-1,0,1
 		whiten:'true', //boolean
 		//consolidate_clusters:1, //boolean

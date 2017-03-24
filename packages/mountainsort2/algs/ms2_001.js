@@ -30,7 +30,7 @@ exports.spec=function() {
 	spec0.parameters.push({name:"central_channel",optional:true,default_value:0});
 	spec0.parameters.push({name:"clip_size_msec",optional:true,default_value:2});
 	spec0.parameters.push({name:"detect_interval_msec",optional:true,default_value:1});
-	spec0.parameters.push({name:"detect_threshold",optional:true,default_value:3.5});
+	spec0.parameters.push({name:"detect_threshold",optional:true,default_value:3.0});
 	spec0.parameters.push({name:"detect_sign",optional:true,default_value:0});
 	spec0.parameters.push({name:"whiten",optional:true,default_value:'false'});
 	spec0.parameters.push({name:"consolidate_clusters",optional:true,default_value:'false'});
