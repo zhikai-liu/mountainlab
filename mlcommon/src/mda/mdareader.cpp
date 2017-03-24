@@ -335,6 +335,7 @@ bool MdaIOHandlerMDA::canWrite() const
 
 bool MdaIOHandlerMDA::read(Mda* mda)
 {
+    bool use64bitdims = false;
     Header header;
     if (!readLE(&header.data_type))
         return false;
@@ -342,12 +343,25 @@ bool MdaIOHandlerMDA::read(Mda* mda)
         return false;
     if (!readLE(&header.num_dims))
         return false;
-    if (header.num_dims <= 0 || header.num_dims > maxDims)
+    if (header.num_dims == 0 || header.num_dims > maxDims)
         return false;
+    if (header.num_dims < 0) {
+        use64bitdims = true;
+        header.num_dims = -header.num_dims;
+    }
     header.dims.resize(header.num_dims);
-    for (size_t i = 0; i < (size_t)header.num_dims; ++i) {
-        if (!readLE(header.dims.data() + i))
-            return false;
+    if (use64bitdims) {
+        for (size_t i = 0; i < (size_t)header.num_dims; ++i) {
+            if (!readLE(header.dims.data() + i))
+                return false;
+        }
+    } else {
+        int32_t data;
+        for (size_t i = 0; i < (size_t)header.num_dims; ++i) {
+            if (!readLE(&data))
+                return false;
+            header.dims[i] = data;
+        }
     }
     while (header.dims.size() < 6)
         header.dims.append(1);
@@ -376,6 +390,7 @@ bool MdaIOHandlerMDA::read(Mda* mda)
 
 bool MdaIOHandlerMDA::read(Mda32* mda)
 {
+    bool use64bitdims = false;
     Header header;
     if (!readLE(&header.data_type))
         return false;
@@ -383,12 +398,25 @@ bool MdaIOHandlerMDA::read(Mda32* mda)
         return false;
     if (!readLE(&header.num_dims))
         return false;
-    if (header.num_dims <= 0 || header.num_dims > maxDims)
+    if (header.num_dims == 0 || header.num_dims > maxDims)
         return false;
+    if (header.num_dims < 0) {
+        use64bitdims = true;
+        header.num_dims = -header.num_dims;
+    }
     header.dims.resize(header.num_dims);
-    for (size_t i = 0; i < (size_t)header.num_dims; ++i) {
-        if (!readLE(header.dims.data() + i))
-            return false;
+    if (use64bitdims) {
+        for (size_t i = 0; i < (size_t)header.num_dims; ++i) {
+            if (!readLE(header.dims.data() + i))
+                return false;
+        }
+    } else {
+        int32_t data;
+        for (size_t i = 0; i < (size_t)header.num_dims; ++i) {
+            if (!readLE(&data))
+                return false;
+            header.dims[i] = data;
+        }
     }
     while (header.dims.size() < 6)
         header.dims.append(1);
@@ -458,16 +486,26 @@ bool MdaIOHandlerMDA::write(const Mda& mda)
     }
     header.num_dims = mda.ndims();
     header.dims.resize(header.num_dims);
+    bool use64bitdims = false;
     for (int i = 0; i < header.num_dims; ++i) {
         header.dims[i] = mda.size(i);
+        if (mda.size(i) > 2e9) {
+            use64bitdims = true;
+        }
     }
+    if (use64bitdims)
+        header.num_dims = - header.num_dims;
     // commit the header
     writeLE(header.data_type);
     writeLE(header.num_bytes_per_entry);
     writeLE(header.num_dims);
-    for (int32_t dim : header.dims)
-        writeLE(dim);
-
+    if (use64bitdims) {
+        for (uint64_t dim : header.dims)
+            writeLE(dim);
+    } else {
+        for (int32_t dim : header.dims)
+            writeLE(dim);
+    }
     // commit data
     switch (header.data_type) {
     case Byte:
