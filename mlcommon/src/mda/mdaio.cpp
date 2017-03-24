@@ -21,7 +21,8 @@ bigint mda_read_header(struct MDAIO_HEADER* HH, FILE* input_file)
 {
     bigint num_read = 0;
     bigint i;
-    bigint totsize;
+    size_t totsize;
+    bool uses64bitdims = false;
 
     //initialize
     HH->data_type = 0;
@@ -59,26 +60,47 @@ bigint mda_read_header(struct MDAIO_HEADER* HH, FILE* input_file)
     if (num_read < 1)
         return 0;
 
-    if ((HH->num_dims <= 0) || (HH->num_dims > MDAIO_MAX_DIMS))
+    if ((HH->num_dims == 0) || (HH->num_dims > MDAIO_MAX_DIMS))
         return 0;
+
+    if (HH->num_dims < 0) {
+        uses64bitdims = true;
+        HH->num_dims = -HH->num_dims;
+    }
 
     //the dimensions
     totsize = 1;
-    for (i = 0; i < HH->num_dims; i++) {
-        int32_t dim0;
-        num_read = jfread(&dim0, 4, 1, input_file);
-        if (num_read < 1)
-            return 0;
-        HH->dims[i] = dim0;
-        totsize *= HH->dims[i];
+    if (uses64bitdims) {
+        for (i = 0; i < HH->num_dims; ++i) {
+            uint64_t dim0;
+            num_read = jfread(&dim0, sizeof(dim0), 1, input_file);
+            if (num_read < 1)
+                return 0;
+            HH->dims[i] = dim0;
+            totsize *= HH->dims[i];
+        }
+    } else {
+        for (i = 0; i < HH->num_dims; i++) {
+            int32_t dim0;
+            num_read = jfread(&dim0, sizeof(dim0), 1, input_file);
+            if (num_read < 1)
+                return 0;
+            if (dim0 < 0) {
+                printf("mda_read_header: Dimension %d less than 0: %d\n", i+1, dim0);
+            }
+            HH->dims[i] = dim0;
+            totsize *= HH->dims[i];
+        }
     }
 
-    if ((totsize < 0) || (totsize > MDAIO_MAX_SIZE)) { // changed to <0 rather than <= 0 on 2/21/17 by jfm
+    if (totsize > MDAIO_MAX_SIZE) {
         printf("mda_read_header: Problem with total size: %ld\n", totsize);
         return 0;
     }
 
-    HH->header_size = (3 + HH->num_dims) * 4;
+    HH->header_size =
+        3 * sizeof(int32_t) +
+        HH->num_dims * (uses64bitdims ? sizeof(uint64_t) : sizeof(int32_t));
 
     //we're done!
     return 1;
@@ -111,6 +133,10 @@ bigint mda_write_header(struct MDAIO_HEADER* X, FILE* output_file)
         printf("mda_write_header: Problem with num dims: %d\n", X->num_dims);
         return 0;
     }
+    bool uses64bitdims = false;
+    for(int i = 0; !uses64bitdims && (i < X->num_dims); ++i) {
+        if (X->dims[i] > 2e9) uses64bitdims = true;
+    }
 
     //data type
     num_bytes = fwrite(&X->data_type, 4, 1, output_file);
@@ -123,25 +149,26 @@ bigint mda_write_header(struct MDAIO_HEADER* X, FILE* output_file)
         return 0;
 
     //number of dimensions
-    num_bytes = fwrite(&X->num_dims, 4, 1, output_file);
+    int32_t num_dims = uses64bitdims ? -X->num_dims : X->num_dims;
+    num_bytes = fwrite(&num_dims, sizeof(num_dims), 1, output_file);
     if (num_bytes < 1)
         return 0;
 
-    const bigint max_int32 = 2147483648;
-
     //the dimensions
     for (i = 0; i < X->num_dims; i++) {
-        if (X->dims[i] >= max_int32) {
-            printf("Dimensions is too large to save in .mda header: %ld >= %ld\n", X->dims[i], max_int32);
-            return 0;
+        if (uses64bitdims) {
+            uint64_t dim0 = X->dims[i];
+            num_bytes = fwrite(&dim0, sizeof(dim0), 1, output_file);
+        } else {
+            int32_t dim0 = X->dims[i];
+            num_bytes = fwrite(&dim0, sizeof(dim0), 1, output_file);
         }
-        int32_t dim0 = X->dims[i];
-        num_bytes = fwrite(&dim0, 4, 1, output_file);
         if (num_bytes < 1)
             return 0;
     }
 
-    X->header_size = 12 + 4 * X->num_dims;
+    X->header_size = 3 * sizeof(int32_t) +
+                     X->num_dims * (uses64bitdims ? sizeof(uint64_t) : sizeof(int32_t));
 
     //we're done!
     return 1;
