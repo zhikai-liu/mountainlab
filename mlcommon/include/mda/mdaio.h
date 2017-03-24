@@ -59,10 +59,10 @@ struct MDAIO_HEADER {
     int32_t data_type; //the data type in the file
     int32_t num_bytes_per_entry; //number of bytes per data entry (redundant)
     int32_t num_dims; //the number of dimensions to read/write
-    bigint dims[MDAIO_MAX_DIMS]; //the size of the dimensions
+    uint64_t dims[MDAIO_MAX_DIMS]; //the size of the dimensions
 
     //the following make sense for reading but not writing -- purposes of info
-    //note that the header size will always be (3+num_dims)x4
+    //note that the header size will be (3+num_dims)x4 or 3x4+num_dims*8
     bigint header_size; //the size of the header in bytes
 };
 
