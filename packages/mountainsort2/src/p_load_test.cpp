@@ -68,14 +68,8 @@ bool p_load_test(QString stats_out, P_load_test_opts opts)
     return TextFile::write(stats_out, json);
 }
 
-bool p_misc_test()
+bool p_misc_test(QString dir_path, QString info_out_path)
 {
-    bigint M = 4;
-    bigint T = 50;
-    bigint L = 1000;
-
-    //Mda32 clip0(M,T);
-
-    //Mda32 X(M,T,L);
-    return true;
+    QJsonObject obj = MLUtil::createPrvObject(dir_path);
+    return TextFile::write(info_out_path, QJsonDocument(obj).toJson());
 }

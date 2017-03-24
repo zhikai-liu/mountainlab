@@ -355,7 +355,8 @@ bool MdaIOHandlerMDA::read(Mda* mda)
             if (!readLE(header.dims.data() + i))
                 return false;
         }
-    } else {
+    }
+    else {
         int32_t data;
         for (size_t i = 0; i < (size_t)header.num_dims; ++i) {
             if (!readLE(&data))
@@ -410,7 +411,8 @@ bool MdaIOHandlerMDA::read(Mda32* mda)
             if (!readLE(header.dims.data() + i))
                 return false;
         }
-    } else {
+    }
+    else {
         int32_t data;
         for (size_t i = 0; i < (size_t)header.num_dims; ++i) {
             if (!readLE(&data))
@@ -494,7 +496,7 @@ bool MdaIOHandlerMDA::write(const Mda& mda)
         }
     }
     if (use64bitdims)
-        header.num_dims = - header.num_dims;
+        header.num_dims = -header.num_dims;
     // commit the header
     writeLE(header.data_type);
     writeLE(header.num_bytes_per_entry);
@@ -502,7 +504,8 @@ bool MdaIOHandlerMDA::write(const Mda& mda)
     if (use64bitdims) {
         for (uint64_t dim : header.dims)
             writeLE(dim);
-    } else {
+    }
+    else {
         for (int32_t dim : header.dims)
             writeLE(dim);
     }

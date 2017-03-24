@@ -32,6 +32,7 @@ public:
     void setPath(const QString& file_path);
     void setPrvObject(const QJsonObject& prv_object);
     void setConcatPaths(int concat_dimension, const QStringList& paths);
+    void setConcatDirectory(int concat_dimension, const QString& dir_path);
 
     QString makePath() const; //not capturing the reshaping
     QJsonObject toPrvObject() const;

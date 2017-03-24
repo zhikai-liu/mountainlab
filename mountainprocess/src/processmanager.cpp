@@ -807,5 +807,26 @@ QJsonObject ProcessManagerPrivate::create_file_object(const QString& fname_in)
     }
     obj["size"] = QFileInfo(fname).size();
     obj["last_modified"] = QFileInfo(fname).lastModified().toString("yyyy-MM-dd-hh-mm-ss-zzz");
+    if (QFileInfo(fname).isDir()) {
+        QStringList fnames = QDir(fname).entryList(QDir::Files, QDir::Name);
+        QJsonArray files_array;
+        foreach (QString fname2, fnames) {
+            QJsonObject obj0;
+            obj0["name"] = fname2;
+            obj0["object"] = create_file_object(fname + "/" + fname2);
+            files_array.push_back(obj0);
+        }
+        obj["files"] = files_array;
+
+        QStringList dirnames = QDir(fname).entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+        QJsonArray dirs_array;
+        foreach (QString dirname2, dirnames) {
+            QJsonObject obj0;
+            obj0["name"] = dirname2;
+            obj0["object"] = create_file_object(fname + "/" + dirname2);
+            dirs_array.push_back(obj0);
+        }
+        obj["directories"] = dirs_array;
+    }
     return obj;
 }

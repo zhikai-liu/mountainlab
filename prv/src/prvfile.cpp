@@ -227,6 +227,9 @@ QString PrvFile::locate(const PrvFileLocateOptions& opts)
     QString fname_or_url = d->find_file(original_size, checksum, fcs, opts);
     if ((fname_or_url.isEmpty()) && (opts.search_locally)) {
         QString original_path = obj["original_path"].toString();
+        if (opts.verbose) {
+            qDebug().noquote() << "Trying original path:" << original_path;
+        }
         if (QFile::exists(original_path)) {
             if (QFileInfo(original_path).size() == original_size) {
                 if (MLUtil::matchesFastChecksum(original_path, fcs)) {

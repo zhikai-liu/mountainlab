@@ -1139,7 +1139,7 @@ QStringList get_local_search_paths()
     return local_search_paths;
 }
 
-QString find_file_2(QString directory, QString checksum, QString fcs_optional, int size, bool recursive, bool verbose)
+QString find_file_2(QString directory, QString checksum, QString fcs_optional, bigint size, bool recursive, bool verbose)
 {
     QStringList files = QDir(directory).entryList(QStringList("*"), QDir::Files, QDir::Name);
     foreach (QString file, files) {
@@ -1188,12 +1188,12 @@ QString find_file_2(QString directory, QString checksum, QString fcs_optional, i
     return "";
 }
 
-QString find_local_file(int size, const QString& checksum, const QString& fcs_optional, const QStringList& local_search_paths, bool verbose)
+QString find_local_file(bigint size, const QString& checksum, const QString& fcs_optional, const QStringList& local_search_paths, bool verbose)
 {
     for (int i = 0; i < local_search_paths.count(); i++) {
         QString search_path = local_search_paths[i];
         if (verbose)
-            printf("Searching %s\n", search_path.toUtf8().data());
+            qDebug().noquote() << "Searching: " + search_path;
         QString fname = find_file_2(search_path, checksum, fcs_optional, size, true, verbose);
         if (!fname.isEmpty())
             return fname;

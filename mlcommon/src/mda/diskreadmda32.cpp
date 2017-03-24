@@ -48,6 +48,7 @@ public:
     bool open_file_if_needed();
     void copy_from(const DiskReadMda32& other);
     bigint total_size();
+    static QStringList find_all_mda_files_in_directory(QString dir_path, bool recursive);
 };
 
 DiskReadMda32::DiskReadMda32(const QString& path)
@@ -209,7 +210,12 @@ void DiskReadMda32::setPath(const QString& file_path)
             return;
         }
     }
+    else if (QFileInfo(file_path).isDir()) {
+        qWarning() << "Path is directory: concatenating all .mda files along the second dimension: " + file_path;
+        this->setConcatDirectory(2, file_path);
+    }
     else if ((file_path.startsWith("[")) && (file_path.endsWith("]"))) {
+        /// TODO: this should not be done here! because how do we know we want to concat along the second dimension!
         QString fp = file_path.mid(1, file_path.count() - 2);
         QStringList list = fp.split("][");
         if (list.count() == 1) {
@@ -243,6 +249,13 @@ void DiskReadMda32::setConcatPaths(int concat_dimension, const QStringList& path
     }
 }
 
+void DiskReadMda32::setConcatDirectory(int concat_dimension, const QString& dir_path)
+{
+    QStringList fnames = d->find_all_mda_files_in_directory(dir_path, true);
+    this->setConcatPaths(concat_dimension, fnames);
+    d->m_path = dir_path;
+}
+
 QString compute_memory_checksum32(bigint nbytes, void* ptr)
 {
     QByteArray X((char*)ptr, nbytes);
@@ -265,6 +278,8 @@ QString compute_mda_checksum(Mda32& X)
 
 QString DiskReadMda32::makePath() const
 {
+    if (!d->m_path.isEmpty())
+        return d->m_path;
     if (d->m_use_memory_mda) {
         QString checksum = compute_mda_checksum(d->m_memory_mda);
         QString fname = CacheManager::globalInstance()->makeLocalFile(checksum + ".makePath.mda", CacheManager::ShortTerm);
@@ -472,7 +487,7 @@ bool read_chunk_from_concat_list(Mda32& chunk, const QList<DiskReadMda32>& list,
     QVector<bigint> sizes;
     for (int j = 0; j < list.count(); j++) {
         if (list[j].totalSize() % N1 != 0) {
-            qWarning() << "For now the concat_dimension must be 2 and the individual arrays must have total size a multiple of N1" << N1 << list[j].totalSize();
+            qWarning() << "For now the concat_dimension must be 2 and the individual arrays must have total size a multiple of N1." << N1 << list[j].totalSize();
             return false;
         }
         sizes << list[j].totalSize() / N1;
@@ -825,4 +840,23 @@ bigint DiskReadMda32Private::total_size()
     if (!read_header_if_needed())
         return 0;
     return m_mda_header_total_size;
+}
+
+QStringList DiskReadMda32Private::find_all_mda_files_in_directory(QString dir_path, bool recursive)
+{
+    QStringList ret;
+    QStringList fnames = QDir(dir_path).entryList(QDir::Files, QDir::Name);
+    foreach (QString fname, fnames) {
+        if (fname.endsWith(".mda")) {
+            ret << dir_path + "/" + fname;
+        }
+    }
+    if (recursive) {
+        QStringList dirnames = QDir(dir_path).entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+        foreach (QString dirname, dirnames) {
+            QStringList tmp = find_all_mda_files_in_directory(dir_path + "/dirname", recursive);
+            ret.append(tmp);
+        }
+    }
+    return ret;
 }

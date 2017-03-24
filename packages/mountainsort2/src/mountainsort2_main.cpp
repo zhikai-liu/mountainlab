@@ -239,6 +239,12 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
+        ProcessorSpec X("mountainsort.misc_test", "0.1");
+        X.addInput("dir");
+        X.addOutputs("info_out");
+        processors.push_back(X.get_spec());
+    }
+    {
         ProcessorSpec X("mountainsort.compute_amplitudes", "0.1");
         X.addInputs("timeseries", "event_times");
         X.addOutputs("amplitudes_out");
@@ -488,6 +494,11 @@ int main(int argc, char* argv[])
         opts.num_read_bytes = CLP.named_parameters["num_read_bytes"].toDouble();
         opts.num_write_bytes = CLP.named_parameters["num_write_bytes"].toDouble();
         ret = p_load_test(stats_out, opts);
+    }
+    else if (arg1 == "mountainsort.misc_test") {
+        QString dir = CLP.named_parameters["dir"].toString();
+        QString info_out = CLP.named_parameters["info_out"].toString();
+        ret = p_misc_test(dir, info_out);
     }
     else if (arg1 == "mountainsort.compute_amplitudes") {
         P_compute_amplitudes_opts opts;

@@ -80,14 +80,15 @@ bigint mda_read_header(struct MDAIO_HEADER* HH, FILE* input_file)
             HH->dims[i] = dim0;
             totsize *= HH->dims[i];
         }
-    } else {
+    }
+    else {
         for (i = 0; i < HH->num_dims; i++) {
             int32_t dim0;
             num_read = jfread(&dim0, sizeof(dim0), 1, input_file);
             if (num_read < 1)
                 return 0;
             if (dim0 < 0) {
-                printf("mda_read_header: Dimension %ld less than 0: %" PRIi32 "\n", i+1, dim0);
+                printf("mda_read_header: Dimension %ld less than 0: %" PRIi32 "\n", i + 1, dim0);
             }
             HH->dims[i] = dim0;
             totsize *= HH->dims[i];
@@ -99,9 +100,7 @@ bigint mda_read_header(struct MDAIO_HEADER* HH, FILE* input_file)
         return 0;
     }
 
-    HH->header_size =
-        3 * sizeof(int32_t) +
-        HH->num_dims * (uses64bitdims ? sizeof(uint64_t) : sizeof(int32_t));
+    HH->header_size = 3 * sizeof(int32_t) + HH->num_dims * (uses64bitdims ? sizeof(uint64_t) : sizeof(int32_t));
 
     //we're done!
     return 1;
@@ -135,8 +134,9 @@ bigint mda_write_header(struct MDAIO_HEADER* X, FILE* output_file)
         return 0;
     }
     bool uses64bitdims = false;
-    for(int i = 0; !uses64bitdims && (i < X->num_dims); ++i) {
-        if (X->dims[i] > 2e9) uses64bitdims = true;
+    for (int i = 0; !uses64bitdims && (i < X->num_dims); ++i) {
+        if (X->dims[i] > 2e9)
+            uses64bitdims = true;
     }
 
     //data type
@@ -160,7 +160,8 @@ bigint mda_write_header(struct MDAIO_HEADER* X, FILE* output_file)
         if (uses64bitdims) {
             uint64_t dim0 = X->dims[i];
             num_bytes = fwrite(&dim0, sizeof(dim0), 1, output_file);
-        } else {
+        }
+        else {
             int32_t dim0 = X->dims[i];
             num_bytes = fwrite(&dim0, sizeof(dim0), 1, output_file);
         }
@@ -168,8 +169,7 @@ bigint mda_write_header(struct MDAIO_HEADER* X, FILE* output_file)
             return 0;
     }
 
-    X->header_size = 3 * sizeof(int32_t) +
-                     X->num_dims * (uses64bitdims ? sizeof(uint64_t) : sizeof(int32_t));
+    X->header_size = 3 * sizeof(int32_t) + X->num_dims * (uses64bitdims ? sizeof(uint64_t) : sizeof(int32_t));
 
     //we're done!
     return 1;

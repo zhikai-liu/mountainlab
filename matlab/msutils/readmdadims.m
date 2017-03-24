@@ -31,10 +31,15 @@ else
     fread(F,1,'int32');
     num_dims=fread(F,1,'int32');    
 end;
+dim_type_str='int32';
+if (num_dims<0)
+    num_dims=-num_dims;
+    dim_type_str='int64';
+end;
 
 S=zeros(1,num_dims);
 for j=1:num_dims
-    S(j)=fread(F,1,'int32');
+    S(j)=fread(F,1,dim_type_str);
 end;
 
 fclose(F);

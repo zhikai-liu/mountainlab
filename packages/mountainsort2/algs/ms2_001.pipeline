@@ -22,12 +22,14 @@ function main(params) {
 	//bandpass filter each session
 	var filt;
 	var raw;
-	var sessions=[];
+	//var sessions=[];
 	if (file_exists(inpath+'/raw.mda.prv')) {
 		raw=inpath+'/raw.mda.prv';
 		filt=bandpass_filter(raw,params.samplerate,params.freq_min,params.freq_max,params.freq_wid,params.quantization_unit);
 	}
 	else {
+		filt=[];
+		/*
 		sessions=find_all_sessions(inpath);
 		raw=[];
 		filt=[];
@@ -42,9 +44,11 @@ function main(params) {
 				mkdir(outpath+'/'+sessions[i].relpath);
 			}
 		}
+		*/
 	}
 	if (filt.length===0) {
-		console.err('No raw files or sessions found.');
+		//console.err('No raw files or sessions found.');
+		console.error('Unable to find raw.mda.prv');
 		return;
 	}
 
@@ -123,6 +127,7 @@ function main(params) {
 		remove_file(params.outpath+'/filt.mda.prv'); //to be safe
 	}
 
+	/*
 	if (sessions.length>0) {
 		//split the firings
 		var firings_out_list=[];
@@ -139,6 +144,7 @@ function main(params) {
 				{firings_out_list:firings_out_list}
 			);
 	}
+	*/
 
 	run_pipeline();
 }

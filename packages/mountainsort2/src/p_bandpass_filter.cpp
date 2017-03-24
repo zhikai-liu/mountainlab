@@ -6,6 +6,8 @@
 #include "omp.h"
 #include "fftw3.h"
 #include <QFile>
+#include <QFileInfo>
+#include <QCoreApplication>
 
 namespace P_bandpass_filter {
 void define_kernel(bigint N, double* kernel, double samplefreq, double freq_min, double freq_max, double freq_wid);
@@ -100,13 +102,11 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
         do_write = false;
 
     DiskReadMda32 X;
-    if (opts.testcode.isEmpty())
+    if (QFileInfo(timeseries).isDir())
+        X.setConcatDirectory(2, timeseries);
+    else
         X.setPath(timeseries);
-    else if (opts.testcode.split(",").contains("noread")) {
-        DiskReadMda32 A(timeseries);
-        Mda32 tmp(A.N1(), A.N2());
-        X = DiskReadMda32(tmp);
-    }
+
     const bigint M = X.N1();
     const bigint N = X.N2();
 
@@ -131,6 +131,7 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
     printf("************+++ Using chunk size / overlap size: %ld / %ld (num threads=%ld)\n", chunk_size, overlap_size, num_threads);
     qDebug().noquote() << "samplerate/freq_min/freq_max/freq_wid:" << opts.samplerate << opts.freq_min << opts.freq_max << opts.freq_wid;
 
+    bool ret = true;
 #pragma omp parallel
     {
         // one kernel runner for each parallel thread so they don't intersect
@@ -145,7 +146,10 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
             Mda32 chunk;
 #pragma omp critical(lock1)
             {
-                X.readChunk(chunk, 0, timepoint - overlap_size, M, chunk_size + 2 * overlap_size);
+                if (!X.readChunk(chunk, 0, timepoint - overlap_size, M, chunk_size + 2 * overlap_size)) {
+                    qWarning() << "Error reading chunk";
+                    ret = false;
+                }
             }
             if (!opts.testcode.split(",").contains("nokernel")) {
                 QTime kernel_timer;
@@ -165,7 +169,10 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
                         if (opts.quantization_unit) {
                             P_bandpass_filter::multiply_by_factor(chunk2.totalSize(), chunk2.dataPtr(), 1.0 / opts.quantization_unit);
                         }
-                        Y.writeChunk(chunk2, 0, timepoint);
+                        if (!Y.writeChunk(chunk2, 0, timepoint)) {
+                            qWarning() << "Error writing chunk";
+                            ret = false;
+                        }
                     }
                 }
                 num_timepoints_handled += qMin((bigint)chunk_size, N - timepoint);
@@ -180,7 +187,7 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
         }
     }
 
-    return true;
+    return ret;
 }
 
 namespace P_bandpass_filter {

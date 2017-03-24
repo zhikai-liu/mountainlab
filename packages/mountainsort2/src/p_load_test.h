@@ -11,6 +11,6 @@ struct P_load_test_opts {
 
 bool p_load_test(QString stats_out, P_load_test_opts opts);
 
-bool p_misc_test();
+bool p_misc_test(QString dir, QString info_out);
 
 #endif // P_LOAD_TEST_H
