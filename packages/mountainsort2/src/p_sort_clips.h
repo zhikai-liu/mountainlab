@@ -9,7 +9,7 @@ struct Sort_clips_opts {
     double isocut_threshold = 1;
     double K_init = 200;
     bigint max_samples = 10000; //for subsampled pca
-    bool remove_outliers = true;
+    bool remove_outliers = false;
 };
 
 bool p_sort_clips(QString clips, QString firings_out, Sort_clips_opts opts);
