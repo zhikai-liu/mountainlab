@@ -123,7 +123,7 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.sort_clips", "0.1");
+        ProcessorSpec X("mountainsort.sort_clips", "0.11a");
         X.addInputs("clips");
         X.addOutputs("labels_out");
         //X.addRequiredParameters();

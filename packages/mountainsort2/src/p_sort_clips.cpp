@@ -10,6 +10,7 @@
 namespace P_sort_clips {
 QVector<int> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indices, Sort_clips_opts opts);
 Mda32 dimension_reduce_clips(Mda32& clips, bigint num_features_per_channel, bigint max_samples);
+Mda32 compute_templates(Mda32& clips, const QVector<int>& labels);
 }
 
 bool p_sort_clips(QString clips_path, QString labels_out, Sort_clips_opts opts)
@@ -22,8 +23,8 @@ bool p_sort_clips(QString clips_path, QString labels_out, Sort_clips_opts opts)
         clips = P_sort_clips::dimension_reduce_clips(clips, opts.num_features, opts.max_samples);
         qDebug().noquote() << QString("Time elapsed for dimension reduction per channel (%1x%2x%3): %4 sec").arg(clips.N1()).arg(clips.N2()).arg(clips.N3()).arg(timer.elapsed() * 1.0 / 1000);
     }
-    //bigint M=clips.N1();
-    //bigint T=clips.N2();
+    bigint M = clips.N1();
+    bigint T = clips.N2();
     bigint L = clips.N3();
 
     QVector<bigint> indices(L);
@@ -33,6 +34,49 @@ bool p_sort_clips(QString clips_path, QString labels_out, Sort_clips_opts opts)
 
     qDebug().noquote() << "Sorting clips...";
     QVector<int> labels = P_sort_clips::sort_clips_subset(clips, indices, opts);
+
+    if (opts.remove_outliers) {
+        qDebug().noquote() << "Computing templates...";
+        Mda32 templates0 = P_sort_clips::compute_templates(clips, labels);
+        float* tptr = templates0.dataPtr();
+        float* cptr = clips.dataPtr();
+        qDebug().noquote() << "Removing outliers...";
+        QVector<float> diff(M * T);
+        bigint aa = 0;
+        bigint num_outliers_removed = 0;
+        QVector<double> clip_norms(L);
+        QVector<double> template_norms(L);
+        QVector<double> resid_norms(L);
+        for (bigint i = 0; i < L; i++) {
+            int k = labels[i];
+            if (k > 0) {
+                float* tptr0 = &tptr[(k - 1) * M * T];
+                float* cptr0 = &cptr[aa];
+                for (int bb = 0; bb < M * T; bb++) {
+                    diff[bb] = cptr0[bb] - tptr0[bb];
+                }
+                clip_norms[i] = sqrt(MLCompute::dotProduct(M * T, &cptr[aa], &cptr[aa]));
+                template_norms[i] = sqrt(MLCompute::dotProduct(M * T, tptr0, tptr0));
+                resid_norms[i] = sqrt(MLCompute::dotProduct(M * T, diff.data(), diff.data()));
+            }
+            aa += M * T;
+        }
+        double mean_resid_norms = MLCompute::mean(resid_norms);
+        double stdev_resid_norms = MLCompute::stdev(resid_norms);
+        for (bigint i = 0; i < L; i++) {
+            if (resid_norms[i] > clip_norms[i]) {
+                //subtracting off the template made the L2-norm increase
+                labels[i] = 0;
+            }
+            if (resid_norms[i] > mean_resid_norms + 4 * stdev_resid_norms) {
+                //the resid is larger than most.
+                labels[i] = 0;
+            }
+            if (!labels[i])
+                num_outliers_removed++;
+        }
+        qDebug().noquote() << QString("Removed %1 outliers out of %2 (%3%)").arg(num_outliers_removed).arg(L).arg(num_outliers_removed * 100.0 / L);
+    }
 
     Mda ret(1, L);
     for (bigint i = 0; i < L; i++) {
@@ -157,6 +201,42 @@ QVector<int> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indice
 
         return labels_new;
     }
+}
+Mda32 compute_templates(Mda32& clips, const QVector<int>& labels)
+{
+    int M = clips.N1();
+    int T = clips.N2();
+    bigint L = clips.N3();
+    int Kmax = MLCompute::max(labels);
+    Mda sum(M, T, Kmax);
+    QVector<double> counts(Kmax);
+    double* sumptr = sum.dataPtr();
+    float* cptr = clips.dataPtr();
+    bigint aa = 0;
+    for (bigint i = 0; i < L; i++) {
+        int k = labels[i];
+        if (k > 0) {
+            bigint bb = M * T * (k - 1);
+            for (bigint jj = 0; jj < M * T; jj++) {
+                sumptr[bb] += cptr[aa];
+                aa++;
+                bb++;
+            }
+            counts[k - 1]++;
+        }
+    }
+    Mda32 ret(M, T, Kmax);
+    for (int k = 0; k < Kmax; k++) {
+        double factor = 0;
+        if (counts[k])
+            factor = 1.0 / counts[k];
+        for (int t = 0; t < T; t++) {
+            for (int m = 0; m < M; m++) {
+                ret.setValue(sum.value(m, t, k) * factor, m, t, k);
+            }
+        }
+    }
+    return ret;
 }
 }
 

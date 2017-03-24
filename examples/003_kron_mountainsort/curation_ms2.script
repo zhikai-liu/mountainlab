@@ -1,6 +1,6 @@
 var noise_overlap_threshold=0.05;
-var peak_snr_threshold=4;
-var isolation_threshold=0.92;
+var peak_snr_threshold=2.5;
+var isolation_threshold=0.9;
 
 // Initialize
 for (var i in clusters) {
@@ -36,4 +36,4 @@ for (var i in clusters) {
 		clusters[i].addTag('non-isolated');
 	}
 }
-n
+
