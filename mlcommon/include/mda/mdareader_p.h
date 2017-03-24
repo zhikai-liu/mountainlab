@@ -60,7 +60,7 @@ public:
         int32_t data_type;
         int32_t num_bytes_per_entry;
         int32_t num_dims;
-        QVector<int32_t> dims;
+        QVector<uint64_t> dims;
     };
     template <typename T>
     bool readLE(T* ptr)
