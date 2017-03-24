@@ -25,6 +25,8 @@
 #include <QSettings>
 #include "mlnetwork.h"
 
+#define PRV_VERSION "0.11"
+
 #ifdef QT_GUI_LIB
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
@@ -242,6 +244,11 @@ QString MLUtil::computeSha1SumOfFile(const QString& path)
 QString MLUtil::computeSha1SumOfFileHead(const QString& path, bigint num_bytes)
 {
     return sumit(path, num_bytes, MLUtil::tempPath());
+}
+
+QString MLUtil::computeSha1SumOfDirectory(const QString& path)
+{
+    return sumit_dir(path, MLUtil::tempPath());
 }
 
 static QString s_temp_path = "";
@@ -888,6 +895,8 @@ QJsonValue MLUtil::configValue(const QString& group, const QString& key)
 
 QString locate_prv(const QJsonObject& obj)
 {
+    return MLUtil::locatePrv(obj);
+    /*
     QString path0 = obj["original_path"].toString();
     QString checksum0 = obj["original_checksum"].toString();
     QString fcs0 = obj["original_fcs"].toString();
@@ -904,6 +913,7 @@ QString locate_prv(const QJsonObject& obj)
         }
     }
     return ret;
+    */
 }
 
 QStringList MLUtil::toStringList(const QVariant& val)
@@ -972,4 +982,243 @@ double MLCompute::stdev(bigint N, const float* X)
     }
     else
         return 0;
+}
+
+QJsonObject MLUtil::createPrvObject(const QString& file_or_dir_path)
+{
+    QString path = file_or_dir_path;
+    if (QFileInfo(path).isFile()) {
+        QJsonObject obj;
+        obj["prv_version"] = PRV_VERSION;
+        obj["original_path"] = path;
+        obj["original_checksum"] = MLUtil::computeSha1SumOfFile(path);
+        obj["original_fcs"] = "head1000-" + MLUtil::computeSha1SumOfFileHead(path, 1000);
+        obj["original_size"] = QFileInfo(path).size();
+        return obj;
+    }
+    else if (QFileInfo(path).isDir()) {
+        QString dir_path = path;
+        QJsonObject obj;
+        obj["prv_version"] = PRV_VERSION;
+        obj["original_path"] = dir_path;
+
+        QJsonArray files_array;
+        QStringList file_list = QDir(dir_path).entryList(QStringList("*"), QDir::Files, QDir::Name);
+        foreach (QString file, file_list) {
+            QJsonObject obj0;
+            obj0["name"] = file;
+            obj0["prv"] = MLUtil::createPrvObject(dir_path + "/" + file);
+            files_array.push_back(obj0);
+        }
+        if (!files_array.isEmpty())
+            obj["files"] = files_array;
+
+        QJsonArray dirs_array;
+        QStringList dir_list = QDir(dir_path).entryList(QStringList("*"), QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+        foreach (QString dir, dir_list) {
+            QJsonObject obj0;
+            obj0["name"] = dir;
+            obj0["prv"] = MLUtil::createPrvObject(dir_path + "/" + dir);
+            dirs_array.push_back(obj0);
+        }
+        if (!dirs_array.isEmpty())
+            obj["directories"] = dirs_array;
+        return obj;
+    }
+    else {
+        return QJsonObject();
+    }
+}
+
+bool file_matches_prv_object(QString file_path, const QJsonObject& obj)
+{
+    if (QFile::exists(file_path)) {
+        bigint original_size = obj["original_size"].toVariant().toLongLong();
+        if (QFileInfo(file_path).size() == original_size) {
+            QString fcs = obj["original_fcs"].toString();
+            if (MLUtil::matchesFastChecksum(file_path, fcs)) {
+                QString checksum = obj["original_checksum"].toString();
+                if (MLUtil::computeSha1SumOfFile(file_path) == checksum) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool directory_matches_prv_object(QString dir_path, const QJsonObject& obj, bool verbose)
+{
+    //check to see if the number of files is correct
+    QStringList files0 = QDir(dir_path).entryList(QDir::Files, QDir::Name);
+    QJsonArray files1 = obj.value("files").toArray();
+    if (files0.count() != files1.count())
+        return false;
+
+    //check to see if file names are correct
+    QSet<QString> files1_set;
+    for (int i = 0; i < files1.count(); i++) {
+        QString fname0 = files1[i].toObject().value("name").toString();
+        files1_set.insert(fname0);
+    }
+    foreach (QString fname, files0) {
+        if (!files1_set.contains(fname))
+            return false;
+    }
+
+    //check to see if the number of dirs is correct
+    QStringList dirs0 = QDir(dir_path).entryList(QStringList("*"), QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    QJsonArray dirs1 = obj.value("directories").toArray();
+    if (dirs0.count() != dirs1.count())
+        return false;
+
+    //check to see if dir names are correct
+    QSet<QString> dirs1_set;
+    for (int i = 0; i < dirs1.count(); i++) {
+        QString dirname0 = dirs1[i].toObject().value("name").toString();
+        dirs1_set.insert(dirname0);
+    }
+    foreach (QString dirname, dirs0) {
+        if (!dirs1_set.contains(dirname))
+            return false;
+    }
+
+    //check to see if file content matches
+    for (int i = 0; i < files1.count(); i++) {
+        QString fname0 = files1[i].toObject().value("name").toString();
+        if (!file_matches_prv_object(dir_path + "/" + fname0, files1[i].toObject().value("prv").toObject())) {
+            return false;
+        }
+    }
+
+    //check to see if dir content matches
+    for (int i = 0; i < dirs1.count(); i++) {
+        QString dirname0 = dirs1[i].toObject().value("name").toString();
+        if (!directory_matches_prv_object(dir_path + "/" + dirname0, dirs1[i].toObject().value("prv").toObject(), verbose)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+QString find_directory_2(const QJsonObject& obj, QString base_path, bool recursive, bool verbose)
+{
+    if (directory_matches_prv_object(base_path, obj, verbose))
+        return base_path;
+    if (recursive) {
+        QStringList dirs = QDir(base_path).entryList(QStringList("*"), QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+        foreach (QString dir, dirs) {
+            QString path = base_path + "/" + dir;
+            QString path0 = find_directory_2(obj, path, recursive, verbose);
+            if (!path0.isEmpty())
+                return path0;
+        }
+    }
+    return "";
+}
+
+QString find_directory_in_search_paths(const QJsonObject& obj, const QStringList& local_search_paths)
+{
+    for (int i = 0; i < local_search_paths.count(); i++) {
+        QString search_path = local_search_paths[i];
+        QString fname = find_directory_2(obj, search_path, true, false);
+        if (!fname.isEmpty())
+            return fname;
+    }
+    return "";
+}
+
+QStringList get_local_search_paths()
+{
+    QStringList local_search_paths = MLUtil::configResolvedPathList("prv", "local_search_paths");
+    QString temporary_path = MLUtil::tempPath();
+    if (!temporary_path.isEmpty()) {
+        local_search_paths << temporary_path;
+    }
+    return local_search_paths;
+}
+
+QString find_file_2(QString directory, QString checksum, QString fcs_optional, int size, bool recursive, bool verbose)
+{
+    QStringList files = QDir(directory).entryList(QStringList("*"), QDir::Files, QDir::Name);
+    foreach (QString file, files) {
+        QString path = directory + "/" + file;
+        if (QFileInfo(path).size() == size) {
+            if (!fcs_optional.isEmpty()) {
+                if (verbose)
+                    printf("Fast checksum test for %s\n", path.toUtf8().data());
+                if (MLUtil::matchesFastChecksum(path, fcs_optional)) {
+                    if (verbose)
+                        printf("Matches. Computing full checksum...\n");
+                    QString checksum1 = MLUtil::computeSha1SumOfFile(path);
+                    if (checksum1 == checksum) {
+                        if (verbose)
+                            printf("Matches.\n");
+                        return path;
+                    }
+                    else {
+                        if (verbose)
+                            printf("Does not match.\n");
+                    }
+                }
+                else {
+                    if (verbose)
+                        printf("Does not match.\n");
+                }
+            }
+            else {
+                if (verbose)
+                    printf("Computing sha1 sum for: %s\n", path.toUtf8().data());
+                QString checksum1 = MLUtil::computeSha1SumOfFile(path);
+                if (checksum1 == checksum) {
+                    return path;
+                }
+            }
+        }
+    }
+    if (recursive) {
+        QStringList dirs = QDir(directory).entryList(QStringList("*"), QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+        foreach (QString dir, dirs) {
+            QString path = find_file_2(directory + "/" + dir, checksum, fcs_optional, size, recursive, verbose);
+            if (!path.isEmpty())
+                return path;
+        }
+    }
+    return "";
+}
+
+QString find_local_file(int size, const QString& checksum, const QString& fcs_optional, const QStringList& local_search_paths, bool verbose)
+{
+    for (int i = 0; i < local_search_paths.count(); i++) {
+        QString search_path = local_search_paths[i];
+        if (verbose)
+            printf("Searching %s\n", search_path.toUtf8().data());
+        QString fname = find_file_2(search_path, checksum, fcs_optional, size, true, verbose);
+        if (!fname.isEmpty())
+            return fname;
+    }
+    return "";
+}
+
+QString MLUtil::locatePrv(const QJsonObject& obj)
+{
+    if (obj.contains("original_checksum")) {
+        //it is a file
+        bigint size = obj["original_size"].toVariant().toLongLong();
+        QString checksum = obj["original_checksum"].toString();
+        QString fcs = obj["original_fcs"].toString();
+        return find_local_file(size, checksum, fcs, get_local_search_paths(), false);
+    }
+    else {
+        QStringList search_paths = get_local_search_paths();
+        QString original_path = obj.value("original_path").toString();
+        //it is a directory
+        if ((QFile::exists(original_path)) && (QFileInfo(original_path).isDir())) {
+            if (directory_matches_prv_object(original_path, obj, false))
+                return original_path;
+        }
+        QString fname = find_directory_in_search_paths(obj, search_paths);
+        return fname;
+    }
 }

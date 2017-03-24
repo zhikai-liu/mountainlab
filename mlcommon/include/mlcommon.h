@@ -11,6 +11,7 @@
 #include <QDebug>
 #include <QJsonValue>
 #include <QByteArray>
+#include <QJsonObject>
 
 #include <math.h>
 
@@ -34,6 +35,7 @@ void mkdirIfNeeded(const QString& path);
 QString computeSha1SumOfFile(const QString& path);
 QString computeSha1SumOfFileHead(const QString& path, bigint num_bytes);
 QString computeSha1SumOfString(const QString& str);
+QString computeSha1SumOfDirectory(const QString& path);
 bool matchesFastChecksum(QString path, QString fcs);
 QList<int> stringListToIntList(const QStringList& list);
 QList<int> stringListToBigIntList(const QStringList& list);
@@ -53,6 +55,8 @@ QJsonValue configValue(const QString& group, const QString& key);
 QString configResolvedPath(const QString& group, const QString& key);
 QStringList configResolvedPathList(const QString& group, const QString& key);
 QStringList toStringList(const QVariant& val); //val is either a string or a QVariantList
+QJsonObject createPrvObject(const QString& file_or_dir_path);
+QString locatePrv(const QJsonObject& obj);
 };
 
 namespace MLCompute {

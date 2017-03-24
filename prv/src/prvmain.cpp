@@ -661,9 +661,6 @@ public:
                 }
             }
         }
-        if (verbose) {
-            qDebug().noquote() << QJsonDocument(obj).toJson();
-        }
         if (obj.contains("original_checksum")) {
             QVariantMap params;
             if (parser.isSet("path"))
@@ -726,6 +723,7 @@ private:
         opts.search_locally = true;
         opts.search_remotely = false;
         opts.verbose = verbose;
+        opts.local_search_paths = get_local_search_paths();
         QString fname_or_url = prvf.locateDirectory(opts);
         if (fname_or_url.isEmpty())
             return -1;
@@ -1061,10 +1059,20 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext& context, const QS
     */
 }
 
+bool contains_argv(int argc, char* argv[], QString str)
+{
+    for (int i = 0; i < argc; i++) {
+        if (QString(argv[i]) == str)
+            return true;
+    }
+    return false;
+}
+
 int main(int argc, char* argv[])
 {
 
-    qInstallMessageHandler(myMessageOutput);
+    if (!contains_argv(argc, argv, "--verbose"))
+        qInstallMessageHandler(myMessageOutput);
 
     QCoreApplication app(argc, argv);
 
@@ -1095,16 +1103,6 @@ void print(QString str)
 void println(QString str)
 {
     printf("%s\n", str.toUtf8().constData());
-}
-
-QStringList get_local_search_paths()
-{
-    QStringList local_search_paths = MLUtil::configResolvedPathList("prv", "local_search_paths");
-    QString temporary_path = MLUtil::tempPath();
-    if (!temporary_path.isEmpty()) {
-        local_search_paths << temporary_path;
-    }
-    return local_search_paths;
 }
 
 QString get_tmp_path()

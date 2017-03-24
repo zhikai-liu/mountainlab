@@ -1143,7 +1143,7 @@ bool queue_pript(PriptType prtype, const CLParams& CLP, QString working_path)
     }
 
     PP.force_run = CLP.named_parameters.contains("_force_run"); // do not check if processes have already run
-    PP.working_path = working_path; // all processes and scripts should be run in this working path
+    PP.working_path = working_path; // all processes and scripts should be run with this working path
 
     MPDaemonClient client;
     if (!client.isConnected()) {

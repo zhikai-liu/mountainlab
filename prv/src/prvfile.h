@@ -6,8 +6,6 @@
 #ifndef PRVFILE_H
 #define PRVFILE_H
 
-#define PRV_VERSION "0.11"
-
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QString>
