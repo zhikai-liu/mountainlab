@@ -152,7 +152,7 @@ ContentPane* QAccordion::getContentPane(uint index)
         return this->contentPanes.at(index);
     }
     catch (const std::out_of_range& ex) {
-        qDebug() << Q_FUNC_INFO << "Can not return Content Pane: " << ex.what();
+        qWarning() << Q_FUNC_INFO << "Can not return Content Pane: " << ex.what();
         this->errorString = "Can not return Content Pane: " + QString(ex.what());
         return nullptr;
     }
@@ -343,14 +343,14 @@ bool QAccordion::checkIndexError(uint index, bool sizeIndexAllowed,
     // fix??
     if (sizeIndexAllowed) {
         if (index != 0 && index > this->contentPanes.size()) {
-            qDebug() << Q_FUNC_INFO << errMessage;
+            qWarning() << Q_FUNC_INFO << errMessage;
             this->errorString = errMessage;
             return true;
         }
     }
     else {
         if (index >= this->contentPanes.size()) {
-            qDebug() << Q_FUNC_INFO << errMessage;
+            qWarning() << Q_FUNC_INFO << errMessage;
             this->errorString = errMessage;
             return true;
         }

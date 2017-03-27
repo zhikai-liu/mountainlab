@@ -224,6 +224,7 @@ MVMainWindow::MVMainWindow(MVAbstractContext* context, QWidget* parent)
     vsplitter->addWidget(d->m_tabs2);
 
     MVStatusBar* status_bar = new MVStatusBar();
+
     status_bar->setFixedHeight(MV_STATUS_BAR_HEIGHT);
 
     QVBoxLayout* vlayout = new QVBoxLayout;

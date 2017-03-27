@@ -46,12 +46,16 @@ MVStatusBar::MVStatusBar()
     setLayout(layout);
 
     d->m_tp_agent = TaskManager::TaskProgressMonitor::globalInstance();
+
     connect(d->m_tp_agent->model(), SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(slot_update_tasks()));
     connect(d->m_tp_agent->model(), SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(slot_update_tasks()));
     ICounterManager* manager = ObjectRegistry::getObject<ICounterManager>();
-    SimpleAggregateCounter* meminuse = new SimpleAggregateCounter("bytes_in_use", SimpleAggregateCounter::Subtract, manager->counter("allocated_bytes"), manager->counter("freed_bytes"));
-    meminuse->setParent(this);
-    ObjectRegistry::addObject(meminuse);
+    if (manager) {
+        SimpleAggregateCounter* meminuse = new SimpleAggregateCounter("bytes_in_use", SimpleAggregateCounter::Subtract, manager->counter("allocated_bytes"), manager->counter("freed_bytes"));
+        meminuse->setParent(this);
+        ObjectRegistry::addObject(meminuse);
+    }
+
     if (manager) {
         QStringList counters = { "bytes_downloaded", "bytes_read", "bytes_in_use" };
         foreach (const QString& cntr, counters) {
@@ -90,13 +94,15 @@ QString format_duration(double msec)
 void MVStatusBar::slot_update_quantities()
 {
     ICounterManager* manager = ObjectRegistry::getObject<ICounterManager>();
-    if (ICounterBase* counter = manager ? manager->counter("bytes_downloaded") : nullptr) {
-        QString txt = QString("%1 downloaded |").arg(counter->label());
-        d->m_bytes_downloaded_label.setText(txt);
-    }
-    if (ICounterBase* counter = manager ? manager->counter("remote_processing_time") : nullptr) {
-        QString txt = QString("%1 remote processing").arg(format_duration(counter->value<int>()));
-        d->m_remote_processing_time_label.setText(txt);
+    if (manager) {
+        if (ICounterBase* counter = manager ? manager->counter("bytes_downloaded") : nullptr) {
+            QString txt = QString("%1 downloaded |").arg(counter->label());
+            d->m_bytes_downloaded_label.setText(txt);
+        }
+        if (ICounterBase* counter = manager ? manager->counter("remote_processing_time") : nullptr) {
+            QString txt = QString("%1 remote processing").arg(format_duration(counter->value<int>()));
+            d->m_remote_processing_time_label.setText(txt);
+        }
     }
     {
         if (manager) {
