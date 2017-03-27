@@ -18,6 +18,29 @@ struct is_same<T, T> {
     };
 };
 
+int mda_get_num_bytes_per_entry(int data_type)
+{
+    int num_bytes_per_entry = 0;
+    //make sure we have the right number of bytes per entry in case the programmer forgot to set this!
+    if (data_type == MDAIO_TYPE_BYTE)
+        num_bytes_per_entry = 1;
+    else if (data_type == MDAIO_TYPE_COMPLEX)
+        num_bytes_per_entry = 8;
+    else if (data_type == MDAIO_TYPE_FLOAT32)
+        num_bytes_per_entry = 4;
+    else if (data_type == MDAIO_TYPE_INT16)
+        num_bytes_per_entry = 2;
+    else if (data_type == MDAIO_TYPE_INT32)
+        num_bytes_per_entry = 4;
+    else if (data_type == MDAIO_TYPE_UINT16)
+        num_bytes_per_entry = 2;
+    else if (data_type == MDAIO_TYPE_FLOAT64)
+        num_bytes_per_entry = 8;
+    else if (data_type == MDAIO_TYPE_UINT32)
+        num_bytes_per_entry = 4;
+    return num_bytes_per_entry;
+}
+
 bigint mda_read_header(struct MDAIO_HEADER* HH, FILE* input_file)
 {
     bigint num_read = 0;
@@ -55,6 +78,11 @@ bigint mda_read_header(struct MDAIO_HEADER* HH, FILE* input_file)
 
     if ((HH->num_bytes_per_entry <= 0) || (HH->num_bytes_per_entry > 8))
         return 0;
+
+    if (HH->num_bytes_per_entry != mda_get_num_bytes_per_entry(HH->data_type)) {
+        qWarning() << "In mda_read_header: num_bytes_per_entry does not agree with data_type. Setting proper value." << HH->num_bytes_per_entry << HH->data_type << mda_get_num_bytes_per_entry(HH->data_type);
+        HH->num_bytes_per_entry = mda_get_num_bytes_per_entry(HH->data_type);
+    }
 
     //number of dimensions
     num_read = jfread(&HH->num_dims, 4, 1, input_file);
@@ -110,24 +138,6 @@ bigint mda_write_header(struct MDAIO_HEADER* X, FILE* output_file)
 {
     bigint num_bytes;
     bigint i;
-
-    //make sure we have the right number of bytes per entry in case the programmer forgot to set this!
-    if (X->data_type == MDAIO_TYPE_BYTE)
-        X->num_bytes_per_entry = 1;
-    else if (X->data_type == MDAIO_TYPE_COMPLEX)
-        X->num_bytes_per_entry = 8;
-    else if (X->data_type == MDAIO_TYPE_FLOAT32)
-        X->num_bytes_per_entry = 4;
-    else if (X->data_type == MDAIO_TYPE_INT16)
-        X->num_bytes_per_entry = 2;
-    else if (X->data_type == MDAIO_TYPE_INT32)
-        X->num_bytes_per_entry = 4;
-    else if (X->data_type == MDAIO_TYPE_UINT16)
-        X->num_bytes_per_entry = 2;
-    else if (X->data_type == MDAIO_TYPE_FLOAT64)
-        X->num_bytes_per_entry = 8;
-    else if (X->data_type == MDAIO_TYPE_UINT32)
-        X->num_bytes_per_entry = 4;
 
     if ((X->num_dims <= 0) || (X->num_dims > MDAIO_MAX_DIMS)) {
         printf("mda_write_header: Problem with num dims: %d\n", X->num_dims);

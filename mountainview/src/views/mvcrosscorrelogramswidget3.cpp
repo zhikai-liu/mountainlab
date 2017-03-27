@@ -332,6 +332,15 @@ double estimate_cc_data_size(const QVector<double>& times1, const QVector<double
     return datab.count() * dsfactor * dsfactor;
 }
 
+bool write_mda(QString fname, const QVector<double>& X)
+{
+    Mda A(1, X.count());
+    for (bigint i = 0; i < X.count(); i++) {
+        A.set(X[i], i);
+    }
+    return A.write64(fname);
+}
+
 QVector<double> compute_cc_data3(const QVector<double>& times1_in, const QVector<double>& times2_in, int max_dt, bool exclude_matches, double max_est_data_size)
 {
     QVector<double> ret;
@@ -384,12 +393,13 @@ void MVCrossCorrelogramsWidget3Computer::compute()
 
     QVector<double> times;
     QVector<int> labels;
-    int L = firings.N2();
+    bigint L = firings.N2();
 
     //assemble the times and labels arrays
     task.setProgress(0.2);
-    for (int n = 0; n < L; n++) {
+    for (bigint n = 0; n < L; n++) {
         times << firings.value(1, n);
+        //times << debug.value(1,n);
         labels << (int)firings.value(2, n);
     }
 
@@ -453,9 +463,9 @@ void MVCrossCorrelogramsWidget3Computer::compute()
     for (int k = 0; k <= K; k++) {
         the_times << DoubleList();
     }
-    for (int ii = 0; ii < labels.count(); ii++) {
+    for (bigint ii = 0; ii < labels.count(); ii++) {
         int k = labels[ii];
-        if (k <= the_times.count()) {
+        if (k < the_times.count()) {
             the_times[k] << times[ii];
         }
     }

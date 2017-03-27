@@ -1194,10 +1194,12 @@ bool queue_pript(PriptType prtype, const CLParams& CLP, QString working_path)
 
 void mountainprocessMessageOutput(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
+    (void)context;
     QByteArray localMsg = msg.toLocal8Bit();
     switch (type) {
     case QtDebugMsg:
-        fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        //fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        fprintf(stderr, "Debug: %s\n", localMsg.constData());
         break;
     case QtInfoMsg:
         fprintf(stderr, "%s\n", localMsg.constData());

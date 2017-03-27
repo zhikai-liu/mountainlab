@@ -9,7 +9,6 @@ bool mv_compute_templates(const QString& timeseries_path, const QString& firings
 {
     DiskReadMda X(timeseries_path);
     if (X.N2() <= 1) {
-        qDebug() << "Problem with size of timeseries:" << timeseries_path << X.N1() << X.N2();
         return false;
     }
     DiskReadMda firings(firings_path);

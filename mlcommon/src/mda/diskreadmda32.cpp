@@ -561,7 +561,7 @@ bool DiskReadMda32::readChunk(Mda32& X, bigint i, bigint size) const
     bigint jB = qMin(i + size - 1, d->total_size() - 1);
     bigint size_to_read = jB - jA + 1;
     if (size_to_read > 0) {
-        fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (jA), SEEK_SET);
+        fseeko(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (jA), SEEK_SET);
         bigint bytes_read = mda_read_float32(&X.dataPtr()[jA - i], &d->m_header, size_to_read, d->m_file);
         if (d->bytesReadCounter)
             d->bytesReadCounter->add(bytes_read);
@@ -596,7 +596,7 @@ bool DiskReadMda32::readChunk(Mda32& X, bigint i1, bigint i2, bigint size1, bigi
         bigint jB = qMin(i2 + size2 - 1, N2() - 1);
         bigint size2_to_read = jB - jA + 1;
         if (size2_to_read > 0) {
-            fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (i1 + N1() * jA), SEEK_SET);
+            fseeko(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (i1 + N1() * jA), SEEK_SET);
             bigint bytes_read = mda_read_float32(&X.dataPtr()[(jA - i2) * size1], &d->m_header, size1 * size2_to_read, d->m_file);
             if (d->bytesReadCounter)
                 d->bytesReadCounter->add(bytes_read);
@@ -641,7 +641,7 @@ bool DiskReadMda32::readChunk(Mda32& X, bigint i1, bigint i2, bigint i3, bigint 
         bigint jB = qMin(i3 + size3 - 1, N3() - 1);
         bigint size3_to_read = jB - jA + 1;
         if (size3_to_read > 0) {
-            fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (i1 + N1() * i2 + N1() * N2() * jA), SEEK_SET);
+            fseeko(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (i1 + N1() * i2 + N1() * N2() * jA), SEEK_SET);
             bigint bytes_read = mda_read_float32(&X.dataPtr()[(jA - i3) * size1 * size2], &d->m_header, size1 * size2 * size3_to_read, d->m_file);
             if (d->bytesReadCounter)
                 d->bytesReadCounter->add(bytes_read);

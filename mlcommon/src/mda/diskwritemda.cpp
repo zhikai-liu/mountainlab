@@ -93,7 +93,7 @@ bool DiskWriteMda::open(int data_type, const QString& path, bigint N1, bigint N2
 	}
 	free(zeros);
     */
-    fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * NN - 1, SEEK_SET);
+    fseeko(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * NN - 1, SEEK_SET);
     unsigned char zero = 0;
     fwrite(&zero, 1, 1, d->m_file);
 
@@ -181,7 +181,7 @@ bool DiskWriteMda::writeChunk(Mda& X, bigint i)
 {
     if (!d->m_file)
         return false;
-    fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * i, SEEK_SET);
+    fseeko(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * i, SEEK_SET);
     bigint size = X.totalSize();
     if (i + size > this->totalSize())
         size = this->totalSize() - i;
@@ -221,7 +221,7 @@ bool DiskWriteMda::writeChunk(Mda32& X, bigint i)
 {
     if (!d->m_file)
         return false;
-    fseek(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * i, SEEK_SET);
+    fseeko(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * i, SEEK_SET);
     bigint size = X.totalSize();
     if (i + size > this->totalSize())
         size = this->totalSize() - i;
