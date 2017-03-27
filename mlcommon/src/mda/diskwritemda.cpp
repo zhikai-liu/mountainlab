@@ -75,24 +75,25 @@ bool DiskWriteMda::open(int data_type, const QString& path, bigint N1, bigint N2
     }
 
     bigint NN = N1 * N2 * N3 * N4 * N5 * N6;
-    //int buf_size=1e6;
+    int buf_size = 1e6;
 
     //write the header
     mda_write_header(&d->m_header, d->m_file);
 
-    /*
-	//fill it all with zeros!
-	float *zeros=(float *)malloc(sizeof(float)*buf_size);
-	for (int i=0; i<buf_size; i++) zeros[i]=0;
-	int i=0;
-	while (i<NN) {
-		int num_to_write=NN-i;
-		if (num_to_write>buf_size) num_to_write=buf_size;
-		mda_write_float32(zeros,&d->m_header,num_to_write,d->m_file);
-		i+=buf_size;
-	}
-	free(zeros);
-    */
+    //fill it all with zeros!
+    float* zeros = (float*)malloc(sizeof(float) * buf_size);
+    for (int i = 0; i < buf_size; i++)
+        zeros[i] = 0;
+    int i = 0;
+    while (i < NN) {
+        int num_to_write = NN - i;
+        if (num_to_write > buf_size)
+            num_to_write = buf_size;
+        mda_write_float32(zeros, &d->m_header, num_to_write, d->m_file);
+        i += buf_size;
+    }
+    free(zeros);
+
     fseeko(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * NN - 1, SEEK_SET);
     unsigned char zero = 0;
     fwrite(&zero, 1, 1, d->m_file);
