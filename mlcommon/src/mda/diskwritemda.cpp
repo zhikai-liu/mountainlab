@@ -78,6 +78,7 @@ bool DiskWriteMda::open(int data_type, const QString& path, bigint N1, bigint N2
     int buf_size = 1e6;
 
     //write the header
+    qDebug() << "write the header:::::::::::::::" << d->m_header.data_type << d->m_header.num_dims << d->m_header.num_bytes_per_entry << d->m_header.dims[0] << d->m_header.dims[1];
     mda_write_header(&d->m_header, d->m_file);
 
     //fill it all with zeros!

@@ -155,6 +155,7 @@ bigint mda_write_header(struct MDAIO_HEADER* X, FILE* output_file)
         return 0;
 
     //number of bytes per entry
+    X->num_bytes_per_entry=mda_get_num_bytes_per_entry(X->data_type);
     num_bytes = fwrite(&X->num_bytes_per_entry, 4, 1, output_file);
     if (num_bytes < 1)
         return 0;
