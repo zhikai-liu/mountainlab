@@ -1381,7 +1381,7 @@ void get_missing_prvs(QString key, QVariant clparam, QJsonObject& missing_prvs, 
             QJsonObject obj = read_prv_file(val);
             QString path0 = locate_prv(obj);
             if (path0.isEmpty()) {
-                qWarning() << QString("prv is missing: %1 (parameter: %2, working_path:%3)").arg(MLUtil::resolvePath(working_path,val)).arg(key).arg(working_path);
+                qWarning() << QString("prv is missing: %1 (parameter: %2, working_path:%3)").arg(MLUtil::resolvePath(working_path, val)).arg(key).arg(working_path);
                 missing_prvs[key] = obj;
             }
         }

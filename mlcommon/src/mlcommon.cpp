@@ -1209,6 +1209,18 @@ QString MLUtil::locatePrv(const QJsonObject& obj)
         bigint size = obj["original_size"].toVariant().toLongLong();
         QString checksum = obj["original_checksum"].toString();
         QString fcs = obj["original_fcs"].toString();
+        QString original_path = obj["original_path"].toString();
+        if (!original_path.isEmpty()) {
+            if (QFile::exists(original_path)) {
+                if (QFileInfo(original_path).size() == size) {
+                    if (matchesFastChecksum(original_path, fcs)) {
+                        if (MLUtil::computeSha1SumOfFile(original_path) == checksum) {
+                            return original_path;
+                        }
+                    }
+                }
+            }
+        }
         return find_local_file(size, checksum, fcs, get_local_search_paths(), false);
     }
     else {
