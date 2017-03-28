@@ -1,34 +1,104 @@
 #ifndef MCCONTEXT_H
 #define MCCONTEXT_H
 
+#include "mvabstractcontext.h"
 #include "mvcontext.h"
 
+///A firing event defined by a time, label, and firings_num
+struct MCEvent {
+    bool operator==(const MCEvent& other) const
+    {
+        return ((time == other.time) && (label == other.label) && (firings_num==other.firings_num));
+    }
+
+    double time=-1;
+    int label=-1;
+    int firings_num=1;
+};
+
+struct MCCluster {
+    int num=-1;
+    int firings_num=1;
+    bool operator==(const MCCluster& other) {
+        return ((num==other.num)&&(firings_num==other.firings_num));
+    }
+};
+
+
 class MCContextPrivate;
-class MCContext : public MVContext {
+class MCContext : public MVAbstractContext {
     Q_OBJECT
 public:
     friend class MCContextPrivate;
     MCContext();
     virtual ~MCContext();
 
-    void computeMergedFirings(); //must be done in worker thread
+    MVContext *mvContext1();
+    MVContext *mvContext2();
 
+    /////////////////////////////////////////////////
+    void setFromMV2FileObject(QJsonObject obj) Q_DECL_OVERRIDE;
+    QJsonObject toMV2FileObject() const Q_DECL_OVERRIDE;
+
+    /////////////////////////////////////////////////
+    MCEvent currentEvent() const;
+    MCCluster currentCluster() const;
+    QList<MCCluster> selectedClusters() const;
+    double currentTimepoint() const;
+    MVRange currentTimeRange() const;
+    void setCurrentEvent(const MCEvent& evt);
+    void setCurrentCluster(const MCCluster& C);
+    void setSelectedClusters(const QList<MCCluster>& Cs);
+    void setCurrentTimepoint(double tp);
+    void setCurrentTimeRange(const MVRange& range);
+    void clickCluster(MCCluster C, Qt::KeyboardModifiers modifiers);
+
+    /////////////////////////////////////////////////
+    QColor clusterColor(int k) const;
+    QColor channelColor(int m) const;
+    QColor color(QString name, QColor default_color = Qt::black) const;
+    QMap<QString, QColor> colors() const;
+    QList<QColor> channelColors() const;
+    QList<QColor> clusterColors() const;
+    void setClusterColors(const QList<QColor>& colors);
+    void setChannelColors(const QList<QColor>& colors);
+    void setColors(const QMap<QString, QColor>& colors);
+
+    /////////////////////////////////////////////////
+    DiskReadMda currentTimeseries() const;
+    DiskReadMda timeseries(QString name) const;
+    QString currentTimeseriesName() const;
+    QStringList timeseriesNames() const;
+    void addTimeseries(QString name, DiskReadMda timeseries);
+    void setCurrentTimeseriesName(QString name);
+
+    /////////////////////////////////////////////////
+    DiskReadMda firings1();
+    DiskReadMda firings2();
+    //DiskReadMda firingsMerged();
+    void setFirings1(const DiskReadMda& F);
+    void setFirings2(const DiskReadMda& F);
+    //void computeMergedFirings(); //must be done in worker thread
+
+    /////////////////////////////////////////////////
+    // these should be set once at beginning
+    double sampleRate() const;
+    void setSampleRate(double sample_rate);
+
+    /////////////////////////////////////////////////
     Mda confusionMatrix() const;
     QList<int> optimalLabelMap() const;
-    DiskReadMda firingsMerged() const;
 
-    DiskReadMda firings2();
-    int currentCluster2() const;
-    QList<int> selectedClusters2() const;
-
-    void setFirings2(const DiskReadMda& F);
-    void setCurrentCluster2(int k);
-    void clickCluster2(int k, Qt::KeyboardModifiers modifiers);
-    void setSelectedClusters2(const QList<int>& list);
 signals:
-    void currentCluster2Changed();
-    void firings2Changed();
-    void selectedClusters2Changed();
+    void currentTimeseriesChanged();
+    void timeseriesNamesChanged();
+    void firingsChanged();
+    void currentEventChanged();
+    void currentClusterChanged();
+    void selectedClustersChanged();
+    void currentTimepointChanged();
+    void currentTimeRangeChanged();
+    void clusterColorsChanged(const QList<QColor>&);
 
 private:
     MCContextPrivate* d;

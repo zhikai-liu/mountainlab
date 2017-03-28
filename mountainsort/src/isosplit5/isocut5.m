@@ -50,7 +50,7 @@ ks_right_index=length(spacings)-ks_right_index+1;
 if (ks_left>ks_right)
     critical_range=1:ks_left_index;
     dip_score=ks_left;
-else
+    else1
     critical_range=ks_right_index:length(spacings);
     dip_score=ks_right;
 end;

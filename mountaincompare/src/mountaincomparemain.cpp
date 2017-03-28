@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
     }
     if (CLP.named_parameters.contains("firings1")) {
         QString firings_path = CLP.named_parameters["firings1"].toString();
-        context->setFirings(DiskReadMda(firings_path));
+        context->setFirings1(DiskReadMda(firings_path));
         W->setWindowTitle(firings_path);
     }
     if (CLP.named_parameters.contains("firings2")) {
