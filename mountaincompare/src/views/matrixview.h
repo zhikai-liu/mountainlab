@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <mda.h>
 
+uint qHash(const QPoint& pt);
+
 class MatrixViewPrivate;
 class MatrixView : public QWidget {
     Q_OBJECT
@@ -28,6 +30,8 @@ public:
     void setDrawDividerForFinalColumn(bool val);
     void setCurrentElement(QPoint pt);
     QPoint currentElement() const;
+    void setSelectedElements(const QList<QPoint>& pts);
+    QList<QPoint> selectedElements() const;
 
     Mda matrix() const;
     QStringList rowLabels() const;

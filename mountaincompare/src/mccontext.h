@@ -8,22 +8,28 @@
 struct MCEvent {
     bool operator==(const MCEvent& other) const
     {
-        return ((time == other.time) && (label == other.label) && (firings_num==other.firings_num));
+        return ((time == other.time) && (label == other.label) && (firings_num == other.firings_num));
     }
 
-    double time=-1;
-    int label=-1;
-    int firings_num=1;
+    double time = -1;
+    int label = -1;
+    int firings_num = 1;
 };
 
 struct MCCluster {
-    int num=-1;
-    int firings_num=1;
-    bool operator==(const MCCluster& other) {
-        return ((num==other.num)&&(firings_num==other.firings_num));
+    int num = -1;
+    int firings_num = 1;
+    bool operator==(const MCCluster& other) const
+    {
+        return ((num == other.num) && (firings_num == other.firings_num));
+    }
+    QString toString() const
+    {
+        return QString("%1,%2").arg(num).arg(firings_num);
     }
 };
 
+uint qHash(const MCCluster& C);
 
 class MCContextPrivate;
 class MCContext : public MVAbstractContext {
@@ -33,8 +39,8 @@ public:
     MCContext();
     virtual ~MCContext();
 
-    MVContext *mvContext1();
-    MVContext *mvContext2();
+    MVContext* mvContext1();
+    MVContext* mvContext2();
 
     /////////////////////////////////////////////////
     void setFromMV2FileObject(QJsonObject obj) Q_DECL_OVERRIDE;
@@ -78,7 +84,7 @@ public:
     //DiskReadMda firingsMerged();
     void setFirings1(const DiskReadMda& F);
     void setFirings2(const DiskReadMda& F);
-    //void computeMergedFirings(); //must be done in worker thread
+    void computeMatchedFirings(); //must be done in worker thread
 
     /////////////////////////////////////////////////
     // these should be set once at beginning
@@ -87,7 +93,7 @@ public:
 
     /////////////////////////////////////////////////
     Mda confusionMatrix() const;
-    QList<int> optimalLabelMap() const;
+    QList<int> labelMap() const;
 
 signals:
     void currentTimeseriesChanged();
@@ -99,6 +105,10 @@ signals:
     void currentTimepointChanged();
     void currentTimeRangeChanged();
     void clusterColorsChanged(const QList<QColor>&);
+
+private slots:
+    void slot_context_current_timepoint_changed();
+    void slot_context_current_time_range_changed();
 
 private:
     MCContextPrivate* d;

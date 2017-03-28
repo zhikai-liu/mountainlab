@@ -156,7 +156,9 @@ ConfusionMatrixView::ConfusionMatrixView(MVAbstractContext* mvcontext)
 
     //Important to do a queued connection here! because we are changing two things at the same time
     QObject::connect(mcContext(), SIGNAL(currentClusterChanged()), this, SLOT(slot_update_current_elements_based_on_context()), Qt::QueuedConnection);
-    QObject::connect(mcContext(), SIGNAL(currentCluster2Changed()), this, SLOT(slot_update_current_elements_based_on_context()), Qt::QueuedConnection);
+    //QObject::connect(mcContext(), SIGNAL(currentCluster2Changed()), this, SLOT(slot_update_current_elements_based_on_context()), Qt::QueuedConnection);
+
+    QObject::connect(mcContext(), SIGNAL(selectedClustersChanged()), this, SLOT(slot_update_selected()));
 
     this->recalculate();
 }
@@ -175,7 +177,7 @@ void ConfusionMatrixView::prepareCalculation()
 
 void ConfusionMatrixView::runCalculation()
 {
-    mcContext()->computeMergedFirings();
+    mcContext()->computeMatchedFirings();
 }
 
 void ConfusionMatrixView::onCalculationFinished()
@@ -184,7 +186,7 @@ void ConfusionMatrixView::onCalculationFinished()
     int A1 = confusion_matrix.N1();
     int A2 = confusion_matrix.N2();
     confusion_matrix.readChunk(d->m_confusion_matrix, 0, 0, A1, A2);
-    d->m_optimal_label_map = mcContext()->optimalLabelMap();
+    d->m_optimal_label_map = mcContext()->labelMap();
 
     d->m_matrix_view->setMatrix(d->m_confusion_matrix);
     d->m_matrix_view->setValueRange(0, d->m_confusion_matrix.maximum());
@@ -205,6 +207,7 @@ void ConfusionMatrixView::onCalculationFinished()
 
     d->update_permutations();
     slot_update_current_elements_based_on_context();
+    slot_update_selected();
 }
 
 MCContext* ConfusionMatrixView::mcContext()
@@ -249,17 +252,27 @@ void ConfusionMatrixView::slot_matrix_view_current_element_changed()
         return;
     QPoint a = MV->currentElement();
     if ((a.x() >= 0) && (a.y() >= 0)) {
-        mcContext()->clickCluster(a.x() + 1, Qt::NoModifier);
-        mcContext()->clickCluster2(a.y() + 1, Qt::NoModifier);
+        qDebug() << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << a.x() << a.y();
+        MCCluster C1, C2;
+        C1.firings_num = 1;
+        C1.num = a.x() + 1;
+        C2.firings_num = 2;
+        C2.num = a.y() + 1;
+        QList<MCCluster> list;
+        list << C1 << C2;
+        mcContext()->setSelectedClusters(list);
+        //mcContext()->clickCluster(a.x() + 1, Qt::NoModifier);
+        //mcContext()->clickCluster2(a.y() + 1, Qt::NoModifier);
     }
     else {
-        mcContext()->setCurrentCluster(-1);
-        mcContext()->setCurrentCluster2(-1);
+        //mcContext()->setCurrentCluster(-1);
+        //mcContext()->setCurrentCluster2(-1);
     }
 }
 
 void ConfusionMatrixView::slot_update_current_elements_based_on_context()
 {
+    /*
     int k1 = mcContext()->currentCluster();
     int k2 = mcContext()->currentCluster2();
     if (k1 <= 0) {
@@ -275,6 +288,7 @@ void ConfusionMatrixView::slot_update_current_elements_based_on_context()
             MV->setCurrentElement(QPoint(k1 - 1, k2 - 1));
         }
     }
+    */
 }
 
 void ConfusionMatrixView::slot_export_csv()
@@ -323,6 +337,30 @@ void ConfusionMatrixView::slot_export_csv()
     if (fname.isEmpty())
         return;
     TextFile::write(fname, txt);
+}
+
+void ConfusionMatrixView::slot_update_selected()
+{
+    QList<MCCluster> cluster_list = mcContext()->selectedClusters();
+    QSet<QPoint> pts;
+    foreach (MCCluster C, cluster_list) {
+        if (C.firings_num == 1) {
+            for (int i = 0; i < d->m_confusion_matrix.N2(); i++) {
+                QPoint pt(C.num - 1, i);
+                pts.insert(pt);
+            }
+        }
+        else if (C.firings_num == 2) {
+            for (int i = 0; i < d->m_confusion_matrix.N1(); i++) {
+                QPoint pt(i, C.num - 1);
+                pts.insert(pt);
+            }
+        }
+    }
+
+    foreach (MatrixView* V, d->m_all_matrix_views) {
+        V->setSelectedElements(pts.toList());
+    }
 }
 
 ConfusionMatrixViewFactory::ConfusionMatrixViewFactory(MVMainWindow* mw, QObject* parent)

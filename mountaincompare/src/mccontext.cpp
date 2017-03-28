@@ -5,7 +5,7 @@
 #include <taskprogress.h>
 #include "mlcommon.h"
 
-class MergeFiringsCalculator {
+class MatchFiringsCalculator {
 public:
     //input
     QString mlproxy_url;
@@ -13,9 +13,9 @@ public:
     DiskReadMda firings2;
 
     //output
-    DiskReadMda firings_merged;
+    DiskReadMda matched_firings;
     DiskReadMda confusion_matrix;
-    DiskReadMda optimal_label_map;
+    DiskReadMda label_map;
 
     virtual void compute();
 };
@@ -23,23 +23,21 @@ public:
 class MCContextPrivate {
 public:
     MCContext* q;
-    MVContext *m_mv_context1;
-    MVContext *m_mv_context2;
+    MVContext* m_mv_context1;
+    MVContext* m_mv_context2;
 
+    QMutex m_mutex;
+    bool m_matched_firings_computed = false;
+    MatchFiringsCalculator m_match_firings_calculator;
 
     /////////////////////////////////////
     DiskReadMda m_firings1;
     DiskReadMda m_firings2;
+    DiskReadMda m_matched_firings;
     int m_current_cluster2 = -1;
     QSet<int> m_selected_clusters2;
-
-    QMutex m_mutex;
-    bool m_merged_firings_computed = false;
     DiskReadMda m_confusion_matrix;
-    DiskReadMda m_optimal_label_map;
-    DiskReadMda m_firings_merged;
-
-    MergeFiringsCalculator m_calculator;
+    DiskReadMda m_label_map;
 
     void setup_mv_contexts();
 };
@@ -48,8 +46,8 @@ MCContext::MCContext()
 {
     d = new MCContextPrivate;
     d->q = this;
-    d->m_mv_context1=new MVContext;
-    d->m_mv_context2=new MVContext;
+    d->m_mv_context1 = new MVContext;
+    d->m_mv_context2 = new MVContext;
 
     d->setup_mv_contexts();
 }
@@ -61,38 +59,48 @@ MCContext::~MCContext()
     delete d;
 }
 
-MVContext *MCContext::mvContext1()
+MVContext* MCContext::mvContext1()
 {
     return d->m_mv_context1;
 }
 
-MVContext *MCContext::mvContext2()
+MVContext* MCContext::mvContext2()
 {
     return d->m_mv_context2;
 }
 
 void MCContext::setFromMV2FileObject(QJsonObject obj)
 {
-    //finish
+    d->m_mv_context1->setFromMV2FileObject(obj);
+    d->m_mv_context2->setFromMV2FileObject(obj);
+    if (obj.contains("firings1")) {
+        this->setFirings1(DiskReadMda(obj["firings1"].toObject()));
+    }
+    if (obj.contains("firings2")) {
+        this->setFirings2(DiskReadMda(obj["firings2"].toObject()));
+    }
 }
 
 QJsonObject MCContext::toMV2FileObject() const
 {
-    //finish
+    QJsonObject obj = d->m_mv_context1->toMV2FileObject();
+    obj["firings1"] = d->m_mv_context1->firings().toPrvObject();
+    obj["firings2"] = d->m_mv_context2->firings().toPrvObject();
+    return obj;
 }
 
 MCEvent MCContext::currentEvent() const
 {
     MCEvent ret;
-    if (d->m_mv_context1->currentEvent().label>=0) {
-        ret.firings_num=1;
-        ret.time=d->m_mv_context1->currentEvent().time;
-        ret.label=d->m_mv_context1->currentEvent().label;
+    if (d->m_mv_context1->currentEvent().label >= 0) {
+        ret.firings_num = 1;
+        ret.time = d->m_mv_context1->currentEvent().time;
+        ret.label = d->m_mv_context1->currentEvent().label;
     }
     else {
-        ret.firings_num=2;
-        ret.time=d->m_mv_context2->currentEvent().time;
-        ret.label=d->m_mv_context2->currentEvent().label;
+        ret.firings_num = 2;
+        ret.time = d->m_mv_context2->currentEvent().time;
+        ret.label = d->m_mv_context2->currentEvent().label;
     }
     return ret;
 }
@@ -100,13 +108,33 @@ MCEvent MCContext::currentEvent() const
 MCCluster MCContext::currentCluster() const
 {
     MCCluster ret;
-    if (d->m_mv_context2->currentEvent().label>=0) {
-        ret.firings_num=1;
-        ret.num=d->m_mv_context1->currentCluster();
+    if (d->m_mv_context2->currentEvent().label >= 0) {
+        ret.firings_num = 1;
+        ret.num = d->m_mv_context1->currentCluster();
     }
     else {
-        ret.firings_num=2;
-        ret.num=d->m_mv_context2->currentCluster();
+        ret.firings_num = 2;
+        ret.num = d->m_mv_context2->currentCluster();
+    }
+    return ret;
+}
+
+QList<MCCluster> MCContext::selectedClusters() const
+{
+    QList<MCCluster> ret;
+    QList<int> C1 = d->m_mv_context1->selectedClusters();
+    QList<int> C2 = d->m_mv_context2->selectedClusters();
+    foreach (int c, C1) {
+        MCCluster X;
+        X.num = c;
+        X.firings_num = 1;
+        ret << X;
+    }
+    foreach (int c, C2) {
+        MCCluster X;
+        X.num = c;
+        X.firings_num = 2;
+        ret << X;
     }
     return ret;
 }
@@ -121,16 +149,16 @@ MVRange MCContext::currentTimeRange() const
     return d->m_mv_context1->currentTimeRange();
 }
 
-void MCContext::setCurrentEvent(const MCEvent &evt)
+void MCContext::setCurrentEvent(const MCEvent& evt)
 {
     MVEvent evt2;
-    evt2.label=evt.label;
-    evt2.time=evt.time;
-    if (evt.firings_num==1) {
+    evt2.label = evt.label;
+    evt2.time = evt.time;
+    if (evt.firings_num == 1) {
         d->m_mv_context1->setCurrentEvent(evt2);
         d->m_mv_context2->setCurrentEvent(MVEvent());
     }
-    else if (evt.firings_num==2) {
+    else if (evt.firings_num == 2) {
         d->m_mv_context2->setCurrentEvent(evt2);
         d->m_mv_context1->setCurrentEvent(MVEvent());
     }
@@ -140,13 +168,13 @@ void MCContext::setCurrentEvent(const MCEvent &evt)
     }
 }
 
-void MCContext::setCurrentCluster(const MCCluster &C)
+void MCContext::setCurrentCluster(const MCCluster& C)
 {
-    if (C.firings_num==1) {
+    if (C.firings_num == 1) {
         d->m_mv_context1->setCurrentCluster(C.num);
         d->m_mv_context2->setCurrentCluster(-1);
     }
-    else if (evt.firings_num==2) {
+    else if (C.firings_num == 2) {
         d->m_mv_context2->setCurrentCluster(C.num);
         d->m_mv_context1->setCurrentCluster(-1);
     }
@@ -156,26 +184,27 @@ void MCContext::setCurrentCluster(const MCCluster &C)
     }
 }
 
-bool matches(const QSet<MCCluster> &clusters1,const QSet<MCCluster> &clusters2) {
-    if (clusters1.count()!=clusters2.count())
+bool matches(const QSet<MCCluster>& clusters1, const QSet<MCCluster>& clusters2)
+{
+    if (clusters1.count() != clusters2.count())
         return false;
-    foreach (MCCluster C,clusters1) {
+    foreach (MCCluster C, clusters1) {
         if (!clusters2.contains(C))
             return false;
     }
     return true;
 }
 
-void MCContext::setSelectedClusters(const QList<MCCluster> &Cs)
+void MCContext::setSelectedClusters(const QList<MCCluster>& Cs)
 {
-    if (matches(Cs.toSet(),d->m_selected_clusters.toSet()))
+    if (matches(Cs.toSet(), this->selectedClusters().toSet()))
         return;
-    QList<int> C1s,C2s;
-    foreach (MCCluster C,Cs) {
-        if (C.firings_num==1) {
+    QList<int> C1s, C2s;
+    foreach (MCCluster C, Cs) {
+        if (C.firings_num == 1) {
             C1s << C.num;
         }
-        else if (C.firings_num==2) {
+        else if (C.firings_num == 2) {
             C2s << C.num;
         }
     }
@@ -188,21 +217,21 @@ void MCContext::setCurrentTimepoint(double tp)
     d->m_mv_context1->setCurrentTimepoint(tp);
 }
 
-void MCContext::setCurrentTimeRange(const MVRange &range)
+void MCContext::setCurrentTimeRange(const MVRange& range)
 {
     d->m_mv_context1->setCurrentTimeRange(range);
 }
 
 void MCContext::clickCluster(MCCluster C, Qt::KeyboardModifiers modifiers)
 {
-    if (C.firings_num==1) {
-        d->m_mv_context1->clickCluster(C,modifiers);
+    if (C.firings_num == 1) {
+        d->m_mv_context1->clickCluster(C.num, modifiers);
         if (!(modifiers & Qt::ControlModifier)) {
             d->m_mv_context2->setSelectedClusters(QList<int>());
         }
     }
-    else if (C.firings_num==2) {
-        d->m_mv_context2->clickCluster(C,modifiers);
+    else if (C.firings_num == 2) {
+        d->m_mv_context2->clickCluster(C.num, modifiers);
         if (!(modifiers & Qt::ControlModifier)) {
             d->m_mv_context1->setSelectedClusters(QList<int>());
         }
@@ -221,7 +250,7 @@ QColor MCContext::channelColor(int m) const
 
 QColor MCContext::color(QString name, QColor default_color) const
 {
-    return d->m_mv_context1->color(name,default_color);
+    return d->m_mv_context1->color(name, default_color);
 }
 
 QMap<QString, QColor> MCContext::colors() const
@@ -239,19 +268,19 @@ QList<QColor> MCContext::clusterColors() const
     return d->m_mv_context1->clusterColors();
 }
 
-void MCContext::setClusterColors(const QList<QColor> &colors)
+void MCContext::setClusterColors(const QList<QColor>& colors)
 {
     d->m_mv_context1->setClusterColors(colors);
     d->m_mv_context2->setClusterColors(colors);
 }
 
-void MCContext::setChannelColors(const QList<QColor> &colors)
+void MCContext::setChannelColors(const QList<QColor>& colors)
 {
     d->m_mv_context1->setChannelColors(colors);
     d->m_mv_context2->setChannelColors(colors);
 }
 
-void MCContext::setColors(const QMap<QString, QColor> &colors)
+void MCContext::setColors(const QMap<QString, QColor>& colors)
 {
     d->m_mv_context1->setColors(colors);
     d->m_mv_context2->setColors(colors);
@@ -279,8 +308,8 @@ QStringList MCContext::timeseriesNames() const
 
 void MCContext::addTimeseries(QString name, DiskReadMda timeseries)
 {
-    d->m_mv_context1->addTimeseries(timeseries);
-    d->m_mv_context2->addTimeseries(timeseries);
+    d->m_mv_context1->addTimeseries(name, timeseries);
+    d->m_mv_context2->addTimeseries(name, timeseries);
 }
 
 void MCContext::setCurrentTimeseriesName(QString name)
@@ -299,14 +328,31 @@ DiskReadMda MCContext::firings2()
     return d->m_mv_context2->firings();
 }
 
-void MCContext::setFirings1(const DiskReadMda &F)
+void MCContext::setFirings1(const DiskReadMda& F)
 {
     d->m_mv_context1->setFirings(F);
 }
 
-void MCContext::setFirings2(const DiskReadMda &F)
+void MCContext::setFirings2(const DiskReadMda& F)
 {
     d->m_mv_context2->setFirings(F);
+}
+
+void MCContext::computeMatchedFirings()
+{
+    {
+        QMutexLocker locker(&d->m_mutex);
+        if (d->m_matched_firings_computed)
+            return;
+        d->m_matched_firings_computed = true;
+    }
+
+    d->m_match_firings_calculator.firings1 = this->firings1();
+    d->m_match_firings_calculator.firings2 = this->firings2();
+    d->m_match_firings_calculator.compute();
+    d->m_confusion_matrix = d->m_match_firings_calculator.confusion_matrix;
+    d->m_matched_firings = d->m_match_firings_calculator.matched_firings;
+    d->m_label_map = d->m_match_firings_calculator.label_map;
 }
 
 double MCContext::sampleRate() const
@@ -322,12 +368,40 @@ void MCContext::setSampleRate(double sample_rate)
 
 Mda MCContext::confusionMatrix() const
 {
-    return d->m_confusion_matrix;
+    Mda ret;
+    d->m_confusion_matrix.readChunk(ret, 0, 0, d->m_confusion_matrix.N1(), d->m_confusion_matrix.N2());
+    return ret;
 }
 
-QList<int> MCContext::optimalLabelMap() const
+QList<int> MCContext::labelMap() const
 {
-    return d->m_optimal_label_map;
+    QList<int> ret;
+    for (int i = 0; i < d->m_label_map.totalSize(); i++) {
+        ret << d->m_label_map.value(i);
+    }
+    return ret;
+}
+
+void MCContext::slot_context_current_timepoint_changed()
+{
+    MVContext* context = qobject_cast<MVContext*>(sender());
+    if (context == d->m_mv_context1) {
+        d->m_mv_context2->setCurrentTimepoint(d->m_mv_context1->currentTimepoint());
+    }
+    else if (context == d->m_mv_context2) {
+        d->m_mv_context1->setCurrentTimepoint(d->m_mv_context2->currentTimepoint());
+    }
+}
+
+void MCContext::slot_context_current_time_range_changed()
+{
+    MVContext* context = qobject_cast<MVContext*>(sender());
+    if (context == d->m_mv_context1) {
+        d->m_mv_context2->setCurrentTimeRange(d->m_mv_context1->currentTimeRange());
+    }
+    else if (context == d->m_mv_context2) {
+        d->m_mv_context1->setCurrentTimeRange(d->m_mv_context2->currentTimeRange());
+    }
 }
 
 /*
@@ -344,7 +418,7 @@ void MCContext::computeMergedFirings()
     d->m_calculator.firings2 = this->firings2();
     d->m_calculator.compute();
     d->m_confusion_matrix = d->m_calculator.confusion_matrix;
-    d->m_optimal_label_map = d->m_calculator.optimal_label_map;
+    d->m_label_map = d->m_calculator.label_map;
     d->m_firings_merged = d->m_calculator.firings_merged;
 
     {
@@ -363,8 +437,8 @@ Mda MCContext::confusionMatrix() const
 QList<int> MCContext::optimalLabelMap() const
 {
     QList<int> ret;
-    for (int i = 0; i < d->m_optimal_label_map.totalSize(); i++) {
-        ret << d->m_optimal_label_map.value(i);
+    for (int i = 0; i < d->m_label_map.totalSize(); i++) {
+        ret << d->m_label_map.value(i);
     }
     return ret;
 }
@@ -467,7 +541,7 @@ void MergeFiringsCalculator::compute()
     task.log() << "Firings 1/2 dimensions" << firings1.N1() << firings1.N2() << firings2.N1() << firings2.N2();
 
     QString firings_merged_path = MPR.makeOutputFilePath("firings_merged");
-    QString optimal_label_map_path = MPR.makeOutputFilePath("optimal_label_map");
+    QString label_map_path = MPR.makeOutputFilePath("label_map");
     QString confusion_matrix_path = MPR.makeOutputFilePath("confusion_matrix");
 
     MPR.runProcess();
@@ -479,7 +553,7 @@ void MergeFiringsCalculator::compute()
 
     firings_merged.setPath(firings_merged_path);
     confusion_matrix.setPath(confusion_matrix_path);
-    optimal_label_map.setPath(optimal_label_map_path);
+    label_map.setPath(label_map_path);
 }
 
 void MCContextPrivate::setup_mv_contexts()
@@ -487,3 +561,63 @@ void MCContextPrivate::setup_mv_contexts()
     //finish
 }
 */
+
+void MCContextPrivate::setup_mv_contexts()
+{
+    QObject::connect(m_mv_context1, SIGNAL(currentTimeseriesChanged()), q, SIGNAL(currentTimeseriesChanged()));
+    QObject::connect(m_mv_context1, SIGNAL(timeseriesNamesChanged()), q, SIGNAL(timeseriesNamesChanged()));
+    QObject::connect(m_mv_context1, SIGNAL(currentTimepointChanged()), q, SIGNAL(currentTimepointChanged()));
+    QObject::connect(m_mv_context1, SIGNAL(currentTimeRangeChanged()), q, SIGNAL(currentTimeRangeChanged()));
+    QObject::connect(m_mv_context1, SIGNAL(clusterColorsChanged(QList<QColor>)), q, SIGNAL(clusterColorsChanged(QList<QColor>)));
+
+    QObject::connect(m_mv_context1, SIGNAL(firingsChanged()), q, SIGNAL(firingsChanged()));
+    QObject::connect(m_mv_context2, SIGNAL(firingsChanged()), q, SIGNAL(firingsChanged()));
+    QObject::connect(m_mv_context1, SIGNAL(currentEventChanged()), q, SIGNAL(currentEventChanged()));
+    QObject::connect(m_mv_context2, SIGNAL(currentEventChanged()), q, SIGNAL(currentEventChanged()));
+    QObject::connect(m_mv_context1, SIGNAL(currentClusterChanged()), q, SIGNAL(currentClusterChanged()));
+    QObject::connect(m_mv_context2, SIGNAL(currentClusterChanged()), q, SIGNAL(currentClusterChanged()));
+    QObject::connect(m_mv_context1, SIGNAL(selectedClustersChanged()), q, SIGNAL(selectedClustersChanged()));
+    QObject::connect(m_mv_context2, SIGNAL(selectedClustersChanged()), q, SIGNAL(selectedClustersChanged()));
+
+    QObject::connect(m_mv_context1, SIGNAL(currentTimepointChanged()), q, SLOT(slot_context_current_timepoint_changed()));
+    QObject::connect(m_mv_context2, SIGNAL(currentTimepointChanged()), q, SLOT(slot_context_current_timepoint_changed()));
+    QObject::connect(m_mv_context1, SIGNAL(currentTimeRangeChanged()), q, SLOT(slot_context_current_time_range_changed()));
+    QObject::connect(m_mv_context2, SIGNAL(currentTimeRangeChanged()), q, SLOT(slot_context_current_time_range_changed()));
+}
+
+uint qHash(const MCCluster& C)
+{
+    return qHash(C.toString());
+}
+
+void MatchFiringsCalculator::compute()
+{
+    TaskProgress task(TaskProgress::Calculate, "Compute confusion matrix");
+    task.setProgress(0.1);
+
+    MountainProcessRunner MPR;
+    MPR.setProcessorName("mountainsort.confusion_matrix");
+
+    QMap<QString, QVariant> params;
+    params["firings1"] = firings1.makePath();
+    params["firings2"] = firings2.makePath();
+    params["max_matching_offset"] = 30;
+    MPR.setInputParameters(params);
+
+    task.log() << "Firings 1/2 dimensions" << firings1.N1() << firings1.N2() << firings2.N1() << firings2.N2();
+
+    QString confusion_matrix_path = MPR.makeOutputFilePath("confusion_matrix_out");
+    QString matched_firings_path = MPR.makeOutputFilePath("matched_firings_out");
+    QString label_map_path = MPR.makeOutputFilePath("label_map_out");
+
+    MPR.runProcess();
+
+    if (MLUtil::threadInterruptRequested()) {
+        task.error(QString("Halted while running process."));
+        return;
+    }
+
+    matched_firings.setPath(matched_firings_path);
+    confusion_matrix.setPath(confusion_matrix_path);
+    label_map.setPath(label_map_path);
+}

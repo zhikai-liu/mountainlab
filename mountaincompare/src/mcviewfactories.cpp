@@ -3,7 +3,40 @@
 
 #include "clusterdetailview.h"
 #include <views/compareclusterview.h>
+#include <mvtimeseriesview2.h>
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ClusterDetail1Factory::ClusterDetail1Factory(MVMainWindow* mw, QObject* parent)
+    : MVAbstractViewFactory(mw, parent)
+{
+}
+
+QString ClusterDetail1Factory::id() const
+{
+    return QStringLiteral("open-cluster-details-1");
+}
+
+QString ClusterDetail1Factory::name() const
+{
+    return tr("Cluster Details 1");
+}
+
+QString ClusterDetail1Factory::title() const
+{
+    return tr("Details 1");
+}
+
+MVAbstractView* ClusterDetail1Factory::createView(MVAbstractContext* context)
+{
+    MCContext* mc_context = qobject_cast<MCContext*>(context);
+    if (!mc_context)
+        return 0;
+
+    ClusterDetailView* X = new ClusterDetailView(mc_context->mvContext1());
+    return X;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ClusterDetail2Factory::ClusterDetail2Factory(MVMainWindow* mw, QObject* parent)
     : MVAbstractViewFactory(mw, parent)
 {
@@ -26,45 +59,76 @@ QString ClusterDetail2Factory::title() const
 
 MVAbstractView* ClusterDetail2Factory::createView(MVAbstractContext* context)
 {
-    MVContext* c = qobject_cast<MVContext*>(context);
-    Q_ASSERT(c);
-
-    MCContext* mc_context = qobject_cast<MCContext*>(c);
+    MCContext* mc_context = qobject_cast<MCContext*>(context);
     if (!mc_context)
         return 0;
 
-    MVContext* c2 = new MVContext;
-    c2->setFromMVFileObject(mc_context->toMVFileObject());
-    c2->setFirings(mc_context->firings2());
-    c2->setCurrentCluster(mc_context->currentCluster2());
-
-    new Synchronizer1(mc_context, c2);
-
-    ClusterDetailView* X = new ClusterDetailView(c2);
+    ClusterDetailView* X = new ClusterDetailView(mc_context->mvContext2());
     return X;
 }
 
-Synchronizer1::Synchronizer1(MCContext* C, MVContext* C_new)
+////////////////////////////////////////////////////////////////////////
+MVTimeSeriesView1Factory::MVTimeSeriesView1Factory(MVMainWindow* mw, QObject* parent)
+    : MVAbstractViewFactory(mw, parent)
 {
-    m_C = C;
-    m_C_new = C_new;
-    QObject::connect(C, SIGNAL(selectedClusters2Changed()), this, SLOT(sync_old_to_new()), Qt::QueuedConnection);
-    QObject::connect(C, SIGNAL(currentCluster2Changed()), this, SLOT(sync_old_to_new()), Qt::QueuedConnection);
-
-    QObject::connect(C_new, SIGNAL(selectedClustersChanged()), this, SLOT(sync_new_to_old()), Qt::QueuedConnection);
-    QObject::connect(C_new, SIGNAL(currentClusterChanged()), this, SLOT(sync_new_to_old()), Qt::QueuedConnection);
 }
 
-void Synchronizer1::sync_new_to_old()
+QString MVTimeSeriesView1Factory::id() const
 {
-    m_C->setSelectedClusters2(m_C_new->selectedClusters());
-    m_C->setCurrentCluster2(m_C_new->currentCluster());
+    return QStringLiteral("open-timeseries-data-1");
 }
 
-void Synchronizer1::sync_old_to_new()
+QString MVTimeSeriesView1Factory::name() const
 {
-    m_C_new->setSelectedClusters(m_C->selectedClusters2());
-    m_C_new->setCurrentCluster(m_C->currentCluster2());
+    return tr("Timeseries Data 1");
+}
+
+QString MVTimeSeriesView1Factory::title() const
+{
+    return tr("Timeseries 1");
+}
+
+MVAbstractView* MVTimeSeriesView1Factory::createView(MVAbstractContext* context)
+{
+    MCContext* c = qobject_cast<MCContext*>(context);
+    Q_ASSERT(c);
+
+    MVTimeSeriesView2* X = new MVTimeSeriesView2(c->mvContext1());
+    QList<int> ks = c->mvContext1()->selectedClusters();
+    X->setLabelsToView(ks.toSet());
+    return X;
+}
+
+////////////////////////////////////////////////////////////////////////
+MVTimeSeriesView2Factory::MVTimeSeriesView2Factory(MVMainWindow* mw, QObject* parent)
+    : MVAbstractViewFactory(mw, parent)
+{
+}
+
+QString MVTimeSeriesView2Factory::id() const
+{
+    return QStringLiteral("open-timeseries-data-2");
+}
+
+QString MVTimeSeriesView2Factory::name() const
+{
+    return tr("Timeseries Data 2");
+}
+
+QString MVTimeSeriesView2Factory::title() const
+{
+    return tr("Timeseries 2");
+}
+
+MVAbstractView* MVTimeSeriesView2Factory::createView(MVAbstractContext* context)
+{
+    MCContext* c = qobject_cast<MCContext*>(context);
+    Q_ASSERT(c);
+
+    MVTimeSeriesView2* X = new MVTimeSeriesView2(c->mvContext2());
+    QList<int> ks = c->mvContext2()->selectedClusters();
+    X->setLabelsToView(ks.toSet());
+    return X;
 }
 
 ////////////////////////////////////////////////////////////////////////

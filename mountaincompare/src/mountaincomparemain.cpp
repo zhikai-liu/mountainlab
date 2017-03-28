@@ -49,6 +49,7 @@ QList<QColor> generate_colors_ahb();
 int main(int argc, char* argv[])
 {
     QApplication a(argc, argv);
+
     // make sure task progress monitor is instantiated in the main thread
     TaskManager::TaskProgressMonitor* monitor = TaskManager::TaskProgressMonitor::globalInstance();
     Q_UNUSED(monitor);
@@ -112,10 +113,12 @@ int main(int argc, char* argv[])
         context->addTimeseries("Preprocessed Data", DiskReadMda(pre_path));
         context->setCurrentTimeseriesName("Preprocessed Data");
     }
+    /*
     if (CLP.named_parameters.contains("mlproxy_url")) {
         QString mlproxy_url = CLP.named_parameters.value("mlproxy_url", "").toString();
         context->setMLProxyUrl(mlproxy_url);
     }
+    */
     if (CLP.named_parameters.contains("window_title")) {
         QString window_title = CLP.named_parameters["window_title"].toString();
         W->setWindowTitle(window_title);
@@ -123,9 +126,11 @@ int main(int argc, char* argv[])
     if (CLP.named_parameters.contains("geom")) {
         QString geom_path = CLP.named_parameters["geom"].toString();
         ElectrodeGeometry eg = ElectrodeGeometry::loadFromGeomFile(geom_path);
-        context->setElectrodeGeometry(eg);
+        context->mvContext1()->setElectrodeGeometry(eg);
+        context->mvContext2()->setElectrodeGeometry(eg);
     }
 
+    /*
     if (CLP.named_parameters.contains("clusters")) {
         QStringList clusters_subset_str = CLP.named_parameters["clusters"].toString().split(",", QString::SkipEmptyParts);
         QList<int> clusters_subset;
@@ -134,23 +139,29 @@ int main(int argc, char* argv[])
         }
         context->setClustersSubset(clusters_subset.toSet());
     }
+    */
 
     set_nice_size(W);
     W->show();
 
-    W->loadPlugin(new ClusterDetailPlugin());
-    W->loadPlugin(new ClipsViewPlugin());
+    //W->loadPlugin(new ClusterDetailPlugin());
+    //W->loadPlugin(new ClipsViewPlugin());
+
+    W->registerViewFactory(new ClusterDetail1Factory(W));
+    W->registerViewFactory(new ClusterDetail2Factory(W));
+
+    W->registerViewFactory(new MVTimeSeriesView1Factory(W));
+    W->registerViewFactory(new MVTimeSeriesView2Factory(W));
 
     W->registerViewFactory(new ConfusionMatrixViewFactory(W));
     W->registerViewFactory(new CompareClustersFactory(W));
 
-    W->registerViewFactory(new ClusterDetail2Factory(W));
-    W->registerViewFactory(new MVPCAFeaturesFactory(W));
+    //W->registerViewFactory(new MVPCAFeaturesFactory(W));
 
     W->addControl(new MVOpenViewsControl(context, W), true);
 
     W->setCurrentContainerName("north");
-    W->openView("open-cluster-details");
+    W->openView("open-cluster-details-1");
     W->setCurrentContainerName("south");
     W->openView("open-confusion-matrix");
 

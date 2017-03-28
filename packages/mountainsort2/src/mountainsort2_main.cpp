@@ -34,6 +34,7 @@
 #include "p_isolation_metrics.h"
 
 #include "omp.h"
+#include "p_confusion_matrix.h"
 
 QJsonObject get_spec()
 {
@@ -256,6 +257,14 @@ QJsonObject get_spec()
         X.addInputs("timeseries_list", "firings");
         X.addOutputs("timeseries_out", "firings_out");
         X.addRequiredParameters("t1", "t2");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.confusion_matrix", "0.1");
+        X.addInputs("firings1", "firings2");
+        X.addOutputs("confusion_matrix_out");
+        X.addOptionalOutputs("matched_firings_out", "label_map_out");
+        X.addOptionalParameter("max_matching_offset", "", 30);
         processors.push_back(X.get_spec());
     }
 
@@ -517,6 +526,18 @@ int main(int argc, char* argv[])
         bigint t1 = CLP.named_parameters["t1"].toDouble();
         bigint t2 = CLP.named_parameters["t2"].toDouble();
         ret = p_extract_time_interval(timeseries_list, firings, timeseries_out, firings_out, t1, t2);
+    }
+    else if (arg1 == "mountainsort.confusion_matrix") {
+        P_confusion_matrix_opts opts;
+        QString firings1 = CLP.named_parameters["firings1"].toString();
+        QString firings2 = CLP.named_parameters["firings2"].toString();
+        QString confusion_matrix_out = CLP.named_parameters["confusion_matrix_out"].toString();
+        QString matched_firings_out = CLP.named_parameters.value("matched_firings_out").toString();
+        QString label_map_out = CLP.named_parameters.value("label_map_out").toString();
+        if (CLP.named_parameters.contains("max_matching_offset")) {
+            opts.max_matching_offset = CLP.named_parameters.value("max_matching_offset").toInt();
+        }
+        ret = p_confusion_matrix(firings1, firings2, confusion_matrix_out, matched_firings_out, label_map_out, opts);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

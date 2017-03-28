@@ -92,7 +92,9 @@ MVOpenViewsControl::MVOpenViewsControl(MVAbstractContext* context, MVMainWindow*
 
     QObject::connect(mw, SIGNAL(viewsChanged()), this, SLOT(updateControls()));
     QObject::connect(mw, SIGNAL(viewsChanged()), this, SLOT(slot_update_enabled()));
+
     updateControls();
+
     slot_update_enabled();
 }
 

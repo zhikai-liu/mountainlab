@@ -118,7 +118,7 @@ void MVTimeseriesControl::slot_create()
     QString name = sender()->property("timeseries_name").toString();
     CreateTimeseriesDialog dlg;
     dlg.setSampleRate(c->sampleRate());
-    dlg.setFreqMin(c->option("suggest_freq_min", 300).toDouble());
+    dlg.setFreqMin(c->option("suggest_freq_min", 800).toDouble());
     dlg.setFreqMax(c->option("suggest_freq_max", 6000).toDouble());
     dlg.setWindowTitle("Create " + name);
     if (dlg.exec() == QDialog::Accepted) {

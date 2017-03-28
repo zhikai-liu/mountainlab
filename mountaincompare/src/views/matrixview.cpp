@@ -19,6 +19,7 @@ public:
     bool m_draw_divider_for_final_column = true;
     QPoint m_hovered_element = QPoint(-1, -1);
     QPoint m_current_element = QPoint(-1, -1);
+    QSet<QPoint> m_selected_elements;
     QString m_title;
     QString m_row_axis_label;
     QString m_column_axis_label;
@@ -145,6 +146,17 @@ QPoint MatrixView::currentElement() const
     return d->m_current_element;
 }
 
+void MatrixView::setSelectedElements(const QList<QPoint>& pts)
+{
+    d->m_selected_elements = pts.toSet();
+    this->update();
+}
+
+QList<QPoint> MatrixView::selectedElements() const
+{
+    return d->m_selected_elements.toList();
+}
+
 Mda MatrixView::matrix() const
 {
     return d->m_matrix;
@@ -215,6 +227,9 @@ void MatrixView::paintEvent(QPaintEvent* evt)
             QRectF r = d->get_entry_rect(m, n);
             double val = d->m_matrix.value(m, n);
             QColor col = d->get_color(val);
+            if (d->m_selected_elements.contains(QPoint(m, n))) {
+                col.setBlue(qMax(160, qMin(255, col.blue() + 30)));
+            }
             painter.fillRect(r, col);
             QString str;
             if (d->m_mode == PercentMode) {
@@ -541,4 +556,9 @@ int MatrixViewPrivate::max_col_map()
     if (m_max_col_map == 0)
         return m_matrix.N2() - 1;
     return m_max_col_map;
+}
+
+uint qHash(const QPoint& pt)
+{
+    return qHash(QString("%1,%2").arg(pt.x(), pt.y()));
 }

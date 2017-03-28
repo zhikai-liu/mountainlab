@@ -66,8 +66,8 @@ CompareClusterView::~CompareClusterView()
 void CompareClusterView::prepareCalculation()
 {
     d->m_calculator.timeseries = mcContext()->currentTimeseries();
-    d->m_calculator.firings_merged = mcContext()->firingsMerged();
-    d->m_calculator.ks_1 = mcContext()->selectedClusters();
+    //d->m_calculator.firings_merged = mcContext()->firingsMerged();
+    //d->m_calculator.ks_1 = mcContext()->selectedClusters();
     d->m_calculator.clip_size = mcContext()->option("clip_size").toInt();
 }
 

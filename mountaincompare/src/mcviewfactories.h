@@ -5,6 +5,19 @@
 
 #include <mvabstractviewfactory.h>
 
+/////////////////////////////////////////////////////////////////////////////
+class ClusterDetail1Factory : public MVAbstractViewFactory {
+    Q_OBJECT
+public:
+    ClusterDetail1Factory(MVMainWindow* mw, QObject* parent = 0);
+    QString id() const Q_DECL_OVERRIDE;
+    QString name() const Q_DECL_OVERRIDE;
+    QString title() const Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
+private slots:
+    //void openClipsForTemplate();
+};
+
 class ClusterDetail2Factory : public MVAbstractViewFactory {
     Q_OBJECT
 public:
@@ -17,17 +30,25 @@ private slots:
     //void openClipsForTemplate();
 };
 
-class Synchronizer1 : public QObject {
+/////////////////////////////////////////////////////////////////////////////
+class MVTimeSeriesView1Factory : public MVAbstractViewFactory {
     Q_OBJECT
 public:
-    Synchronizer1(MCContext* C, MVContext* C_new);
-private slots:
-    void sync_new_to_old();
-    void sync_old_to_new();
+    MVTimeSeriesView1Factory(MVMainWindow* mw, QObject* parent = 0);
+    QString id() const Q_DECL_OVERRIDE;
+    QString name() const Q_DECL_OVERRIDE;
+    QString title() const Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
+};
 
-private:
-    MCContext* m_C;
-    MVContext* m_C_new;
+class MVTimeSeriesView2Factory : public MVAbstractViewFactory {
+    Q_OBJECT
+public:
+    MVTimeSeriesView2Factory(MVMainWindow* mw, QObject* parent = 0);
+    QString id() const Q_DECL_OVERRIDE;
+    QString name() const Q_DECL_OVERRIDE;
+    QString title() const Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
 };
 
 class CompareClustersFactory : public MVAbstractViewFactory {

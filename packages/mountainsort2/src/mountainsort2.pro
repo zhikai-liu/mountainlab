@@ -47,7 +47,9 @@ SOURCES += \
     p_compute_amplitudes.cpp \
     p_extract_time_interval.cpp \
     p_isolation_metrics.cpp \
-    kdtree.cpp
+    kdtree.cpp \
+    p_confusion_matrix.cpp \
+    hungarian.cpp
 
 HEADERS += \
     p_extract_clips.h \
@@ -73,7 +75,9 @@ HEADERS += \
     p_compute_amplitudes.h \
     p_extract_time_interval.h \
     p_isolation_metrics.h \
-    kdtree.h
+    kdtree.h \
+    p_confusion_matrix.h \
+    hungarian.h
 
 INCLUDEPATH += ../../../mountainsort/src/isosplit5
 VPATH += ../../../mountainsort/src/isosplit5
