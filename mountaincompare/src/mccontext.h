@@ -84,7 +84,9 @@ public:
     //DiskReadMda firingsMerged();
     void setFirings1(const DiskReadMda& F);
     void setFirings2(const DiskReadMda& F);
-    void computeMatchedFirings(); //must be done in worker thread
+    void setConfusionMatrix(const DiskReadMda& CM);
+    void setLabelMap(const DiskReadMda& LM);
+    void setMatchedFirings(const DiskReadMda& MF);
 
     /////////////////////////////////////////////////
     // these should be set once at beginning

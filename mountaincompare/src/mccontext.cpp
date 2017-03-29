@@ -5,6 +5,7 @@
 #include <taskprogress.h>
 #include "mlcommon.h"
 
+/*
 class MatchFiringsCalculator {
 public:
     //input
@@ -19,6 +20,7 @@ public:
 
     virtual void compute();
 };
+*/
 
 class MCContextPrivate {
 public:
@@ -28,7 +30,7 @@ public:
 
     QMutex m_mutex;
     bool m_matched_firings_computed = false;
-    MatchFiringsCalculator m_match_firings_calculator;
+    //MatchFiringsCalculator m_match_firings_calculator;
 
     /////////////////////////////////////
     DiskReadMda m_firings1;
@@ -338,6 +340,22 @@ void MCContext::setFirings2(const DiskReadMda& F)
     d->m_mv_context2->setFirings(F);
 }
 
+void MCContext::setConfusionMatrix(const DiskReadMda &CM)
+{
+    d->m_confusion_matrix=CM;
+}
+
+void MCContext::setLabelMap(const DiskReadMda &LM)
+{
+    d->m_label_map=LM;
+}
+
+void MCContext::setMatchedFirings(const DiskReadMda &MF)
+{
+    d->m_matched_firings=MF;
+}
+
+/*
 void MCContext::computeMatchedFirings()
 {
     {
@@ -354,6 +372,7 @@ void MCContext::computeMatchedFirings()
     d->m_matched_firings = d->m_match_firings_calculator.matched_firings;
     d->m_label_map = d->m_match_firings_calculator.label_map;
 }
+*/
 
 double MCContext::sampleRate() const
 {
@@ -590,6 +609,7 @@ uint qHash(const MCCluster& C)
     return qHash(C.toString());
 }
 
+/*
 void MatchFiringsCalculator::compute()
 {
     TaskProgress task(TaskProgress::Calculate, "Compute confusion matrix");
@@ -621,3 +641,4 @@ void MatchFiringsCalculator::compute()
     confusion_matrix.setPath(confusion_matrix_path);
     label_map.setPath(label_map_path);
 }
+*/

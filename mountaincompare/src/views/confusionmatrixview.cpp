@@ -177,7 +177,7 @@ void ConfusionMatrixView::prepareCalculation()
 
 void ConfusionMatrixView::runCalculation()
 {
-    mcContext()->computeMatchedFirings();
+    //mcContext()->computeMatchedFirings();
 }
 
 void ConfusionMatrixView::onCalculationFinished()

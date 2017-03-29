@@ -33,6 +33,7 @@
 #include "taskprogressview.h"
 #include "mvcontrolpanel2.h"
 #include "mvabstractcontrol.h"
+#include "initialize_confusion_matrix.h"
 
 #include "mccontext.h"
 #include "mcviewfactories.h"
@@ -163,7 +164,11 @@ int main(int argc, char* argv[])
     Initialize_confusion_matrix ICM;
     ICM.firings1 = context->firings1().makePath();
     ICM.firings2 = context->firings2().makePath();
-    QObject::connect(&ICM, &Initialize_confusion_matrix::finished, [=]() {
+    QObject::connect(&ICM, &Initialize_confusion_matrix::finishedInGui, [=]() {
+        context->setFirings2(ICM.firings2_relabeled);
+        context->setConfusionMatrix(ICM.confusion_matrix);
+        context->setMatchedFirings(ICM.matched_firings);
+        context->setLabelMap(ICM.label_map);
         W->setCurrentContainerName("north");
         W->openView("open-cluster-details-1");
         W->setCurrentContainerName("south");
@@ -171,7 +176,7 @@ int main(int argc, char* argv[])
         delete TPV;
         set_nice_size(W);
         W->show();
-    }, Qt::QueuedConnection);
+    });
     ICM.start();
 
     a.processEvents();

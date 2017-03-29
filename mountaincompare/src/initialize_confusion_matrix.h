@@ -10,7 +10,12 @@
 #include <mountainprocessrunner.h>
 
 class Initialize_confusion_matrix : public QThread {
+    Q_OBJECT
 public:
+    Initialize_confusion_matrix() {
+        QObject::connect(this,SIGNAL(finished()),this,SIGNAL(finishedInGui())); //so we can use lambda expressions
+    }
+
     // input
     QString firings1;
     QString firings2;
@@ -37,6 +42,8 @@ public:
         firings2_relabeled = MPR.makeOutputFilePath("firings2_relabeled_out");
         MPR.runProcess();
     }
+signals:
+    void finishedInGui(); //so we can use lambda expressions
 };
 
 #endif // INITIALIZE_CONFUSION_MATRIX_H
