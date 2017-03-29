@@ -64,6 +64,7 @@ public:
     DiskReadMda timeseries;
     DiskReadMda firings;
     int clip_size;
+    QSet<int> clusters_to_force_show;
 
     //output
     QList<ClusterData> cluster_data;
@@ -263,6 +264,7 @@ void ClusterDetailView::prepareCalculation()
     d->m_calculator.timeseries = c->currentTimeseries();
     d->m_calculator.firings = c->firings();
     d->m_calculator.clip_size = c->option("clip_size", 100).toInt();
+    d->m_calculator.clusters_to_force_show = c->clustersToForceShow().toSet();
     update();
 }
 
@@ -1439,7 +1441,12 @@ void ClusterDetailViewCalculator::compute()
 
     task.setLabel("Setting cluster data");
     task.setProgress(0.75);
-    for (int k = 1; k <= K; k++) {
+    int K2 = K;
+    foreach (int kk, clusters_to_force_show) {
+        if (kk > K2)
+            K2 = kk;
+    }
+    for (int k = 1; k <= K2; k++) {
         if (MLUtil::threadInterruptRequested()) {
             task.error("Halted ***");
             return;
@@ -1459,7 +1466,7 @@ void ClusterDetailViewCalculator::compute()
         templates0.readChunk(CD.template0, 0, 0, k - 1, M, T, 1);
         stdevs0.readChunk(CD.stdev0, 0, 0, k - 1, M, T, 1);
         if (!MLUtil::threadInterruptRequested()) {
-            if (CD.num_events > 0) {
+            if ((CD.num_events > 0) || (clusters_to_force_show.contains(k))) {
                 cluster_data << CD;
             }
         }

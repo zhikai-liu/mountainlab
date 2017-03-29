@@ -88,6 +88,8 @@ public:
     void setLabelMap(const DiskReadMda& LM);
     void setMatchedFirings(const DiskReadMda& MF);
 
+    void setClustersToForceShow(const QList<int>& list);
+
     /////////////////////////////////////////////////
     // these should be set once at beginning
     double sampleRate() const;

@@ -51,6 +51,7 @@ public:
     QSet<int> m_visible_channels;
     QList<double> m_cluster_order_scores;
     QString m_cluster_order_scores_name;
+    QSet<int> m_clusters_to_force_show;
 
     void update_current_and_selected_clusters_according_to_merged();
     void set_default_options();
@@ -710,6 +711,18 @@ void MVContext::setClusterVisibilityRule(const ClusterVisibilityRule& rule)
         return;
     d->m_visibility_rule = rule;
     emit this->clusterVisibilityChanged();
+}
+
+QList<int> MVContext::clustersToForceShow() const
+{
+    QList<int> ret = d->m_clusters_to_force_show.toList();
+    qSort(ret);
+    return ret;
+}
+
+void MVContext::setClustersToForceShow(const QList<int>& list)
+{
+    d->m_clusters_to_force_show = list.toSet();
 }
 
 QList<int> MVContext::visibleChannels() const

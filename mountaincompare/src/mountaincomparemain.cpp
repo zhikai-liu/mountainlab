@@ -161,23 +161,33 @@ int main(int argc, char* argv[])
     TaskProgressView* TPV = new TaskProgressView;
     TPV->show();
 
-    Initialize_confusion_matrix ICM;
-    ICM.firings1 = context->firings1().makePath();
-    ICM.firings2 = context->firings2().makePath();
-    QObject::connect(&ICM, &Initialize_confusion_matrix::finishedInGui, [=]() {
-        context->setFirings2(ICM.firings2_relabeled);
-        context->setConfusionMatrix(ICM.confusion_matrix);
-        context->setMatchedFirings(ICM.matched_firings);
-        context->setLabelMap(ICM.label_map);
+    Initialize_confusion_matrix* ICM = new Initialize_confusion_matrix; //need pointer to go into lambda expression
+    ICM->firings1 = context->firings1().makePath();
+    ICM->firings2 = context->firings2().makePath();
+    ICM->relabel = true;
+    QObject::connect(ICM, &Initialize_confusion_matrix::finishedInGui, [=]() {
+        if (ICM->relabel)
+            context->setFirings2(DiskReadMda(ICM->firings2_relabeled));
+        context->setConfusionMatrix(DiskReadMda(ICM->confusion_matrix));
+        context->setMatchedFirings(DiskReadMda(ICM->matched_firings));
+        context->setLabelMap(DiskReadMda(ICM->label_map));
+        DiskReadMda CM(ICM->confusion_matrix);
+        int Kmax=qMax(CM.N1()-1,CM.N2()-1);
+        QList<int> clusters_to_force_show;
+        for (int kk=1; kk<=Kmax; kk++) {
+            clusters_to_force_show << kk;
+        }
+        context->setClustersToForceShow(clusters_to_force_show);
         W->setCurrentContainerName("north");
         W->openView("open-cluster-details-1");
         W->setCurrentContainerName("south");
         W->openView("open-confusion-matrix");
         delete TPV;
+        delete ICM;
         set_nice_size(W);
         W->show();
     });
-    ICM.start();
+    ICM->start();
 
     a.processEvents();
 

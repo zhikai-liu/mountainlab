@@ -340,19 +340,25 @@ void MCContext::setFirings2(const DiskReadMda& F)
     d->m_mv_context2->setFirings(F);
 }
 
-void MCContext::setConfusionMatrix(const DiskReadMda &CM)
+void MCContext::setConfusionMatrix(const DiskReadMda& CM)
 {
-    d->m_confusion_matrix=CM;
+    d->m_confusion_matrix = CM;
 }
 
-void MCContext::setLabelMap(const DiskReadMda &LM)
+void MCContext::setLabelMap(const DiskReadMda& LM)
 {
-    d->m_label_map=LM;
+    d->m_label_map = LM;
 }
 
-void MCContext::setMatchedFirings(const DiskReadMda &MF)
+void MCContext::setMatchedFirings(const DiskReadMda& MF)
 {
-    d->m_matched_firings=MF;
+    d->m_matched_firings = MF;
+}
+
+void MCContext::setClustersToForceShow(const QList<int>& list)
+{
+    d->m_mv_context1->setClustersToForceShow(list);
+    d->m_mv_context2->setClustersToForceShow(list);
 }
 
 /*

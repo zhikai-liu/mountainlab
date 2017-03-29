@@ -120,6 +120,8 @@ public:
     QList<int> visibleClusters(int Kmax) const;
     bool clusterIsVisible(int k) const;
     void setClusterVisibilityRule(const ClusterVisibilityRule& rule);
+    QList<int> clustersToForceShow() const;
+    void setClustersToForceShow(const QList<int>& list);
 
     /////////////////////////////////////////////////
     QList<int> visibleChannels() const; //1-based indexing
