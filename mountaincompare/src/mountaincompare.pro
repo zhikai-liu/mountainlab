@@ -21,8 +21,10 @@ TEMPLATE = app
 
 INCLUDEPATH += ../../mountainview/src/msv/plugins
 VPATH += ../../mountainview/src/msv/plugins
-HEADERS += clusterdetailplugin.h clipsviewplugin.h
-SOURCES += clusterdetailplugin.cpp clipsviewplugin.cpp
+HEADERS += clusterdetailplugin.h clipsviewplugin.h \
+    initialize_confusion_matrix.h
+SOURCES += clusterdetailplugin.cpp clipsviewplugin.cpp \
+    initialize_confusion_matrix.cpp
 
 INCLUDEPATH += ../../mountainview/src/msv/views
 VPATH += ../../mountainview/src/msv/views

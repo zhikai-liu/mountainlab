@@ -141,9 +141,6 @@ int main(int argc, char* argv[])
     }
     */
 
-    set_nice_size(W);
-    W->show();
-
     //W->loadPlugin(new ClusterDetailPlugin());
     //W->loadPlugin(new ClipsViewPlugin());
 
@@ -160,10 +157,22 @@ int main(int argc, char* argv[])
 
     W->addControl(new MVOpenViewsControl(context, W), true);
 
-    W->setCurrentContainerName("north");
-    W->openView("open-cluster-details-1");
-    W->setCurrentContainerName("south");
-    W->openView("open-confusion-matrix");
+    TaskProgressView* TPV = new TaskProgressView;
+    TPV->show();
+
+    Initialize_confusion_matrix ICM;
+    ICM.firings1 = context->firings1().makePath();
+    ICM.firings2 = context->firings2().makePath();
+    QObject::connect(&ICM, &Initialize_confusion_matrix::finished, [=]() {
+        W->setCurrentContainerName("north");
+        W->openView("open-cluster-details-1");
+        W->setCurrentContainerName("south");
+        W->openView("open-confusion-matrix");
+        delete TPV;
+        set_nice_size(W);
+        W->show();
+    }, Qt::QueuedConnection);
+    ICM.start();
 
     a.processEvents();
 

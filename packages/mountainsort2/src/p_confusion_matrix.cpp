@@ -24,15 +24,28 @@ void sort_events_by_time(QList<MFMergeEvent>& events);
 int compute_max_label(const QList<MFEvent>& events);
 }
 
-bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_matrix_out, QString matched_firings_out, QString label_map_out, P_confusion_matrix_opts opts)
+bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_matrix_out, QString matched_firings_out, QString label_map_out, QString firings2_relabeled_out, P_confusion_matrix_opts opts)
 {
     using namespace P_confusion_matrix;
+
+    if (opts.relabel_firings2) {
+        if (firings2_relabeled_out.isEmpty()) {
+            qWarning() << "firings2_relabeled_out is empty even though relabel_firings2 is true";
+            return false;
+        }
+    }
+    else {
+        if (!firings2_relabeled_out.isEmpty()) {
+            qWarning() << "firings2_relabeled_out is not empty even though relabel_firings2 is false";
+            return false;
+        }
+    }
 
     // The events from firings1
     QList<MFEvent> events1;
     {
         DiskReadMda F1(firings1);
-        for (int i = 0; i < F1.N2(); i++) {
+        for (bigint i = 0; i < F1.N2(); i++) {
             MFEvent evt;
             evt.chan = F1.value(0, i);
             evt.time = F1.value(1, i);
@@ -44,7 +57,7 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
     QList<MFEvent> events2;
     {
         DiskReadMda F2(firings2);
-        for (int i = 0; i < F2.N2(); i++) {
+        for (bigint i = 0; i < F2.N2(); i++) {
             MFEvent evt;
             evt.chan = F2.value(0, i);
             evt.time = F2.value(1, i);
@@ -61,7 +74,7 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
     int K2 = compute_max_label(events2);
 
     //count up every pair that satisfies opts.max_matching_offset -- and I mean EVERY PAIR
-    int total_counts[K1 + 1][K2 + 1];
+    bigint total_counts[K1 + 1][K2 + 1];
     {
         for (int k2 = 0; k2 < K2 + 1; k2++) {
             for (int k1 = 0; k1 < K1 + 1; k1++) {
@@ -69,13 +82,13 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
             }
         }
 
-        int i2 = 0;
-        for (int i1 = 0; i1 < events1.count(); i1++) {
+        bigint i2 = 0;
+        for (bigint i1 = 0; i1 < events1.count(); i1++) {
             if (events1[i1].label > 0) {
                 double t1 = events1[i1].time;
                 while ((i2 < events2.count()) && (events2[i2].time < t1 - opts.max_matching_offset))
                     i2++;
-                int old_i2 = i2;
+                bigint old_i2 = i2;
                 while ((i2 < events2.count()) && (events2[i2].time <= t1 + opts.max_matching_offset)) {
                     if (events2[i2].label > 0) {
                         total_counts[events1[i1].label][events2[i2].label]++;
@@ -88,11 +101,11 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
     }
 
     // Count up just the events in firings2, this will be used to normalize the match score
-    int total_events2_counts[K2 + 1];
+    bigint total_events2_counts[K2 + 1];
     for (int k2 = 0; k2 < K2 + 1; k2++) {
         total_events2_counts[k2] = 0;
     }
-    for (int i2 = 0; i2 < events2.count(); i2++) {
+    for (bigint i2 = 0; i2 < events2.count(); i2++) {
         if (events2[i2].label > 0) {
             total_events2_counts[events2[i2].label]++;
         }
@@ -102,24 +115,24 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
     QList<MFMergeEvent> events3;
     {
         // This will be the index in firings2
-        int i2 = 0;
+        bigint i2 = 0;
         // Loop through all of the events in firings1
-        for (int i1 = 0; i1 < events1.count(); i1++) {
+        for (bigint i1 = 0; i1 < events1.count(); i1++) {
             if (events1[i1].label > 0) { // only condider it if it has a label
                 double t1 = events1[i1].time; // this is the timepoint for event 1
 
                 //increase i2 until it reaches the left-constraint
                 while ((i2 < events2.count()) && (events2[i2].time < t1 - opts.max_matching_offset))
                     i2++;
-                int old_i2 = i2; //save this index for later so we can return to this spot for the next event
+                bigint old_i2 = i2; //save this index for later so we can return to this spot for the next event
 
                 double best_match_score = 0;
-                int best_i2 = -1;
+                bigint best_i2 = -1;
                 //move through the events in firings2 until we pass the right-constraint
                 while ((i2 < events2.count()) && (events2[i2].time <= t1 + opts.max_matching_offset)) {
                     if (events2[i2].label > 0) { //only consider it if it has a label
                         //total_counts[events1[i1].label][events2[i2].label]++; //oh boy this was a mistake. Commented out on 10/13/16 by jfm
-                        int tmp = total_counts[events1[i1].label][events2[i2].label]; //this is the count
+                        bigint tmp = total_counts[events1[i1].label][events2[i2].label]; //this is the count
                         double denom = total_events2_counts[events2[i2].label];
                         if (denom < 50)
                             denom = 50; //let's make sure it is something reasonable!
@@ -150,7 +163,7 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
     }
 
     //Now take care of all the events that did not get handled earlier ... they are unclassified
-    for (int i1 = 0; i1 < events1.count(); i1++) {
+    for (bigint i1 = 0; i1 < events1.count(); i1++) {
         if (events1[i1].label > 0) { //this is how we check to see if it was not handled
             MFMergeEvent E;
             E.chan = events1[i1].chan;
@@ -160,26 +173,25 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
             events3 << E;
         }
     }
-    for (int i2 = 0; i2 < events2.count(); i2++) {
+    for (bigint i2 = 0; i2 < events2.count(); i2++) {
         if (events2[i2].label > 0) {
             MFMergeEvent E;
             E.chan = events2[i2].chan;
             E.time = events2[i2].time;
             E.label1 = 0;
             E.label2 = events2[i2].label;
-            ;
             events3 << E;
         }
     }
 
     // Sort the matched events by time
     sort_events_by_time(events3);
-    int L = events3.count();
+    bigint L = events3.count();
 
     // Create the confusion matrix
     Mda confusion_matrix(K1 + 1, K2 + 1);
     {
-        for (int i = 0; i < L; i++) {
+        for (bigint i = 0; i < L; i++) {
             int a = events3[i].label1 - 1;
             int b = events3[i].label2 - 1;
             if (a < 0)
@@ -192,8 +204,8 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
     confusion_matrix.write64(confusion_matrix_out);
 
     // Get the optimal label map
-    if (!label_map_out.isEmpty()) {
-        Mda label_map(K1, 1);
+    Mda label_map(K1, 1);
+    if ((!label_map_out.isEmpty()) || (opts.relabel_firings2)) {
         if (K1 > 0) {
             int assignment[K1];
             Mda matrix(K1, K2);
@@ -211,11 +223,65 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
         label_map.write64(label_map_out);
     }
 
+    if (opts.relabel_firings2) {
+        Mda label_map_inv(K2, 1);
+        for (int j = 1; j <= K1; j++) {
+            if (label_map.value(j - 1) > 0) {
+                label_map_inv.setValue(j, label_map.value(j - 1) - 1);
+            }
+        }
+        int kk = K1 + 1;
+        for (int j = 0; j < K2; j++) {
+            if (!label_map_inv.value(j)) {
+                label_map_inv.setValue(kk, j);
+                kk++;
+            }
+        }
+        for (int j = 0; j < K1; j++) {
+            label_map.setValue(j + 1, j);
+        }
+        if (!label_map_out.isEmpty()) {
+            label_map.write64(label_map_out);
+        }
+        Mda confusion_matrix2(K1 + 1, K2 + 1);
+        for (int k1 = 1; k1 <= K1 + 1; k1++) {
+            for (int k2 = 1; k2 <= K2 + 1; k2++) {
+                int k2b = k2;
+                if (k2 <= K2)
+                    k2b = label_map_inv.value(k2 - 1);
+                confusion_matrix2.setValue(confusion_matrix.value(k1 - 1, k2 - 1), k1 - 1, k2b - 1);
+            }
+        }
+        if (!confusion_matrix_out.isEmpty()) {
+            if (!confusion_matrix2.write64(confusion_matrix_out)) {
+                qWarning() << "Error rewriting confusion matrix output";
+                return false;
+            }
+        }
+        if (!firings2_relabeled_out.isEmpty()) {
+            Mda firings2_relabeled(firings2);
+            for (bigint i = 0; i < firings2_relabeled.N2(); i++) {
+                int k = firings2_relabeled.value(2, i);
+                if ((k >= 1) && (k <= K2)) {
+                    firings2_relabeled.setValue(label_map_inv.value(k - 1), 2, i);
+                }
+            }
+            firings2_relabeled.write64(firings2_relabeled_out);
+        }
+        for (bigint i = 0; i < L; i++) {
+            MFMergeEvent* E = &events3[i];
+            int k = E->label2;
+            if ((k >= 1) && (k <= K2)) {
+                E->label2 = label_map_inv.value(k - 1);
+            }
+        }
+    }
+
     if (!matched_firings_out.isEmpty()) {
         // Create the matched firings file
         Mda matched_firings(4, L);
         {
-            for (int i = 0; i < L; i++) {
+            for (bigint i = 0; i < L; i++) {
                 MFMergeEvent* E = &events3[i];
                 matched_firings.setValue(E->chan, 0, i);
                 matched_firings.setValue(E->time, 1, i);
@@ -234,12 +300,12 @@ namespace P_confusion_matrix {
 void sort_events_by_time(QList<MFEvent>& events)
 {
     QVector<double> times(events.count());
-    for (int i = 0; i < events.count(); i++) {
+    for (bigint i = 0; i < events.count(); i++) {
         times[i] = events[i].time;
     }
-    QList<int> inds = get_sort_indices(times);
+    QList<bigint> inds = get_sort_indices_bigint(times);
     QList<MFEvent> ret;
-    for (int i = 0; i < inds.count(); i++) {
+    for (bigint i = 0; i < inds.count(); i++) {
         ret << events[inds[i]];
     }
     events = ret;
@@ -248,12 +314,12 @@ void sort_events_by_time(QList<MFEvent>& events)
 void sort_events_by_time(QList<MFMergeEvent>& events)
 {
     QVector<double> times(events.count());
-    for (int i = 0; i < events.count(); i++) {
+    for (bigint i = 0; i < events.count(); i++) {
         times[i] = events[i].time;
     }
-    QList<int> inds = get_sort_indices(times);
+    QList<bigint> inds = get_sort_indices_bigint(times);
     QList<MFMergeEvent> ret;
-    for (int i = 0; i < inds.count(); i++) {
+    for (bigint i = 0; i < inds.count(); i++) {
         ret << events[inds[i]];
     }
     events = ret;
@@ -262,7 +328,7 @@ void sort_events_by_time(QList<MFMergeEvent>& events)
 int compute_max_label(const QList<MFEvent>& events)
 {
     int ret = 0;
-    for (int i = 0; i < events.count(); i++) {
+    for (bigint i = 0; i < events.count(); i++) {
         if (events[i].label > ret)
             ret = events[i].label;
     }

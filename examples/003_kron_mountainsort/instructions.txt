@@ -10,7 +10,7 @@ mp-daemon-start admin
 This will create two folders: examples and BIGFILES
 
 *** Run sorting and view results
-kron-run ms2_001 example1
+kron-run ms2 example1
 kron-view results ms2_001 example1
 
 *** Repeat this with example1 replaced by example2...example5

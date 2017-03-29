@@ -44,14 +44,7 @@ int main(int argc, char* argv[])
     QString arg2 = params.unnamed_parameters.value(1);
     QString arg3 = params.unnamed_parameters.value(2);
 
-    if (arg1.endsWith(".mda")) {
-        qInstallMessageHandler(silent_message_output);
-        DiskReadMda X(arg1);
-        QString str = get_json_header_string(X);
-        printf("%s\n", str.toUtf8().data());
-        return 0;
-    }
-    else if (arg1 == "get_chunk") {
+    if (arg1 == "get_chunk") {
         if (!arg2.endsWith(".mda")) {
             print_usage();
             return -1;
@@ -181,8 +174,11 @@ int main(int argc, char* argv[])
         return 0;
     }
     else {
-        printf("Unrecognized command.\n");
-        return -1;
+        qInstallMessageHandler(silent_message_output);
+        DiskReadMda X(arg1);
+        QString str = get_json_header_string(X);
+        printf("%s\n", str.toUtf8().data());
+        return 0;
     }
 
     /*
