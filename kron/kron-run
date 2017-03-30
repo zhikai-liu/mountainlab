@@ -88,17 +88,23 @@ else {
 	check_pipelines(pipnames);
 	check_datasets(dsnames);
 
-	for (var p in pipelines) {
+	common.foreach(pipelines,{},function(p,obj,cb1) {
 		if (common.contains_pipeline(pipnames,pipelines[p])) {
-			for (var d in datasets) {
+			common.foreach(datasets,{},function(d,obj,cb2) {
 				if (common.contains_ds(dsnames,datasets[d])) {
 					run_pipeline(pipelines[p],datasets[d],function() {
-
+						cb2();
 					});
 				}
-			}
+				else cb2();
+			},function() {
+				cb1();
+			});
 		}
-	}
+		else cb1();
+	},function() {
+		//done
+	});
 }
 
 /*

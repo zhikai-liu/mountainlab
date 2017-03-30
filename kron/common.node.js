@@ -173,6 +173,37 @@ exports.find_view_program_file=function(program_name) {
 	return null;
 };
 
+exports.foreach=function(array,opts,step_function,end_function) {
+	var num_parallel=opts.num_parallel||1;
+	var num_running=0;
+	var num_finished=0;
+	var already_called_end=false;
+	var ii=0;
+	next_step();
+	function next_step() {
+		if (num_finished>=array.length) {
+			setTimeout(function() { //important to do it this way so we don't accumulate a call stack
+				if (!already_called_end) { 
+					already_called_end=true;
+					end_function();
+				}
+			},0);
+			return;
+		}
+		while ((ii<array.length)&&(num_running<num_parallel)) {
+			num_running++;
+			ii++;
+			step_function(ii-1,array[ii-1],function() {
+				num_running--;
+				num_finished++;
+				setTimeout(function() { //important to do it this way so we don't accumulate a call stack
+					next_step();
+				},0);
+			});
+		}
+	}
+};
+
 function resolve_recursively_from_mountainlab(path,fname) {
 	var tmp=false;
 	if (path.indexOf('/')===0) tmp=true; //absolute

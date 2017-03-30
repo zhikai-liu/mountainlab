@@ -24,15 +24,17 @@ void sort_events_by_time(QList<MFMergeEvent>& events);
 int compute_max_label(const QList<MFEvent>& events);
 }
 
-bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_matrix_out, QString matched_firings_out, QString label_map_out, QString firings2_relabeled_out, P_confusion_matrix_opts opts)
+bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_matrix_out, QString matched_firings_out, QString label_map_out, QString firings2_relabeled_out, QString firings2_relabel_map_out, P_confusion_matrix_opts opts)
 {
     using namespace P_confusion_matrix;
 
     if (opts.relabel_firings2) {
+        /*
         if (firings2_relabeled_out.isEmpty()) {
             qWarning() << "firings2_relabeled_out is empty even though relabel_firings2 is true";
             return false;
         }
+        */
     }
     else {
         if (!firings2_relabeled_out.isEmpty()) {
@@ -267,6 +269,9 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
                 }
             }
             firings2_relabeled.write64(firings2_relabeled_out);
+        }
+        if (!firings2_relabel_map_out.isEmpty()) {
+            label_map_inv.write64(firings2_relabel_map_out);
         }
         for (bigint i = 0; i < L; i++) {
             MFMergeEvent* E = &events3[i];

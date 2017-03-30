@@ -260,10 +260,10 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.confusion_matrix", "0.1");
+        ProcessorSpec X("mountainsort.confusion_matrix", "0.12");
         X.addInputs("firings1", "firings2");
         X.addOutputs("confusion_matrix_out");
-        X.addOptionalOutputs("matched_firings_out", "label_map_out", "firings2_relabeled_out");
+        X.addOptionalOutputs("matched_firings_out", "label_map_out", "firings2_relabeled_out", "firings2_relabel_map_out");
         X.addOptionalParameter("max_matching_offset", "", 30);
         X.addOptionalParameter("relabel_firings2", "", "false");
         processors.push_back(X.get_spec());
@@ -536,11 +536,12 @@ int main(int argc, char* argv[])
         QString matched_firings_out = CLP.named_parameters.value("matched_firings_out").toString();
         QString label_map_out = CLP.named_parameters.value("label_map_out").toString();
         QString firings2_relabeled_out = CLP.named_parameters.value("firings2_relabeled_out").toString();
+        QString firings2_relabel_map_out = CLP.named_parameters.value("firings2_relabel_map_out").toString();
         if (CLP.named_parameters.contains("max_matching_offset")) {
             opts.max_matching_offset = CLP.named_parameters.value("max_matching_offset").toInt();
         }
         opts.relabel_firings2 = (CLP.named_parameters.value("relabel_firings2", "false").toString() == "true");
-        ret = p_confusion_matrix(firings1, firings2, confusion_matrix_out, matched_firings_out, label_map_out, firings2_relabeled_out, opts);
+        ret = p_confusion_matrix(firings1, firings2, confusion_matrix_out, matched_firings_out, label_map_out, firings2_relabeled_out, firings2_relabel_map_out, opts);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;
