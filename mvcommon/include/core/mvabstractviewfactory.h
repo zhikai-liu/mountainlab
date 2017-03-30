@@ -11,11 +11,16 @@ class MVAbstractViewFactory : public QObject {
 public:
     explicit MVAbstractViewFactory(MVMainWindow* mw, QObject* parent = 0);
 
+    enum PreferredOpenLocation {
+        North,South,Floating,NoPreference
+    };
+
     virtual QString id() const = 0;
     virtual QString name() const = 0;
     virtual QString group() const;
     virtual QString toolTip() const;
     virtual QString title() const; /// TODO: move title to the view itself
+    virtual PreferredOpenLocation preferredOpenLocation() const;
     virtual int order() const { return 0; }
     virtual bool isEnabled(MVAbstractContext* context) const;
 
@@ -31,3 +36,5 @@ private:
 };
 
 #endif // MVABSTRACTVIEWFACTORY_H
+
+

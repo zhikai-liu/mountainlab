@@ -48,8 +48,9 @@ SOURCES += mountaincomparemain.cpp \
 
 INCLUDEPATH += ../../mountainview/src/controlwidgets
 VPATH += ../../mountainview/src/controlwidgets
-HEADERS += mvopenviewscontrol.h
-SOURCES += mvopenviewscontrol.cpp
+HEADERS += mvopenviewscontrol.h mvtimeseriescontrol.h createtimeseriesdialog.h
+SOURCES += mvopenviewscontrol.cpp mvtimeseriescontrol.cpp createtimeseriesdialog.cpp
+FORMS += createtimeseriesdialog.ui
 
 INCLUDEPATH += ../../mountainview/src/views
 VPATH += ../../mountainview/src/views
@@ -59,6 +60,9 @@ mvclusterview.h mvclusterwidget.h mvclusterlegend.h
 SOURCES += \
 mvclipsview.cpp mvclipswidget.cpp mvtimeseriesview2.cpp mvtimeseriesviewbase.cpp mvtimeseriesrendermanager.cpp \
 mvclusterview.cpp mvclusterwidget.cpp mvclusterlegend.cpp
+
+HEADERS += mvspikesprayview.h mvspikespraypanel.h
+SOURCES += mvspikesprayview.cpp mvspikespraypanel.cpp
 
 INCLUDEPATH += ../../mountainsort/src/processors
 DEPENDPATH += ../../mountainsort/src/processors

@@ -113,6 +113,7 @@ signals:
 private slots:
     void slot_context_current_timepoint_changed();
     void slot_context_current_time_range_changed();
+    void slot_context_current_timeseries_changed();
 
 private:
     MCContextPrivate* d;

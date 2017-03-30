@@ -56,6 +56,7 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
+    PreferredOpenLocation preferredOpenLocation() const Q_DECL_OVERRIDE;
     MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
 private slots:
     //void openClipsForTemplate();

@@ -440,7 +440,6 @@ int main(int argc, char* argv[])
         }
 
         set_nice_size(W);
-
         W->show();
 
         printf("Setting up main window...\n");
@@ -521,7 +520,7 @@ int main(int argc, char* argv[])
 
     int ret = a.exec();
 
-    printf("Number of files open: %ld, number of unfreed mallocs: %ld, number of unfreed megabytes: %g\n", jnumfilesopen(), jmalloccount(), (int)(jbytesallocated() * 1.0 / 1000000));
+    printf("Number of files open: %ld, number of unfreed mallocs: %ld, number of unfreed megabytes: %d\n", jnumfilesopen(), jmalloccount(), (int)(jbytesallocated() * 1.0 / 1000000));
 
     return ret;
 }

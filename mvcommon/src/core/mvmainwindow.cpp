@@ -78,7 +78,7 @@ public:
     //GuideV2* m_guide_v2;
 
     void update_sizes(); //update sizes of all the widgets when the main window is resized
-    void add_tab(MVAbstractView* W, QString label);
+    void add_tab(MVAbstractView* W, QString label, MVAbstractViewFactory::PreferredOpenLocation preferred_open_location);
 
     //MVCrossCorrelogramsWidget3* open_auto_correlograms();
     //MVCrossCorrelogramsWidget3* open_cross_correlograms(int k);
@@ -497,7 +497,7 @@ MVAbstractView* MVMainWindowPrivate::openView(MVAbstractViewFactory* factory)
     //    set_tool_button_menu(view);
     /// TODO: don't pass label as argument to add_tab (think about it)
     view->setTitle(factory->title());
-    add_tab(view, factory->title());
+    add_tab(view, factory->title(), factory->preferredOpenLocation());
 
     QObject::connect(view, SIGNAL(contextMenuRequested(QMimeData, QPoint)),
         q, SLOT(handleContextMenu(QMimeData, QPoint)));
@@ -549,10 +549,20 @@ void MVMainWindowPrivate::update_sizes()
     }
 }
 
-void MVMainWindowPrivate::add_tab(MVAbstractView* W, QString label)
+void MVMainWindowPrivate::add_tab(MVAbstractView* W, QString label, MVAbstractViewFactory::PreferredOpenLocation preferred_open_location)
 {
     W->setFocusPolicy(Qt::StrongFocus);
-    m_tabber->addWidget(m_tabber->currentContainerName(), label, W);
+    QString container_name=m_tabber->currentContainerName();
+    if (preferred_open_location==MVAbstractViewFactory::South) {
+        container_name="south";
+    }
+    else if (preferred_open_location==MVAbstractViewFactory::North) {
+        container_name="north";
+    }
+    else if (preferred_open_location==MVAbstractViewFactory::Floating) {
+        container_name="";
+    }
+    m_tabber->addWidget(container_name, label, W);
 }
 
 /*

@@ -1,3 +1,5 @@
 ms2 ms2_001.pipeline --whiten=true --curation=curation_ms2.script --detect_sign=1
 ms2b ms2_001.pipeline --whiten=true --curation=curation_ms2.script --detect_sign=0
 ks16 kilosort_001.pipeline --num_clusters=16
+ks32 kilosort_001.pipeline --num_clusters=32
+ks64 kilosort_001.pipeline --num_clusters=64

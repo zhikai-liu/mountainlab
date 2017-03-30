@@ -13,6 +13,7 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
+    PreferredOpenLocation preferredOpenLocation() const Q_DECL_OVERRIDE;
     MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
 private slots:
     //void openClipsForTemplate();
@@ -25,6 +26,7 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
+    PreferredOpenLocation preferredOpenLocation() const Q_DECL_OVERRIDE;
     MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
 private slots:
     //void openClipsForTemplate();
@@ -38,6 +40,7 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
+    PreferredOpenLocation preferredOpenLocation() const Q_DECL_OVERRIDE;
     MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
 };
 
@@ -48,7 +51,33 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
+    PreferredOpenLocation preferredOpenLocation() const Q_DECL_OVERRIDE;
     MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
+};
+
+/////////////////////////////////////////////////////////////////////////////
+class MVSpikeSpray1Factory : public MVAbstractViewFactory {
+    Q_OBJECT
+public:
+    MVSpikeSpray1Factory(MVMainWindow* mw, QObject* parent = 0);
+    QString id() const Q_DECL_OVERRIDE;
+    QString name() const Q_DECL_OVERRIDE;
+    QString title() const Q_DECL_OVERRIDE;
+    PreferredOpenLocation preferredOpenLocation() const Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
+    //QList<QAction*> actions(const QMimeData& md) Q_DECL_OVERRIDE;
+};
+
+class MVSpikeSpray2Factory : public MVAbstractViewFactory {
+    Q_OBJECT
+public:
+    MVSpikeSpray2Factory(MVMainWindow* mw, QObject* parent = 0);
+    QString id() const Q_DECL_OVERRIDE;
+    QString name() const Q_DECL_OVERRIDE;
+    QString title() const Q_DECL_OVERRIDE;
+    PreferredOpenLocation preferredOpenLocation() const Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
+    //QList<QAction*> actions(const QMimeData& md) Q_DECL_OVERRIDE;
 };
 
 class CompareClustersFactory : public MVAbstractViewFactory {
@@ -58,6 +87,7 @@ public:
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
+    PreferredOpenLocation preferredOpenLocation() const Q_DECL_OVERRIDE;
     MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
 private slots:
     //void openClipsForTemplate();

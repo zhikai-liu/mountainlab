@@ -12,6 +12,11 @@ QString MVAbstractViewFactory::toolTip() const { return QString(); }
 
 QString MVAbstractViewFactory::title() const { return name(); }
 
+MVAbstractViewFactory::PreferredOpenLocation MVAbstractViewFactory::preferredOpenLocation() const
+{
+    return PreferredOpenLocation::NoPreference;
+}
+
 bool MVAbstractViewFactory::isEnabled(MVAbstractContext* context) const
 {
     Q_UNUSED(context)

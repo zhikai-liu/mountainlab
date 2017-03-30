@@ -27,6 +27,7 @@
 #include <mvclipswidget.h>
 #include <mvclusterwidget.h>
 #include <mvopenviewscontrol.h>
+#include <mvtimeseriescontrol.h>
 #include <tabber.h>
 
 #include "multiscaletimeseries.h"
@@ -148,15 +149,19 @@ int main(int argc, char* argv[])
     W->registerViewFactory(new ClusterDetail1Factory(W));
     W->registerViewFactory(new ClusterDetail2Factory(W));
 
+    W->registerViewFactory(new MVSpikeSpray1Factory(W));
+    W->registerViewFactory(new MVSpikeSpray2Factory(W));
+
     W->registerViewFactory(new MVTimeSeriesView1Factory(W));
     W->registerViewFactory(new MVTimeSeriesView2Factory(W));
 
     W->registerViewFactory(new ConfusionMatrixViewFactory(W));
-    W->registerViewFactory(new CompareClustersFactory(W));
+    //W->registerViewFactory(new CompareClustersFactory(W));
 
     //W->registerViewFactory(new MVPCAFeaturesFactory(W));
 
     W->addControl(new MVOpenViewsControl(context, W), true);
+    W->addControl(new MVTimeseriesControl(context->mvContext1(), W), true);
 
     TaskProgressView* TPV = new TaskProgressView;
     TPV->show();
@@ -181,11 +186,12 @@ int main(int argc, char* argv[])
         W->setCurrentContainerName("north");
         W->openView("open-cluster-details-1");
         W->setCurrentContainerName("south");
-        W->openView("open-confusion-matrix");
+        W->openView("open-cluster-details-2");
         delete TPV;
         delete ICM;
         set_nice_size(W);
         W->show();
+        W->openView("open-confusion-matrix");
     });
     ICM->start();
 

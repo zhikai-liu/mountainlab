@@ -252,7 +252,6 @@ void ConfusionMatrixView::slot_matrix_view_current_element_changed()
         return;
     QPoint a = MV->currentElement();
     if ((a.x() >= 0) && (a.y() >= 0)) {
-        qDebug() << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << a.x() << a.y();
         MCCluster C1, C2;
         C1.firings_num = 1;
         C1.num = a.x() + 1;
@@ -381,6 +380,11 @@ QString ConfusionMatrixViewFactory::name() const
 QString ConfusionMatrixViewFactory::title() const
 {
     return tr("Confusion Matrix");
+}
+
+MVAbstractViewFactory::PreferredOpenLocation ConfusionMatrixViewFactory::preferredOpenLocation() const
+{
+    return PreferredOpenLocation::Floating;
 }
 
 MVAbstractView* ConfusionMatrixViewFactory::createView(MVAbstractContext* context)

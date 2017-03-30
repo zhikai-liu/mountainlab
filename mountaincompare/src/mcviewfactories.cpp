@@ -4,6 +4,8 @@
 #include "clusterdetailview.h"
 #include <views/compareclusterview.h>
 #include <mvtimeseriesview2.h>
+#include <QMessageBox>
+#include <mvspikesprayview.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ClusterDetail1Factory::ClusterDetail1Factory(MVMainWindow* mw, QObject* parent)
@@ -26,6 +28,11 @@ QString ClusterDetail1Factory::title() const
     return tr("Details 1");
 }
 
+MVAbstractViewFactory::PreferredOpenLocation ClusterDetail1Factory::preferredOpenLocation() const
+{
+    return PreferredOpenLocation::North;
+}
+
 MVAbstractView* ClusterDetail1Factory::createView(MVAbstractContext* context)
 {
     MCContext* mc_context = qobject_cast<MCContext*>(context);
@@ -36,7 +43,8 @@ MVAbstractView* ClusterDetail1Factory::createView(MVAbstractContext* context)
     return X;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 ClusterDetail2Factory::ClusterDetail2Factory(MVMainWindow* mw, QObject* parent)
     : MVAbstractViewFactory(mw, parent)
 {
@@ -55,6 +63,11 @@ QString ClusterDetail2Factory::name() const
 QString ClusterDetail2Factory::title() const
 {
     return tr("Details 2");
+}
+
+MVAbstractViewFactory::PreferredOpenLocation ClusterDetail2Factory::preferredOpenLocation() const
+{
+    return PreferredOpenLocation::South;
 }
 
 MVAbstractView* ClusterDetail2Factory::createView(MVAbstractContext* context)
@@ -88,6 +101,11 @@ QString MVTimeSeriesView1Factory::title() const
     return tr("Timeseries 1");
 }
 
+MVAbstractViewFactory::PreferredOpenLocation MVTimeSeriesView1Factory::preferredOpenLocation() const
+{
+    return PreferredOpenLocation::North;
+}
+
 MVAbstractView* MVTimeSeriesView1Factory::createView(MVAbstractContext* context)
 {
     MCContext* c = qobject_cast<MCContext*>(context);
@@ -99,7 +117,10 @@ MVAbstractView* MVTimeSeriesView1Factory::createView(MVAbstractContext* context)
     return X;
 }
 
-////////////////////////////////////////////////////////////////////////
+
+
+
+
 MVTimeSeriesView2Factory::MVTimeSeriesView2Factory(MVMainWindow* mw, QObject* parent)
     : MVAbstractViewFactory(mw, parent)
 {
@@ -120,6 +141,11 @@ QString MVTimeSeriesView2Factory::title() const
     return tr("Timeseries 2");
 }
 
+MVAbstractViewFactory::PreferredOpenLocation MVTimeSeriesView2Factory::preferredOpenLocation() const
+{
+    return PreferredOpenLocation::South;
+}
+
 MVAbstractView* MVTimeSeriesView2Factory::createView(MVAbstractContext* context)
 {
     MCContext* c = qobject_cast<MCContext*>(context);
@@ -130,6 +156,106 @@ MVAbstractView* MVTimeSeriesView2Factory::createView(MVAbstractContext* context)
     X->setLabelsToView(ks.toSet());
     return X;
 }
+
+
+////////////////////////////////////////////////////////////////////////
+MVSpikeSpray1Factory::MVSpikeSpray1Factory(MVMainWindow* mw, QObject* parent)
+    : MVAbstractViewFactory(mw, parent)
+{
+}
+
+QString MVSpikeSpray1Factory::id() const
+{
+    return QStringLiteral("open-spike-spray-1");
+}
+
+QString MVSpikeSpray1Factory::name() const
+{
+    return tr("Spike Spray 1");
+}
+
+QString MVSpikeSpray1Factory::title() const
+{
+    return tr("Spike Spray 1");
+}
+
+MVAbstractViewFactory::PreferredOpenLocation MVSpikeSpray1Factory::preferredOpenLocation() const
+{
+    return PreferredOpenLocation::North;
+}
+
+MVAbstractView* MVSpikeSpray1Factory::createView(MVAbstractContext* context)
+{
+    MCContext* c = qobject_cast<MCContext*>(context);
+    Q_ASSERT(c);
+
+    MVContext* cc=c->mvContext1();
+
+    QList<int> ks = cc->selectedClusters();
+    if (ks.isEmpty())
+        ks = cc->clusterVisibilityRule().subset.toList();
+    qSort(ks);
+    if (ks.isEmpty()) {
+        QMessageBox::warning(0, "Unable to open spike spray", "You must select at least one cluster.");
+        return Q_NULLPTR;
+    }
+    MVSpikeSprayView* X = new MVSpikeSprayView(cc);
+    X->setLabelsToUse(ks.toSet());
+    return X;
+}
+
+
+
+
+MVSpikeSpray2Factory::MVSpikeSpray2Factory(MVMainWindow* mw, QObject* parent)
+    : MVAbstractViewFactory(mw, parent)
+{
+}
+
+QString MVSpikeSpray2Factory::id() const
+{
+    return QStringLiteral("open-spike-spray-2");
+}
+
+QString MVSpikeSpray2Factory::name() const
+{
+    return tr("Spike Spray 2");
+}
+
+QString MVSpikeSpray2Factory::title() const
+{
+    return tr("Spike Spray 2");
+}
+
+MVAbstractViewFactory::PreferredOpenLocation MVSpikeSpray2Factory::preferredOpenLocation() const
+{
+    return PreferredOpenLocation::South;
+}
+
+MVAbstractView* MVSpikeSpray2Factory::createView(MVAbstractContext* context)
+{
+    MCContext* c = qobject_cast<MCContext*>(context);
+    Q_ASSERT(c);
+
+    MVContext* cc=c->mvContext2();
+
+    QList<int> ks = cc->selectedClusters();
+    if (ks.isEmpty())
+        ks = cc->clusterVisibilityRule().subset.toList();
+    qSort(ks);
+    if (ks.isEmpty()) {
+        QMessageBox::warning(0, "Unable to open spike spray", "You must select at least one cluster.");
+        return Q_NULLPTR;
+    }
+    MVSpikeSprayView* X = new MVSpikeSprayView(cc);
+    X->setLabelsToUse(ks.toSet());
+    return X;
+}
+
+
+
+
+
 
 ////////////////////////////////////////////////////////////////////////
 CompareClustersFactory::CompareClustersFactory(MVMainWindow* mw, QObject* parent)
@@ -150,6 +276,11 @@ QString CompareClustersFactory::name() const
 QString CompareClustersFactory::title() const
 {
     return tr("Compare Clusters");
+}
+
+MVAbstractViewFactory::PreferredOpenLocation CompareClustersFactory::preferredOpenLocation() const
+{
+    return PreferredOpenLocation::Floating;
 }
 
 MVAbstractView* CompareClustersFactory::createView(MVAbstractContext* context)
