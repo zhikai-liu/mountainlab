@@ -1,0 +1,3 @@
+ms2 ms2_001.pipeline
+ks32 kilosort_001.pipeline --num_clusters=32
+sc spyking_circus_001.pipeline --spike_thresh=4

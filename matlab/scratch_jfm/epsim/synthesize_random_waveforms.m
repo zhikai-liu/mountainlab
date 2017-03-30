@@ -11,7 +11,7 @@ if (~isfield(opts,'rand_amps_stdev')) opts.rand_amps_stdev=[0.2,3,0.5,0]; end;
 if (~isfield(opts,'rand_amp_factor_range')) opts.rand_amp_factor_range=[0.5,1]; end;
 if (~isfield(opts,'geom_spread_coef1')) opts.geom_spread_coef1=0.2; end;
 if (~isfield(opts,'geom_spread_coef2')) opts.geom_spread_coef2=1; end;
-if (~isfield(opts,'average_peak_amplitude')) opts.average_peak_amplitude=10; end;
+if (~isfield(opts,'average_peak_amplitude')) opts.average_peak_amplitude=1; end;
 if (~isfield(opts,'upsamplefac')) opts.upsamplefac=1; end;
 if (~isfield(opts,'timeshift_factor')) opts.timeshift_factor=0; end;
 
