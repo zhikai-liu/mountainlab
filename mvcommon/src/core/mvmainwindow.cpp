@@ -552,15 +552,15 @@ void MVMainWindowPrivate::update_sizes()
 void MVMainWindowPrivate::add_tab(MVAbstractView* W, QString label, MVAbstractViewFactory::PreferredOpenLocation preferred_open_location)
 {
     W->setFocusPolicy(Qt::StrongFocus);
-    QString container_name=m_tabber->currentContainerName();
-    if (preferred_open_location==MVAbstractViewFactory::South) {
-        container_name="south";
+    QString container_name = m_tabber->currentContainerName();
+    if (preferred_open_location == MVAbstractViewFactory::South) {
+        container_name = "south";
     }
-    else if (preferred_open_location==MVAbstractViewFactory::North) {
-        container_name="north";
+    else if (preferred_open_location == MVAbstractViewFactory::North) {
+        container_name = "north";
     }
-    else if (preferred_open_location==MVAbstractViewFactory::Floating) {
-        container_name="";
+    else if (preferred_open_location == MVAbstractViewFactory::Floating) {
+        container_name = "";
     }
     m_tabber->addWidget(container_name, label, W);
 }

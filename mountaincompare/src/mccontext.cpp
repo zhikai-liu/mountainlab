@@ -433,11 +433,11 @@ void MCContext::slot_context_current_timeseries_changed()
 {
     MVContext* context = qobject_cast<MVContext*>(sender());
     if (context == d->m_mv_context1) {
-        d->m_mv_context2->addTimeseries(d->m_mv_context1->currentTimeseriesName(),d->m_mv_context1->currentTimeseries());
+        d->m_mv_context2->addTimeseries(d->m_mv_context1->currentTimeseriesName(), d->m_mv_context1->currentTimeseries());
         d->m_mv_context2->setCurrentTimeseriesName(d->m_mv_context1->currentTimeseriesName());
     }
     else if (context == d->m_mv_context2) {
-        d->m_mv_context1->addTimeseries(d->m_mv_context2->currentTimeseriesName(),d->m_mv_context2->currentTimeseries());
+        d->m_mv_context1->addTimeseries(d->m_mv_context2->currentTimeseriesName(), d->m_mv_context2->currentTimeseries());
         d->m_mv_context1->setCurrentTimeseriesName(d->m_mv_context2->currentTimeseriesName());
     }
 }
@@ -621,8 +621,8 @@ void MCContextPrivate::setup_mv_contexts()
     QObject::connect(m_mv_context2, SIGNAL(currentTimepointChanged()), q, SLOT(slot_context_current_timepoint_changed()));
     QObject::connect(m_mv_context1, SIGNAL(currentTimeRangeChanged()), q, SLOT(slot_context_current_time_range_changed()));
     QObject::connect(m_mv_context2, SIGNAL(currentTimeRangeChanged()), q, SLOT(slot_context_current_time_range_changed()));
-    QObject::connect(m_mv_context1, SIGNAL(currentTimeseriesChanged()), q, SLOT(slot_context_current_timeseries_changed()),Qt::QueuedConnection);
-    QObject::connect(m_mv_context2, SIGNAL(currentTimeseriesChanged()), q, SLOT(slot_context_current_timeseries_changed()),Qt::QueuedConnection);
+    QObject::connect(m_mv_context1, SIGNAL(currentTimeseriesChanged()), q, SLOT(slot_context_current_timeseries_changed()), Qt::QueuedConnection);
+    QObject::connect(m_mv_context2, SIGNAL(currentTimeseriesChanged()), q, SLOT(slot_context_current_timeseries_changed()), Qt::QueuedConnection);
 }
 
 uint qHash(const MCCluster& C)

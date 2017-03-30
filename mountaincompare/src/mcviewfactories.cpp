@@ -43,8 +43,6 @@ MVAbstractView* ClusterDetail1Factory::createView(MVAbstractContext* context)
     return X;
 }
 
-
-
 ClusterDetail2Factory::ClusterDetail2Factory(MVMainWindow* mw, QObject* parent)
     : MVAbstractViewFactory(mw, parent)
 {
@@ -117,10 +115,6 @@ MVAbstractView* MVTimeSeriesView1Factory::createView(MVAbstractContext* context)
     return X;
 }
 
-
-
-
-
 MVTimeSeriesView2Factory::MVTimeSeriesView2Factory(MVMainWindow* mw, QObject* parent)
     : MVAbstractViewFactory(mw, parent)
 {
@@ -157,7 +151,6 @@ MVAbstractView* MVTimeSeriesView2Factory::createView(MVAbstractContext* context)
     return X;
 }
 
-
 ////////////////////////////////////////////////////////////////////////
 MVSpikeSpray1Factory::MVSpikeSpray1Factory(MVMainWindow* mw, QObject* parent)
     : MVAbstractViewFactory(mw, parent)
@@ -189,7 +182,7 @@ MVAbstractView* MVSpikeSpray1Factory::createView(MVAbstractContext* context)
     MCContext* c = qobject_cast<MCContext*>(context);
     Q_ASSERT(c);
 
-    MVContext* cc=c->mvContext1();
+    MVContext* cc = c->mvContext1();
 
     QList<int> ks = cc->selectedClusters();
     if (ks.isEmpty())
@@ -203,9 +196,6 @@ MVAbstractView* MVSpikeSpray1Factory::createView(MVAbstractContext* context)
     X->setLabelsToUse(ks.toSet());
     return X;
 }
-
-
-
 
 MVSpikeSpray2Factory::MVSpikeSpray2Factory(MVMainWindow* mw, QObject* parent)
     : MVAbstractViewFactory(mw, parent)
@@ -237,7 +227,7 @@ MVAbstractView* MVSpikeSpray2Factory::createView(MVAbstractContext* context)
     MCContext* c = qobject_cast<MCContext*>(context);
     Q_ASSERT(c);
 
-    MVContext* cc=c->mvContext2();
+    MVContext* cc = c->mvContext2();
 
     QList<int> ks = cc->selectedClusters();
     if (ks.isEmpty())
@@ -251,11 +241,6 @@ MVAbstractView* MVSpikeSpray2Factory::createView(MVAbstractContext* context)
     X->setLabelsToUse(ks.toSet());
     return X;
 }
-
-
-
-
-
 
 ////////////////////////////////////////////////////////////////////////
 CompareClustersFactory::CompareClustersFactory(MVMainWindow* mw, QObject* parent)

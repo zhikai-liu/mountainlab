@@ -12,7 +12,10 @@ public:
     explicit MVAbstractViewFactory(MVMainWindow* mw, QObject* parent = 0);
 
     enum PreferredOpenLocation {
-        North,South,Floating,NoPreference
+        North,
+        South,
+        Floating,
+        NoPreference
     };
 
     virtual QString id() const = 0;
@@ -36,5 +39,3 @@ private:
 };
 
 #endif // MVABSTRACTVIEWFACTORY_H
-
-
