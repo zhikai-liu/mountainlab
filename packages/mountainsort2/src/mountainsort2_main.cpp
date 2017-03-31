@@ -334,7 +334,7 @@ int main(int argc, char* argv[])
         opts.samplerate = CLP.named_parameters["samplerate"].toDouble();
         opts.freq_min = CLP.named_parameters["freq_min"].toDouble();
         opts.freq_max = CLP.named_parameters["freq_max"].toDouble();
-        opts.freq_wid = CLP.named_parameters.value("freq_wid").toDouble();
+        opts.freq_wid = CLP.named_parameters.value("freq_wid", 1000).toDouble();
         opts.quantization_unit = CLP.named_parameters.value("quantization_unit").toDouble();
         opts.testcode = CLP.named_parameters.value("testcode", "").toString();
         ret = p_bandpass_filter(timeseries, timeseries_out, opts);
