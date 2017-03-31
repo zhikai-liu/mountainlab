@@ -23,7 +23,7 @@
 #include <QThread>
 //#include <objectregistry.h>
 #include <icounter.h>
-#include "qprocessmanager.h"
+//#include "qprocessmanager.h"
 
 class MountainProcessRunnerPrivate {
 public:
@@ -189,12 +189,12 @@ void MountainProcessRunner::runProcess()
 
         QProcess process0;
         process0.setProcessChannelMode(QProcess::MergedChannels);
-        process0.setProgram(mountainprocess_exe);
-        process0.setArguments(args);
-        //process0.start(mountainprocess_exe, args);
+        //process0.setProgram(mountainprocess_exe);
+        //process0.setArguments(args);
+        process0.start(mountainprocess_exe, args);
 
-        QProcessManager* manager = ObjectRegistry::getObject<QProcessManager>();
-        QSharedPointer<QProcess> store_it = manager->start(&process0);
+        //QProcessManager* manager = ObjectRegistry::getObject<QProcessManager>();
+        //QSharedPointer<QProcess> store_it = manager->start(&process0);
 
         if (!process0.waitForStarted()) {
             task.error("Error starting process.");
