@@ -53,9 +53,13 @@ MVTimeseriesControl::MVTimeseriesControl(MVAbstractContext* context, MVMainWindo
                       << "Filtered Data"
                       << "Preprocessed Data";
 
+    QStringList labels;
+    labels << "Raw data " << "Filtered data" << "Filt + whitened data";
+
     int row = 0;
-    foreach (QString name, d->m_button_names) {
-        QRadioButton* B = this->createRadioButtonControl(name, name);
+    for (int ii=0; ii<d->m_button_names.count(); ii++) {
+        QString name=d->m_button_names.value(ii);
+        QRadioButton* B = this->createRadioButtonControl(name, labels.value(ii));
         glayout->addWidget(B, row, 0);
         if (name != "Raw Data") {
             QToolButton* TB = this->createToolButtonControl("Create " + name, "create...");
