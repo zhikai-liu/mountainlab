@@ -141,7 +141,7 @@ void print_usage()
     printf("Example usages for converting between raw and mda formats:\n");
     printf("mdaconvert input.mda\n");
     printf("mdaconvert input.dat output.mda --dtype=uint16 --dims=32x100x44\n");
-    printf("mdaconvert input.mda output.mda --dtype=int16 --input_format=raw_timeseries --num_channels=32\n");
+    printf("mdaconvert input.dat output.mda --dtype=int16 --input_format=raw_timeseries --num_channels=32\n");
     printf("mdaconvert input.file output.file --input_format=dat --input_dtype=float64 --output_format=mda --output_dtype=float32\n");
     printf("mdaconvert input.csv output.mda --input_num_header_rows=1 --input_num_header_cols=0\n");
     printf("mdaconvert input.ncs output.mda\n");

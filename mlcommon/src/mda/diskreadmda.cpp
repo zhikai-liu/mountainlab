@@ -26,7 +26,7 @@ public:
     bool m_header_read;
     MDAIO_HEADER m_header;
     bool m_reshaped;
-    int m_mda_header_total_size;
+    bigint m_mda_header_total_size;
     Mda m_internal_chunk;
     int m_current_internal_chunk_index;
     Mda m_memory_mda;
