@@ -130,7 +130,7 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
                 bigint old_i2 = i2; //save this index for later so we can return to this spot for the next event
 
                 double best_match_score = 0;
-                double abs_offset_of_best_match_score=opts.max_matching_offset+1;
+                double abs_offset_of_best_match_score = opts.max_matching_offset + 1;
                 bigint best_i2 = -1;
                 //move through the events in firings2 until we pass the righthand constraint
                 while ((i2 < events2.count()) && (events2[i2].time <= t1 + opts.max_matching_offset)) {
@@ -138,17 +138,17 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
                         //total_counts[events1[i1].label][events2[i2].label]++; //oh boy this was a mistake. Commented out on 10/13/16 by jfm
                         bigint numer = total_counts[events1[i1].label][events2[i2].label]; //this is the count between the two labels
                         double denom = total_events2_counts[events2[i2].label]; //normalize by the total number of label2
-                                                    //note that we don't need to normalize by events1_counts because the event1 is the same for all these guys!
+                        //note that we don't need to normalize by events1_counts because the event1 is the same for all these guys!
                         if (denom < 50)
                             denom = 50; //let's make sure it is something reasonable! -- if something doesnt fire very often we don't want to give it a super high score just because of a low denominator
                         double match_score = numer / denom; //normalize the match score -- which is not what we did in the past. changed on 10/13/16 by jfm
                         if (match_score >= best_match_score) {
-                            double abs_offset=fabs(events2[i2].time-t1);
+                            double abs_offset = fabs(events2[i2].time - t1);
                             //in the case of a tie, use the one that is closer in offset.
-                            if ((match_score>best_match_score)||((match_score==best_match_score)&&(abs_offset<abs_offset_of_best_match_score))) {
+                            if ((match_score > best_match_score) || ((match_score == best_match_score) && (abs_offset < abs_offset_of_best_match_score))) {
                                 best_match_score = match_score;
                                 best_i2 = i2;
-                                abs_offset_of_best_match_score=abs_offset;
+                                abs_offset_of_best_match_score = abs_offset;
                             }
                         }
                     }
