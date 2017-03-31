@@ -8,6 +8,7 @@ struct P_detect_events_opts {
     int central_channel = 0;
     double detect_threshold = 3.5;
     double detect_interval = 10;
+    int detect_rms_window = 0;
     int sign = 0;
     double subsample_factor = 1;
 };
