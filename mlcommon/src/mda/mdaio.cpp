@@ -116,7 +116,7 @@ bigint mda_read_header(struct MDAIO_HEADER* HH, FILE* input_file)
             if (num_read < 1)
                 return 0;
             if (dim0 < 0) {
-                printf("mda_read_header: Dimension %ld less than 0: %" PRIi32 "\n", i + 1, dim0);
+                printf("mda_read_header: Dimension %ld less than 0: %d\n", i + 1, dim0);
             }
             HH->dims[i] = dim0;
             totsize *= HH->dims[i];
