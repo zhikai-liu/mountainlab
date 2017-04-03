@@ -15,29 +15,46 @@ bool p_detect_events(QString timeseries, QString event_times_out, P_detect_event
     bigint M = X.N1();
     bigint N = X.N2();
 
-    printf("Collecting data vector...\n");
     QVector<double> data(N);
-    if (opts.central_channel > 0) {
+    if (opts.detect_rms_window > 0) {
+        printf("Collecting data vector & computing RMS...\n");
+        /*assert (M == 1) * not for multichannel */
         for (bigint i = 0; i < N; i++) {
-            data[i] = X.value(opts.central_channel - 1, i);
+            double val = 0;
+            for(int wind=0;wind<opts.detect_rms_window;wind++){
+                val += X.value(1, i+wind)*X.value(1, i+wind);
+            }
+            data[i] = sqrt(val);
         }
+        double datamean =  MLCompute::mean(data); /*zero mean*/
+        for (bigint i = 0; i < N; i++) {
+           data[i] = data[i] - datamean;
+        } 
     }
     else {
-        for (bigint i = 0; i < N; i++) {
-            double best_value = 0;
-            bigint best_m = 0;
-            for (bigint m = 0; m < M; m++) {
-                double val = X.value(m, i);
-                if (opts.sign < 0)
-                    val = -val;
-                if (opts.sign == 0)
-                    val = fabs(val);
-                if (val > best_value) {
-                    best_value = val;
-                    best_m = m;
-                }
+        printf("Collecting data vector...\n");
+        if (opts.central_channel > 0) {
+            for (bigint i = 0; i < N; i++) {
+                data[i] = X.value(opts.central_channel - 1, i);
             }
-            data[i] = X.value(best_m, i);
+        }
+        else {
+            for (bigint i = 0; i < N; i++) {
+                double best_value = 0;
+                bigint best_m = 0;
+                for (bigint m = 0; m < M; m++) {
+                    double val = X.value(m, i);
+                    if (opts.sign < 0)
+                        val = -val;
+                    if (opts.sign == 0)
+                        val = fabs(val);
+                    if (val > best_value) {
+                        best_value = val;
+                        best_m = m;
+                    }
+                }
+                data[i] = X.value(best_m, i);
+            }
         }
     }
 
