@@ -3,6 +3,7 @@
 
 #include <QMutex>
 #include <QProcess>
+#include <QSet>
 #include <QSharedPointer>
 #include <QStack>
 

@@ -191,6 +191,7 @@ void MountainProcessRunner::runProcess()
         process0->setProcessChannelMode(QProcess::MergedChannels);
 
         //process0.start(mountainprocess_exe, args);
+
         process0->setProgram(mountainprocess_exe);
         process0->setArguments(args);
 
@@ -205,6 +206,7 @@ void MountainProcessRunner::runProcess()
             task.error("Error starting process.");
             return;
         }
+
         QString stdout;
         QEventLoop loop;
         while (process0->state() == QProcess::Running) {

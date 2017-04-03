@@ -62,7 +62,9 @@ If anything crashes along the way, every involved QProcess is killed.
 #include "mlcommon.h"
 #include "scriptcontroller2.h"
 #include <objectregistry.h>
+#include <qprocessmanager.h>
 #include <unistd.h>
+#include "signal.h"
 
 #ifndef Q_OS_LINUX
 #include <sys/types.h>
@@ -132,10 +134,34 @@ void silent_message_output(QtMsgType type, const QMessageLogContext& context, co
     return;
 }
 
+void sig_handler(int signum)
+{
+    printf("sig_handler\n");
+    (void)signum;
+    printf("sig_handler\n");
+    QProcessManager* manager = ObjectRegistry::getObject<QProcessManager>();
+    printf("sig_handler\n");
+    if (manager) {
+        manager->closeAll();
+    }
+    printf("sig_handler\n");
+    //abort();
+    printf("sig_handler\n");
+}
+
 int main(int argc, char* argv[])
 {
     QCoreApplication app(argc, argv);
     CLParams CLP(argc, argv);
+
+    ObjectRegistry registry;
+
+    //The process manager
+    QProcessManager* processManager = new QProcessManager;
+    registry.addAutoReleasedObject(processManager);
+    signal(SIGINT, sig_handler);
+    signal(SIGKILL, sig_handler);
+    signal(SIGTERM, sig_handler);
 
     bool detach_mode = CLP.named_parameters.contains("_detach");
 

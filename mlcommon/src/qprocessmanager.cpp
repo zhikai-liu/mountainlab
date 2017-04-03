@@ -77,6 +77,7 @@ void QProcessManager::closeAll()
     emit countChanged(m_stack.size());
     locker.unlock();
     foreach (QSharedPointer<QProcess> process, processes) {
+        qDebug().noquote() << "QProcessManager:: killing process: " << process->processId() << process->program() + process->arguments().join(" ");
         unregisterProcess(process.data());
         process->kill();
     }

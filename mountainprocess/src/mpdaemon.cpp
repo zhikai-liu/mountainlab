@@ -23,6 +23,8 @@
 #include "mlcommon.h"
 #include <QSettings>
 #include <QSharedMemory>
+#include <objectregistry.h>
+#include <qprocessmanager.h>
 #include <signal.h>
 
 static bool stopDaemon = false;
@@ -920,6 +922,16 @@ bool MountainProcessServer::launch_pript(QString pript_id)
     }
     else {
         qprocess->start(exe, args);
+        /*
+        qprocess->setProgram(exe);
+        qprocess->setArguments(args);
+        QProcessManager *manager=ObjectRegistry::getObject<QProcessManager>();
+        if (!manager) {
+            qCritical() << "No QProcessManager object found in object registry. Aborting.";
+            abort();
+        }
+        manager->start(qprocess);
+        */
     }
     if (qprocess->waitForStarted()) {
         if (S->prtype == ScriptType) {
@@ -1310,11 +1322,28 @@ void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, 
 
     QString script;
     script += "#!/bin/bash\n\n";
-    script += "cmdpid=$BASHPID;\n";
-    script += QString("(while kill -0 %1 >/dev/null 2>&1; do sleep 1; done ; kill $cmdpid) & (%2)\n").arg(pid).arg(exe_command);
+    //script += "cmdpid=$BASHPID;\n";
+    //script += QString("(while kill -0 %1 >/dev/null 2>&1; do sleep 1; done ; kill $cmdpid) & (%2)\n").arg(pid).arg(exe_command);
+    script += exe_command + " &\n";
+    script += "cmdpid=$!\n";
+    script += "trap \"kill $cmdpid; exit 255;\" SIGINT SIGTERM\n";
+    script += QString("while kill -0 %1 >/dev/null 2>&1; do\n").arg(pid);
+    script += "    sleep 1;\n";
+    script += "done ;\n";
+
+    script += "kill $cmdpid\n";
 
     TextFile::write(bash_script_fname, script);
-    qprocess->start("/bin/bash", QStringList(bash_script_fname));
+    QProcessManager* manager = ObjectRegistry::getObject<QProcessManager>();
+    if (!manager) {
+        qCritical() << "No QProcessManager object found in object registry. Aborting.";
+        abort();
+    }
+    qprocess->setProgram("/bin/bash");
+    qprocess->setArguments(QStringList(bash_script_fname));
+    manager->start(qprocess);
+
+    //qprocess->start("/bin/bash", QStringList(bash_script_fname));
 }
 
 void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, int pid)

@@ -137,6 +137,7 @@ QList<QColor> generate_colors_old(const QColor& bg, const QColor& fg, int noColo
 #include "mvprefscontrol.h"
 #include "mvclustervisibilitycontrol.h"
 #include "mvexportcontrol.h"
+#include "signal.h"
 
 void set_nice_size(QWidget* W);
 bool check_whether_prv_objects_need_to_be_downloaded_or_regenerated(QJsonObject obj);
@@ -144,6 +145,16 @@ bool check_whether_prv_objects_need_to_be_downloaded_or_regenerated(QList<PrvRec
 
 void try_to_automatically_download_and_regenerate_prv_objects(QJsonObject obj);
 void try_to_automatically_download_and_regenerate_prv_objects(QList<PrvRecord> prvs);
+
+void sig_handler(int signum)
+{
+    (void)signum;
+    QProcessManager* manager = ObjectRegistry::getObject<QProcessManager>();
+    if (manager) {
+        manager->closeAll();
+    }
+    abort();
+}
 
 int main(int argc, char* argv[])
 {
@@ -154,7 +165,10 @@ int main(int argc, char* argv[])
 
     //The process manager
     QProcessManager* processManager = new QProcessManager;
-    registry.addObject(processManager);
+    registry.addAutoReleasedObject(processManager);
+    signal(SIGINT, sig_handler);
+    signal(SIGKILL, sig_handler);
+    signal(SIGTERM, sig_handler);
 
     printf("Setting up object registry...\n");
     ObjectRegistry::addAutoReleasedObject(new IIntCounter("allocated_bytes"));
