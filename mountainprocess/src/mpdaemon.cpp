@@ -1322,15 +1322,16 @@ void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, 
 
     QString script;
     script += "#!/bin/bash\n\n";
-    //script += "cmdpid=$BASHPID;\n";
-    //script += QString("(while kill -0 %1 >/dev/null 2>&1; do sleep 1; done ; kill $cmdpid) & (%2)\n").arg(pid).arg(exe_command);
     script += exe_command + " &\n";
     script += "cmdpid=$!\n";
     script += "trap \"kill $cmdpid; exit 255;\" SIGINT SIGTERM\n";
     script += QString("while kill -0 %1 >/dev/null 2>&1; do\n").arg(pid);
-    script += "    sleep 1;\n";
+    script += "    if kill -0 $cmdpid > /dev/null 2>&1; then\n";
+    script += "        sleep 1;\n";
+    script += "    else\n";
+    script += "        exit 0;\n";
+    script += "    fi\n";
     script += "done ;\n";
-
     script += "kill $cmdpid\n";
 
     TextFile::write(bash_script_fname, script);
