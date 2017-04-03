@@ -39,6 +39,7 @@
 #include <clusterpaircontextmenuhandler.h>
 #include <mvcrosscorrelogramswidget3.h>
 #include <mvdiscrimhistview.h>
+#include <qprocessmanager.h>
 //#include <mvdiscrimhistview_guide.h>
 #include <mvfiringeventview2.h>
 #include <mvmergecontrol.h>
@@ -150,6 +151,10 @@ int main(int argc, char* argv[])
     ObjectRegistry registry;
     CounterManager* counterManager = new CounterManager;
     registry.addAutoReleasedObject(counterManager);
+
+    //The process manager
+    QProcessManager* processManager = new QProcessManager;
+    registry.addObject(processManager);
 
     printf("Setting up object registry...\n");
     ObjectRegistry::addAutoReleasedObject(new IIntCounter("allocated_bytes"));

@@ -1,5 +1,6 @@
 #include "qprocessmanager.h"
 #include <QMutexLocker>
+#include <QDebug>
 
 /*!
  * \class QProcessManager

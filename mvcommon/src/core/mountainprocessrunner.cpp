@@ -187,29 +187,29 @@ void MountainProcessRunner::runProcess()
 
         task.log(mountainprocess_exe + " " + args.join(" "));
 
-        QProcess process0;
-        process0.setProcessChannelMode(QProcess::MergedChannels);
+        QProcess* process0 = new QProcess;
+        process0->setProcessChannelMode(QProcess::MergedChannels);
 
         //process0.start(mountainprocess_exe, args);
-        process0.setProgram(mountainprocess_exe);
-        process0.setArguments(args);
+        process0->setProgram(mountainprocess_exe);
+        process0->setArguments(args);
 
         QProcessManager* manager = ObjectRegistry::getObject<QProcessManager>();
         if (!manager) {
             qCritical() << "No process manager object found in registry. Aborting.";
             abort();
         }
-        QSharedPointer<QProcess> store_it = manager->start(&process0);
+        QSharedPointer<QProcess> store_it = manager->start(process0);
 
-        if (!process0.waitForStarted()) {
+        if (!process0->waitForStarted()) {
             task.error("Error starting process.");
             return;
         }
         QString stdout;
         QEventLoop loop;
-        while (process0.state() == QProcess::Running) {
+        while (process0->state() == QProcess::Running) {
             loop.processEvents();
-            QString out = process0.readAll();
+            QString out = process0->readAll();
             if (!out.isEmpty()) {
                 printf("%s", out.toLatin1().data());
                 task.log("STDOUT: " + out);
@@ -217,7 +217,7 @@ void MountainProcessRunner::runProcess()
             }
             if (MLUtil::threadInterruptRequested()) {
                 task.error("Terminating due to interrupt request");
-                process0.terminate();
+                process0->terminate();
                 return;
             }
         }

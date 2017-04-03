@@ -21,15 +21,15 @@ bool p_detect_events(QString timeseries, QString event_times_out, P_detect_event
         /*assert (M == 1) * not for multichannel */
         for (bigint i = 0; i < N; i++) {
             double val = 0;
-            for(int wind=0;wind<opts.detect_rms_window;wind++){
-                val += X.value(1, i+wind)*X.value(1, i+wind);
+            for (int wind = 0; wind < opts.detect_rms_window; wind++) {
+                val += X.value(1, i + wind) * X.value(1, i + wind);
             }
             data[i] = sqrt(val);
         }
-        double datamean =  MLCompute::mean(data); /*zero mean*/
+        double datamean = MLCompute::mean(data); /*zero mean*/
         for (bigint i = 0; i < N; i++) {
-           data[i] = data[i] - datamean;
-        } 
+            data[i] = data[i] - datamean;
+        }
     }
     else {
         printf("Collecting data vector...\n");
