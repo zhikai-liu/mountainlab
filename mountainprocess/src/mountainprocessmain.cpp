@@ -136,17 +136,12 @@ void silent_message_output(QtMsgType type, const QMessageLogContext& context, co
 
 void sig_handler(int signum)
 {
-    printf("sig_handler\n");
     (void)signum;
-    printf("sig_handler\n");
     QProcessManager* manager = ObjectRegistry::getObject<QProcessManager>();
-    printf("sig_handler\n");
     if (manager) {
         manager->closeAll();
     }
-    printf("sig_handler\n");
-    //abort();
-    printf("sig_handler\n");
+    abort();
 }
 
 int main(int argc, char* argv[])
