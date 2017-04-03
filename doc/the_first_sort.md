@@ -59,7 +59,7 @@ The other settings are described in [[todo: Advanced settings]].
 
 ### 2. Prepare the raw data
 
-The raw timeseries data must first be converted to .mda format. This is [described here](doc/mda_format.md). Next, put it somewhere in the /path/to/prvdata as configured in mountainlab.user.json. That directory will be searched recursively. The principle (as will be described in more detail) is to separate the huge raw data files from the rest of the analysis procedure.
+The raw timeseries data must first be converted to .mda format. This is [described here](mda_format.md). Next, put it somewhere in the /path/to/prvdata as configured in mountainlab.user.json. That directory will be searched recursively. The principle (as will be described in more detail) is to separate the huge raw data files from the rest of the analysis procedure.
 
 ### 3. Prepare a sorting project
 
