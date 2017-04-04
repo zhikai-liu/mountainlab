@@ -15,6 +15,8 @@ bool p_detect_events(QString timeseries, QString event_times_out, P_detect_event
     bigint M = X.N1();
     bigint N = X.N2();
 
+    QVector<double> data(N);
+    printf("Collecting data vector...\n");
     if (opts.detect_rms_window > 0) {
         printf("Collecting data vector & computing RMS...\n");
         /*assert (M == 1) * not for multichannel */
@@ -31,8 +33,6 @@ bool p_detect_events(QString timeseries, QString event_times_out, P_detect_event
         }
     }
     else {
-        printf("Collecting data vector...\n");
-        QVector<double> data(N);
         if (opts.central_channel > 0) {
             if (opts.central_channel-1>=M) {
                 qWarning() << "Central channel is out of range:" << opts.central_channel << M;
