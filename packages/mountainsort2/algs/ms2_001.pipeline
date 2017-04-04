@@ -13,8 +13,10 @@ function main(params) {
 		num_threads:0, //number of time segments to process in parallel
 		subsample_factor:1,
 		multichannel:'false',
+		merge_across_channels:'false',
 		adjacency_radius:0
 	});
+	var clip_size=Math.floor(params.clip_size_msec/1000*params.samplerate);
 
 	var inpath=params.inpath;
 	var outpath=params.outpath;
@@ -64,6 +66,11 @@ function main(params) {
 				outputs0
 		);
 		firings=results0.firings_out;
+		if (params.merge_across_channels=='true') {
+			firings=Process('merge_across_channels_v2',{timeseries:filt,firings:firings},{
+				clip_size:clip_size
+			}).firings_out;
+		}
 		if (params.fit_stage=='true') {
 			firings=Process('mountainsort.fit_stage',
 				{timeseries:filt,firings:firings},
@@ -95,7 +102,7 @@ function main(params) {
 
 	var templates=Process('mountainsort.compute_templates',
 		{timeseries:filt,firings:firings},
-		{clip_size:Math.floor(params.clip_size_msec/1000*params.samplerate)}
+		{clip_size:clip_size}
 	).templates_out;
 	firings=Process('mountainsort.reorder_labels',
 		{templates:templates,firings:firings},

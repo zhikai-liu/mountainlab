@@ -24,7 +24,7 @@ bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, bi
 
     qDebug().noquote() << QString("Extracting segment timeseries M=%1, N2=%2").arg(M).arg(N2);
 
-    bigint M2=M;
+    bigint M2 = M;
     if (!channels.isEmpty()) {
         M2 = channels.count();
     }
