@@ -57,12 +57,18 @@ function main(params) {
 	var firings;
 	if (params.multichannel=='true') {
 		var outputs0={firings_out:''};
+		params2.fit_stage='false';
 		var results0=Process('mountainsort.ms2_001_multichannel',
 				{timeseries:filt,geom:params.geom},
 				params2,
 				outputs0
 		);
 		firings=results0.firings_out;
+		if (params.fit_stage=='true') {
+			firings=Process('mountainsort.fit_stage',
+				{timeseries:filt,firings:firings},
+				{}).firings_out;
+		}
 	}
 	else {
 		//pre-sort processing
