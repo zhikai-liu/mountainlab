@@ -15,7 +15,6 @@ bool p_detect_events(QString timeseries, QString event_times_out, P_detect_event
     bigint M = X.N1();
     bigint N = X.N2();
 
-    QVector<double> data(N);
     if (opts.detect_rms_window > 0) {
         printf("Collecting data vector & computing RMS...\n");
         /*assert (M == 1) * not for multichannel */
@@ -33,7 +32,12 @@ bool p_detect_events(QString timeseries, QString event_times_out, P_detect_event
     }
     else {
         printf("Collecting data vector...\n");
+        QVector<double> data(N);
         if (opts.central_channel > 0) {
+            if (opts.central_channel-1>=M) {
+                qWarning() << "Central channel is out of range:" << opts.central_channel << M;
+                return false;
+            }
             for (bigint i = 0; i < N; i++) {
                 data[i] = X.value(opts.central_channel - 1, i);
             }
@@ -80,6 +84,7 @@ bool p_detect_events(QString timeseries, QString event_times_out, P_detect_event
 namespace P_detect_events {
 QVector<double> detect_events(const QVector<double>& X, double detect_threshold, double detect_interval, int sign)
 {
+    double mean = MLCompute::mean(X);
     double stdev = MLCompute::stdev(X);
     double threshold2 = detect_threshold * stdev;
 
@@ -89,7 +94,7 @@ QVector<double> detect_events(const QVector<double>& X, double detect_threshold,
     bigint last_best_ind = 0;
     double last_best_val = 0;
     for (bigint n = 0; n < N; n++) {
-        double val = X[n];
+        double val = (X[n]-mean);
         if (sign < 0)
             val = -val;
         else if (sign == 0)
@@ -106,9 +111,11 @@ QVector<double> detect_events(const QVector<double>& X, double detect_threshold,
                 }
             }
             else {
-                to_use[n] = 1;
-                last_best_ind = n;
-                last_best_val = val;
+                if (val>0) {
+                    to_use[n] = 1;
+                    last_best_ind = n;
+                    last_best_val = val;
+                }
             }
         }
     }

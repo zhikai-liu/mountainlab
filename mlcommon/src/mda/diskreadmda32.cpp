@@ -608,8 +608,14 @@ bool DiskReadMda32::readChunk(Mda32& X, bigint i1, bigint i2, bigint size1, bigi
         return true;
     }
     else {
-        printf("Warning: This case not yet supported (DiskReadMda32::readchunk 2d).\n");
-        return false;
+	if ((N1()==0)||(N2()==0)) {
+	    qWarning() << "Cannot read chunk from empty array:" << i1 << size1 << N1() << N2();
+	    return false;
+	}
+	else {
+	    qWarning() << "Cannot read chunk, dimensions don't agree:" << i1 << i2 << size1 << size2 << N1() << N2();
+	    return false;
+	}
     }
 }
 

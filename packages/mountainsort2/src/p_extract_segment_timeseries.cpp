@@ -24,13 +24,14 @@ bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, bi
 
     qDebug().noquote() << QString("Extracting segment timeseries M=%1, N2=%2").arg(M).arg(N2);
 
+    bigint M2=M;
     if (!channels.isEmpty()) {
-        M = channels.count();
+        M2 = channels.count();
     }
 
     //do it this way so we can specify the datatype
     DiskWriteMda Y;
-    Y.open(X.mdaioHeader().data_type, timeseries_out, M, N2);
+    Y.open(X.mdaioHeader().data_type, timeseries_out, M2, N2);
 
     //conserve memory as of 3/1/17 -- jfm
     bigint chunk_size = 10000; //conserve memory!
