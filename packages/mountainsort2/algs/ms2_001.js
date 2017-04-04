@@ -608,7 +608,6 @@ exports.run=function(opts,callback) {
 		console.log ('Reading info from input files...');
 		if (typeof(opts.timeseries)!='object') {
 			common.read_mda_header(opts.timeseries,function (header) { // Read the .mda header for the timeseries
-				console.log(JSON.stringify(info));
 				info.M=header.dims[0];
 				info.N=header.dims[1];
 				if (opts.channels) {

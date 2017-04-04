@@ -32,7 +32,6 @@ exports.run=function(opts,callback) {
 	var info={};
 	read_info_from_input_files(function() {
 		var num_threads=Number(opts.num_threads)||os.cpus().length;
-		console.log(num_threads);
 		var num_threads_within_neighborhood=Math.floor(num_threads/info.M);
 		if (num_threads_within_neighborhood<1) num_threads_within_neighborhood=1;
 		var num_parallel_neighborhoods=info.M;
@@ -45,30 +44,32 @@ exports.run=function(opts,callback) {
 		}
 		function add_neighborhood_step(ch) {
 			nbhd_steps.push(function(cb) {
-				var channels=get_neighborhood_channels(info.geom_coords,ch,opts.adjacency_radius);
+				var hold=get_neighborhood_channels(info.geom_coords,ch,opts.adjacency_radius);
+				var channels=hold.channels;
+				var central_channel2=hold.central_channel;
 				var firings0=mktmp('firings_nbhd'+ch+'.mda');
 				all_nbhd_firings.push(firings0);
 				{
 					var opts2=common.clone(opts);
-					opts2.central_channel=1;
+					opts2.central_channel=central_channel2;
 					opts2.firings_out=firings0;
 					opts2.cluster_metrics_out=null; //we'll compute this at the end
 					opts2.num_threads=num_threads_within_neighborhood;
 					opts2.consolidate_clusters='true';
 					opts2.channels=channels.join(',');
 					opts2._temp_prefix=(opts._temp_prefix||'00')+'-nbhd'+ch;
-					console.log('Running basic sort for electrode '+ch+'...\n');
+					console.log ('Running basic sort for electrode '+ch+'...\n');
 					basic_sort.run(opts2,function() {
 						cb();
 					});
 				}
 			});
 		}
-		console.log('Num neighborhood steps: '+nbhd_steps.length+', num_parallel_neighborhoods: '+num_parallel_neighborhoods);
+		console.log ('Num neighborhood steps: '+nbhd_steps.length+', num_parallel_neighborhoods: '+num_parallel_neighborhoods);
 		//Run all steps
 		common.foreach(nbhd_steps,{num_parallel:num_parallel_neighborhoods},function(ii,step,cb) {
-			console.log('');
-			console.log('--------------------------- NEIGHBORHOOD '+(ii+1)+' of '+nbhd_steps.length +' -----------');
+			console.log ('');
+			console.log ('--------------------------- NEIGHBORHOOD '+(ii+1)+' of '+nbhd_steps.length +' -----------');
 			var timer=new Date();
 			step(function() {
 				console.log ('Elapsed time for neighborhood '+(ii+1)+' (sec): '+get_elapsed_sec(timer));
@@ -83,7 +84,7 @@ exports.run=function(opts,callback) {
 			common.mp_exec_process('mountainsort.combine_firings',
 					{firings_list:all_nbhd_firings},
 					{firings_out:firings_combined},
-					{},
+					{increment_labels:'true'},
 					function() {
 						common.copy_file(firings_combined,opts.firings_out,function() {
 							cleanup(function() {
@@ -172,19 +173,16 @@ function get_elapsed_sec(timer) {
 
 function get_neighborhood_channels(coords,chan,adjacency_radius) {
 	var pt0=coords[chan-1];
-	var ret=[chan];
+	var central_channel2=0;
+	var ret=[];
 	for (var i=0; i<coords.length; i++) {
-		if (i+1!=chan) {
-			var dist0=compute_distance(coords[i],pt0);
-			if (dist0<=adjacency_radius)
-				ret.push(i+1);
-		}
+		var dist0=compute_distance(coords[i],pt0);
+		if (dist0<=adjacency_radius)
+			ret.push(i+1);
+		if (i+1==chan)
+			central_channel2=ret.length;
 	}
-	console.log('#################################################################');
-	console.log(ret);
-	console.log(JSON.stringify(coords));
-	console.log(chan);
-	return ret;
+	return {channels:ret,central_channel:central_channel2};
 }
 
 function compute_distance(pt1,pt2) {

@@ -18,6 +18,10 @@ bool p_detect_events(QString timeseries, QString event_times_out, P_detect_event
     printf("Collecting data vector...\n");
     QVector<double> data(N);
     if (opts.central_channel > 0) {
+        if (opts.central_channel-1>=M) {
+            qWarning() << "Central channel is out of range:" << opts.central_channel << M;
+            return false;
+        }
         for (bigint i = 0; i < N; i++) {
             data[i] = X.value(opts.central_channel - 1, i);
         }
@@ -90,9 +94,11 @@ QVector<double> detect_events(const QVector<double>& X, double detect_threshold,
                 }
             }
             else {
-                to_use[n] = 1;
-                last_best_ind = n;
-                last_best_val = val;
+                if (val>0) {
+                    to_use[n] = 1;
+                    last_best_ind = n;
+                    last_best_val = val;
+                }
             }
         }
     }

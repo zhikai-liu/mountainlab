@@ -101,7 +101,7 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.detect_events", "0.12");
+        ProcessorSpec X("mountainsort.detect_events", "0.13");
         X.addInputs("timeseries");
         X.addOutputs("event_times_out");
         X.addRequiredParameters("central_channel", "detect_threshold", "detect_interval", "sign");
