@@ -312,7 +312,7 @@ exports.run=function(opts,callback) {
 					segment.firings_fit1=mktmp('firings_fit1_segment_'+iseg+'.mda'); //after timestamp offset applied
 					intersegment_steps.push(function(cb2) {
 						console.log ('>>>>>>>>>>>> post-sort----: Extracting timeseries for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-						extract_segment_timeseries(opts.timeseries,segment.timeseries0,segment.t1,segment.t2,channels_list,function() {
+						extract_segment_timeseries(opts.timeseries,segment.timeseries0,segment.t1,segment.t2,opts.channels,function() {
 							cb2();
 						});
 					});
