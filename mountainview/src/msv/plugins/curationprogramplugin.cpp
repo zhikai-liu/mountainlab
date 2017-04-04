@@ -38,10 +38,14 @@ QString CurationProgramPlugin::description()
 }
 
 void compute_basic_metrics(MVAbstractContext* mv_context);
+
 void CurationProgramPlugin::initialize(MVMainWindow* mw)
 {
     mw->registerViewFactory(new CurationProgramFactory(mw));
-    compute_basic_metrics(mw->mvContext());
+    MVContext* c = qobject_cast<MVContext*>(mw->mvContext());
+    Q_ASSERT(c);
+    if (c->firings().N2() > 1)
+        compute_basic_metrics(mw->mvContext());
 }
 
 CurationProgramFactory::CurationProgramFactory(MVMainWindow* mw, QObject* parent)

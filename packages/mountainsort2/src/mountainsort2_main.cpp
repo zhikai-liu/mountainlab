@@ -80,9 +80,10 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.compute_whitening_matrix", "0.1");
+        ProcessorSpec X("mountainsort.compute_whitening_matrix", "0.11");
         X.addInputs("timeseries_list");
         X.addOutputs("whitening_matrix_out");
+        X.addOptionalParameter("channels");
         //X.addRequiredParameters();
         processors.push_back(X.get_spec());
     }
@@ -109,10 +110,11 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.extract_clips", "0.1");
+        ProcessorSpec X("mountainsort.extract_clips", "0.11");
         X.addInputs("timeseries", "event_times");
         X.addOutputs("clips_out");
         X.addRequiredParameters("clip_size");
+        X.addOptionalParameter("channels");
         processors.push_back(X.get_spec());
     }
     {
@@ -302,8 +304,8 @@ int main(int argc, char* argv[])
     if (arg1 == "mountainsort.extract_neighborhood_timeseries") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
-        QStringList channels_str = CLP.named_parameters["channels"].toString().split(",");
-        QList<int> channels = MLUtil::stringListToBigIntList(channels_str);
+        QStringList channels_str = CLP.named_parameters["channels"].toString().split(",", QString::SkipEmptyParts);
+        QList<int> channels = MLUtil::stringListToIntList(channels_str);
         ret = p_extract_neighborhood_timeseries(timeseries, timeseries_out, channels);
     }
     else if (arg1 == "mountainsort.extract_segment_timeseries") {
@@ -348,8 +350,10 @@ int main(int argc, char* argv[])
     else if (arg1 == "mountainsort.compute_whitening_matrix") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);
         QString whitening_matrix_out = CLP.named_parameters["whitening_matrix_out"].toString();
+        QStringList channels_str = CLP.named_parameters["channels"].toString().split(",", QString::SkipEmptyParts);
+        QList<int> channels = MLUtil::stringListToIntList(channels_str);
         Whiten_opts opts;
-        ret = p_compute_whitening_matrix(timeseries_list, whitening_matrix_out, opts);
+        ret = p_compute_whitening_matrix(timeseries_list, channels, whitening_matrix_out, opts);
     }
     else if (arg1 == "mountainsort.whiten_clips") {
         QString clips = CLP.named_parameters["clips"].toString();
@@ -380,7 +384,9 @@ int main(int argc, char* argv[])
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries"]);
         QString event_times = CLP.named_parameters["event_times"].toString();
         QString clips_out = CLP.named_parameters["clips_out"].toString();
-        ret = p_extract_clips(timeseries_list, event_times, clips_out, CLP.named_parameters);
+        QStringList channels_str = CLP.named_parameters["channels"].toString().split(",", QString::SkipEmptyParts);
+        QList<int> channels = MLUtil::stringListToIntList(channels_str);
+        ret = p_extract_clips(timeseries_list, event_times, channels, clips_out, CLP.named_parameters);
     }
     else if (arg1 == "mountainsort.compute_templates") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries"]);

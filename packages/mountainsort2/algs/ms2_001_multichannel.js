@@ -44,14 +44,12 @@ exports.run=function(opts,callback) {
 		}
 		function add_neighborhood_step(ch) {
 			nbhd_steps.push(function(cb) {
-				var hold=get_neighborhood_channels(info.geom_coords,ch,opts.adjacency_radius);
-				var channels=hold.channels;
-				var central_channel2=hold.central_channel;
+				var channels=get_neighborhood_channels(info.geom_coords,ch,opts.adjacency_radius);
 				var firings0=mktmp('firings_nbhd'+ch+'.mda');
 				all_nbhd_firings.push(firings0);
 				{
 					var opts2=common.clone(opts);
-					opts2.central_channel=central_channel2;
+					opts2.central_channel=ch;
 					opts2.firings_out=firings0;
 					opts2.cluster_metrics_out=null; //we'll compute this at the end
 					opts2.num_threads=num_threads_within_neighborhood;
@@ -173,16 +171,13 @@ function get_elapsed_sec(timer) {
 
 function get_neighborhood_channels(coords,chan,adjacency_radius) {
 	var pt0=coords[chan-1];
-	var central_channel2=0;
 	var ret=[];
 	for (var i=0; i<coords.length; i++) {
 		var dist0=compute_distance(coords[i],pt0);
 		if (dist0<=adjacency_radius)
 			ret.push(i+1);
-		if (i+1==chan)
-			central_channel2=ret.length;
 	}
-	return {channels:ret,central_channel:central_channel2};
+	return ret;
 }
 
 function compute_distance(pt1,pt2) {

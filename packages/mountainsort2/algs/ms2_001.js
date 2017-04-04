@@ -6,7 +6,7 @@ var os=require('os');
 exports.spec=function() {
 	var spec0={};
 	spec0.name='mountainsort.ms2_001';
-	spec0.version='0.21b';
+	spec0.version='0.22';
 
 	spec0.inputs=[
         {name:"timeseries",description:"preprocessed timeseries (M x N)",optional:false},
@@ -44,6 +44,16 @@ exports.run=function(opts,callback) {
 	var tmpfiles=[]; //all the temporary files to get removed at the end
 	opts.temp_prefix=opts.temp_prefix||'00'; //in case the user has specified the temp_prefix
 	if (!opts.num_threads) opts.num_threads=os.cpus().length;
+	if (!opts.central_channel) opts.central_channel=0;
+	var central_channel2=opts.central_channel;
+	if ((opts.central_channel)&&(opts.channels)) {
+		var channels_list=opts.channels.split(',');
+		for (var i=0; i<channels_list.length; i++) {
+			if (channels_list[i]==opts.central_channel) {
+				central_channel2=(i+1);
+			}
+		}
+	}
 	
 	if (opts.clips) {
 		if (!opts.event_times) {
@@ -245,13 +255,13 @@ exports.run=function(opts,callback) {
 					});
 					intersegment_steps.push(function(cb2) {
 						console.log ('>>>>>>>>>>>> pre-sort: Detect events for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-						detect_events(segment.timeseries0,segment.event_times0,function() {
+						detect_events(segment.timeseries0,segment.event_times0,central_channel2,function() {
 							cb2();
 						});
 					});
 					intersegment_steps.push(function(cb2) {
 						console.log ('>>>>>>>>>>>> pre-sort: Compute amplitudes for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-						compute_amplitudes(segment.timeseries0,segment.event_times0,opts.central_channel||0,segment.amplitudes0,function() {
+						compute_amplitudes(segment.timeseries0,segment.event_times0,central_channel2,segment.amplitudes0,function() {
 							cb2();
 						});
 					});
@@ -431,7 +441,7 @@ exports.run=function(opts,callback) {
 		common.mp_exec_process('mountainsort.extract_clips',
 			{timeseries:opts.timeseries,event_times:event_times},
 			{clips_out:clips_unwhitened},
-			{clip_size:clip_size},
+			{clip_size:clip_size,channels:opts.channels||''},
 			extract_clips_callback
 		);
 	}
@@ -441,7 +451,7 @@ exports.run=function(opts,callback) {
 		common.mp_exec_process('mountainsort.compute_whitening_matrix',
 			{timeseries_list:opts.timeseries},
 			{whitening_matrix_out:whitening_matrix},
-			{_request_num_threads:opts.num_threads},
+			{channels:opts.channels||'',_request_num_threads:opts.num_threads},
 			compute_whitening_matrix_callback
 		);	
 	}
@@ -472,7 +482,7 @@ exports.run=function(opts,callback) {
 			{clips:clips,labels:labels},
 			{labels_out:labels2},
 			{
-				central_channel:opts.central_channel,
+				central_channel:central_channel2,
 				_request_num_threads:opts.num_threads
 			},
 			consolidate_clusters_callback
@@ -484,7 +494,7 @@ exports.run=function(opts,callback) {
 		common.mp_exec_process('mountainsort.create_firings',
 			{event_times:event_times,labels:labels2,amplitudes:(amplitudes||'')},
 			{firings_out:firings},
-			{central_channel:opts.central_channel,_request_num_threads:opts.num_threads},
+			{central_channel:opts.central_channel||0,_request_num_threads:opts.num_threads},
 			create_firings_callback
 		);	
 	}		
@@ -555,13 +565,13 @@ exports.run=function(opts,callback) {
 		common.remove_temporary_files(tmpfiles,callback);
 	}
 
-	function detect_events(timeseries,event_times_out,callback) {
+	function detect_events(timeseries,event_times_out,central_channel,callback) {
 		var detect_interval=Math.ceil(opts.detect_interval_msec/1000*opts.samplerate);
 		common.mp_exec_process('mountainsort.detect_events',
 			{timeseries:timeseries},
 			{event_times_out:event_times_out},
 			{
-				central_channel:opts.central_channel,
+				central_channel:central_channel,
 				detect_threshold:opts.detect_threshold,
 				detect_interval:detect_interval,
 				sign:opts.detect_sign,

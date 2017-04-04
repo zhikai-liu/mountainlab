@@ -10,7 +10,11 @@
 
 #include <diskwritemda.h>
 
-bool p_extract_clips(QStringList timeseries_list, QString event_times, QString clips_out, const QVariantMap& params)
+namespace P_extract_clips {
+Mda32 extract_channels_from_chunk(const Mda32& chunk, const QList<int>& channels);
+}
+
+bool p_extract_clips(QStringList timeseries_list, QString event_times, const QList<int>& channels, QString clips_out, const QVariantMap& params)
 {
     DiskReadMda32 X(2, timeseries_list);
     DiskReadMda ET(event_times);
@@ -20,20 +24,28 @@ bool p_extract_clips(QStringList timeseries_list, QString event_times, QString c
     bigint T = params["clip_size"].toInt();
     bigint L = ET.totalSize();
 
+    bigint M2 = M;
+    if (!channels.isEmpty()) {
+        M2 = channels.count();
+    }
+
     if (!T) {
         qWarning() << "Unexpected: Clip size is zero.";
         return false;
     }
 
     bigint Tmid = (bigint)((T + 1) / 2) - 1;
-    printf("Extracting clips (%ld,%ld,%ld)...\n", M, T, L);
+    printf("Extracting clips (%ld,%ld,%ld) (%ld)...\n", M, T, L, M2);
     DiskWriteMda clips;
-    clips.open(MDAIO_TYPE_FLOAT32, clips_out, M, T, L);
+    clips.open(MDAIO_TYPE_FLOAT32, clips_out, M2, T, L);
     for (bigint i = 0; i < L; i++) {
         bigint t1 = ET.value(i) - Tmid;
         //bigint t2 = t1 + T - 1;
         Mda32 tmp;
         X.readChunk(tmp, 0, t1, M, T);
+        if (!channels.isEmpty()) {
+            tmp = P_extract_clips::extract_channels_from_chunk(tmp, channels);
+        }
         if (!clips.writeChunk(tmp, 0, 0, i)) {
             qWarning() << "Problem writing chunk" << i;
             return false;
@@ -41,4 +53,20 @@ bool p_extract_clips(QStringList timeseries_list, QString event_times, QString c
     }
 
     return true;
+}
+
+namespace P_extract_clips {
+Mda32 extract_channels_from_chunk(const Mda32& X, const QList<int>& channels)
+{
+    //int M=X.N1();
+    int T = X.N2();
+    int M2 = channels.count();
+    Mda32 ret(M2, T);
+    for (int t = 0; t < T; t++) {
+        for (int m2 = 0; m2 < M2; m2++) {
+            ret.set(X.value(channels[m2] - 1, t), m2, t);
+        }
+    }
+    return ret;
+}
 }

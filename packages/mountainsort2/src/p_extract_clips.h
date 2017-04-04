@@ -8,6 +8,6 @@
 
 #include <QVariantMap>
 
-bool p_extract_clips(QStringList timeseries_list, QString event_times, QString clips_out, const QVariantMap& params);
+bool p_extract_clips(QStringList timeseries_list, QString event_times, const QList<int>& channels, QString clips_out, const QVariantMap& params);
 
 #endif // P_EXTRACT_CLIPS_H

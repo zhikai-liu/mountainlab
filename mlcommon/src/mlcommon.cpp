@@ -492,9 +492,9 @@ QList<int> MLUtil::stringListToIntList(const QStringList& list)
     return ret;
 }
 
-QList<int> MLUtil::stringListToBigIntList(const QStringList& list)
+QList<bigint> MLUtil::stringListToBigIntList(const QStringList& list)
 {
-    QList<int> ret;
+    QList<bigint> ret;
     ret.reserve(list.size());
     foreach (QString str, list) {
         ret << str.toLongLong();

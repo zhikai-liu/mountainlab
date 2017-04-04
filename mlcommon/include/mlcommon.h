@@ -38,7 +38,7 @@ QString computeSha1SumOfString(const QString& str);
 QString computeSha1SumOfDirectory(const QString& path);
 bool matchesFastChecksum(QString path, QString fcs);
 QList<int> stringListToIntList(const QStringList& list);
-QList<int> stringListToBigIntList(const QStringList& list);
+QList<bigint> stringListToBigIntList(const QStringList& list);
 QStringList intListToStringList(const QList<int>& list);
 QJsonValue toJsonValue(const QByteArray& X);
 QJsonValue toJsonValue(const QList<int>& X);

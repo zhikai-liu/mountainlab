@@ -20,6 +20,7 @@ void quantize(bigint N, float* X, double unit)
         X[i] = quantize(X[i], unit);
     }
 }
+Mda32 extract_channels_from_chunk(const Mda32& X, const QList<int>& channels);
 }
 
 bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
@@ -136,18 +137,22 @@ bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
     return true;
 }
 
-bool p_compute_whitening_matrix(QStringList timeseries_list, QString whitening_matrix_out, Whiten_opts opts)
+bool p_compute_whitening_matrix(QStringList timeseries_list, const QList<int>& channels, QString whitening_matrix_out, Whiten_opts opts)
 {
     (void)opts;
 
     DiskReadMda32 X0(2, timeseries_list);
     bigint M = X0.N1();
     bigint N = X0.N2();
+    bigint M2 = M;
+    if (!channels.isEmpty()) {
+        M2 = channels.count();
+    }
     qDebug().noquote() << "Computing whitening matrix: M/N" << M << N;
 
     bigint processing_chunk_size = 1e7;
 
-    Mda XXt(M, M);
+    Mda XXt(M2, M2);
     double* XXtptr = XXt.dataPtr();
     bigint chunk_size = processing_chunk_size;
     if (N < processing_chunk_size) {
@@ -160,6 +165,9 @@ bool p_compute_whitening_matrix(QStringList timeseries_list, QString whitening_m
         while ((timepoint < N) && (chunks.count() < omp_get_max_threads())) {
             Mda32 chunk0;
             X0.readChunk(chunk0, 0, timepoint, M, qMin(chunk_size, N - timepoint));
+            if (!channels.isEmpty()) {
+                chunk0 = P_whiten::extract_channels_from_chunk(chunk0, channels);
+            }
             chunks << chunk0;
             timepoint += chunk_size;
         }
@@ -173,14 +181,14 @@ bool p_compute_whitening_matrix(QStringList timeseries_list, QString whitening_m
                 {
                     chunk0 = chunks[i];
                 }
-                Mda XXt0(M, M);
+                Mda XXt0(M2, M2);
                 double* XXt0ptr = XXt0.dataPtr();
                 float* chunkptr = chunk0.dataPtr();
                 for (bigint i = 0; i < chunk0.N2(); i++) {
-                    bigint aa = M * i;
+                    bigint aa = M2 * i;
                     bigint bb = 0;
-                    for (bigint m1 = 0; m1 < M; m1++) {
-                        for (bigint m2 = 0; m2 < M; m2++) {
+                    for (bigint m1 = 0; m1 < M2; m1++) {
+                        for (bigint m2 = 0; m2 < M2; m2++) {
                             XXt0ptr[bb] += chunkptr[aa + m1] * chunkptr[aa + m2];
                             bb++;
                         }
@@ -189,8 +197,8 @@ bool p_compute_whitening_matrix(QStringList timeseries_list, QString whitening_m
 #pragma omp critical(lock2)
                 {
                     bigint bb = 0;
-                    for (bigint m1 = 0; m1 < M; m1++) {
-                        for (bigint m2 = 0; m2 < M; m2++) {
+                    for (bigint m1 = 0; m1 < M2; m1++) {
+                        for (bigint m2 = 0; m2 < M2; m2++) {
                             XXtptr[bb] += XXt0ptr[bb];
                             bb++;
                         }
@@ -201,7 +209,7 @@ bool p_compute_whitening_matrix(QStringList timeseries_list, QString whitening_m
     }
 
     if (N > 1) {
-        for (bigint ii = 0; ii < M * M; ii++) {
+        for (bigint ii = 0; ii < M2 * M2; ii++) {
             XXtptr[ii] /= (N - 1);
         }
     }
@@ -330,4 +338,20 @@ bool p_apply_whitening_matrix(QString timeseries, QString whitening_matrix, QStr
     Y.close();
 
     return true;
+}
+
+namespace P_whiten {
+Mda32 extract_channels_from_chunk(const Mda32& X, const QList<int>& channels)
+{
+    //int M=X.N1();
+    int T = X.N2();
+    int M2 = channels.count();
+    Mda32 ret(M2, T);
+    for (int t = 0; t < T; t++) {
+        for (int m2 = 0; m2 < M2; m2++) {
+            ret.set(X.value(channels[m2] - 1, t), m2, t);
+        }
+    }
+    return ret;
+}
 }

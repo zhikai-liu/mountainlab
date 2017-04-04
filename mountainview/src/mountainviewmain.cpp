@@ -477,11 +477,17 @@ int main(int argc, char* argv[])
         a.processEvents();
 
         printf("Opening initial views...\n");
-        W->setCurrentContainerName("north");
-        W->openView("open-cluster-details");
-        W->setCurrentContainerName("south");
-        //W->openView("open-auto-correlograms");
-        W->openView("open-cluster-metrics");
+        if (context->firings().N2() > 1) {
+            W->setCurrentContainerName("north");
+            W->openView("open-cluster-details");
+            W->setCurrentContainerName("south");
+            //W->openView("open-auto-correlograms");
+            W->openView("open-cluster-metrics");
+        }
+        else if (context->currentTimeseries().N2() > 1) {
+            W->setCurrentContainerName("south");
+            W->openView("open-timeseries-data");
+        }
 
         printf("Starting event loop...\n");
         return a.exec();
