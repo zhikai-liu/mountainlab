@@ -28,6 +28,7 @@
 #include <mvclusterwidget.h>
 #include <mvopenviewscontrol.h>
 #include <mvtimeseriescontrol.h>
+#include <qprocessmanager.h>
 #include <tabber.h>
 
 #include "multiscaletimeseries.h"
@@ -41,6 +42,9 @@
 #include "mvmainwindow.h"
 #include "clusterdetailplugin.h"
 
+#include "objectregistry.h"
+#include "signal.h"
+
 #include <views/confusionmatrixview.h>
 #include <QFileDialog>
 
@@ -48,9 +52,27 @@ void set_nice_size(QWidget* W);
 QColor brighten(QColor col, int amount);
 QList<QColor> generate_colors_ahb();
 
+void sig_handler(int signum)
+{
+    (void)signum;
+    QProcessManager* manager = ObjectRegistry::getObject<QProcessManager>();
+    if (manager) {
+        manager->closeAll();
+    }
+    abort();
+}
+
 int main(int argc, char* argv[])
 {
     QApplication a(argc, argv);
+    ObjectRegistry registry;
+
+    //The process manager
+    QProcessManager* processManager = new QProcessManager;
+    registry.addAutoReleasedObject(processManager);
+    signal(SIGINT, sig_handler);
+    signal(SIGKILL, sig_handler);
+    signal(SIGTERM, sig_handler);
 
     // make sure task progress monitor is instantiated in the main thread
     TaskManager::TaskProgressMonitor* monitor = TaskManager::TaskProgressMonitor::globalInstance();
