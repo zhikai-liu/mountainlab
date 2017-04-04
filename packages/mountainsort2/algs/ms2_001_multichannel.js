@@ -50,7 +50,7 @@ exports.run=function(opts,callback) {
 				all_nbhd_firings.push(firings0);
 				{
 					var opts2=common.clone(opts);
-					opts2.central_channel=ch;
+					opts2.central_channel=1;
 					opts2.firings_out=firings0;
 					opts2.cluster_metrics_out=null; //we'll compute this at the end
 					opts2.num_threads=num_threads_within_neighborhood;
@@ -172,12 +172,18 @@ function get_elapsed_sec(timer) {
 
 function get_neighborhood_channels(coords,chan,adjacency_radius) {
 	var pt0=coords[chan-1];
-	var ret=[];
+	var ret=[chan];
 	for (var i=0; i<coords.length; i++) {
-		var dist0=compute_distance(coords[i],pt0);
-		if (dist0<=adjacency_radius)
-			ret.push(i+1);
+		if (i+1!=chan) {
+			var dist0=compute_distance(coords[i],pt0);
+			if (dist0<=adjacency_radius)
+				ret.push(i+1);
+		}
 	}
+	console.log('#################################################################');
+	console.log(ret);
+	console.log(JSON.stringify(coords));
+	console.log(chan);
 	return ret;
 }
 

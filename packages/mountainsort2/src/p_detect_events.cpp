@@ -63,6 +63,7 @@ bool p_detect_events(QString timeseries, QString event_times_out, P_detect_event
 namespace P_detect_events {
 QVector<double> detect_events(const QVector<double>& X, double detect_threshold, double detect_interval, int sign)
 {
+    double mean = MLCompute::mean(X);
     double stdev = MLCompute::stdev(X);
     double threshold2 = detect_threshold * stdev;
 
@@ -72,7 +73,7 @@ QVector<double> detect_events(const QVector<double>& X, double detect_threshold,
     bigint last_best_ind = 0;
     double last_best_val = 0;
     for (bigint n = 0; n < N; n++) {
-        double val = X[n];
+        double val = (X[n]-mean);
         if (sign < 0)
             val = -val;
         else if (sign == 0)
