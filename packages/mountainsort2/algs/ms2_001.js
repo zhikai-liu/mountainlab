@@ -6,7 +6,7 @@ var os=require('os');
 exports.spec=function() {
 	var spec0={};
 	spec0.name='mountainsort.ms2_001';
-	spec0.version='0.22';
+	spec0.version='0.23';
 
 	spec0.inputs=[
         {name:"timeseries",description:"preprocessed timeseries (M x N)",optional:false},

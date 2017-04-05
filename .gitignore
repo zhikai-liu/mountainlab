@@ -50,3 +50,4 @@ Makefile*
 
 */bin
 */tmp
+*.m~

@@ -741,6 +741,9 @@ bool MountainProcessServer::handle_scripts()
 
 bool MountainProcessServer::handle_processes()
 {
+    ProcessManager* PM = ProcessManager::globalInstance();
+    PM->reloadProcessors();
+
     ProcessResources pr_available = compute_process_resources_available();
     QStringList keys = m_pripts.keys();
     foreach (QString key, keys) {

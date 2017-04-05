@@ -35,6 +35,7 @@ class ProcessManagerPrivate {
 public:
     ProcessManager* q;
 
+    QStringList m_processor_paths;
     QMap<QString, MLProcessor> m_processors;
     QMap<QString, PMProcess> m_processes;
     //QStringList m_server_urls;
@@ -48,6 +49,7 @@ public:
     QJsonObject compute_unique_process_object(MLProcessor P, const QVariantMap& parameters);
     bool all_input_and_output_files_exist(MLProcessor P, const QVariantMap& parameters);
     QJsonObject create_file_object(const QString& fname);
+    void reload_processors();
 
     static MLProcessor create_processor_from_json_object(QJsonObject obj);
     static MLParameter create_parameter_from_json_object(QJsonObject obj);
@@ -65,6 +67,17 @@ ProcessManager::~ProcessManager()
 {
     d->clear_all_processes();
     delete d;
+}
+
+void ProcessManager::setProcessorPaths(const QStringList& paths)
+{
+    d->m_processor_paths = paths;
+    d->reload_processors();
+}
+
+void ProcessManager::reloadProcessors()
+{
+    d->reload_processors();
 }
 
 /*
@@ -829,4 +842,12 @@ QJsonObject ProcessManagerPrivate::create_file_object(const QString& fname_in)
         obj["directories"] = dirs_array;
     }
     return obj;
+}
+
+void ProcessManagerPrivate::reload_processors()
+{
+    m_processors.clear();
+    foreach (QString processor_path, m_processor_paths) {
+        q->loadProcessors(processor_path);
+    }
 }

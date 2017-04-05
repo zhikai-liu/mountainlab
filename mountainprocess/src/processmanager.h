@@ -69,8 +69,9 @@ public:
     //void setServerUrls(const QStringList& urls);
     //void setServerBasePath(const QString& path);
 
-    bool loadProcessors(const QString& path, bool recursive = true);
-    bool loadProcessorFile(const QString& path);
+    void setProcessorPaths(const QStringList& paths);
+    void reloadProcessors();
+
     QStringList processorNames() const;
     MLProcessor processor(const QString& name);
 
@@ -88,6 +89,10 @@ public:
     bool isFinished(const QString& id);
 
     static ProcessManager* globalInstance();
+
+private:
+    bool loadProcessors(const QString& path, bool recursive = true);
+    bool loadProcessorFile(const QString& path);
 
 signals:
     void processFinished(QString id);

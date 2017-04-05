@@ -903,19 +903,23 @@ int main(int argc, char* argv[])
 // load the processor plugins etc
 bool initialize_process_manager()
 {
-    /*
-     * Load the processor paths
-     */
+
+    // Load the processor paths
     QStringList processor_paths = MLUtil::configResolvedPathList("mountainprocess", "processor_paths");
     if (processor_paths.isEmpty()) {
         qCritical() << "No processor paths found.";
         return false;
     }
+    ProcessManager* PM = ProcessManager::globalInstance();
+
+    PM->setProcessorPaths(processor_paths);
+    return true;
+
+    //everything below has been moved to ProcessManager
 
     /*
-     * Load the processors
-     */
-    ProcessManager* PM = ProcessManager::globalInstance();
+    // Load the processors
+
     foreach (QString processor_path, processor_paths) {
         //printf("Searching for processors in %s\n", p0.toLatin1().data());
         //int previous_num_processors = PM->processorNames().count();
@@ -925,6 +929,7 @@ bool initialize_process_manager()
     }
 
     return true;
+    */
 }
 
 QString remove_comments_in_line(QString line)
