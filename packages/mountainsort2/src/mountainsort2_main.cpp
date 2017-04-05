@@ -32,6 +32,7 @@
 #include "p_compute_amplitudes.h"
 #include "p_extract_time_interval.h"
 #include "p_isolation_metrics.h"
+#include "p_generate_background_dataset.h"
 
 #include "omp.h"
 #include "p_confusion_matrix.h"
@@ -268,6 +269,12 @@ QJsonObject get_spec()
         X.addOptionalOutputs("matched_firings_out", "label_map_out", "firings2_relabeled_out", "firings2_relabel_map_out");
         X.addOptionalParameter("max_matching_offset", "", 30);
         X.addOptionalParameter("relabel_firings2", "", "false");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.generate_background_dataset", "0.1");
+        X.addInputs("timeseries", "event_times");
+        X.addOutputs("timeseries_out");
         processors.push_back(X.get_spec());
     }
 
@@ -548,6 +555,13 @@ int main(int argc, char* argv[])
         }
         opts.relabel_firings2 = (CLP.named_parameters.value("relabel_firings2", "false").toString() == "true");
         ret = p_confusion_matrix(firings1, firings2, confusion_matrix_out, matched_firings_out, label_map_out, firings2_relabeled_out, firings2_relabel_map_out, opts);
+    }
+    else if (arg1 == "mountainsort.generate_background_dataset") {
+        QString timeseries = CLP.named_parameters["timeseries"].toString();
+        QString event_times = CLP.named_parameters["event_times"].toString();
+        QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
+        P_generate_background_dataset_opts opts;
+        ret = p_generate_background_dataset(timeseries, event_times, timeseries_out, opts);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

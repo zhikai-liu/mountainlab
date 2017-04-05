@@ -49,7 +49,8 @@ SOURCES += \
     p_isolation_metrics.cpp \
     kdtree.cpp \
     p_confusion_matrix.cpp \
-    hungarian.cpp
+    hungarian.cpp \
+    p_generate_background_dataset.cpp
 
 HEADERS += \
     p_extract_clips.h \
@@ -77,7 +78,8 @@ HEADERS += \
     p_isolation_metrics.h \
     kdtree.h \
     p_confusion_matrix.h \
-    hungarian.h
+    hungarian.h \
+    p_generate_background_dataset.h
 
 INCLUDEPATH += ../../../mountainsort/src/isosplit5
 VPATH += ../../../mountainsort/src/isosplit5

@@ -146,6 +146,7 @@ void print_usage()
     printf("mdaconvert input.csv output.mda --input_num_header_rows=1 --input_num_header_cols=0\n");
     printf("mdaconvert input.ncs output.mda\n");
     printf("mdaconvert input.nrd output.mda --num_channels=32\n");
+    printf("mdaconvert extract_time_chunk input.mda output.mda --t1=0 --t2=1e6\n");
 }
 
 #define MDAIO_MAX_DIMS 50
@@ -242,8 +243,8 @@ bool extract_time_chunk(QString input_fname, QString output_fname, const QMap<QS
     DiskReadMda X(input_fname);
     Mda Y;
 
-    bigint t1 = params["t1"].toLongLong();
-    bigint t2 = params["t2"].toLongLong();
+    bigint t1 = params["t1"].toDouble(); //to double to handle scientific notation
+    bigint t2 = params["t2"].toDouble();
 
     if (!X.readChunk(Y, 0, t1, X.N1(), t2 - t1 + 1)) {
         qWarning() << "Problem reading chunk.";

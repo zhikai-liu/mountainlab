@@ -1,0 +1,113 @@
+function main(params) {
+	set_default_parameters(params,{
+		samplerate:30000, //Hz
+		freq_min:800,freq_max:6000,freq_wid:1000,
+		detect_threshold:3.5
+	});
+
+	var timeseries=params.timeseries;
+	var timeseries_out=params.timeseries_out;
+
+	var filt=bandpass_filter(timeseries,params.samplerate,params.freq_min,params.freq_max,params.freq_wid,0);
+	var event_times=Process('mountainsort.detect_events',
+			{timeseries:filt},
+			{
+				central_channel:0,
+				detect_threshold:params.detect_threshold,
+				detect_interval:30,
+				sign:0
+			}
+		).event_times_out;
+	console.log(':::::::::::: '+event_times);
+
+	var X=Process('mountainsort.generate_background_dataset',
+			{timeseries:timeseries,event_times:event_times},
+			{}).timeseries_out;
+	write_file(X,timeseries_out);
+
+	run_pipeline();
+}
+
+function bandpass_filter(raw,samplerate,freq_min,freq_max,freq_wid,quantization_unit) {
+	console.log ('bandpass_filter: '+raw);
+	if ((!freq_min)&&(!freq_max)) {
+		return raw;
+	}
+	else {
+		var filt=Process('mountainsort.bandpass_filter',
+			{timeseries:raw},
+			{samplerate:samplerate,freq_min:freq_min,freq_max:freq_max,freq_wid:freq_wid,quantization_unit:quantization_unit}
+		).timeseries_out;
+		return filt;
+	}
+}
+
+function run_pipeline() {
+	_MP2.runPipeline();
+}
+
+function Process(processor_name,inputs,parameters,outputs) {
+	if (!parameters) parameters={};
+	if (!outputs) outputs=''; // empty outputs means that they will be created as temporary files and the return object will contain the paths to these temporary files
+	var ret=_MP2.addProcess(
+		processor_name,
+		JSON.stringify(inputs),
+		JSON.stringify(parameters),
+		JSON.stringify(outputs)
+	);
+	return JSON.parse(ret);
+}
+
+function setNumThreads(num_threads) {
+	_MP2.setNumThreads(num_threads);
+}
+
+function write_file(input,output) {
+	_MP2.addCopyFile(input,output);
+	/*
+	_MP2.addProcess(
+		'copy',
+		JSON.stringify({input:input}),
+		JSON.stringify({}),
+		JSON.stringify({output:output})
+	);
+	*/
+}
+
+function write_prv(input,output) {
+	_MP2.addPrv(input,output);
+}
+
+function remove_file(path) {
+	_MP2.removeFile(path);
+}
+
+function clone(obj) {
+	return JSON.parse(JSON.stringify(obj));
+}
+
+var console={
+	log:function(msg) {_MP2.log(msg);},
+	err:function(msg) {_MP2.log('Pipeline error: '+msg);}
+};
+
+function set_default_parameters(params,defaults) {
+	for (var pname in defaults) {
+		if (!(pname in params)) {
+			params[pname]=defaults[pname];
+		}
+	}
+}
+
+
+function file_exists(path) {
+	return _MP2.fileExists(path);
+}
+
+function dir(path) {
+	return JSON.parse(_MP2.dir(path));
+}
+
+function mkdir(path) {
+	_MP2.mkdir(path);
+}

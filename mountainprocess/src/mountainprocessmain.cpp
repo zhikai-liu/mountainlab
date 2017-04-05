@@ -653,7 +653,7 @@ int main(int argc, char* argv[])
             printf("%s\n", msg.toUtf8().data());
             set_default_daemon_id(daemon_id);
         }
-/*
+        /*
         bool user_wants_to_set_as_default = false;
         while (1) {
             if (daemon_id != get_default_daemon_id()) {
@@ -682,7 +682,10 @@ int main(int argc, char* argv[])
         }
         */
 
-// Start the mountainprocess daemon
+        bool do_fork = (!CLP.named_parameters.contains("_nofork"));
+
+        // Start the mountainprocess daemon
+        if (do_fork) {
 #ifndef NO_FORK
 /*
          *  The following magic ensures we detach from the parent process
@@ -690,24 +693,25 @@ int main(int argc, char* argv[])
          *  that spawned us to wait for our children to complete.
          */
 #ifdef Q_OS_LINUX
-        // fork, setsid(?), redirect stdout to /dev/null
-        if (daemon(1, 0)) {
-            exit(1);
-        }
+            // fork, setsid(?), redirect stdout to /dev/null
+            if (daemon(1, 0)) {
+                exit(1);
+            }
 #else
-        // fork, setsid, fork, redirect stdout to /dev/null
-        if (fork() > 0) {
-            exit(0);
-        }
-        Q_UNUSED(setsid());
-        if (fork() > 0) {
-            exit(0);
-        }
-        int devnull = open("/dev/null", O_WRONLY);
-        Q_UNUSED(dup2(devnull, STDOUT_FILENO));
-        Q_UNUSED(dup2(devnull, STDERR_FILENO));
+            // fork, setsid, fork, redirect stdout to /dev/null
+            if (fork() > 0) {
+                exit(0);
+            }
+            Q_UNUSED(setsid());
+            if (fork() > 0) {
+                exit(0);
+            }
+            int devnull = open("/dev/null", O_WRONLY);
+            Q_UNUSED(dup2(devnull, STDOUT_FILENO));
+            Q_UNUSED(dup2(devnull, STDERR_FILENO));
 #endif
 #endif
+        }
         qDebug().noquote() << "Initializing process manager...";
         if (!initialize_process_manager()) { // load the processor plugins etc
             //log_end();
