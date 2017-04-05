@@ -544,7 +544,9 @@ void MVClusterWidgetComputer::compute()
 
     DiskReadMda features(features_path);
     //features.setRemoteDataType("float32");
-    features.readChunk(data, 0, 0, features.N1(), features.N2());
+    if (!features.readChunk(data, 0, 0, features.N1(), features.N2())) {
+        qWarning() << "Unable to read chunk of features in Cluster widget";
+    }
 }
 
 MVPCAFeaturesFactory::MVPCAFeaturesFactory(MVMainWindow* mw, QObject* parent)

@@ -521,14 +521,20 @@ void MVSpikeSprayComputer::compute()
     task.log("clips_path: " + clips_path);
 
     DiskReadMda clips0(clips_path);
-    clips0.readChunk(clips_to_render, 0, 0, 0, clips0.N1(), clips0.N2(), clips0.N3());
+    if (!clips0.readChunk(clips_to_render, 0, 0, 0, clips0.N1(), clips0.N2(), clips0.N3())) {
+        qWarning() << "Unable to read chunk of clips in spikespray view";
+        return;
+    }
 
     task.setProgress(0.75);
 
     DiskReadMda firings2(firings_out_path);
     task.log(QString("%1x%2 from %3x%4 (%5x%6x%7) (%8)").arg(firings2.N1()).arg(firings2.N2()).arg(firings.N1()).arg(firings.N2()).arg(clips0.N1()).arg(clips0.N2()).arg(clips0.N3()).arg(clips_to_render.N3()));
     Mda firings0;
-    firings2.readChunk(firings0, 0, 0, firings2.N1(), firings2.N2());
+    if (!firings2.readChunk(firings0, 0, 0, firings2.N1(), firings2.N2())) {
+        qWarning() << "Unable to read chunk of firings in spikespray view";
+        return;
+    }
     task.setProgress(0.9);
     labels_to_render.clear();
     for (int i = 0; i < firings0.N2(); i++) {

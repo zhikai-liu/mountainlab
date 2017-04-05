@@ -78,7 +78,10 @@ Mda32 compute_template(QString clips_path, const QVector<int>& labels, int k)
     for (bigint i = 0; i < labels.count(); i++) {
         if (labels[i] == k) {
             Mda32 tmp;
-            clips.readChunk(tmp, 0, 0, i, M, T, 1);
+            if (!clips.readChunk(tmp, 0, 0, i, M, T, 1)) {
+                qWarning() << "Problem reading chunk in compute_template of consolidate_clusters";
+                return Mda32();
+            }
             for (bigint j = 0; j < M * T; j++) {
                 sum.set(sum.get(j) + tmp.get(j), j);
             }

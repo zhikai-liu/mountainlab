@@ -68,7 +68,9 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
                 //build the variables above
                 local_templates = templates;
                 local_opts = opts;
-                X.readChunk(chunk, 0, timepoint - overlap_size, M, chunk_size + 2 * overlap_size);
+                if (!X.readChunk(chunk, 0, timepoint - overlap_size, M, chunk_size + 2 * overlap_size)) {
+                    qWarning() << "Problem reading chunk in fit_stage";
+                }
                 for (bigint jj = 0; jj < L; jj++) {
                     if ((timepoint - overlap_size <= times[jj]) && (times[jj] < timepoint - overlap_size + chunk_size + 2 * overlap_size)) {
                         local_times << times[jj] - (timepoint - overlap_size);
@@ -155,7 +157,9 @@ Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, co
         bigint t0 = (bigint)(times[i] + 0.5);
         if (k >= 1) {
             Mda32 X0;
-            X.readChunk(X0, 0, t0 - Tmid, M, T);
+            if (!X.readChunk(X0, 0, t0 - Tmid, M, T)) {
+                qWarning() << "Problem reading chunk in compute_templates of fit_stage";
+            }
             dtype32* Xptr = X0.dataPtr();
             dtype32* Tptr = templates.dataPtr(0, 0, k - 1);
             for (bigint i = 0; i < M * T; i++) {

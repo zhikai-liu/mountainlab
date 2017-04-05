@@ -42,7 +42,10 @@ bool p_extract_clips(QStringList timeseries_list, QString event_times, const QLi
         bigint t1 = ET.value(i) - Tmid;
         //bigint t2 = t1 + T - 1;
         Mda32 tmp;
-        X.readChunk(tmp, 0, t1, M, T);
+        if (!X.readChunk(tmp, 0, t1, M, T)) {
+            qWarning() << "Problem reading chunk in extract_clips";
+            return false;
+        }
         if (!channels.isEmpty()) {
             tmp = P_extract_clips::extract_channels_from_chunk(tmp, channels);
         }

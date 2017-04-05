@@ -339,7 +339,9 @@ Mda SpectrogramViewPrivate::get_spectrogram_data(int t1, int t2)
     SpectrogramViewPrivate::parse_freq_range(ifreq_min, ifreq_max, m_spectrogram_freq_range);
 
     Mda X;
-    m_spectrogram.readChunk(X, 0, 0, ifreq_min, m_spectrogram.N1(), m_spectrogram.N2(), ifreq_max - ifreq_min + 1);
+    if (!m_spectrogram.readChunk(X, 0, 0, ifreq_min, m_spectrogram.N1(), m_spectrogram.N2(), ifreq_max - ifreq_min + 1)) {
+        qWarning() << "Problem reading chunk in spectrogram view";
+    }
 
     Mda ret(M, N2);
     for (int n = 0; n < N2; n++) {

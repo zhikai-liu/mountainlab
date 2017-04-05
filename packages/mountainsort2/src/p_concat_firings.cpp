@@ -43,8 +43,14 @@ bool p_concat_firings(QStringList timeseries_list, QStringList firings_list, QSt
             DiskReadMda32 X1(timeseries_list.value(i));
             if (!timeseries_out.isEmpty()) {
                 Mda32 chunk;
-                X1.readChunk(chunk, 0, 0, M, X1.N2());
-                Y.writeChunk(chunk, 0, n0);
+                if (!X1.readChunk(chunk, 0, 0, M, X1.N2())) {
+                    qWarning() << "Problem reading chunk in concat_firings";
+                    return false;
+                }
+                if (!Y.writeChunk(chunk, 0, n0)) {
+                    qWarning() << "Problem writing chunk in concat_firings";
+                    return false;
+                }
             }
             n0 += X1.N2();
         }

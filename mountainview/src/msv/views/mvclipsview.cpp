@@ -110,7 +110,11 @@ QPointF MVClipsViewPrivate::coord2pix(const mvclipsview_coord& C)
 void MVClipsViewPrivate::auto_set_vert_scale_factor()
 {
     Mda X;
-    m_clips.readChunk(X, 0, 0, 0, m_clips.N1(), m_clips.N2(), m_clips.N3());
+    if (!m_clips.readChunk(X, 0, 0, 0, m_clips.N1(), m_clips.N2(), m_clips.N3())) {
+        qWarning() << "Unable to read chunk of clips in auto_set_vert_scale_factor of clips view.";
+        return;
+        ;
+    }
     double val = qMax(qAbs(X.minimum()), qAbs(X.maximum()));
     if (!val) {
         m_vert_scale_factor = 1;

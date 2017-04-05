@@ -25,8 +25,14 @@ bool p_concat_timeseries(QStringList timeseries_list, QString timeseries_out)
     for (bigint i = 0; i < timeseries_list.count(); i++) {
         DiskReadMda32 X1(timeseries_list.value(i));
         Mda32 chunk;
-        X1.readChunk(chunk, 0, 0, M, X1.N2());
-        Y.writeChunk(chunk, 0, n0);
+        if (!X1.readChunk(chunk, 0, 0, M, X1.N2())) {
+            qWarning() << "Problem reading chunk in concat_timeseries";
+            return false;
+        }
+        if (!Y.writeChunk(chunk, 0, n0)) {
+            qWarning() << "Problem writing chunk in concat_timeseries";
+            return false;
+        }
         n0 += X1.N2();
     }
 

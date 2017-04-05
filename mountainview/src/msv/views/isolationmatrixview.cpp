@@ -200,7 +200,10 @@ void IsolationMatrixView::onCalculationFinished()
     DiskReadMda confusion_matrix = d->m_calculator.confusion_matrix;
     int A1 = confusion_matrix.N1();
     int A2 = confusion_matrix.N2();
-    confusion_matrix.readChunk(d->m_confusion_matrix, 0, 0, A1, A2);
+    if (!confusion_matrix.readChunk(d->m_confusion_matrix, 0, 0, A1, A2)) {
+        qWarning() << "Unable to read chunk for confusion matrix in isolation matrix view";
+        return;
+    }
 
     d->m_optimal_label_map.clear();
     for (int k = 1; k <= 1000; k++) {

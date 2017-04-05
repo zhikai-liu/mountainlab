@@ -394,7 +394,9 @@ void MCContext::setSampleRate(double sample_rate)
 Mda MCContext::confusionMatrix() const
 {
     Mda ret;
-    d->m_confusion_matrix.readChunk(ret, 0, 0, d->m_confusion_matrix.N1(), d->m_confusion_matrix.N2());
+    if (!d->m_confusion_matrix.readChunk(ret, 0, 0, d->m_confusion_matrix.N1(), d->m_confusion_matrix.N2())) {
+        qWarning() << "Unable to read chunk of confusion matrix";
+    }
     return ret;
 }
 

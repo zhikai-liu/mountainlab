@@ -49,7 +49,9 @@ bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
             Mda32 chunk;
 #pragma omp critical(lock1)
             {
-                X.readChunk(chunk, 0, timepoint, M, qMin(chunk_size, N - timepoint));
+                if (!X.readChunk(chunk, 0, timepoint, M, qMin(chunk_size, N - timepoint))) {
+                    qWarning() << "Problem reading chunk in whiten (1)";
+                }
             }
             float* chunkptr = chunk.dataPtr();
             Mda XXt0(M, M);
@@ -103,7 +105,9 @@ bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
             Mda32 chunk_in;
 #pragma omp critical(lock1)
             {
-                X.readChunk(chunk_in, 0, timepoint, M, qMin(chunk_size, N - timepoint));
+                if (!X.readChunk(chunk_in, 0, timepoint, M, qMin(chunk_size, N - timepoint))) {
+                    qWarning() << "Problem reading chunk in whiten (2)";
+                }
             }
             float* chunk_in_ptr = chunk_in.dataPtr();
             Mda32 chunk_out(M, chunk_in.N2());
@@ -123,7 +127,9 @@ bool p_whiten(QString timeseries, QString timeseries_out, Whiten_opts opts)
                 // The following is needed to make the output deterministic, due to a very tricky floating-point problem that I honestly could not track down
                 // It has something to do with multiplying by very small values of WWptr[bb]. But I truly could not pinpoint the exact problem.
                 P_whiten::quantize(chunk_out.totalSize(), chunk_out.dataPtr(), 0.0001);
-                Y.writeChunk(chunk_out, 0, timepoint);
+                if (!Y.writeChunk(chunk_out, 0, timepoint)) {
+                    qWarning() << "Problem writing chunk in whiten";
+                }
                 num_timepoints_handled += qMin(chunk_size, N - timepoint);
                 if ((timer.elapsed() > 5000) || (num_timepoints_handled == N)) {
                     printf("%ld/%ld (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));
@@ -164,7 +170,10 @@ bool p_compute_whitening_matrix(QStringList timeseries_list, const QList<int>& c
         QList<Mda32> chunks;
         while ((timepoint < N) && (chunks.count() < omp_get_max_threads())) {
             Mda32 chunk0;
-            X0.readChunk(chunk0, 0, timepoint, M, qMin(chunk_size, N - timepoint));
+            if (!X0.readChunk(chunk0, 0, timepoint, M, qMin(chunk_size, N - timepoint))) {
+                qWarning() << "Problem reading chunk in compute whiten matrix";
+                return false;
+            }
             if (!channels.isEmpty()) {
                 chunk0 = P_whiten::extract_channels_from_chunk(chunk0, channels);
             }
@@ -306,7 +315,9 @@ bool p_apply_whitening_matrix(QString timeseries, QString whitening_matrix, QStr
             Mda32 chunk_in;
 #pragma omp critical(lock1)
             {
-                X.readChunk(chunk_in, 0, timepoint, M, qMin(chunk_size, N - timepoint));
+                if (!X.readChunk(chunk_in, 0, timepoint, M, qMin(chunk_size, N - timepoint))) {
+                    qWarning() << "Problem reading chunk in whiten (3)";
+                }
             }
             float* chunk_in_ptr = chunk_in.dataPtr();
             Mda32 chunk_out(M, chunk_in.N2());
@@ -326,7 +337,9 @@ bool p_apply_whitening_matrix(QString timeseries, QString whitening_matrix, QStr
                 // The following is needed to make the output deterministic, due to a very tricky floating-point problem that I honestly could not track down
                 // It has something to do with multiplying by very small values of WWptr[bb]. But I truly could not pinpoint the exact problem.
                 P_whiten::quantize(chunk_out.totalSize(), chunk_out.dataPtr(), 0.0001);
-                Y.writeChunk(chunk_out, 0, timepoint);
+                if (!Y.writeChunk(chunk_out, 0, timepoint)) {
+                    qWarning() << "Problem writing chunk in apply whitening matrix";
+                }
                 num_timepoints_handled += qMin(chunk_size, N - timepoint);
                 if ((timer.elapsed() > 5000) || (num_timepoints_handled == N)) {
                     printf("%ld/%ld (%d%%)\n", num_timepoints_handled, N, (int)(num_timepoints_handled * 1.0 / N * 100));

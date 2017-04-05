@@ -204,7 +204,10 @@ bool MultiScaleTimeSeriesPrivate::get_data(Mda& min, Mda& max, int t1, int t2, i
     }
 
     if (ds_factor == 1) {
-        m_data.readChunk(min, 0, t1, M, t2 - t1 + 1);
+        if (!m_data.readChunk(min, 0, t1, M, t2 - t1 + 1)) {
+            qWarning() << "Unable to read chunk of data in multi-scale timeseries (1)";
+            return false;
+        }
         max = min;
         return true;
     }
@@ -225,8 +228,14 @@ bool MultiScaleTimeSeriesPrivate::get_data(Mda& min, Mda& max, int t1, int t2, i
         }
         int t_offset_max = t_offset_min + N / ds_factor;
 
-        m_multiscale_data.readChunk(min, 0, t1 + t_offset_min, M, t2 - t1 + 1);
-        m_multiscale_data.readChunk(max, 0, t1 + t_offset_max, M, t2 - t1 + 1);
+        if (!m_multiscale_data.readChunk(min, 0, t1 + t_offset_min, M, t2 - t1 + 1)) {
+            qWarning() << "Unable to read chunk of data in multi-scale timeseries (2)";
+            return false;
+        }
+        if (!m_multiscale_data.readChunk(max, 0, t1 + t_offset_max, M, t2 - t1 + 1)) {
+            qWarning() << "Unable to read chunk of data in multi-scale timeseries (3)";
+            return false;
+        }
 
         if (MLUtil::threadInterruptRequested()) {
             return false;

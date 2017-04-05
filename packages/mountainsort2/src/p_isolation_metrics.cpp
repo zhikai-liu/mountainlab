@@ -476,7 +476,9 @@ Mda32 extract_clips(const DiskReadMda32& X, const QVector<double>& times, int cl
         bigint t1 = times.value(i) - Tmid;
         //bigint t2 = t1 + T - 1;
         Mda32 tmp;
-        X.readChunk(tmp, 0, t1, M, T);
+        if (!X.readChunk(tmp, 0, t1, M, T)) {
+            qWarning() << "Problem reading chunk in extract_clips of isolation_metrics";
+        }
         clips.setChunk(tmp, 0, 0, i);
     }
     return clips;

@@ -361,8 +361,13 @@ void MVTemplatesView2Calculator::compute()
             task.error("Halted ****");
             return;
         }
-        templates0.readChunk(CD.template0, 0, 0, k - 1, M, T, 1);
-        stdevs0.readChunk(CD.stdev0, 0, 0, k - 1, M, T, 1);
+        if (!templates0.readChunk(CD.template0, 0, 0, k - 1, M, T, 1)) {
+            qWarning() << "Unable to read chunk of templates in templates view";
+            return;
+        }
+        if (!stdevs0.readChunk(CD.stdev0, 0, 0, k - 1, M, T, 1)) {
+            qWarning() << "Unable to read chunk of stdevs in templates view";
+        }
         if (!MLUtil::threadInterruptRequested()) {
             if (CD.num_events > 0) {
                 cluster_data << CD;

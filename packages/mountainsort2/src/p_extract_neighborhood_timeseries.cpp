@@ -25,9 +25,15 @@ bool p_extract_neighborhood_timeseries(QString timeseries, QString timeseries_ou
 
     // TODO: don't load the whole thing into memory
     Mda32 chunk;
-    X.readChunk(chunk, 0, 0, M, N);
+    if (!X.readChunk(chunk, 0, 0, M, N)) {
+        qWarning() << "Problem reading chunk in extract_neighborhood_timeseries";
+        return false;
+    }
     Mda32 chunk2 = P_extract_neighborhood_timeseries::extract_neighborhood(chunk, channels);
-    Y.writeChunk(chunk2, 0, 0);
+    if (!Y.writeChunk(chunk2, 0, 0)) {
+        qWarning() << "Problem writing chunk in extract_neighborhood_timeseries";
+        return false;
+    }
     Y.close();
 
     return true;

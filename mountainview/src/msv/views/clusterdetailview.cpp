@@ -1463,8 +1463,13 @@ void ClusterDetailViewCalculator::compute()
             task.error("Halted ****");
             return;
         }
-        templates0.readChunk(CD.template0, 0, 0, k - 1, M, T, 1);
-        stdevs0.readChunk(CD.stdev0, 0, 0, k - 1, M, T, 1);
+        if (!templates0.readChunk(CD.template0, 0, 0, k - 1, M, T, 1)) {
+            qWarning() << "Unable to read chunk of templates in cluster detail view";
+            return;
+        }
+        if (!stdevs0.readChunk(CD.stdev0, 0, 0, k - 1, M, T, 1)) {
+            qWarning() << "Unable to read chunk of stdevs in cluster detail view";
+        }
         if (!MLUtil::threadInterruptRequested()) {
             if ((CD.num_events > 0) || (clusters_to_force_show.contains(k))) {
                 cluster_data << CD;

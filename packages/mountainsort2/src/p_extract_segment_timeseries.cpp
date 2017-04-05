@@ -113,7 +113,10 @@ bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, 
             ssA = start_timepoints[ii] - t1;
         }
 
-        Y.readChunk(chunk, 0, ttA, Y.N1(), ttB - ttA + 1);
+        if (!Y.readChunk(chunk, 0, ttA, Y.N1(), ttB - ttA + 1)) {
+            qWarning() << "Problem reading chunk in extract_segment_timeseries from concat list";
+            return false;
+        }
         if (!channels.isEmpty()) {
             chunk = P_extract_segment_timeseries::extract_channels_from_chunk(chunk, channels);
         }
@@ -126,7 +129,10 @@ bool p_extract_segment_timeseries_from_concat_list(QStringList timeseries_list, 
         qWarning() << "Error opening file for writing: " << timeseries_out << M << t2 - t1 + 1;
         return false;
     }
-    Y.writeChunk(out, 0, 0);
+    if (!Y.writeChunk(out, 0, 0)) {
+        qWarning() << "Problem writing chunk in extract_segment_timeseries";
+        return false;
+    }
     Y.close();
 
     return true;

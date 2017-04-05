@@ -156,5 +156,7 @@ void CompareClusterViewCalculator::compute()
     DiskReadMda features0;
     features0 = compute_firings_features(timeseries, firings_merged_subset, 3, clip_size);
     labels = extract_labels(firings_merged_subset, 3);
-    features0.readChunk(features, 0, 0, features0.N1(), features0.N2());
+    if (!features0.readChunk(features, 0, 0, features0.N1(), features0.N2())) {
+        qWarning() << "Unable to read chunk in CompareClusterViewCalculator";
+    }
 }

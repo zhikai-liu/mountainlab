@@ -185,7 +185,10 @@ void ConfusionMatrixView::onCalculationFinished()
     DiskReadMda confusion_matrix = mcContext()->confusionMatrix();
     int A1 = confusion_matrix.N1();
     int A2 = confusion_matrix.N2();
-    confusion_matrix.readChunk(d->m_confusion_matrix, 0, 0, A1, A2);
+    if (!confusion_matrix.readChunk(d->m_confusion_matrix, 0, 0, A1, A2)) {
+        qWarning() << "Unable to read chunk of confusion matrix in ConfusionMatrixView";
+        return;
+    }
     d->m_optimal_label_map = mcContext()->labelMap();
 
     d->m_matrix_view->setMatrix(d->m_confusion_matrix);
