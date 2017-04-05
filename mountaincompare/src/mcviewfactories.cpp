@@ -6,6 +6,7 @@
 #include <mvtimeseriesview2.h>
 #include <QMessageBox>
 #include <mvspikesprayview.h>
+#include <mvclusterwidget.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ClusterDetail1Factory::ClusterDetail1Factory(MVMainWindow* mw, QObject* parent)
@@ -243,6 +244,133 @@ MVAbstractView* MVSpikeSpray2Factory::createView(MVAbstractContext* context)
 }
 
 ////////////////////////////////////////////////////////////////////////
+
+MVPCAFeatures1Factory::MVPCAFeatures1Factory(MVMainWindow* mw, QObject* parent)
+    : MVAbstractViewFactory(mw, parent)
+{
+}
+
+QString MVPCAFeatures1Factory::id() const
+{
+    return QStringLiteral("open-pca-features-1");
+}
+
+QString MVPCAFeatures1Factory::name() const
+{
+    return tr("PCA Features 1");
+}
+
+QString MVPCAFeatures1Factory::title() const
+{
+    return tr("PCA features 1");
+}
+
+MVAbstractView* MVPCAFeatures1Factory::createView(MVAbstractContext* context)
+{
+    MCContext* c = qobject_cast<MCContext*>(context);
+    Q_ASSERT(c);
+
+    QList<MCCluster> clusters = c->selectedClusters();
+    QList<int> ks;
+    foreach (MCCluster C,clusters) {
+        if (C.firings_num==1)
+            ks << C.num;
+    }
+    qSort(ks);
+    if (ks.count() == 0) {
+        QMessageBox::information(0, "Unable to open clusters", "You must select at least one cluster.");
+        return Q_NULLPTR;
+    }
+    MVClusterWidget* X = new MVClusterWidget(c->mvContext1());
+    X->setLabelsToUse(ks);
+    X->setFeatureMode("pca");
+    return X;
+}
+
+bool MVPCAFeatures1Factory::isEnabled(MVAbstractContext* context) const
+{
+    MCContext* c = qobject_cast<MCContext*>(context);
+    Q_ASSERT(c);
+
+    QList<MCCluster> clusters = c->selectedClusters();
+    QList<int> ks;
+    foreach (MCCluster C,clusters) {
+        if (C.firings_num==1)
+            ks << C.num;
+    }
+
+    return (!ks.isEmpty());
+}
+
+////////////////////////////////////////////////////////////////////////
+
+MVPCAFeatures2Factory::MVPCAFeatures2Factory(MVMainWindow* mw, QObject* parent)
+    : MVAbstractViewFactory(mw, parent)
+{
+}
+
+QString MVPCAFeatures2Factory::id() const
+{
+    return QStringLiteral("open-pca-features-2");
+}
+
+QString MVPCAFeatures2Factory::name() const
+{
+    return tr("PCA Features 2");
+}
+
+QString MVPCAFeatures2Factory::title() const
+{
+    return tr("PCA features 2");
+}
+
+MVAbstractView* MVPCAFeatures2Factory::createView(MVAbstractContext* context)
+{
+    qDebug() << __FILE__ << __LINE__;
+    MCContext* c = qobject_cast<MCContext*>(context);
+    Q_ASSERT(c);
+
+    qDebug() << __FILE__ << __LINE__;
+    QList<MCCluster> clusters = c->selectedClusters();
+    qDebug() << __FILE__ << __LINE__;
+    QList<int> ks;
+    foreach (MCCluster C,clusters) {
+        if (C.firings_num==2)
+            ks << C.num;
+    }
+    qDebug() << __FILE__ << __LINE__;
+    qSort(ks);
+    qDebug() << __FILE__ << __LINE__;
+    if (ks.count() == 0) {
+        QMessageBox::information(0, "Unable to open clusters", "You must select at least one cluster.");
+        return Q_NULLPTR;
+    }
+    qDebug() << __FILE__ << __LINE__;
+    MVClusterWidget* X = new MVClusterWidget(c->mvContext2());
+    X->setLabelsToUse(ks);
+    X->setFeatureMode("pca");
+
+    qDebug() << __FILE__ << __LINE__;
+
+    return X;
+}
+
+bool MVPCAFeatures2Factory::isEnabled(MVAbstractContext* context) const
+{
+    MCContext* c = qobject_cast<MCContext*>(context);
+    Q_ASSERT(c);
+
+    QList<MCCluster> clusters = c->selectedClusters();
+    QList<int> ks;
+    foreach (MCCluster C,clusters) {
+        if (C.firings_num==2)
+            ks << C.num;
+    }
+
+    return (!ks.isEmpty());
+}
+
+////////////////////////////////////////////////////////////////////////
 CompareClustersFactory::CompareClustersFactory(MVMainWindow* mw, QObject* parent)
     : MVAbstractViewFactory(mw, parent)
 {
@@ -278,3 +406,6 @@ MVAbstractView* CompareClustersFactory::createView(MVAbstractContext* context)
 
     return X;
 }
+
+
+

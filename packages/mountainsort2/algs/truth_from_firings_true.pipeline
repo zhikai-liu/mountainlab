@@ -1,5 +1,6 @@
 function main(params) {
 	set_default_parameters(params,{
+		firings_file_name:'firings_true.mda'
 	});
 
 	var inpath=params.inpath;
@@ -9,10 +10,10 @@ function main(params) {
 	var filt;
 	var raw=inpath+'/raw.mda.prv';
 	var firings_true;
-	if (file_exists(inpath+'/firings_true.mda.prv'))
-		firings_true=inpath+'/firings_true.mda.prv';
+	if (file_exists(inpath+'/'+params.firings_file_name+'.prv'))
+		firings_true=inpath+'/'+params.firings_file_name+'.prv';
 	else
-		firings_true=inpath+'/firings_true.mda';
+		firings_true=inpath+'/'+params.firings_file_name;
 
 	// Write the output
 	if (file_exists(inpath+'/waveforms_true.mda.prv'))

@@ -846,8 +846,13 @@ QJsonObject ProcessManagerPrivate::create_file_object(const QString& fname_in)
 
 void ProcessManagerPrivate::reload_processors()
 {
+    QMap<QString, MLProcessor> saved=m_processors;
     m_processors.clear();
     foreach (QString processor_path, m_processor_paths) {
-        q->loadProcessors(processor_path);
+        if (!q->loadProcessors(processor_path)) {
+            //something happened, let's revert to saved version
+            m_processors=saved;
+            return;
+        }
     }
 }

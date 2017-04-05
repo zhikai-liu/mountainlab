@@ -180,7 +180,9 @@ int main(int argc, char* argv[])
     W->registerViewFactory(new ConfusionMatrixViewFactory(W));
     //W->registerViewFactory(new CompareClustersFactory(W));
 
-    //W->registerViewFactory(new MVPCAFeaturesFactory(W));
+    W->registerViewFactory(new MVPCAFeatures1Factory(W));
+    W->registerViewFactory(new MVPCAFeatures2Factory(W));
+
 
     W->addControl(new MVOpenViewsControl(context, W), true);
     W->addControl(new MVTimeseriesControl(context->mvContext1(), W), true);

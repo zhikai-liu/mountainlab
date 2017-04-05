@@ -80,6 +80,31 @@ public:
     //QList<QAction*> actions(const QMimeData& md) Q_DECL_OVERRIDE;
 };
 
+/////////////////////////////////////////////////////////////////////////////
+class MVPCAFeatures1Factory : public MVAbstractViewFactory {
+    Q_OBJECT
+public:
+    MVPCAFeatures1Factory(MVMainWindow* mw, QObject* parent = 0);
+    QString id() const Q_DECL_OVERRIDE;
+    QString name() const Q_DECL_OVERRIDE;
+    QString title() const Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
+    bool isEnabled(MVAbstractContext* context) const Q_DECL_OVERRIDE;
+};
+
+class MVPCAFeatures2Factory : public MVAbstractViewFactory {
+    Q_OBJECT
+public:
+    MVPCAFeatures2Factory(MVMainWindow* mw, QObject* parent = 0);
+    QString id() const Q_DECL_OVERRIDE;
+    QString name() const Q_DECL_OVERRIDE;
+    QString title() const Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
+    bool isEnabled(MVAbstractContext* context) const Q_DECL_OVERRIDE;
+};
+
+
+/////////////////////////////////////////////////////////////////////////////
 class CompareClustersFactory : public MVAbstractViewFactory {
     Q_OBJECT
 public:
