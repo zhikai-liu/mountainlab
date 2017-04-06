@@ -114,8 +114,13 @@ function main(params) {
 			{samplerate:params.samplerate,_request_num_threads:params.num_threads}
 	).cluster_metrics_out;
 
+	var pre=Process('whiten',{
+			timeseries:filt
+		},{}
+	).timeseries_out;
+
 	var im_out=Process('mountainsort.isolation_metrics',
-			{timeseries:filt,firings:firings},
+			{timeseries:pre,firings:firings},
 			{_request_num_threads:params.num_threads},
 			{metrics_out:'',pair_metrics_out:''}
 	);

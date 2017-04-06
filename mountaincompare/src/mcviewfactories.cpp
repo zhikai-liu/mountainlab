@@ -326,31 +326,23 @@ QString MVPCAFeatures2Factory::title() const
 
 MVAbstractView* MVPCAFeatures2Factory::createView(MVAbstractContext* context)
 {
-    qDebug() << __FILE__ << __LINE__;
     MCContext* c = qobject_cast<MCContext*>(context);
     Q_ASSERT(c);
 
-    qDebug() << __FILE__ << __LINE__;
     QList<MCCluster> clusters = c->selectedClusters();
-    qDebug() << __FILE__ << __LINE__;
     QList<int> ks;
     foreach (MCCluster C, clusters) {
         if (C.firings_num == 2)
             ks << C.num;
     }
-    qDebug() << __FILE__ << __LINE__;
     qSort(ks);
-    qDebug() << __FILE__ << __LINE__;
     if (ks.count() == 0) {
         QMessageBox::information(0, "Unable to open clusters", "You must select at least one cluster.");
         return Q_NULLPTR;
     }
-    qDebug() << __FILE__ << __LINE__;
     MVClusterWidget* X = new MVClusterWidget(c->mvContext2());
     X->setLabelsToUse(ks);
     X->setFeatureMode("pca");
-
-    qDebug() << __FILE__ << __LINE__;
 
     return X;
 }

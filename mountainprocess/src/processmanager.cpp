@@ -96,8 +96,9 @@ bool ProcessManager::loadProcessors(const QString& path, bool recursive)
 {
     QStringList fnames = QDir(path).entryList(QStringList("*.mp"), QDir::Files, QDir::Name);
     foreach (QString fname, fnames) {
-        if (!this->loadProcessorFile(path + "/" + fname))
+        if (!this->loadProcessorFile(path + "/" + fname)) {
             return false;
+        }
     }
     if (recursive) {
         QStringList subdirs = QDir(path).entryList(QStringList("*"), QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
@@ -120,7 +121,7 @@ bool ProcessManager::loadProcessorFile(const QString& path)
             QProcess pp;
             pp.start(path, QStringList("spec"));
             if (!pp.waitForFinished()) {
-                qCritical() << "Problem with executable processor file, waiting for finish: " + path;
+                qWarning() << "Problem with executable processor file, waiting for finish: " + path;
                 return false;
             }
             pp.waitForReadyRead();
@@ -134,7 +135,7 @@ bool ProcessManager::loadProcessorFile(const QString& path)
                     QJsonParseError error;
                     QJsonObject obj = QJsonDocument::fromJson(json.toLatin1(), &error).object();
                     if (error.error != QJsonParseError::NoError) {
-                        qCritical() << "Executable processor file did not return output for spec: " + path;
+                        qWarning() << "Executable processor file did not return output for spec: " + path;
                         return false;
                     }
                     else {
@@ -142,7 +143,7 @@ bool ProcessManager::loadProcessorFile(const QString& path)
                     }
                 }
                 else {
-                    qCritical() << "File is too large to be a text file. Executable processor file did not return output for spec: " + path;
+                    qWarning() << "File is too large to be a text file. Executable processor file did not return output for spec: " + path;
                     return false;
                 }
             }
@@ -154,30 +155,30 @@ bool ProcessManager::loadProcessorFile(const QString& path)
     else {
         json = TextFile::read(path);
         if (json.isEmpty()) {
-            qCritical() << "Processor file is empty: " + path;
+            qWarning() << "Processor file is empty: " + path;
             return false;
         }
     }
     QJsonParseError error;
     QJsonObject obj = QJsonDocument::fromJson(json.toLatin1(), &error).object();
     if (error.error != QJsonParseError::NoError) {
-        qCritical() << "Json parse error: " << error.errorString();
+        qWarning() << "Json parse error: " << error.errorString();
         return false;
     }
     if (!obj["processors"].isArray()) {
-        qCritical() << "Problem with processor file: processors field is missing or not any array: " + path;
+        qWarning() << "Problem with processor file: processors field is missing or not any array: " + path;
         return false;
     }
     QJsonArray processors = obj["processors"].toArray();
     for (int i = 0; i < processors.count(); i++) {
         if (!processors[i].isObject()) {
-            qCritical() << "Problem with processor file: processor is not an object: " + path;
+            qWarning() << "Problem with processor file: processor is not an object: " + path;
             return false;
         }
         MLProcessor P = d->create_processor_from_json_object(processors[i].toObject());
         P.basepath = QFileInfo(path).path();
         if (P.name.isEmpty()) {
-            qCritical() << "Problem with processor file: processor error: " + path;
+            qWarning() << "Problem with processor file: processor error: " + path;
             return false;
         }
         d->m_processors[P.name] = P;

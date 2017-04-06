@@ -452,7 +452,7 @@ QSet<QString> get_pairs_to_compare(const DiskReadMda32& X, const DiskReadMda& F,
         QList<bigint> inds = get_sort_indices_bigint(dists);
         int num0 = 0;
         for (bigint a = 0; (a < inds.count()) && (num0 < num_comparisons_per_cluster); a++) {
-            if ((a < min_num_comparisons_per_cluster) || (correlations[a] >= 0.9)) {
+            if ((a < min_num_comparisons_per_cluster) || (correlations[a] >= 0.8)) {
                 int k2 = cluster_numbers[inds[a]];
                 if (k2 != k1) {
                     ret.insert(QString("%1-%2").arg(k1).arg(k2));
