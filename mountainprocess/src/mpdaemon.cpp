@@ -1326,16 +1326,18 @@ void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, 
     QString script;
     script += "#!/bin/bash\n\n";
     script += exe_command + " &\n";
-    script += "cmdpid=$!\n";
-    script += "trap \"kill $cmdpid; exit 255;\" SIGINT SIGTERM\n";
-    script += QString("while kill -0 %1 >/dev/null 2>&1; do\n").arg(pid);
+    script += "cmdpid=$!\n"; //get the pid of the exe_command
+    script += "trap \"kill $cmdpid; exit 255;\" SIGINT SIGTERM\n"; //capture the terminate signal and pass it on
+    script += QString("while kill -0 %1 >/dev/null 2>&1; do\n").arg(pid); //while the (parent) pid still exists
     script += "    if kill -0 $cmdpid > /dev/null 2>&1; then\n";
-    script += "        sleep 1;\n";
-    script += "    else\n";
-    script += "        exit 0;\n";
+    script += "        sleep 1;\n"; //we are still going
+    script += "    else\n"; //else the exe process is done
+    script += "        wait $cmdpid\n"; //get the return code for the process that has already completed
+    script += "        exit $?\n";
     script += "    fi\n";
     script += "done ;\n";
-    script += "kill $cmdpid\n";
+    script += "kill $cmdpid\n"; //the parent pid is gone
+    script += "exit 255\n"; //return error exit code
 
     TextFile::write(bash_script_fname, script);
     QProcessManager* manager = ObjectRegistry::getObject<QProcessManager>();

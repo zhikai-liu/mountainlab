@@ -103,7 +103,6 @@ public:
     bool isEnabled(MVAbstractContext* context) const Q_DECL_OVERRIDE;
 };
 
-
 /////////////////////////////////////////////////////////////////////////////
 class CompareClustersFactory : public MVAbstractViewFactory {
     Q_OBJECT

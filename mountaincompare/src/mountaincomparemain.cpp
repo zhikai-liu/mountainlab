@@ -183,7 +183,6 @@ int main(int argc, char* argv[])
     W->registerViewFactory(new MVPCAFeatures1Factory(W));
     W->registerViewFactory(new MVPCAFeatures2Factory(W));
 
-
     W->addControl(new MVOpenViewsControl(context, W), true);
     W->addControl(new MVTimeseriesControl(context->mvContext1(), W), true);
 
@@ -193,7 +192,7 @@ int main(int argc, char* argv[])
     Initialize_confusion_matrix* ICM = new Initialize_confusion_matrix; //need pointer to go into lambda expression
     ICM->firings1 = context->firings1().makePath();
     ICM->firings2 = context->firings2().makePath();
-    ICM->relabel = true;
+    ICM->relabel = CLP.named_parameters.contains("relabel");
     QObject::connect(ICM, &Initialize_confusion_matrix::finishedInGui, [=]() {
         if (ICM->relabel)
             context->setFirings2(DiskReadMda(ICM->firings2_relabeled));

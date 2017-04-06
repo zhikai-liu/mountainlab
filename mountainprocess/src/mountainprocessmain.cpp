@@ -337,7 +337,7 @@ int main(int argc, char* argv[])
             }
 
             printf("---------------------------------------------------------------\n");
-            printf("PROCESS COMPLETED: %s\n", info.processor_name.toLatin1().data());
+            printf("PROCESS COMPLETED (exit code = %d): %s\n", info.exit_code, info.processor_name.toLatin1().data());
             if (!error_message.isEmpty())
                 printf("ERROR: %s\n", error_message.toLatin1().data());
             int mb = compute_peak_mem_bytes(info.monitor_stats) / 1000000;

@@ -272,8 +272,8 @@ MVAbstractView* MVPCAFeatures1Factory::createView(MVAbstractContext* context)
 
     QList<MCCluster> clusters = c->selectedClusters();
     QList<int> ks;
-    foreach (MCCluster C,clusters) {
-        if (C.firings_num==1)
+    foreach (MCCluster C, clusters) {
+        if (C.firings_num == 1)
             ks << C.num;
     }
     qSort(ks);
@@ -294,8 +294,8 @@ bool MVPCAFeatures1Factory::isEnabled(MVAbstractContext* context) const
 
     QList<MCCluster> clusters = c->selectedClusters();
     QList<int> ks;
-    foreach (MCCluster C,clusters) {
-        if (C.firings_num==1)
+    foreach (MCCluster C, clusters) {
+        if (C.firings_num == 1)
             ks << C.num;
     }
 
@@ -334,8 +334,8 @@ MVAbstractView* MVPCAFeatures2Factory::createView(MVAbstractContext* context)
     QList<MCCluster> clusters = c->selectedClusters();
     qDebug() << __FILE__ << __LINE__;
     QList<int> ks;
-    foreach (MCCluster C,clusters) {
-        if (C.firings_num==2)
+    foreach (MCCluster C, clusters) {
+        if (C.firings_num == 2)
             ks << C.num;
     }
     qDebug() << __FILE__ << __LINE__;
@@ -362,8 +362,8 @@ bool MVPCAFeatures2Factory::isEnabled(MVAbstractContext* context) const
 
     QList<MCCluster> clusters = c->selectedClusters();
     QList<int> ks;
-    foreach (MCCluster C,clusters) {
-        if (C.firings_num==2)
+    foreach (MCCluster C, clusters) {
+        if (C.firings_num == 2)
             ks << C.num;
     }
 
@@ -406,6 +406,3 @@ MVAbstractView* CompareClustersFactory::createView(MVAbstractContext* context)
 
     return X;
 }
-
-
-

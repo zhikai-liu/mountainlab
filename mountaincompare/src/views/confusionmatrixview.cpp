@@ -519,7 +519,7 @@ void ConfusionMatrixViewPrivate::update_permutations()
             int m = sort_inds[sort_inds.count() - 1 - ii];
             perm_rows[m] = ii;
             int n = m_optimal_label_map.value(m) - 1;
-            if ((n >= 0)&&(n<N-1)) {
+            if ((n >= 0) && (n < N - 1)) {
                 perm_cols[n] = ii;
             }
         }
@@ -558,7 +558,7 @@ void ConfusionMatrixViewPrivate::update_permutations()
             int n = sort_inds[sort_inds.count() - 1 - ii];
             perm_cols[n] = ii;
             int m = m_optimal_label_map.indexOf(n + 1);
-            if ((m >= 0)&&(m<M-1)) {
+            if ((m >= 0) && (m < M - 1)) {
                 perm_rows[m] = ii;
             }
         }
