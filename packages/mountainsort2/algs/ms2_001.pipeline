@@ -14,7 +14,8 @@ function main(params) {
 		subsample_factor:1,
 		multichannel:'false',
 		merge_across_channels:'false',
-		adjacency_radius:0
+		adjacency_radius:0,
+		prescribed_event_times:'' //you can supply your own file of event times (only works for multichannel=false). Otherwise, if empty, it will detect the events as part of processing
 	});
 	var clip_size=Math.floor(params.clip_size_msec/1000*params.samplerate);
 
@@ -82,7 +83,7 @@ function main(params) {
 		var outputs1={event_times_out:'',amplitudes_out:'',clips_out:''}; //specify which outputs to create
 		if (params.whiten=='true') outputs1.whitening_matrix_out='';
 		var results1=Process('mountainsort.ms2_001',
-				{timeseries:filt},params2,outputs1
+				{timeseries:filt,prescribed_event_times:params.prescribed_event_times},params2,outputs1
 		);
 
 		//the actual sorting

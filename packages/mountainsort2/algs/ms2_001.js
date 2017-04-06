@@ -10,6 +10,7 @@ exports.spec=function() {
 
 	spec0.inputs=[
         {name:"timeseries",description:"preprocessed timeseries (M x N)",optional:false},
+        {name:"prescribed_event_times",description:"Timestamps for all events",optional:true},
         {name:"event_times",description:"Timestamps for all events",optional:true},
         {name:"amplitudes",description:"Amplitudes for all events",optional:true},
         {name:"clips",description:"Event clips (perhaps whitened)",optional:true}
@@ -253,12 +254,23 @@ exports.run=function(opts,callback) {
 							cb2();
 						});
 					});
-					intersegment_steps.push(function(cb2) {
-						console.log ('>>>>>>>>>>>> pre-sort: Detect events for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
-						detect_events(segment.timeseries0,segment.event_times0,central_channel2,function() {
-							cb2();
+					if (opts.prescribed_event_times) {
+						//use has supplied the event times as input
+						intersegment_steps.push(function(cb2) {
+							console.log ('>>>>>>>>>>>> pre-sort: Using input event times for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+							extract_segment_event_times(opts.prescribed_event_times,segment.event_times0,segment.t1,segment.t2,function() {
+								cb2();
+							});
 						});
-					});
+					}
+					else {
+						intersegment_steps.push(function(cb2) {
+							console.log ('>>>>>>>>>>>> pre-sort: Detect events for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
+							detect_events(segment.timeseries0,segment.event_times0,central_channel2,function() {
+								cb2();
+							});
+						});
+					}
 					intersegment_steps.push(function(cb2) {
 						console.log ('>>>>>>>>>>>> pre-sort: Compute amplitudes for segment '+(iseg+1)+' ('+segment.t1+','+segment.t2+')...\n');	
 						compute_amplitudes(segment.timeseries0,segment.event_times0,central_channel2,segment.amplitudes0,function() {
@@ -578,6 +590,15 @@ exports.run=function(opts,callback) {
 				subsample_factor:opts.subsample_factor||1,
 				_request_num_threads:num_intersegment_threads	
 			},
+			callback
+		);
+	}
+
+	function extract_segment_event_times(event_times,event_times_out,t1,t2,callback) {
+		common.mp_exec_process('mountainsort.extract_segment_firings',
+			{firings:event_times},
+			{firings_out:event_times_out},
+			{t1:t1,t2:t2},
 			callback
 		);
 	}

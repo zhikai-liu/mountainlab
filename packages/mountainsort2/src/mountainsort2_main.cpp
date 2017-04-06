@@ -57,7 +57,7 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.extract_segment_firings", "0.1");
+        ProcessorSpec X("mountainsort.extract_segment_firings", "0.11");
         X.addInputs("firings");
         X.addOutputs("firings_out");
         X.addRequiredParameters("t1", "t2");
