@@ -49,6 +49,13 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
+        ProcessorSpec X("mountainsort.extract_geom_channels", "0.11");
+        X.addInputs("geom");
+        X.addOutputs("geom_out");
+        X.addRequiredParameters("channels");
+        processors.push_back(X.get_spec());
+    }
+    {
         ProcessorSpec X("mountainsort.extract_segment_timeseries", "0.1");
         X.addInputs("timeseries");
         X.addOutputs("timeseries_out");
@@ -141,9 +148,8 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.consolidate_clusters", "0.1");
-        X.addInputs("clips", "labels");
-        X.addOptionalInputs("amplitudes");
+        ProcessorSpec X("mountainsort.consolidate_clusters", "0.12");
+        X.addInputs("timeseries", "event_times", "labels");
         X.addOutputs("labels_out");
         X.addRequiredParameters("central_channel");
         processors.push_back(X.get_spec());
@@ -315,6 +321,13 @@ int main(int argc, char* argv[])
         QList<int> channels = MLUtil::stringListToIntList(channels_str);
         ret = p_extract_neighborhood_timeseries(timeseries, timeseries_out, channels);
     }
+    else if (arg1 == "mountainsort.extract_geom_channels") {
+        QString geom = CLP.named_parameters["geom"].toString();
+        QString geom_out = CLP.named_parameters["geom_out"].toString();
+        QStringList channels_str = CLP.named_parameters["channels"].toString().split(",", QString::SkipEmptyParts);
+        QList<int> channels = MLUtil::stringListToIntList(channels_str);
+        ret = p_extract_geom_channels(geom, geom_out, channels);
+    }
     else if (arg1 == "mountainsort.extract_segment_timeseries") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries"]);
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
@@ -416,12 +429,13 @@ int main(int argc, char* argv[])
         ret = p_reorder_labels(templates, firings, firings_out);
     }
     else if (arg1 == "mountainsort.consolidate_clusters") {
-        QString clips = CLP.named_parameters["clips"].toString();
+        QString timeseries = CLP.named_parameters["timeseries"].toString();
+        QString event_times = CLP.named_parameters["event_times"].toString();
         QString labels = CLP.named_parameters["labels"].toString();
         QString labels_out = CLP.named_parameters["labels_out"].toString();
         Consolidate_clusters_opts opts;
         opts.central_channel = CLP.named_parameters["central_channel"].toInt();
-        ret = p_consolidate_clusters(clips, labels, labels_out, opts);
+        ret = p_consolidate_clusters(timeseries, event_times, labels, labels_out, opts);
     }
     else if (arg1 == "mountainsort.create_firings") {
         QString event_times = CLP.named_parameters["event_times"].toString();

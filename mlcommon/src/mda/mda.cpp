@@ -178,7 +178,7 @@ bool Mda::write32i(const QString& path) const
 
 bool Mda::writeCsv(const QString& path) const
 {
-    return d->write_to_text_file(path);
+    return d->write_to_text_file(path, ',');
 }
 
 bool Mda::read(const char* path)
@@ -217,8 +217,11 @@ bool Mda::readCsv(const QString& path)
 
 bool Mda::write8(const char* path) const
 {
-    if ((QString(path).endsWith(".txt")) || (QString(path).endsWith(".csv"))) {
-        return d->write_to_text_file(path);
+    if (QString(path).endsWith(".txt")) {
+        return d->write_to_text_file(path, ' ');
+    }
+    if (QString(path).endsWith(".csv")) {
+        return d->write_to_text_file(path, ',');
     }
     FILE* output_file = fopen(path, "wb");
     if (!output_file) {
@@ -242,8 +245,11 @@ bool Mda::write8(const char* path) const
 
 bool Mda::write32(const char* path) const
 {
-    if ((QString(path).endsWith(".txt")) || (QString(path).endsWith(".csv"))) {
-        return d->write_to_text_file(path);
+    if (QString(path).endsWith(".txt")) {
+        return d->write_to_text_file(path, ' ');
+    }
+    if (QString(path).endsWith(".csv")) {
+        return d->write_to_text_file(path, ',');
     }
     FILE* output_file = fopen(path, "wb");
     if (!output_file) {
@@ -267,8 +273,11 @@ bool Mda::write32(const char* path) const
 
 bool Mda::write64(const char* path) const
 {
-    if ((QString(path).endsWith(".txt")) || (QString(path).endsWith(".csv"))) {
-        return d->write_to_text_file(path);
+    if (QString(path).endsWith(".txt")) {
+        return d->write_to_text_file(path, ' ');
+    }
+    if (QString(path).endsWith(".csv")) {
+        return d->write_to_text_file(path, ',');
     }
     FILE* output_file = fopen(path, "wb");
     if (!output_file) {
