@@ -491,7 +491,7 @@ exports.run=function(opts,callback) {
 	function STEP_consolidate_clusters(consolidate_clusters_callback) {
 		console.log ('-------------------- CONSOLIDATING CLUSTERS -------------------');
 		common.mp_exec_process('mountainsort.consolidate_clusters',
-			{timeseries:opts.timeseries,event_times,labels:labels},
+			{timeseries:opts.timeseries,event_times:event_times,labels:labels},
 			{labels_out:labels2},
 			{
 				central_channel:opts.central_channel,

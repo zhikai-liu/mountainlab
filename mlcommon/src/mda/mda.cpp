@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <icounter.h>
 #include <objectregistry.h>
+#include <QFile>
 
 #ifdef USE_SSE2
 static void* malloc_aligned(const int alignValue, const bigint nbytes)
@@ -303,28 +304,36 @@ QByteArray Mda::toByteArray8() const
 {
     QString path = CacheManager::globalInstance()->makeLocalFile("", CacheManager::ShortTerm);
     write8(path);
-    return MLUtil::readByteArray(path);
+    QByteArray ret=MLUtil::readByteArray(path);
+    QFile::remove(path);
+    return ret;
 }
 
 QByteArray Mda::toByteArray32() const
 {
     QString path = CacheManager::globalInstance()->makeLocalFile("", CacheManager::ShortTerm);
     write32(path);
-    return MLUtil::readByteArray(path);
+    QByteArray ret=MLUtil::readByteArray(path);
+    QFile::remove(path);
+    return ret;
 }
 
 QByteArray Mda::toByteArray64() const
 {
     QString path = CacheManager::globalInstance()->makeLocalFile("", CacheManager::ShortTerm);
     write64(path);
-    return MLUtil::readByteArray(path);
+    QByteArray ret=MLUtil::readByteArray(path);
+    QFile::remove(path);
+    return ret;
 }
 
 bool Mda::fromByteArray(const QByteArray& X)
 {
     QString path = CacheManager::globalInstance()->makeLocalFile("", CacheManager::ShortTerm);
     MLUtil::writeByteArray(path, X);
-    return this->read(path);
+    bool ret=this->read(path);
+    QFile::remove(path);
+    return ret;
 }
 
 int Mda::ndims() const
