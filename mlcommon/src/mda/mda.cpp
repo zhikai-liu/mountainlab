@@ -304,7 +304,7 @@ QByteArray Mda::toByteArray8() const
 {
     QString path = CacheManager::globalInstance()->makeLocalFile("", CacheManager::ShortTerm);
     write8(path);
-    QByteArray ret=MLUtil::readByteArray(path);
+    QByteArray ret = MLUtil::readByteArray(path);
     QFile::remove(path);
     return ret;
 }
@@ -313,7 +313,7 @@ QByteArray Mda::toByteArray32() const
 {
     QString path = CacheManager::globalInstance()->makeLocalFile("", CacheManager::ShortTerm);
     write32(path);
-    QByteArray ret=MLUtil::readByteArray(path);
+    QByteArray ret = MLUtil::readByteArray(path);
     QFile::remove(path);
     return ret;
 }
@@ -322,7 +322,7 @@ QByteArray Mda::toByteArray64() const
 {
     QString path = CacheManager::globalInstance()->makeLocalFile("", CacheManager::ShortTerm);
     write64(path);
-    QByteArray ret=MLUtil::readByteArray(path);
+    QByteArray ret = MLUtil::readByteArray(path);
     QFile::remove(path);
     return ret;
 }
@@ -331,7 +331,7 @@ bool Mda::fromByteArray(const QByteArray& X)
 {
     QString path = CacheManager::globalInstance()->makeLocalFile("", CacheManager::ShortTerm);
     MLUtil::writeByteArray(path, X);
-    bool ret=this->read(path);
+    bool ret = this->read(path);
     QFile::remove(path);
     return ret;
 }

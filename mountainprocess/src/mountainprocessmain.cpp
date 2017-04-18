@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
             QString tmp_fname = CacheManager::globalInstance()->makeLocalFile() + ".prvs";
             QString json = QJsonDocument(missing_prvs).toJson();
             TextFile::write(tmp_fname, json);
-            CacheManager::globalInstance()->setTemporaryFileDuration(tmp_fname,600);
+            CacheManager::globalInstance()->setTemporaryFileDuration(tmp_fname, 600);
             QString cmd = QString("prv-gui %1").arg(tmp_fname);
             QProcess::startDetached(cmd);
             return -1;

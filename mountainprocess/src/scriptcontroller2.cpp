@@ -743,7 +743,7 @@ bool ScriptController2Private::handle_running_processes()
                     if (tmp_json.isEmpty()) {
                         qWarning() << "process output file is empty or does not exist for processor: " + node->processor_name;
                     }
-                    CacheManager::globalInstance()->setTemporaryFileDuration(node->process_output_fname,600);
+                    CacheManager::globalInstance()->setTemporaryFileDuration(node->process_output_fname, 600);
                     //QFile::remove(node->process_output_fname);
                     QJsonArray PP = m_results["processes"].toArray();
                     while (i >= PP.count())

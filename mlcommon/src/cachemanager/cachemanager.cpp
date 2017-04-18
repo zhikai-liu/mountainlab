@@ -138,57 +138,58 @@ QString CacheManager::localTempPath()
 
 void CacheManager::setTemporaryFileDuration(QString path, qint64 duration_sec)
 {
-    duration_sec=10;
+    duration_sec = 10;
 
-    QString str=MLUtil::computeSha1SumOfString(path);
+    QString str = MLUtil::computeSha1SumOfString(path);
     if (!QFile::exists(QString("%1/expiration_records").arg(localTempPath())))
         QDir(localTempPath()).mkdir("expiration_records");
-    QString fname=QString("%1/expiration_records/%2.json").arg(CacheManager::localTempPath()).arg(str);
+    QString fname = QString("%1/expiration_records/%2.json").arg(CacheManager::localTempPath()).arg(str);
     QJsonObject obj;
     if (QFile::exists(fname)) {
-        obj=QJsonDocument::fromJson(TextFile::read(fname).toUtf8()).object();
+        obj = QJsonDocument::fromJson(TextFile::read(fname).toUtf8()).object();
     }
-    obj["path"]=path;
+    obj["path"] = path;
     if (QFile::exists(path)) {
-        obj["creation_timestamp"]=QFileInfo(path).created().toString("yyyy-MM-dd hh:mm:ss");
+        obj["creation_timestamp"] = QFileInfo(path).created().toString("yyyy-MM-dd hh:mm:ss");
     }
     else {
-        obj["creation_timestamp"]="";
+        obj["creation_timestamp"] = "";
     }
-    QDateTime timestamp=QFileInfo(path).created().addSecs(duration_sec);
-    obj["expiration_timestamp"]=timestamp.toString("yyyy-MM-dd hh:mm:ss");;
+    QDateTime timestamp = QFileInfo(path).created().addSecs(duration_sec);
+    obj["expiration_timestamp"] = timestamp.toString("yyyy-MM-dd hh:mm:ss");
+    ;
 
-    QString json=QJsonDocument(obj).toJson();
-    TextFile::write(fname,json);
+    QString json = QJsonDocument(obj).toJson();
+    TextFile::write(fname, json);
 }
 
 void CacheManager::setTemporaryFileExpirePid(QString path, qint64 pid)
 {
-    QString str=MLUtil::computeSha1SumOfString(path);
+    QString str = MLUtil::computeSha1SumOfString(path);
     if (!QFile::exists(QString("%1/expiration_records").arg(localTempPath())))
         QDir(localTempPath()).mkdir("expiration_records");
-    QString fname=QString("%1/expiration_records/%2.json").arg(CacheManager::localTempPath()).arg(str);
+    QString fname = QString("%1/expiration_records/%2.json").arg(CacheManager::localTempPath()).arg(str);
     QJsonObject obj;
     if (QFile::exists(fname)) {
-        obj=QJsonDocument::fromJson(TextFile::read(fname).toUtf8()).object();
+        obj = QJsonDocument::fromJson(TextFile::read(fname).toUtf8()).object();
     }
-    obj["path"]=path;
+    obj["path"] = path;
     if (QFile::exists(path)) {
-        obj["creation_timestamp"]=QFileInfo(path).created().toString("yyyy-MM-dd hh:mm:ss");
+        obj["creation_timestamp"] = QFileInfo(path).created().toString("yyyy-MM-dd hh:mm:ss");
     }
     else {
-        obj["creation_timestamp"]="";
+        obj["creation_timestamp"] = "";
     }
-    obj["expiration_pid"]=pid;
+    obj["expiration_pid"] = pid;
 
-    QString json=QJsonDocument(obj).toJson();
-    TextFile::write(fname,json);
+    QString json = QJsonDocument(obj).toJson();
+    TextFile::write(fname, json);
 }
 
 QString CacheManager::makeExpiringFile(QString file_name, qint64 duration_sec)
 {
-    QString ret=this->makeLocalFile(file_name,ShortTerm);
-    this->setTemporaryFileDuration(ret,duration_sec);
+    QString ret = this->makeLocalFile(file_name, ShortTerm);
+    this->setTemporaryFileDuration(ret, duration_sec);
     return ret;
 }
 
@@ -233,25 +234,28 @@ void sort_by_elapsed(QList<CMFileRec>& records)
     qSort(records.begin(), records.end(), CMFileRec_comparer());
 }
 
-bool pid_exists(int pid) {
+bool pid_exists(int pid)
+{
     return (kill(pid, 0) == 0);
 }
 
-bool is_expired(CMFileRec rec) {
-    QString fname=QFileInfo(rec.path).fileName();
-    QStringList list=fname.split("--");
-    if (list.count()<2) return false;
-    QStringList list2=list.value(0).split(".");
-    foreach (QString str,list2) {
-        QStringList vals=str.split("=");
-        if (vals.count()==2) {
-            if (vals.value(0)=="dursec") {
-                bigint numsec=vals.value(1).toLongLong();
-                if (numsec<rec.elapsed_sec)
+bool is_expired(CMFileRec rec)
+{
+    QString fname = QFileInfo(rec.path).fileName();
+    QStringList list = fname.split("--");
+    if (list.count() < 2)
+        return false;
+    QStringList list2 = list.value(0).split(".");
+    foreach (QString str, list2) {
+        QStringList vals = str.split("=");
+        if (vals.count() == 2) {
+            if (vals.value(0) == "dursec") {
+                bigint numsec = vals.value(1).toLongLong();
+                if (numsec < rec.elapsed_sec)
                     return true;
             }
-            else if (vals.value(0)=="pid") {
-                int pid=vals.value(1).toInt();
+            else if (vals.value(0) == "pid") {
+                int pid = vals.value(1).toInt();
                 if (!pid_exists(pid))
                     return true;
             }
@@ -263,61 +267,60 @@ bool is_expired(CMFileRec rec) {
 void CacheManager::removeExpiredFiles()
 {
     //get a list of the expiration records
-    QString dirname=QString("%1/expiration_records").arg(CacheManager::localTempPath());
-    QStringList list=QDir(dirname).entryList(QStringList("*.json"),QDir::Files,QDir::Name);
-    foreach (QString str,list) {
-        QString fname=QString("%1/%2").arg(dirname).arg(str);
+    QString dirname = QString("%1/expiration_records").arg(CacheManager::localTempPath());
+    QStringList list = QDir(dirname).entryList(QStringList("*.json"), QDir::Files, QDir::Name);
+    foreach (QString str, list) {
+        QString fname = QString("%1/%2").arg(dirname).arg(str);
         //make sure it was created at least a few seconds ago
-        if (QFileInfo(fname).lastModified().secsTo(QDateTime::currentDateTime())>3) {
-            QString json=TextFile::read(fname);
-            QJsonObject obj=QJsonDocument::fromJson(json.toUtf8()).object();
-            QString path0=obj["path"].toString();
-            QString creation_timestamp_str=obj["creation_timestamp"].toString();
+        if (QFileInfo(fname).lastModified().secsTo(QDateTime::currentDateTime()) > 3) {
+            QString json = TextFile::read(fname);
+            QJsonObject obj = QJsonDocument::fromJson(json.toUtf8()).object();
+            QString path0 = obj["path"].toString();
+            QString creation_timestamp_str = obj["creation_timestamp"].toString();
             //QDateTime creation_timestamp=QDateTime::fromString(creation_timestamp_str,"yyyy-MM-dd hh:mm:ss");
-            QString expiration_timestamp_str=obj["expiration_timestamp"].toString();
-            QDateTime expiration_timestamp=QDateTime::fromString(expiration_timestamp_str);
-            int expiration_pid=obj["expiration_pid"].toInt();
+            QString expiration_timestamp_str = obj["expiration_timestamp"].toString();
+            QDateTime expiration_timestamp = QDateTime::fromString(expiration_timestamp_str, "yyyy-MM-dd hh:mm:ss");
+            int expiration_pid = obj["expiration_pid"].toInt();
             if (QFile(path0).exists()) {
                 //the temporary file exists
-                bool ok=true;
+                bool ok = true;
                 if (!creation_timestamp_str.isEmpty()) {
                     //there was a creation timestamp. let's see if it matches.
-                    if (QFileInfo(path0).created().toString("yyyy-MM-dd hh:mm:ss")!=creation_timestamp_str) {
+                    if (QFileInfo(path0).created().toString("yyyy-MM-dd hh:mm:ss") != creation_timestamp_str) {
                         qWarning() << "Temporary file creation timestamp does not match that in the expiration record. Removing expiration record.";
                         QFile::remove(fname);
-                        ok=false;
+                        ok = false;
                     }
                 }
-                if ((ok)&&(!expiration_timestamp_str.isEmpty())) {
+                if ((ok) && (!expiration_timestamp_str.isEmpty())) {
                     //an expiration time exists
-                    if (expiration_timestamp.secsTo(QDateTime::currentDateTime())>0) {
+                    if (expiration_timestamp.secsTo(QDateTime::currentDateTime()) > 0) {
                         //the file is expired
-                        qDebug().noquote() << "Removing expired file: "+path0;
+                        qDebug().noquote() << "Removing expired file: " + path0;
                         if (QFile::remove(path0)) {
                             QFile::remove(fname);
                         }
                         else {
-                            qWarning() << "Unable to remove expired temporary file: "+path0;
+                            qWarning() << "Unable to remove expired temporary file: " + path0;
                         }
                     }
                 }
-                if ((ok)&&(expiration_pid)) {
+                if ((ok) && (expiration_pid)) {
                     if (!pid_exists(expiration_pid)) {
-                       //the pid no longer exists
-                        qDebug().noquote() << "Removing expired file (pid is gone): "+path0;
+                        //the pid no longer exists
+                        qDebug().noquote() << "Removing expired file (pid is gone): " + path0;
                         if (QFile::remove(path0)) {
                             QFile::remove(fname);
                         }
                         else {
-                            qWarning() << "Unable to remove expired temporary file: "+path0;
+                            qWarning() << "Unable to remove expired temporary file: " + path0;
                         }
                     }
                 }
-
             }
             else {
                 //the temporary file does not exist
-                if (QFileInfo(fname).lastModified().secsTo(QDateTime::currentDateTime())>10) {
+                if (QFileInfo(fname).lastModified().secsTo(QDateTime::currentDateTime()) > 10) {
                     //the expiration record has been around for at least 10 seconds
                     QFile::remove(fname);
                 }
