@@ -138,7 +138,7 @@ QString CacheManager::localTempPath()
 
 void CacheManager::setTemporaryFileDuration(QString path, qint64 duration_sec)
 {
-    duration_sec = 10;
+    //duration_sec = 10;
 
     QString str = MLUtil::computeSha1SumOfString(path);
     if (!QFile::exists(QString("%1/expiration_records").arg(localTempPath())))
