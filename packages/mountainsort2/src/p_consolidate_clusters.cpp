@@ -162,8 +162,8 @@ Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, co
     bigint bb = 0;
     for (bigint k = 0; k < Kmax; k++) {
         for (bigint aa = 0; aa < M * T; aa++) {
-            if (counts[k - 1])
-                templates_ptr[bb] = sums_ptr[bb] / counts[k - 1];
+            if (counts[k])
+                templates_ptr[bb] = sums_ptr[bb] / counts[k];
             bb++;
         }
     }

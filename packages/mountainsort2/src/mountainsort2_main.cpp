@@ -148,10 +148,11 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.consolidate_clusters", "0.12");
+        ProcessorSpec X("mountainsort.consolidate_clusters", "0.13");
         X.addInputs("timeseries", "event_times", "labels");
         X.addOutputs("labels_out");
         X.addRequiredParameters("central_channel");
+        X.addOptionalParameter("consolidation_factor","",0.9);
         processors.push_back(X.get_spec());
     }
     {
@@ -435,6 +436,7 @@ int main(int argc, char* argv[])
         QString labels_out = CLP.named_parameters["labels_out"].toString();
         Consolidate_clusters_opts opts;
         opts.central_channel = CLP.named_parameters["central_channel"].toInt();
+        opts.consolidation_factor = CLP.named_parameters["consolidation_factor"].toDouble();
         ret = p_consolidate_clusters(timeseries, event_times, labels, labels_out, opts);
     }
     else if (arg1 == "mountainsort.create_firings") {
