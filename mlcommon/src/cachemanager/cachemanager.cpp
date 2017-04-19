@@ -296,7 +296,6 @@ void CacheManager::removeExpiredFiles()
                     //an expiration time exists
                     if (expiration_timestamp.secsTo(QDateTime::currentDateTime()) > 0) {
                         //the file is expired
-                        qDebug().noquote() << "Removing expired file: " + path0;
                         if (QFile::remove(path0)) {
                             QFile::remove(fname);
                         }
@@ -308,7 +307,6 @@ void CacheManager::removeExpiredFiles()
                 if ((ok) && (expiration_pid)) {
                     if (!pid_exists(expiration_pid)) {
                         //the pid no longer exists
-                        qDebug().noquote() << "Removing expired file (pid is gone): " + path0;
                         if (QFile::remove(path0)) {
                             QFile::remove(fname);
                         }
@@ -333,7 +331,6 @@ void CacheManager::removeExpiredFiles()
     for (int i=0; i<recs.count(); i++) {
         CMFileRec rec=recs[i];
         if (is_expired(rec)) {
-            qDebug().noquote() << "Removing expired temporary file: "+rec.path;
             QFile::remove(rec.path);
         }
     }
