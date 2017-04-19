@@ -111,7 +111,7 @@ MVSpikeSprayView::MVSpikeSprayView(MVAbstractContext* context)
     d->m_context = c;
 
     recalculateOnOptionChanged("clip_size");
-    recalculateOnOptionChanged("timeseries_for_spikespray");
+    //recalculateOnOptionChanged("timeseries_for_spikespray");
     recalculateOn(c, SIGNAL(clusterMergeChanged()));
     recalculateOn(c, SIGNAL(timeseriesNamesChanged()));
     recalculateOn(c, SIGNAL(visibleChannelsChanged()));
@@ -225,9 +225,10 @@ void MVSpikeSprayView::setLabelsToUse(const QSet<int>& labels_to_use)
 
 void MVSpikeSprayView::prepareCalculation()
 {
-    QString timeseries_name = d->m_context->option("timeseries_for_spikespray").toString();
-    if (timeseries_name.isEmpty())
-        timeseries_name = d->m_context->currentTimeseriesName();
+    //QString timeseries_name = d->m_context->option("timeseries_for_spikespray").toString();
+    //if (timeseries_name.isEmpty())
+    //    timeseries_name = d->m_context->currentTimeseriesName();
+    QString timeseries_name = d->m_context->currentTimeseriesName();
     this->setCalculatingMessage(QString("Calculating using %1...").arg(timeseries_name));
     d->m_labels_to_render.clear();
     d->m_computer.mlproxy_url = d->m_context->mlProxyUrl();
