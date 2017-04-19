@@ -42,7 +42,7 @@ This last command prints the path of the found file to standard output. Importan
 The PRV system does more than just provide universal pointers to large files. The .prv extension stands for 'provenance', and these files can also contain information about the sequence of operations that were used to create the file. It is assumed that each processing step was accomplished using mountainprocess (described elsewhere). This not only documents processing history, but also allows files that are not on the local machine to be recreated (assuming the necessary input files are present).
 
 Here is an example .prv file encapsulating a preprocessed raw data file called pre.mda.prv:
-```json
+```
 {
     "original_checksum": "2d38f234d30bc50b7b93aaefda4a8b668f3e5f46",
     "original_path": "0b7a1e3-whiten-timeseries_out.tmp",
@@ -103,7 +103,7 @@ Then bandpass_filter and whiten processors will then be run to recreate this fil
 The PRV system also enables storage of raw, intermediate, and result files on a remote server. Recall that a .prv file is a universal pointer to the original data file and does not contain any information about which servers the file may reside. This allows tremendous flexibility on how data may be stored or moved around without affecting the ability of researchers to access the binary files.
 
 In the mountainlab/mountainsort.user.json there are fields that can be specified for where prv-locate searches for the raw data, both on your local machine with local_search_paths and on remote servers.
-```json
+```
 “prv”:{
 	“local_search_paths”:[“examples”, “/path/to/your/data/dir”, “/path/to/other/data”],
 	“servers” : [
