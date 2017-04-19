@@ -32,11 +32,11 @@
 #include <QThreadPool>
 #include <QtConcurrentRun>
 #include <clustercontextmenuplugin.h>
-#include <firetrackview.h>
+//#include <firetrackview.h>
 #include <mvamphistview3.h>
 #include <mvclipswidget.h>
 #include <clustercontextmenuhandler.h>
-#include <clusterpaircontextmenuhandler.h>
+//#include <clusterpaircontextmenuhandler.h>
 #include <mvcrosscorrelogramswidget3.h>
 #include <mvdiscrimhistview.h>
 #include <qprocessmanager.h>
@@ -51,7 +51,7 @@
 #include <QFileDialog>
 #include <QSettings>
 #include <clipsviewplugin.h>
-#include <mvclusterordercontrol.h>
+//#include <mvclusterordercontrol.h>
 #include <clustermetricsplugin.h>
 #include <curationprogramplugin.h>
 #include "prvgui.h"
@@ -388,10 +388,10 @@ int main(int argc, char* argv[])
                 QString cluster_metrics_path = CLP.named_parameters["cluster_metrics"].toString();
                 dc.loadClusterMetricsFromFile(cluster_metrics_path);
             }
-            if (CLP.named_parameters.contains("cluster_pair_metrics")) {
+            /*if (CLP.named_parameters.contains("cluster_pair_metrics")) {
                 QString cluster_pair_metrics_path = CLP.named_parameters["cluster_pair_metrics"].toString();
                 dc.loadClusterPairMetricsFromFile(cluster_pair_metrics_path);
-            }
+            }*/
             if (CLP.named_parameters.contains("curation")) {
                 QString curation_program_path = CLP.named_parameters["curation"].toString();
                 QString js = TextFile::read(curation_program_path);
@@ -473,7 +473,7 @@ int main(int argc, char* argv[])
         W->addControl(new MVMergeControl(context, W), false);
         W->addControl(new MVPrefsControl(context, W), false);
 
-        W->addControl(new MVClusterOrderControl(context, W), false);
+        //W->addControl(new MVClusterOrderControl(context, W), false);
 
         a.processEvents();
 
@@ -921,7 +921,7 @@ void setup_main_window(MVMainWindow* W)
     W->registerViewFactory(new MVAmplitudeHistograms3Factory(W));
     W->registerViewFactory(new MVDiscrimHistFactory(W));
     //W->registerViewFactory(new MVDiscrimHistGuideFactory(W));
-    W->registerViewFactory(new MVFireTrackFactory(W));
+    //W->registerViewFactory(new MVFireTrackFactory(W));
 }
 
 bool check_whether_prv_objects_need_to_be_downloaded_or_regenerated(QJsonObject obj)

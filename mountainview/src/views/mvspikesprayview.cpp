@@ -137,6 +137,7 @@ MVSpikeSprayView::MVSpikeSprayView(MVAbstractContext* context)
     ActionFactory::addToToolbar(ActionFactory::ActionType::ZoomInVertical, this, SLOT(slot_vertical_zoom_in()));
     ActionFactory::addToToolbar(ActionFactory::ActionType::ZoomOutVertical, this, SLOT(slot_vertical_zoom_out()));
 
+    /*
     {
         QAction* A = new QAction("<-col", this);
         A->setProperty("action_type", "toolbar");
@@ -149,6 +150,7 @@ MVSpikeSprayView::MVSpikeSprayView(MVAbstractContext* context)
         QObject::connect(A, SIGNAL(triggered(bool)), this, SLOT(slot_shift_colors_right()));
         this->addAction(A);
     }
+    */
 
     {
         QAction* A = new QAction("Export static view", this);
@@ -362,7 +364,7 @@ void MVSpikeSprayView::slot_shift_colors_left(int step)
     int shift = c->option("cluster_color_index_shift", 0).toInt();
     shift += step;
     c->setOption("cluster_color_index_shift", shift);
-    //this->onCalculationFinished();
+    this->onCalculationFinished();
 }
 
 void MVSpikeSprayView::slot_shift_colors_right()

@@ -105,6 +105,7 @@ MVClusterWidget::MVClusterWidget(MVAbstractContext* context)
     this->setLayout(mainlayout);
 
     QHBoxLayout* bottom_panel = new QHBoxLayout;
+    /*
     {
         QCheckBox* CB = new QCheckBox;
         CB->setText("Clip View");
@@ -112,6 +113,7 @@ MVClusterWidget::MVClusterWidget(MVAbstractContext* context)
         CB->setChecked(true);
         bottom_panel->addWidget(CB);
     }
+    */
     {
         QCheckBox* CB = new QCheckBox;
         CB->setText("Density Plot");
@@ -608,12 +610,12 @@ QString MVChannelFeaturesFactory::id() const
 
 QString MVChannelFeaturesFactory::name() const
 {
-    return tr("Channel Features");
+    return tr("Peak amplitude features");
 }
 
 QString MVChannelFeaturesFactory::title() const
 {
-    return tr("Ch. features");
+    return tr("Peak amp features");
 }
 
 MVAbstractView* MVChannelFeaturesFactory::createView(MVAbstractContext* context)

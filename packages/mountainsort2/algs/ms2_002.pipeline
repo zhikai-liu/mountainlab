@@ -16,8 +16,8 @@ function main(params) {
 		consolidate_clusters:'true', //applies to multineighborhood
 		consolidation_factor:0.9, //applies to multineighborhood and consolidate_clusters=true
 		mask_out_artifacts:'false',		
-		mask_out_artifacts_interval:1000, //applies to mask_out_artifacts=true
-		mask_out_artifacts_threshold:8, //applies to mask_out_artifacts=true
+		mask_out_artifacts_interval:2000, //applies to mask_out_artifacts=true
+		mask_out_artifacts_threshold:6, //applies to mask_out_artifacts=true
 		adjacency_radius:0,
 		channels:'', //comma-separated list of channels to analyze
 		prescribed_event_times:'' //you can supply your own file of event times (only works for multineighborhood=false). Otherwise, if empty, it will detect the events as part of processing
