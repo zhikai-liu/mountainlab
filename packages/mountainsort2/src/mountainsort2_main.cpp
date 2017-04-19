@@ -152,7 +152,7 @@ QJsonObject get_spec()
         X.addInputs("timeseries", "event_times", "labels");
         X.addOutputs("labels_out");
         X.addRequiredParameters("central_channel");
-        X.addOptionalParameter("consolidation_factor","",0.9);
+        X.addOptionalParameter("consolidation_factor", "", 0.9);
         processors.push_back(X.get_spec());
     }
     {
