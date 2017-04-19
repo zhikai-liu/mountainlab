@@ -466,7 +466,7 @@ if ('rendererEvalAsync' in window) {
 				<li><a href="/help/requests/new" data-qa="contact">Contact</a></li>
 				<li><a href="/terms-of-service" data-qa="policies">Policies</a></li>
 				<li><a href="http://slackhq.com/" target="_blank" data-qa="our_blog">Our Blog</a></li>
-				<li><a href="https://slack.com/signout/132790116245?crumb=s-1492624261-1683bcbc37-%E2%98%83" data-qa="sign_out">Sign Out<i class="ts_icon ts_icon_sign_out small_left_margin ts_icon_inherit"></i></a></li>
+				<li><a href="https://slack.com/signout/132790116245?crumb=s-1492630036-266e1bdcda-%E2%98%83" data-qa="sign_out">Sign Out<i class="ts_icon ts_icon_sign_out small_left_margin ts_icon_inherit"></i></a></li>
 			</ul>
 
 			<p id="footer_signature">Made with <i class="ts_icon ts_icon_heart"></i> by Slack</p>
@@ -582,7 +582,7 @@ if ('rendererEvalAsync' in window) {
 			<span class="member_image thumb_36" style="background-image: url('https://secure.gravatar.com/avatar/377ccaca87c9e721493144c47eb61070.jpg?s=72&d=https%3A%2F%2Fa.slack-edge.com%2F66f9%2Fimg%2Favatars%2Fava_0021-72.png')" data-thumb-size="36" data-member-id="U3XBG8ZU6"></span>
 		</a>
 		<input type="hidden" name="addcomment" value="1" />
-	<input type="hidden" name="crumb" value="s-1492624261-c245cee753-☃" />
+	<input type="hidden" name="crumb" value="s-1492630036-8d08af8687-☃" />
 
 			<div id="file_comment" class="small texty_comment_input comment_input small_bottom_margin" name="comment" wrap="virtual" ></div>
 		<span class="input_note float_left indifferent_grey file_comment_tip">shift+enter to add a new line</span>	<button id="file_comment_submit_btn" type="submit" class="btn float_right  ladda-button" data-style="expand-right"><span class="ladda-label">Add Comment</span></button>
@@ -654,8 +654,8 @@ if ('rendererEvalAsync' in window) {
 		app: 'web',
 		user_id: 'U3XBG8ZU6',
 		no_login: false,
-		version_ts: '1492623855',
-		version_uid: '4fdc9c9f4e4b9295cc715c64c4ca325d84920e96',
+		version_ts: '1492629350',
+		version_uid: 'e7271c0cf09b160ae536712a77b76e0231c4932b',
 		cache_version: "v16-giraffe",
 		cache_ts_version: "v2-bunny",
 		redir_domain: 'slack-redir.net',
@@ -667,7 +667,7 @@ if ('rendererEvalAsync' in window) {
 		beacon_timing_url: "https:\/\/slack.com\/beacon\/timing",
 		beacon_error_url: "https:\/\/slack.com\/beacon\/error",
 		clog_url: "clog\/track\/",
-		api_token: 'xoxs-132790116245-133390305958-133666051108-f11b7ac440',
+		api_token: 'xoxs-132790116245-133390305958-172435571623-e90380c5a9',
 		ls_disabled: false,
 
 		vvv_paths: {
@@ -708,7 +708,6 @@ if ('rendererEvalAsync' in window) {
 		feature_email_ingestion: false,
 		feature_msg_consistency: false,
 		feature_sli_channel_priority: false,
-		feature_admin_profile_info: true,
 		feature_thanks: false,
 		feature_attachments_inline: false,
 		feature_fix_files: true,
@@ -840,14 +839,14 @@ if ('rendererEvalAsync' in window) {
 
 	<!-- output_js "core" -->
 <script type="text/javascript" src="https://a.slack-edge.com/4a0bf/js/rollup-core_required_libs.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
-<script type="text/javascript" src="https://a.slack-edge.com/890620/js/rollup-core_required_ts.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
+<script type="text/javascript" src="https://a.slack-edge.com/d3d92/js/rollup-core_required_ts.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
 <script type="text/javascript" src="https://a.slack-edge.com/501f2/js/TS.web.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
 
 	<!-- output_js "core_web" -->
 <script type="text/javascript" src="https://a.slack-edge.com/b225d/js/rollup-core_web.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
 
 	<!-- output_js "secondary" -->
-<script type="text/javascript" src="https://a.slack-edge.com/64b4e/js/rollup-secondary_a_required.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
+<script type="text/javascript" src="https://a.slack-edge.com/f9d50/js/rollup-secondary_a_required.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
 <script type="text/javascript" src="https://a.slack-edge.com/1faf0/js/rollup-secondary_b_required.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
 
 			
@@ -856,13 +855,13 @@ if ('rendererEvalAsync' in window) {
 <script type="text/javascript" src="https://a.slack-edge.com/70b87/js/TS.web.comments.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
 <script type="text/javascript" src="https://a.slack-edge.com/6ba29/js/TS.files.media.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
 <script type="text/javascript" src="https://a.slack-edge.com/53731/js/TS.web.file.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
-<script type="text/javascript" src="https://a.slack-edge.com/d66d/js/prebuilt/texty.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
+<script type="text/javascript" src="https://a.slack-edge.com/e51fd1/js/prebuilt/texty.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
 <script type="text/javascript" src="https://a.slack-edge.com/b0a8/js/TS.format.texty.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
 <script type="text/javascript" src="https://a.slack-edge.com/130e1/js/TS.tabcomplete.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
-<script type="text/javascript" src="https://a.slack-edge.com/871c6/js/TS.tabcomplete.members.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
+<script type="text/javascript" src="https://a.slack-edge.com/ca40/js/TS.tabcomplete.members.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
 <script type="text/javascript" src="https://a.slack-edge.com/6a88/js/TS.tabcomplete.channels.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
 <script type="text/javascript" src="https://a.slack-edge.com/aa3b/js/TS.tabcomplete.commands.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
-<script type="text/javascript" src="https://a.slack-edge.com/0bf20/js/TS.tabcomplete.emoji.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
+<script type="text/javascript" src="https://a.slack-edge.com/79677/js/TS.tabcomplete.emoji.js" crossorigin="anonymous" onload="window._cdn && _cdn.ok(this, arguments)" onerror="window._cdn && _cdn.failed(this, arguments)"></script>
 
 
 		<script type="text/javascript">
@@ -886,7 +885,7 @@ if ('rendererEvalAsync' in window) {
 	
 <style>.color_9f69e7:not(.nuc) {color:#9F69E7;}.color_4bbe2e:not(.nuc) {color:#4BBE2E;}.color_e7392d:not(.nuc) {color:#E7392D;}.color_3c989f:not(.nuc) {color:#3C989F;}.color_674b1b:not(.nuc) {color:#674B1B;}.color_e96699:not(.nuc) {color:#E96699;}.color_e0a729:not(.nuc) {color:#E0A729;}.color_684b6c:not(.nuc) {color:#684B6C;}.color_5b89d5:not(.nuc) {color:#5B89D5;}.color_2b6836:not(.nuc) {color:#2B6836;}.color_99a949:not(.nuc) {color:#99A949;}.color_df3dc0:not(.nuc) {color:#DF3DC0;}.color_4cc091:not(.nuc) {color:#4CC091;}.color_9b3b45:not(.nuc) {color:#9B3B45;}.color_d58247:not(.nuc) {color:#D58247;}.color_bb86b7:not(.nuc) {color:#BB86B7;}.color_5a4592:not(.nuc) {color:#5A4592;}.color_db3150:not(.nuc) {color:#DB3150;}.color_235e5b:not(.nuc) {color:#235E5B;}.color_9e3997:not(.nuc) {color:#9E3997;}.color_53b759:not(.nuc) {color:#53B759;}.color_c386df:not(.nuc) {color:#C386DF;}.color_385a86:not(.nuc) {color:#385A86;}.color_a63024:not(.nuc) {color:#A63024;}.color_5870dd:not(.nuc) {color:#5870DD;}.color_ea2977:not(.nuc) {color:#EA2977;}.color_50a0cf:not(.nuc) {color:#50A0CF;}.color_d55aef:not(.nuc) {color:#D55AEF;}.color_d1707d:not(.nuc) {color:#D1707D;}.color_43761b:not(.nuc) {color:#43761B;}.color_e06b56:not(.nuc) {color:#E06B56;}.color_8f4a2b:not(.nuc) {color:#8F4A2B;}.color_902d59:not(.nuc) {color:#902D59;}.color_de5f24:not(.nuc) {color:#DE5F24;}.color_a2a5dc:not(.nuc) {color:#A2A5DC;}.color_827327:not(.nuc) {color:#827327;}.color_3c8c69:not(.nuc) {color:#3C8C69;}.color_8d4b84:not(.nuc) {color:#8D4B84;}.color_84b22f:not(.nuc) {color:#84B22F;}.color_4ec0d6:not(.nuc) {color:#4EC0D6;}.color_e23f99:not(.nuc) {color:#E23F99;}.color_e475df:not(.nuc) {color:#E475DF;}.color_619a4f:not(.nuc) {color:#619A4F;}.color_a72f79:not(.nuc) {color:#A72F79;}.color_7d414c:not(.nuc) {color:#7D414C;}.color_aba727:not(.nuc) {color:#ABA727;}.color_965d1b:not(.nuc) {color:#965D1B;}.color_4d5e26:not(.nuc) {color:#4D5E26;}.color_dd8527:not(.nuc) {color:#DD8527;}.color_bd9336:not(.nuc) {color:#BD9336;}.color_e85d72:not(.nuc) {color:#E85D72;}.color_dc7dbb:not(.nuc) {color:#DC7DBB;}.color_bc3663:not(.nuc) {color:#BC3663;}.color_9d8eee:not(.nuc) {color:#9D8EEE;}.color_8469bc:not(.nuc) {color:#8469BC;}.color_73769d:not(.nuc) {color:#73769D;}.color_b14cbc:not(.nuc) {color:#B14CBC;}</style>
 
-<!-- slack-www-hhvm-0b1946e734c7ecf26 / 2017-04-19 10:51:01 / v4fdc9c9f4e4b9295cc715c64c4ca325d84920e96 / B:H -->
+<!-- slack-www-hhvm-0fc131a963aa6ba6f / 2017-04-19 12:27:16 / ve7271c0cf09b160ae536712a77b76e0231c4932b / B:H -->
 
 
 </body>
