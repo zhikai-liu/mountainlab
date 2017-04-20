@@ -788,8 +788,9 @@ bool ProcessManagerPrivate::all_input_and_output_files_exist(MLProcessor P, cons
             if (!fname0.isEmpty()) {
                 QString fname = resolve_file_name_p(fname0);
                 if (!fname.isEmpty()) {
-                    if (!QFile::exists(fname))
+                    if (!QFile::exists(fname)) {
                         return false;
+                    }
                 }
             }
         }

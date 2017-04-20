@@ -185,11 +185,35 @@ QString ScriptController2::addProcess(QString processor_name, QString inputs_jso
     PipelineNode2 node;
     /// TODO: check for json parse errors here
     node.processor_name = processor_name;
-    node.inputs = QJsonDocument::fromJson(inputs_json.toLatin1()).object().toVariantMap();
-    node.parameters = QJsonDocument::fromJson(parameters_json.toLatin1()).object().toVariantMap();
+
+    {
+        QVariantMap inputs0=QJsonDocument::fromJson(inputs_json.toLatin1()).object().toVariantMap();
+        QStringList input_keys=PP.inputs.keys();
+        foreach (QString key,input_keys) {
+            node.inputs[key]=inputs0[key];
+        }
+    }
+    {
+        QVariantMap parameters0=QJsonDocument::fromJson(parameters_json.toLatin1()).object().toVariantMap();
+        QStringList parameter_keys=PP.parameters.keys();
+        foreach (QString key,parameter_keys) {
+            node.parameters[key]=parameters0[key];
+        }
+    }
+
+    //node.inputs = QJsonDocument::fromJson(inputs_json.toLatin1()).object().toVariantMap();
+    //node.parameters = QJsonDocument::fromJson(parameters_json.toLatin1()).object().toVariantMap();
     if (!outputs_json.isEmpty()) {
         node.outputs = QJsonDocument::fromJson(outputs_json.toLatin1()).object().toVariantMap();
-        /// TODO: check to see if outputs are consistent with PP_outputs
+        // check to see if outputs are consistent with PP_outputs
+        QSet<QString> output_keys=PP.outputs.keys().toSet();
+        QStringList node_output_keys=node.outputs.keys();
+        foreach (QString key,node_output_keys) {
+            if (!output_keys.contains(key)) {
+                qWarning() << "Processor "+processor_name+" does not contain output: "+key;
+                return "{}";
+            }
+        }
     }
 
     if ((outputs_json.isEmpty()) || (outputs_json == "\"\"")) {

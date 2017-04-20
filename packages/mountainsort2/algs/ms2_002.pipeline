@@ -88,6 +88,7 @@ function main(params) {
 	var firings;
 	if (params.multineighborhood=='true') {
 		var outputs0={firings_out:''};
+		console.log(':::::::::::::::: '+JSON.stringify(params2));
 		var results0=Process('mountainsort.ms2_002_multineighborhood',
 				{timeseries:pre,geom:params.geom},
 				params2,

@@ -7,10 +7,13 @@
 #include "get_sort_indices.h"
 #include "mlcommon.h"
 
+typedef QList<bigint> IntList;
+
 namespace P_fit_stage {
 Mda sort_firings_by_time(const Mda& firings);
 Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, const QVector<bigint>& labels, bigint clip_size);
-QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts);
+QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList> &channel_mask);
+QList<bigint> get_channel_mask(Mda32 template0, double thresh);
 }
 
 bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_out_path, Fit_stage_opts opts)
@@ -26,6 +29,7 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
     firingsA.read(firings_path);
     Mda firings = P_fit_stage::sort_firings_by_time(firingsA);
 
+    printf("Extracting times and labels...\n");
     //L is the number of events. Accumulate vectors of times and labels for convenience
     bigint L = firings.N2();
     QVector<double> times;
@@ -35,6 +39,7 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
         labels << (bigint)firings.value(2, j); //these are labels of clusters
     }
 
+    printf("Computing templates...\n");
     //These are the templates corresponding to the clusters
     Mda32 templates = P_fit_stage::compute_templates(X, times, labels, T); //MxTxK
 
@@ -49,25 +54,36 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
         overlap_size = 0;
     }
 
+    bigint K=MLCompute::max(labels);
+    QList<IntList> channel_mask;
+    for (bigint i = 0; i < K; i++) {
+        Mda32 template0;
+        templates.getChunk(template0, 0, 0, i, M, T, 1);
+        channel_mask << P_fit_stage::get_channel_mask(template0, 0.03); //use only the channels with highest maxval
+        printf("k=%ld, num.channels=%d\n",i+1,channel_mask[i].count());
+    }
+
     QList<bigint> inds_to_use;
 
-    printf("Starting fit stage\n");
+    printf("Starting fit stage...\n");
     {
         bigint num_timepoints_handled = 0;
 #pragma omp parallel for
         for (bigint timepoint = 0; timepoint < N; timepoint += chunk_size) {
-            QMap<QString, bigint> elapsed_times_local;
+            //QMap<QString, bigint> elapsed_times_local;
             Mda32 chunk; //this will be the chunk we are working on
             Mda32 local_templates; //just a local copy of the templates
             QVector<double> local_times; //the times that fall in this time range
             QVector<bigint> local_labels; //the corresponding labels
             QList<bigint> local_inds; //the corresponding event indices
-            Fit_stage_opts local_opts;
+            Fit_stage_opts local_opts; //a local copy of the opts
+            QList<IntList> local_channel_mask;
 #pragma omp critical(lock1)
             {
                 //build the variables above
                 local_templates = templates;
                 local_opts = opts;
+                local_channel_mask=channel_mask;
                 if (!X.readChunk(chunk, 0, timepoint - overlap_size, M, chunk_size + 2 * overlap_size)) {
                     qWarning() << "Problem reading chunk in fit_stage";
                 }
@@ -84,7 +100,7 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
             QList<bigint> local_inds_to_use;
             {
                 //This is the main kernel operation!!
-                local_inds_to_use = P_fit_stage::fit_stage_kernel(chunk, local_templates, local_times, local_labels, local_opts);
+                local_inds_to_use = P_fit_stage::fit_stage_kernel(chunk, local_templates, local_times, local_labels, local_opts, channel_mask);
             }
 #pragma omp critical(lock1)
             {
@@ -103,6 +119,7 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
         }
     }
 
+    printf("Setting firings_out...\n");
     qSort(inds_to_use);
     bigint num_to_use = inds_to_use.count();
     if (times.count()) {
@@ -151,7 +168,7 @@ Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, co
     Mda32 templates(M, T, K);
     QList<bigint> counts;
     for (bigint k = 0; k < K; k++)
-        counts << k;
+        counts << 0;
     for (bigint i = 0; i < L; i++) {
         bigint k = labels[i];
         bigint t0 = (bigint)(times[i] + 0.5);
@@ -181,9 +198,7 @@ Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, co
     return templates;
 }
 
-typedef QList<bigint> IntList;
-
-QList<bigint> get_channel_mask(Mda32 template0, bigint num)
+QList<bigint> get_channel_mask(Mda32 template0, double thresh)
 {
     bigint M = template0.N1();
     bigint T = template0.N2();
@@ -195,12 +210,11 @@ QList<bigint> get_channel_mask(Mda32 template0, bigint num)
         }
         maxabs << val;
     }
-    QList<bigint> inds = get_sort_indices_bigint(maxabs);
     QList<bigint> ret;
-    for (bigint i = 0; i < num; i++) {
-        if (i < inds.count()) {
-            ret << inds[inds.count() - 1 - i];
-        }
+    double global_max=MLCompute::max(maxabs);
+    for (bigint m=0; m<M; m++) {
+        if (maxabs[m]>=global_max*thresh)
+            ret << m;
     }
     return ret;
 }
@@ -311,7 +325,7 @@ QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<d
     return to_use;
 }
 
-QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts)
+QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList> &channel_mask )
 {
     bigint M = X.N1(); //the number of dimensions
     bigint T = opts.clip_size; //the clip size
@@ -338,13 +352,6 @@ QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& time
     Mda dirty(X.N1(), X.N2()); //timepoints/channels for which we need to recompute the score if a clip was centered here
     for (bigint ii = 0; ii < dirty.totalSize(); ii++) {
         dirty.setValue(1, ii);
-    }
-
-    QList<IntList> channel_mask;
-    for (bigint i = 0; i < K; i++) {
-        Mda32 template0;
-        templates.getChunk(template0, 0, 0, i, M, T, 1);
-        channel_mask << get_channel_mask(template0, 8); //use only the 8 channels with highest maxval
     }
 
     while (something_changed) {
