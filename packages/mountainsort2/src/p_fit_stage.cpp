@@ -12,7 +12,7 @@ typedef QList<bigint> IntList;
 namespace P_fit_stage {
 Mda sort_firings_by_time(const Mda& firings);
 Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, const QVector<bigint>& labels, bigint clip_size);
-QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList> &channel_mask);
+QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList>& channel_mask);
 QList<bigint> get_channel_mask(Mda32 template0, double thresh);
 }
 
@@ -54,13 +54,13 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
         overlap_size = 0;
     }
 
-    bigint K=MLCompute::max(labels);
+    bigint K = MLCompute::max(labels);
     QList<IntList> channel_mask;
     for (bigint i = 0; i < K; i++) {
         Mda32 template0;
         templates.getChunk(template0, 0, 0, i, M, T, 1);
         channel_mask << P_fit_stage::get_channel_mask(template0, 0.03); //use only the channels with highest maxval
-        printf("k=%ld, num.channels=%d\n",i+1,channel_mask[i].count());
+        printf("k=%ld, num.channels=%d\n", i + 1, channel_mask[i].count());
     }
 
     QList<bigint> inds_to_use;
@@ -83,7 +83,7 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
                 //build the variables above
                 local_templates = templates;
                 local_opts = opts;
-                local_channel_mask=channel_mask;
+                local_channel_mask = channel_mask;
                 if (!X.readChunk(chunk, 0, timepoint - overlap_size, M, chunk_size + 2 * overlap_size)) {
                     qWarning() << "Problem reading chunk in fit_stage";
                 }
@@ -211,9 +211,9 @@ QList<bigint> get_channel_mask(Mda32 template0, double thresh)
         maxabs << val;
     }
     QList<bigint> ret;
-    double global_max=MLCompute::max(maxabs);
-    for (bigint m=0; m<M; m++) {
-        if (maxabs[m]>=global_max*thresh)
+    double global_max = MLCompute::max(maxabs);
+    for (bigint m = 0; m < M; m++) {
+        if (maxabs[m] >= global_max * thresh)
             ret << m;
     }
     return ret;
@@ -256,7 +256,7 @@ double compute_score(bigint M, bigint T, float* X, float* template0, const QList
     return before_sumsqr - after_sumsqr;
 }
 
-void subtract_scaled_template(bigint N, double* X, double* template0, double scale_min,double scale_max)
+void subtract_scaled_template(bigint N, double* X, double* template0, double scale_min, double scale_max)
 {
     double S12 = 0, S22 = 0;
     for (bigint i = 0; i < N; i++) {
@@ -266,13 +266,13 @@ void subtract_scaled_template(bigint N, double* X, double* template0, double sca
     double alpha = 1;
     if (S22)
         alpha = S12 / S22;
-    alpha=qMin(scale_max,qMax(scale_min,alpha));
+    alpha = qMin(scale_max, qMax(scale_min, alpha));
     for (bigint i = 0; i < N; i++) {
         X[i] -= alpha * template0[i];
     }
 }
 
-void subtract_scaled_template(bigint M, bigint T, float* X, float* template0, const QList<bigint>& chmask, double scale_min,double scale_max)
+void subtract_scaled_template(bigint M, bigint T, float* X, float* template0, const QList<bigint>& chmask, double scale_min, double scale_max)
 {
     double S12 = 0, S22 = 0;
     for (bigint t = 0; t < T; t++) {
@@ -286,7 +286,7 @@ void subtract_scaled_template(bigint M, bigint T, float* X, float* template0, co
     double alpha = 1;
     if (S22)
         alpha = S12 / S22;
-    alpha=qMin(scale_max,qMax(scale_min,alpha));
+    alpha = qMin(scale_max, qMax(scale_min, alpha));
     for (bigint t = 0; t < T; t++) {
         for (bigint j = 0; j < chmask.count(); j++) {
             bigint m = chmask[j];
@@ -327,7 +327,7 @@ QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<d
     return to_use;
 }
 
-QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList> &channel_mask )
+QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList>& channel_mask)
 {
     bigint M = X.N1(); //the number of dimensions
     bigint T = opts.clip_size; //the clip size
@@ -413,8 +413,8 @@ QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& time
         }
 
         //amplitude scaling before subtracting
-        double scale_min=1;
-        double scale_max=1;
+        double scale_min = 1;
+        double scale_max = 1;
 
         //for all those we are going to "use", we want to subtract out the corresponding templates from the timeseries data
         something_changed = false;
@@ -425,7 +425,7 @@ QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& time
                 something_changed = true;
                 num_added++;
                 bigint tt = (bigint)(times_to_try[i] - Tmid + 0.5);
-                subtract_scaled_template(M, T, X.dataPtr(0, tt), templates.dataPtr(0, 0, labels_to_try[i] - 1), chmask, scale_min,scale_max);
+                subtract_scaled_template(M, T, X.dataPtr(0, tt), templates.dataPtr(0, 0, labels_to_try[i] - 1), chmask, scale_min, scale_max);
                 for (bigint aa = tt - T / 2 - 1; aa <= tt + T + T / 2 + 1; aa++) {
                     if ((aa >= 0) && (aa < X.N2())) {
                         for (bigint k = 0; k < chmask.count(); k++) {
