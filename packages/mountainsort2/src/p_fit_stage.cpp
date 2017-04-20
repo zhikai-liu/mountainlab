@@ -12,7 +12,7 @@ typedef QList<bigint> IntList;
 namespace P_fit_stage {
 Mda sort_firings_by_time(const Mda& firings);
 Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, const QVector<bigint>& labels, bigint clip_size);
-QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList>& time_channel_mask);
+QVector<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList>& time_channel_mask);
 QList<bigint> get_time_channel_mask(Mda32 template0, double thresh);
 }
 
@@ -101,7 +101,7 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
             }
             //Our real task is to decide which of these events to keep. Those will be stored in local_inds_to_use
             //"Local" means this chunk in this thread
-            QList<bigint> local_inds_to_use;
+            QVector<bigint> local_inds_to_use;
             {
                 //This is the main kernel operation!!
                 local_inds_to_use = P_fit_stage::fit_stage_kernel(chunk, local_templates, local_times, local_labels, local_opts, time_channel_mask);
@@ -329,7 +329,7 @@ QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<d
     return to_use;
 }
 
-QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList>& time_channel_mask)
+QVector<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList>& time_channel_mask)
 {
     bigint M = X.N1(); //the number of dimensions
     bigint T = opts.clip_size; //the clip size
@@ -346,9 +346,6 @@ QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& time
 
     //keep passing through the data until nothing changes anymore
     bool something_changed = true;
-    QVector<bigint> all_to_use; //a vector of 0's and 1's telling which events should be used
-    for (bigint i = 0; i < L; i++)
-        all_to_use << 0; //start out using none
     bigint num_passes = 0;
     //while ((something_changed)&&(num_passes<2)) {
 
@@ -358,55 +355,62 @@ QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& time
         dirty.setValue(1, ii);
     }
 
+    QVector<bigint> event_inds_to_consider;
+    for (bigint i = 0; i < L; i++)
+        event_inds_to_consider << i;
+    QVector<bigint> event_inds_to_use;
+
     bigint num_score_computes = 0;
     bigint num_to_use = 0;
     while (something_changed) {
         num_passes++;
+
+        QList<bigint> inds_to_try; //indices of the events to try on this pass
         QVector<double> scores_to_try;
         QVector<double> times_to_try;
         QVector<bigint> labels_to_try;
-        QList<bigint> inds_to_try; //indices of the events to try on this pass
-        //QVector<double> template_norms_to_try;
-        for (bigint i = 0; i < L; i++) { //loop through the events
-            if (all_to_use[i] == 0) { //if we are not yet using it...
-                double t0 = times[i];
-                bigint k0 = labels[i];
-                if (k0 > 0) { //make sure we have a positive label (don't know why we wouldn't)
-                    bigint tt = (bigint)(t0 - Tmid + 0.5); //start time of clip
-                    double score0 = 0;
-                    if ((tt >= 0) && (tt + T <= X.N2())) { //make sure we are in range
-                        IntList tchmask = time_channel_mask[k0 - 1];
-                        if (!is_dirty(dirty.dataPtr(0, tt), tchmask)) {
-                            // we don't need to recompute the score
-                            score0 = scores[i];
-                        }
-                        else {
-                            //we do need to recompute it.
 
-                            //The score will be how much something like the L2-norm is decreased
-                            score0 = compute_score(M, T, X.dataPtr(0, tt), templates.dataPtr(0, 0, k0 - 1), tchmask);
-                            num_score_computes++;
-                            /*
-                            if (score0 < template_norms[k0] * template_norms[k0] * 0.1)
-                                score0 = 0; //the norm of the improvement needs to be at least 0.5 times the norm of the template
-                                */
-                            scores[i] = score0;
-                        }
-                    }
-                    //the score needs to be at least as large as neglogprior in order to accept the spike
-                    //double neglogprior = 30;
-                    double neglogprior = 0;
-                    if (score0 > neglogprior) {
-                        //we are not committing to using this event yet... see below for next step
-                        scores_to_try << score0;
-                        times_to_try << t0;
-                        labels_to_try << k0;
-                        inds_to_try << i;
+        //QVector<double> template_norms_to_try;
+        QVector<bigint> new_event_inds_to_consider;
+        for (bigint kk = 0; kk < event_inds_to_consider.count(); kk++) { //loop through the events
+            bigint i = event_inds_to_consider[kk];
+
+            double t0 = times[i];
+            bigint k0 = labels[i];
+            if (k0 > 0) { //make sure we have a positive label (don't know why we wouldn't)
+                bigint tt = (bigint)(t0 - Tmid + 0.5); //start time of clip
+                double score0 = 0;
+                if ((tt >= 0) && (tt + T <= X.N2())) { //make sure we are in range
+                    IntList tchmask = time_channel_mask[k0 - 1];
+                    if (!is_dirty(dirty.dataPtr(0, tt), tchmask)) {
+                        // we don't need to recompute the score
+                        score0 = scores[i];
                     }
                     else {
-                        //means we definitely aren't using it (so we will never get here again)
-                        all_to_use[i] = -1; //signals not to try again
+                        //we do need to recompute it.
+
+                        //The score will be how much something like the L2-norm is decreased
+                        score0 = compute_score(M, T, X.dataPtr(0, tt), templates.dataPtr(0, 0, k0 - 1), tchmask);
+                        num_score_computes++;
+                        /*
+                        if (score0 < template_norms[k0] * template_norms[k0] * 0.1)
+                            score0 = 0; //the norm of the improvement needs to be at least 0.5 times the norm of the template
+                            */
+                        scores[i] = score0;
                     }
+                }
+                //the score needs to be at least as large as neglogprior in order to accept the spike
+                //double neglogprior = 30;
+                double neglogprior = 0;
+                if (score0 > neglogprior) {
+                    //we are not committing to using this event yet... see below for next step
+                    scores_to_try << score0;
+                    times_to_try << t0;
+                    labels_to_try << k0;
+                    inds_to_try << i;
+                }
+                else {
+                    //not gonna use it
                 }
             }
         }
@@ -418,34 +422,33 @@ QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& time
             dirty.set(0, i);
         }
 
-        //amplitude scaling before subtracting
+        //amplitude scaling for template subtraction
         double scale_min = 1;
         double scale_max = 1;
 
         //for all those we are going to "use", we want to subtract out the corresponding templates from the timeseries data
         something_changed = false;
         bigint num_added = 0;
-        for (bigint i = 0; i < to_use.count(); i++) {
-            if (to_use[i] == 1) {
-                IntList tchmask = time_channel_mask[labels_to_try[i] - 1];
+        for (bigint aa = 0; aa < to_use.count(); aa++) {
+            if (to_use[aa] == 1) {
+                IntList tchmask = time_channel_mask[labels_to_try[aa] - 1];
                 something_changed = true;
                 num_added++;
-                bigint tt = (bigint)(times_to_try[i] - Tmid + 0.5);
-                subtract_scaled_template(M, T, X.dataPtr(0, tt), dirty.dataPtr(0, tt), templates.dataPtr(0, 0, labels_to_try[i] - 1), tchmask, scale_min, scale_max);
-                all_to_use[inds_to_try[i]] = 1;
+                bigint tt = (bigint)(times_to_try[aa] - Tmid + 0.5);
+                subtract_scaled_template(M, T, X.dataPtr(0, tt), dirty.dataPtr(0, tt), templates.dataPtr(0, 0, labels_to_try[aa] - 1), tchmask, scale_min, scale_max);
+                event_inds_to_use << inds_to_try[aa];
                 num_to_use++;
             }
+            else {
+                //consider it for next time
+                new_event_inds_to_consider << inds_to_try[aa];
+            }
         }
+        event_inds_to_consider = new_event_inds_to_consider;
     }
 
     qDebug().noquote() << QString("Processed %1 events in time chunk (using %2%), %3 score computes per event, %4 passes").arg(L).arg(num_to_use * 100.0 / L).arg(num_score_computes * 1.0 / L).arg(num_passes);
 
-    QList<bigint> inds_to_use;
-    for (bigint i = 0; i < L; i++) {
-        if (all_to_use[i] == 1)
-            inds_to_use << i;
-    }
-
-    return inds_to_use;
+    return event_inds_to_use;
 }
 }
