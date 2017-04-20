@@ -141,7 +141,7 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.reorder_labels", "0.1");
+        ProcessorSpec X("mountainsort.reorder_labels", "0.11");
         X.addInputs("templates", "firings");
         X.addOutputs("firings_out");
         //X.addRequiredParameters();
