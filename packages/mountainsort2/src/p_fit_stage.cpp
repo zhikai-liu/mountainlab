@@ -256,7 +256,7 @@ double compute_score(bigint M, bigint T, float* X, float* template0, const QList
     return before_sumsqr - after_sumsqr;
 }
 
-void subtract_scaled_template(bigint N, double* X, double* template0)
+void subtract_scaled_template(bigint N, double* X, double* template0, double scale_min,double scale_max)
 {
     double S12 = 0, S22 = 0;
     for (bigint i = 0; i < N; i++) {
@@ -266,12 +266,13 @@ void subtract_scaled_template(bigint N, double* X, double* template0)
     double alpha = 1;
     if (S22)
         alpha = S12 / S22;
+    alpha=qMin(scale_max,qMax(scale_min,alpha));
     for (bigint i = 0; i < N; i++) {
         X[i] -= alpha * template0[i];
     }
 }
 
-void subtract_scaled_template(bigint M, bigint T, float* X, float* template0, const QList<bigint>& chmask)
+void subtract_scaled_template(bigint M, bigint T, float* X, float* template0, const QList<bigint>& chmask, double scale_min,double scale_max)
 {
     double S12 = 0, S22 = 0;
     for (bigint t = 0; t < T; t++) {
@@ -285,6 +286,7 @@ void subtract_scaled_template(bigint M, bigint T, float* X, float* template0, co
     double alpha = 1;
     if (S22)
         alpha = S12 / S22;
+    alpha=qMin(scale_max,qMax(scale_min,alpha));
     for (bigint t = 0; t < T; t++) {
         for (bigint j = 0; j < chmask.count(); j++) {
             bigint m = chmask[j];
@@ -410,6 +412,10 @@ QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& time
             dirty.set(0, i);
         }
 
+        //amplitude scaling before subtracting
+        double scale_min=1;
+        double scale_max=1;
+
         //for all those we are going to "use", we want to subtract out the corresponding templates from the timeseries data
         something_changed = false;
         bigint num_added = 0;
@@ -419,7 +425,7 @@ QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& time
                 something_changed = true;
                 num_added++;
                 bigint tt = (bigint)(times_to_try[i] - Tmid + 0.5);
-                subtract_scaled_template(M, T, X.dataPtr(0, tt), templates.dataPtr(0, 0, labels_to_try[i] - 1), chmask);
+                subtract_scaled_template(M, T, X.dataPtr(0, tt), templates.dataPtr(0, 0, labels_to_try[i] - 1), chmask, scale_min,scale_max);
                 for (bigint aa = tt - T / 2 - 1; aa <= tt + T + T / 2 + 1; aa++) {
                     if ((aa >= 0) && (aa < X.N2())) {
                         for (bigint k = 0; k < chmask.count(); k++) {
