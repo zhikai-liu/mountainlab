@@ -485,9 +485,18 @@ double MLCompute::min(bigint N, const double* X)
 QList<int> MLUtil::stringListToIntList(const QStringList& list)
 {
     QList<int> ret;
-    ret.reserve(list.size());
     foreach (QString str, list) {
-        ret << str.toInt();
+        if (str.contains("-")) {
+            QStringList vals = str.split("-");
+            int i1 = vals.value(0).toInt();
+            int i2 = vals.value(1).toInt();
+            for (int i = i1; i <= i2; i++) {
+                ret << i;
+            }
+        }
+        else {
+            ret << str.toInt();
+        }
     }
     return ret;
 }
