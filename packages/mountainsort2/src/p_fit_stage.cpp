@@ -12,8 +12,8 @@ typedef QList<bigint> IntList;
 namespace P_fit_stage {
 Mda sort_firings_by_time(const Mda& firings);
 Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, const QVector<bigint>& labels, bigint clip_size);
-QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList>& channel_mask);
-QList<bigint> get_channel_mask(Mda32 template0, double thresh);
+QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList>& time_channel_mask);
+QList<bigint> get_time_channel_mask(Mda32 template0, double thresh);
 }
 
 bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_out_path, Fit_stage_opts opts)
@@ -25,11 +25,13 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
     bigint T = opts.clip_size;
 
     //Read in the firings array
+    qDebug().noquote() << "Reading firings...";
     Mda firingsA;
     firingsA.read(firings_path);
+    qDebug().noquote() << "Sorting events...";
     Mda firings = P_fit_stage::sort_firings_by_time(firingsA);
 
-    printf("Extracting times and labels...\n");
+    qDebug().noquote() << "Extracting times and labels...";
     //L is the number of events. Accumulate vectors of times and labels for convenience
     bigint L = firings.N2();
     QVector<double> times;
@@ -39,12 +41,12 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
         labels << (bigint)firings.value(2, j); //these are labels of clusters
     }
 
-    printf("Computing templates...\n");
+    qDebug().noquote() << "Computing templates...";
     //These are the templates corresponding to the clusters
     Mda32 templates = P_fit_stage::compute_templates(X, times, labels, T); //MxTxK
 
-    bigint processing_chunk_size = 1e6;
-    bigint processing_chunk_overlap_size = 1e4;
+    bigint processing_chunk_size = 1e5;
+    bigint processing_chunk_overlap_size = 1e3;
 
     //Now we do the processing in chunks
     bigint chunk_size = processing_chunk_size;
@@ -54,22 +56,24 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
         overlap_size = 0;
     }
 
+    double time_channel_mask_thresh = 0.5;
+
     bigint K = MLCompute::max(labels);
-    QList<IntList> channel_mask;
+    QList<IntList> time_channel_mask;
     for (bigint i = 0; i < K; i++) {
         Mda32 template0;
         templates.getChunk(template0, 0, 0, i, M, T, 1);
-        channel_mask << P_fit_stage::get_channel_mask(template0, 0.03); //use only the channels with highest maxval
-        printf("k=%ld, num.channels=%d\n", i + 1, channel_mask[i].count());
+        time_channel_mask << P_fit_stage::get_time_channel_mask(template0, time_channel_mask_thresh); //use only the channels with highest maxval
+        qDebug().noquote() << QString("k=%1, mask.size=%2").arg(i + 1).arg(time_channel_mask[i].count());
     }
 
     QList<bigint> inds_to_use;
-
     printf("Starting fit stage...\n");
     {
         bigint num_timepoints_handled = 0;
 #pragma omp parallel for
         for (bigint timepoint = 0; timepoint < N; timepoint += chunk_size) {
+            //for (bigint timepoint = 0; timepoint < N; timepoint += N) { //for debugging
             //QMap<QString, bigint> elapsed_times_local;
             Mda32 chunk; //this will be the chunk we are working on
             Mda32 local_templates; //just a local copy of the templates
@@ -77,13 +81,13 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
             QVector<bigint> local_labels; //the corresponding labels
             QList<bigint> local_inds; //the corresponding event indices
             Fit_stage_opts local_opts; //a local copy of the opts
-            QList<IntList> local_channel_mask;
+            QList<IntList> local_time_channel_mask;
 #pragma omp critical(lock1)
             {
                 //build the variables above
                 local_templates = templates;
                 local_opts = opts;
-                local_channel_mask = channel_mask;
+                local_time_channel_mask = time_channel_mask;
                 if (!X.readChunk(chunk, 0, timepoint - overlap_size, M, chunk_size + 2 * overlap_size)) {
                     qWarning() << "Problem reading chunk in fit_stage";
                 }
@@ -100,7 +104,7 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
             QList<bigint> local_inds_to_use;
             {
                 //This is the main kernel operation!!
-                local_inds_to_use = P_fit_stage::fit_stage_kernel(chunk, local_templates, local_times, local_labels, local_opts, channel_mask);
+                local_inds_to_use = P_fit_stage::fit_stage_kernel(chunk, local_templates, local_times, local_labels, local_opts, time_channel_mask);
             }
 #pragma omp critical(lock1)
             {
@@ -115,15 +119,16 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
                 }
 
                 num_timepoints_handled += qMin(chunk_size, N - timepoint);
+                qDebug().noquote() << QString("--- Handled %1% of timepoints").arg((int)(num_timepoints_handled * 100.0 / N));
             }
         }
     }
 
-    printf("Setting firings_out...\n");
+    qDebug().noquote() << "Setting firings_out...";
     qSort(inds_to_use);
     bigint num_to_use = inds_to_use.count();
     if (times.count()) {
-        printf("using %ld/%ld events (%g%%)\n", num_to_use, (bigint)times.count(), num_to_use * 100.0 / times.count());
+        qDebug().noquote() << QString("using %1/%2 events (%3%)").arg(num_to_use).arg((bigint)times.count()).arg(num_to_use * 100.0 / times.count());
     }
     Mda firings_out(firings.N1(), num_to_use);
     for (bigint i = 0; i < num_to_use; i++) {
@@ -198,36 +203,33 @@ Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, co
     return templates;
 }
 
-QList<bigint> get_channel_mask(Mda32 template0, double thresh)
+QList<bigint> get_time_channel_mask(Mda32 template0, double thresh)
 {
     bigint M = template0.N1();
     bigint T = template0.N2();
-    QVector<double> maxabs;
-    for (bigint m = 0; m < M; m++) {
-        double val = 0;
-        for (bigint t = 0; t < T; t++) {
-            val = qMax(val, 1.0 * qAbs(template0.value(m, t)));
-        }
-        maxabs << val;
-    }
     QList<bigint> ret;
-    double global_max = MLCompute::max(maxabs);
-    for (bigint m = 0; m < M; m++) {
-        if (maxabs[m] >= global_max * thresh)
-            ret << m;
+    int ii = 0;
+    for (bigint t = 0; t < T; t++) {
+        for (bigint m = 0; m < M; m++) {
+            double val = qAbs(template0.value(m, t));
+            if (val > thresh)
+                ret << ii;
+            ii++;
+        }
     }
     return ret;
 }
 
-bool is_dirty(const Mda& dirty, bigint t0, const QList<bigint>& chmask)
+bool is_dirty(float* dirty_ptr, const QList<bigint>& tchmask)
 {
-    for (bigint i = 0; i < chmask.count(); i++) {
-        if (dirty.value(chmask[i], t0))
+    for (bigint i = 0; i < tchmask.count(); i++) {
+        if (dirty_ptr[i])
             return true;
     }
     return false;
 }
 
+/*
 double compute_score(bigint N, float* X, float* template0)
 {
     Mda resid(1, N);
@@ -238,21 +240,21 @@ double compute_score(bigint N, float* X, float* template0)
     double norm2 = MLCompute::norm(N, resid_ptr);
     return norm1 * norm1 - norm2 * norm2;
 }
+*/
 
-double compute_score(bigint M, bigint T, float* X, float* template0, const QList<bigint>& chmask)
+double compute_score(bigint M, bigint T, float* X_ptr, float* template0, const QList<bigint>& tchmask)
 {
+    (void)M;
+    (void)T;
     double before_sumsqr = 0;
     double after_sumsqr = 0;
-    for (bigint t = 0; t < T; t++) {
-        for (bigint i = 0; i < chmask.count(); i++) {
-            bigint m = chmask[i];
-            double val = X[m + t * M];
-            before_sumsqr += val * val;
-            val -= template0[m + t * M];
-            after_sumsqr += val * val;
-        }
+    for (bigint j = 0; j < tchmask.count(); j++) {
+        bigint i = tchmask[j];
+        double val = X_ptr[i];
+        before_sumsqr += val * val;
+        val -= template0[i];
+        after_sumsqr += val * val;
     }
-
     return before_sumsqr - after_sumsqr;
 }
 
@@ -272,27 +274,24 @@ void subtract_scaled_template(bigint N, double* X, double* template0, double sca
     }
 }
 
-void subtract_scaled_template(bigint M, bigint T, float* X, float* template0, const QList<bigint>& chmask, double scale_min, double scale_max)
+void subtract_scaled_template(bigint M, bigint T, float* X_ptr, float* dirty_ptr, float* template0, const QList<bigint>& tchmask, double scale_min, double scale_max)
 {
+    (void)M;
+    (void)T;
     double S12 = 0, S22 = 0;
-    for (bigint t = 0; t < T; t++) {
-        for (bigint j = 0; j < chmask.count(); j++) {
-            bigint m = chmask[j];
-            bigint i = m + M * t;
-            S22 += template0[i] * template0[i];
-            S12 += X[i] * template0[i];
-        }
+    for (bigint j = 0; j < tchmask.count(); j++) {
+        bigint i = tchmask[j];
+        S22 += template0[i] * template0[i];
+        S12 += X_ptr[i] * template0[i];
     }
     double alpha = 1;
     if (S22)
         alpha = S12 / S22;
     alpha = qMin(scale_max, qMax(scale_min, alpha));
-    for (bigint t = 0; t < T; t++) {
-        for (bigint j = 0; j < chmask.count(); j++) {
-            bigint m = chmask[j];
-            bigint i = m + M * t;
-            X[i] -= alpha * template0[i];
-        }
+    for (bigint j = 0; j < tchmask.count(); j++) {
+        bigint i = tchmask[j];
+        X_ptr[i] -= alpha * template0[i];
+        dirty_ptr[i] = 1;
     }
 }
 
@@ -307,18 +306,21 @@ QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<d
             to_use[i] = 1; //for now we say we are using it
             {
                 // but let's check nearby events that may have a larger score
+
                 bigint j = i;
                 while ((j >= 0) && (times[j] >= times[i] - opts.clip_size)) {
-                    if ((i != j) && (scores[j] >= scores[i]))
+                    if ((i != j) && (scores[j] >= scores[i])) {
                         to_use[i] = 0; //actually not using it because there is something bigger to the left
+                    }
                     j--;
                 }
             }
             {
                 bigint j = i;
                 while ((j < times.count()) && (times[j] <= times[i] + opts.clip_size)) {
-                    if (scores[j] > scores[i])
+                    if (scores[j] > scores[i]) {
                         to_use[i] = 0; //actually not using it because there is something bigger to the right
+                    }
                     j++;
                 }
             }
@@ -327,7 +329,7 @@ QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<d
     return to_use;
 }
 
-QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList>& channel_mask)
+QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList>& time_channel_mask)
 {
     bigint M = X.N1(); //the number of dimensions
     bigint T = opts.clip_size; //the clip size
@@ -351,11 +353,13 @@ QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& time
     //while ((something_changed)&&(num_passes<2)) {
 
     QVector<double> scores(L);
-    Mda dirty(X.N1(), X.N2()); //timepoints/channels for which we need to recompute the score if a clip was centered here
+    Mda32 dirty(X.N1(), X.N2()); //timepoints/channels for which we need to recompute the score if an event overlaps
     for (bigint ii = 0; ii < dirty.totalSize(); ii++) {
         dirty.setValue(1, ii);
     }
 
+    bigint num_score_computes = 0;
+    bigint num_to_use = 0;
     while (something_changed) {
         num_passes++;
         QVector<double> scores_to_try;
@@ -370,23 +374,25 @@ QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& time
                 if (k0 > 0) { //make sure we have a positive label (don't know why we wouldn't)
                     bigint tt = (bigint)(t0 - Tmid + 0.5); //start time of clip
                     double score0 = 0;
-                    IntList chmask = channel_mask[k0 - 1];
-                    if (!is_dirty(dirty, t0, chmask)) {
-                        // we don't need to recompute the score
-                        score0 = scores[i];
-                    }
-                    else {
-                        //we do need to recompute it.
-                        if ((tt >= 0) && (tt + T <= X.N2())) { //make sure we are in range
-                            //The score will be how much something like the L2-norm is decreased
-                            score0 = compute_score(M, T, X.dataPtr(0, tt), templates.dataPtr(0, 0, k0 - 1), chmask);
+                    if ((tt >= 0) && (tt + T <= X.N2())) { //make sure we are in range
+                        IntList tchmask = time_channel_mask[k0 - 1];
+                        if (!is_dirty(dirty.dataPtr(0, tt), tchmask)) {
+                            // we don't need to recompute the score
+                            score0 = scores[i];
                         }
-                        /*
-                        if (score0 < template_norms[k0] * template_norms[k0] * 0.1)
-                            score0 = 0; //the norm of the improvement needs to be at least 0.5 times the norm of the template
-                            */
-                    }
+                        else {
+                            //we do need to recompute it.
 
+                            //The score will be how much something like the L2-norm is decreased
+                            score0 = compute_score(M, T, X.dataPtr(0, tt), templates.dataPtr(0, 0, k0 - 1), tchmask);
+                            num_score_computes++;
+                            /*
+                            if (score0 < template_norms[k0] * template_norms[k0] * 0.1)
+                                score0 = 0; //the norm of the improvement needs to be at least 0.5 times the norm of the template
+                                */
+                            scores[i] = score0;
+                        }
+                    }
                     //the score needs to be at least as large as neglogprior in order to accept the spike
                     //double neglogprior = 30;
                     double neglogprior = 0;
@@ -421,22 +427,18 @@ QList<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& time
         bigint num_added = 0;
         for (bigint i = 0; i < to_use.count(); i++) {
             if (to_use[i] == 1) {
-                IntList chmask = channel_mask[labels_to_try[i] - 1];
+                IntList tchmask = time_channel_mask[labels_to_try[i] - 1];
                 something_changed = true;
                 num_added++;
                 bigint tt = (bigint)(times_to_try[i] - Tmid + 0.5);
-                subtract_scaled_template(M, T, X.dataPtr(0, tt), templates.dataPtr(0, 0, labels_to_try[i] - 1), chmask, scale_min, scale_max);
-                for (bigint aa = tt - T / 2 - 1; aa <= tt + T + T / 2 + 1; aa++) {
-                    if ((aa >= 0) && (aa < X.N2())) {
-                        for (bigint k = 0; k < chmask.count(); k++) {
-                            dirty.setValue(1, chmask[k], aa);
-                        }
-                    }
-                }
+                subtract_scaled_template(M, T, X.dataPtr(0, tt), dirty.dataPtr(0, tt), templates.dataPtr(0, 0, labels_to_try[i] - 1), tchmask, scale_min, scale_max);
                 all_to_use[inds_to_try[i]] = 1;
+                num_to_use++;
             }
         }
     }
+
+    qDebug().noquote() << QString("Processed %1 events in time chunk (using %2%), %3 score computes per event, %4 passes").arg(L).arg(num_to_use * 100.0 / L).arg(num_score_computes * 1.0 / L).arg(num_passes);
 
     QList<bigint> inds_to_use;
     for (bigint i = 0; i < L; i++) {

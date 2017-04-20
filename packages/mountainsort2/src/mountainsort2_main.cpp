@@ -172,7 +172,7 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.fit_stage", "0.13");
+        ProcessorSpec X("mountainsort.fit_stage", "0.14");
         X.addInputs("timeseries", "firings");
         X.addOutputs("firings_out");
         //X.addRequiredParameters();
