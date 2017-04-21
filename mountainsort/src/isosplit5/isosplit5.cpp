@@ -41,6 +41,7 @@ void isosplit5_mex(double* labels_out, int M, int N, double* X)
     for (bigint i = 0; i < M * N; i++)
         Xf[i] = X[i];
     isosplit5_opts opts;
+    //opts.refine_clusters=true;
     isosplit5(labelsi, M, N, Xf, opts);
     for (bigint i = 0; i < N; i++)
         labels_out[i] = labelsi[i];
