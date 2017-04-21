@@ -967,6 +967,8 @@ bool MLUtil::matchesFastChecksum(QString path, QString fcs)
 
 double MLCompute::correlation(bigint N, const float* X1, const float* X2)
 {
+    if (N <= 1)
+        return 0;
     double mean1 = mean(N, X1);
     double stdev1 = stdev(N, X1);
     double mean2 = mean(N, X2);
@@ -979,7 +981,7 @@ double MLCompute::correlation(bigint N, const float* X1, const float* X2)
         Y1[i] = (X1[i] - mean1) / stdev1;
         Y2[i] = (X2[i] - mean2) / stdev2;
     }
-    return dotProduct(Y1, Y2);
+    return dotProduct(Y1, Y2) / (N - 1);
 }
 
 double MLCompute::stdev(bigint N, const float* X)

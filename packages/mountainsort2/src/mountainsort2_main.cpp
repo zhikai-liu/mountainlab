@@ -172,7 +172,7 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.fit_stage", "0.14");
+        ProcessorSpec X("mountainsort.fit_stage", "0.16b");
         X.addInputs("timeseries", "firings");
         X.addOutputs("firings_out");
         //X.addRequiredParameters();
@@ -201,10 +201,11 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.isolation_metrics", "0.13");
+        ProcessorSpec X("mountainsort.isolation_metrics", "0.15j");
         X.addInputs("timeseries", "firings");
         X.addOutputs("metrics_out");
         X.addOptionalOutputs("pair_metrics_out");
+        X.addOptionalParameter("compute_bursting_parents", "", "false");
         processors.push_back(X.get_spec());
     }
     {
@@ -214,7 +215,7 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.split_firings", "0.14");
+        ProcessorSpec X("mountainsort.split_firings", "0.15");
         X.addInputs("timeseries_list", "firings");
         X.addOutputs("firings_out_list");
         //X.addRequiredParameters();
@@ -496,6 +497,7 @@ int main(int argc, char* argv[])
         QString metrics_out = CLP.named_parameters["metrics_out"].toString();
         QString pair_metrics_out = CLP.named_parameters["pair_metrics_out"].toString();
         P_isolation_metrics_opts opts;
+        opts.compute_bursting_parents = (CLP.named_parameters["compute_bursting_parents"].toString() == "true");
         ret = p_isolation_metrics(timeseries_list, firings, metrics_out, pair_metrics_out, opts);
     }
     else if (arg1 == "mountainsort.combine_cluster_metrics") {

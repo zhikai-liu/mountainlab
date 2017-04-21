@@ -20,7 +20,8 @@ function main(params) {
 		mask_out_artifacts_threshold:6, //applies to mask_out_artifacts=true
 		adjacency_radius:0,
 		channels:'', //comma-separated list of channels to analyze
-		prescribed_event_times:'' //you can supply your own file of event times (only works for multineighborhood=false). Otherwise, if empty, it will detect the events as part of processing
+		prescribed_event_times:'', //you can supply your own file of event times (only works for multineighborhood=false). Otherwise, if empty, it will detect the events as part of processing
+		compute_bursting_parents:'true'
 	});
 	var clip_size=Math.floor(params.clip_size_msec/1000*params.samplerate);
 
@@ -148,7 +149,7 @@ function main(params) {
 
 	var im_out=Process('mountainsort.isolation_metrics',
 			{timeseries:pre,firings:firings},
-			{_request_num_threads:params.num_threads},
+			{_request_num_threads:params.num_threads,compute_bursting_parents:params.compute_bursting_parents},
 			{metrics_out:'',pair_metrics_out:''}
 	);
 	var isolation_metrics=im_out.metrics_out;

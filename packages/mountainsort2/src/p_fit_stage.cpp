@@ -1,5 +1,6 @@
 #include "p_fit_stage.h"
 
+#include <QTime>
 #include <diskreadmda.h>
 #include <diskreadmda32.h>
 #include <mda.h>
@@ -69,6 +70,8 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
 
     QList<bigint> inds_to_use;
     printf("Starting fit stage...\n");
+    QTime timer;
+    timer.start();
     {
         bigint num_timepoints_handled = 0;
 #pragma omp parallel for
@@ -119,7 +122,10 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
                 }
 
                 num_timepoints_handled += qMin(chunk_size, N - timepoint);
-                qDebug().noquote() << QString("--- Handled %1% of timepoints").arg((int)(num_timepoints_handled * 100.0 / N));
+                if (timer.elapsed() > 5000) {
+                    qDebug().noquote() << QString("--- Handled %1% of timepoints").arg((int)(num_timepoints_handled * 100.0 / N)) << timer.elapsed();
+                    timer.restart();
+                }
             }
         }
     }
@@ -447,7 +453,7 @@ QVector<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& ti
         event_inds_to_consider = new_event_inds_to_consider;
     }
 
-    qDebug().noquote() << QString("Processed %1 events in time chunk (using %2%), %3 score computes per event, %4 passes").arg(L).arg(num_to_use * 100.0 / L).arg(num_score_computes * 1.0 / L).arg(num_passes);
+    //qDebug().noquote() << QString("Processed %1 events in time chunk (using %2%), %3 score computes per event, %4 passes").arg(L).arg(num_to_use * 100.0 / L).arg(num_score_computes * 1.0 / L).arg(num_passes);
 
     return event_inds_to_use;
 }
