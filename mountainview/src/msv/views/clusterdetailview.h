@@ -64,6 +64,7 @@ private slots:
     void slot_export_static_view();
     void slot_update_sort_order();
     void slot_view_properties();
+    void slot_export_template_waveforms();
 
 private:
     ClusterDetailViewPrivate* d;

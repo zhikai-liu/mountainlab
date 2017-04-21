@@ -15,6 +15,8 @@
 #include <math.h>
 #include <mvcontext.h>
 #include "mountainprocessrunner.h"
+#include <QDir>
+#include <QFileDialog>
 
 /// TODO: (MEDIUM) control brightness in 3D density view
 
@@ -58,6 +60,7 @@ public:
     MVClipsView* m_clips_view;
     QLabel* m_info_bar;
     Mda m_data;
+    QVector<int> m_labels;
     QList<int> m_labels_to_use;
     MVClusterWidgetComputer m_computer;
     QString m_feature_mode;
@@ -201,6 +204,18 @@ MVClusterWidget::MVClusterWidget(MVAbstractContext* context)
         QObject::connect(A, SIGNAL(triggered(bool)), this, SLOT(slot_shift_colors_right()));
         this->addAction(A);
     }
+    {
+        QAction* A = new QAction("Export features", this);
+        A->setProperty("action_type", "");
+        QObject::connect(A, SIGNAL(triggered(bool)), this, SLOT(slot_export_features()));
+        this->addAction(A);
+    }
+    {
+        QAction* A = new QAction("Export labels", this);
+        A->setProperty("action_type", "");
+        QObject::connect(A, SIGNAL(triggered(bool)), this, SLOT(slot_export_labels()));
+        this->addAction(A);
+    }
 }
 
 MVClusterWidget::~MVClusterWidget()
@@ -275,6 +290,7 @@ void MVClusterWidget::setTimes(const QVector<double>& times)
 
 void MVClusterWidget::setLabels(const QVector<int>& labels)
 {
+    d->m_labels = labels;
     foreach (MVClusterView* V, d->m_views) {
         V->setLabels(labels);
     }
@@ -386,6 +402,32 @@ void MVClusterWidget::slot_shift_colors_left(int step)
 void MVClusterWidget::slot_shift_colors_right()
 {
     slot_shift_colors_left(-1);
+}
+
+void MVClusterWidget::slot_export_features()
+{
+    QString default_dir = QDir::currentPath();
+    QString fname = QFileDialog::getSaveFileName(this, "Export features", default_dir, "*.mda");
+    if (fname.isEmpty())
+        return;
+    if (!d->m_data.write32(fname)) {
+        qWarning() << "Problem writing file: " + fname;
+    }
+}
+
+void MVClusterWidget::slot_export_labels()
+{
+    QString default_dir = QDir::currentPath();
+    QString fname = QFileDialog::getSaveFileName(this, "Export labels", default_dir, "*.mda");
+    if (fname.isEmpty())
+        return;
+    Mda LL(1, d->m_labels.count());
+    for (bigint i = 0; i < d->m_labels.count(); i++) {
+        LL.set(d->m_labels[i], i);
+    }
+    if (!LL.write32(fname)) {
+        qWarning() << "Problem writing file: " + fname;
+    }
 }
 
 void MVClusterWidgetPrivate::connect_view(MVClusterView* V)

@@ -34,7 +34,7 @@ namespace smi {
 bool get_inverse_via_lu_decomposition(int M, float* out, float* in);
 }
 
-void isosplit5_mex(double* labels_out, bigint M, bigint N, double* X)
+void isosplit5_mex(double* labels_out, int M, int N, double* X)
 {
     float* Xf = (float*)malloc(sizeof(float) * M * N);
     int* labelsi = (int*)malloc(sizeof(int) * N);

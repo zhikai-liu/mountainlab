@@ -162,6 +162,7 @@ public:
     double compute_sort_score(const ClusterData& CD);
 
     static QList<ClusterData> merge_cluster_data(const ClusterMerge& CM, const QList<ClusterData>& CD);
+    Mda32 get_template_waveforms_for_export();
 };
 
 ClusterDetailView::ClusterDetailView(MVAbstractContext* context)
@@ -217,10 +218,19 @@ ClusterDetailView::ClusterDetailView(MVAbstractContext* context)
     ActionFactory::addToToolbar(ActionFactory::ActionType::ZoomInVertical, this, SLOT(slot_vertical_zoom_in()));
     ActionFactory::addToToolbar(ActionFactory::ActionType::ZoomOutVertical, this, SLOT(slot_vertical_zoom_out()));
 
+    /*
     {
         QAction* A = new QAction("Export static view", this);
         A->setProperty("action_type", "");
         QObject::connect(A, SIGNAL(triggered(bool)), this, SLOT(slot_export_static_view()));
+        this->addAction(A);
+    }
+    */
+
+    {
+        QAction* A = new QAction("Export template waveforms...", this);
+        A->setProperty("action_type", "");
+        QObject::connect(A, SIGNAL(triggered(bool)), this, SLOT(slot_export_template_waveforms()));
         this->addAction(A);
     }
 
@@ -686,6 +696,18 @@ void ClusterDetailView::slot_view_properties()
     if (dlg.exec() == QDialog::Accepted) {
         d->m_properties = dlg.properties();
         this->update();
+    }
+}
+
+void ClusterDetailView::slot_export_template_waveforms()
+{
+    Mda32 X = d->get_template_waveforms_for_export();
+    QString default_dir = QDir::currentPath();
+    QString fname = QFileDialog::getSaveFileName(this, "Export template waveforms...", default_dir, "*.mda");
+    if (fname.isEmpty())
+        return;
+    if (!X.write32(fname)) {
+        qWarning() << "Problem writing file: " + fname;
     }
 }
 
@@ -1223,6 +1245,28 @@ QList<ClusterData> ClusterDetailViewPrivate::merge_cluster_data(const ClusterMer
         }
     }
     return ret;
+}
+
+Mda32 ClusterDetailViewPrivate::get_template_waveforms_for_export()
+{
+    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    Q_ASSERT(c);
+
+    QList<Mda32> templates;
+    for (int ii = 0; ii < m_cluster_data.count(); ii++) {
+        int k = m_cluster_data[ii].k;
+        if (c->clusterIsVisible(k)) {
+            templates << m_cluster_data[ii].template0;
+        }
+    }
+    int A = templates.count();
+    int M = templates.value(0).N1();
+    int T = templates.value(0).N2();
+    Mda32 X(M, T, A);
+    for (int a = 0; a < A; a++) {
+        X.setChunk(templates[a], 0, 0, a);
+    }
+    return X;
 }
 
 QPointF ClusterView::template_coord2pix(int m, double t, double val)
