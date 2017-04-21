@@ -85,6 +85,7 @@ QJsonObject get_spec()
         X.addInputs("timeseries");
         X.addOutputs("timeseries_out");
         //X.addRequiredParameters();
+        X.addOptionalParameter("quantization_unit","",0);
         processors.push_back(X.get_spec());
     }
     {
@@ -100,6 +101,7 @@ QJsonObject get_spec()
         X.addInputs("clips", "whitening_matrix");
         X.addOutputs("clips_out");
         //X.addRequiredParameters();
+        X.addOptionalParameter("quantization_unit","",0);
         processors.push_back(X.get_spec());
     }
     {
@@ -107,6 +109,7 @@ QJsonObject get_spec()
         X.addInputs("timeseries", "whitening_matrix");
         X.addOutputs("timeseries_out");
         //X.addRequiredParameters();
+        X.addOptionalParameter("quantization_unit","",0);
         processors.push_back(X.get_spec());
     }
     {
@@ -367,6 +370,7 @@ int main(int argc, char* argv[])
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
         Whiten_opts opts;
+        opts.quantization_unit=CLP.named_parameters["quantization_unit"].toDouble();
         ret = p_whiten(timeseries, timeseries_out, opts);
     }
     else if (arg1 == "mountainsort.compute_whitening_matrix") {
@@ -382,6 +386,7 @@ int main(int argc, char* argv[])
         QString whitening_matrix = CLP.named_parameters["whitening_matrix"].toString();
         QString clips_out = CLP.named_parameters["clips_out"].toString();
         Whiten_opts opts;
+        opts.quantization_unit=CLP.named_parameters["quantization_unit"].toDouble();
         ret = p_whiten_clips(clips, whitening_matrix, clips_out, opts);
     }
     else if (arg1 == "mountainsort.apply_whitening_matrix") {
@@ -389,6 +394,7 @@ int main(int argc, char* argv[])
         QString whitening_matrix = CLP.named_parameters["whitening_matrix"].toString();
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
         Whiten_opts opts;
+        opts.quantization_unit=CLP.named_parameters["quantization_unit"].toDouble();
         ret = p_apply_whitening_matrix(timeseries, whitening_matrix, timeseries_out, opts);
     }
     else if (arg1 == "mountainsort.detect_events") {

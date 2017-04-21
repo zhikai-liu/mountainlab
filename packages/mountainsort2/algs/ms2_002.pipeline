@@ -80,9 +80,11 @@ function main(params) {
 		).timeseries_out;
 	}
 	if (params.whiten=='true') {
+		var whitening_quantization_unit=0;
+		if (params.quantization_unit) whitening_quantization_unit=0.01;
 		pre=Process('whiten',{
 						timeseries:pre
-					},{}
+					},{quantization_unit:whitening_quantization_unit}
 				).timeseries_out;
 	}
 
