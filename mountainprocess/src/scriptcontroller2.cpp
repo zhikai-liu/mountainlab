@@ -43,6 +43,7 @@ struct PipelineNode2 {
     QVariantMap outputs;
     bool create_prv = false;
     bool copy_file = false;
+    bool remove_intermediate = false;
     bool completed;
     bool running;
     QString process_output_fname; //internal
@@ -103,6 +104,8 @@ public:
     PipelineNode2* find_node_ready_to_run();
     bool handle_running_processes();
     bool get_node_indices_for_outputs(QMap<QString, int>& node_indices_for_outputs);
+    bool okay_to_remove_intermediate_file(const QString& path);
+    bool create_rprv(const QString& path);
 };
 
 ScriptController2::ScriptController2()
@@ -352,8 +355,14 @@ void ScriptController2::setNumThreads(int num_threads)
 QJsonObject make_prv_object_2(QString path)
 {
     if (!QFile::exists(path)) {
-        qWarning() << "Unable to find file (for prv):" << path;
-        return QJsonObject();
+        if (QFile::exists(path + ".rprv")) {
+            QString json = TextFile::read(path + ".rprv");
+            return QJsonDocument::fromJson(json.toUtf8()).object();
+        }
+        else {
+            qWarning() << "Unable to find file (in make_prv_object_2):" << path;
+            return QJsonObject();
+        }
     }
     if (path.endsWith(".prv")) {
         //this important section added on 10/12/16 by jfm
@@ -641,11 +650,27 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
         node->completed = true;
         return true;
     }
+    if (node->remove_intermediate) {
+        QString input_path = node->inputs["input"].toString();
+        if (QFile::exists(input_path)) { //note that the file may not exist if the .rprv from a previous run already exists
+            qDebug().noquote() << QString("Removing intermediate file: %1").arg(input_path);
+            if (!create_rprv(input_path)) {
+                qWarning() << "Unable to create .rprv file";
+                return false;
+            }
+            if (!QFile::remove(input_path)) {
+                qWarning() << "Unable to remove intermediate file: " + input_path;
+                return false;
+            }
+        }
+        node->completed = true;
+        return true;
+    }
     if (!PM->checkParameters(node->processor_name, parameters0)) {
         qWarning() << "Error checking parameters for processor: " + node->processor_name;
         return false;
     }
-    if ((!m_force_run) && (PM->processAlreadyCompleted(node->processor_name, parameters0))) {
+    if ((!m_force_run) && (PM->processAlreadyCompleted(node->processor_name, parameters0, true, true))) {
         q->log(QString("Process already completed: %1").arg(node->processor_name));
         node->completed = true;
         return true;
@@ -705,7 +730,14 @@ PipelineNode2* ScriptController2Private::find_node_ready_to_run()
                 }
             }
             if (ready_to_run) {
-                return node;
+                if (node->remove_intermediate) {
+                    if (okay_to_remove_intermediate_file(node->inputs["input"].toString())) {
+                        return node;
+                    }
+                }
+                else {
+                    return node;
+                }
             }
         }
     }
@@ -805,6 +837,41 @@ bool ScriptController2Private::get_node_indices_for_outputs(QMap<QString, int>& 
             }
             node_indices_for_outputs[path] = i;
         }
+    }
+    return true;
+}
+
+bool ScriptController2Private::okay_to_remove_intermediate_file(const QString& path)
+{
+    for (int i = 0; i < m_pipeline_nodes.count(); i++) {
+        PipelineNode2* node = &m_pipeline_nodes[i];
+        if (!node->completed) {
+            if ((!node->remove_intermediate) && (node->input_paths().contains(path))) {
+                return false;
+            }
+            if (node->output_paths().contains(path)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool ScriptController2Private::create_rprv(const QString& path)
+{
+    if (!QFile::exists(path)) {
+        qWarning() << "In create_prv: file does not exist: " + path;
+        return false;
+    }
+    QJsonObject obj = MLUtil::createPrvObject(path);
+
+    //important for provenance tracking
+    obj["original_last_modified"] = QFileInfo(path).lastModified().toString("yyyy-MM-dd-hh-mm-ss-zzz");
+
+    QString json = QJsonDocument(obj).toJson();
+    if (!TextFile::write(path + ".rprv", json)) {
+        qWarning() << "Unable to write .rprv file: " + path + ".rprv";
+        return false;
     }
     return true;
 }
@@ -951,4 +1018,12 @@ QJsonArray get_prv_processes_2(const QList<PipelineNode2>& nodes, const QMap<QSt
     }
     *ok = true;
     return processes;
+}
+
+void ScriptController2::removeIntermediate(const QString& path)
+{
+    PipelineNode2 node;
+    node.inputs["input"] = d->make_absolute_path(path);
+    node.remove_intermediate = true;
+    d->m_pipeline_nodes << node;
 }

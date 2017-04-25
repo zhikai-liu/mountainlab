@@ -417,6 +417,8 @@ int main(int argc, char* argv[])
             return -1;
         }
 
+        ProcessManager::globalInstance()->cleanUpCompletedProcessRecords(); //those .json files in completed_process tmp directory
+
         QString output_fname = CLP.named_parameters.value("_script_output").toString(); //maybe the user or framework specified where output is to be saved
         if (!output_fname.isEmpty()) {
             output_fname = QDir::current().absoluteFilePath(output_fname); //make it absolute

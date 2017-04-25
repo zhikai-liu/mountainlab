@@ -81,11 +81,13 @@ function main(params) {
 	}
 	if (params.whiten=='true') {
 		var whitening_quantization_unit=0;
-		if (params.quantization_unit) whitening_quantization_unit=0.01;
-		pre=Process('whiten',{
+		//if (params.quantization_unit) whitening_quantization_unit=0.01;
+		var old=pre;
+		pre=Process('mountainsort.whiten',{
 						timeseries:pre
 					},{quantization_unit:whitening_quantization_unit}
 				).timeseries_out;
+		RemoveIntermediate(old); //save disk space without ruining provenance
 	}
 
 	var firings;
@@ -251,6 +253,10 @@ function Process(processor_name,inputs,parameters,outputs) {
 		JSON.stringify(outputs)
 	);
 	return JSON.parse(ret);
+}
+
+function RemoveIntermediate(file) {
+	_MP2.removeIntermediate(file);
 }
 
 function setNumThreads(num_threads) {

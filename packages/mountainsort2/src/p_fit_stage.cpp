@@ -12,9 +12,9 @@ typedef QList<bigint> IntList;
 
 namespace P_fit_stage {
 Mda sort_firings_by_time(const Mda& firings);
-Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, const QVector<bigint>& labels, bigint clip_size);
+void compute_templates(Mda32& templates_out, Mda32& templates_stdevs_out, const DiskReadMda32& X, const QVector<double>& times, const QVector<bigint>& labels, bigint clip_size);
 QVector<bigint> fit_stage_kernel(Mda32& X, Mda32& templates, QVector<double>& times, QVector<bigint>& labels, const Fit_stage_opts& opts, const QList<IntList>& time_channel_mask);
-QList<bigint> get_time_channel_mask(Mda32 template0, double thresh);
+QList<bigint> get_time_channel_mask(const Mda32& template0, const Mda32& template0_stdev, double thresh);
 }
 
 bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_out_path, Fit_stage_opts opts)
@@ -44,7 +44,9 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
 
     qDebug().noquote() << "Computing templates...";
     //These are the templates corresponding to the clusters
-    Mda32 templates = P_fit_stage::compute_templates(X, times, labels, T); //MxTxK
+    Mda32 templates;
+    Mda32 templates_stdev;
+    P_fit_stage::compute_templates(templates, templates_stdev, X, times, labels, T); //MxTxK
 
     bigint processing_chunk_size = 1e5;
     bigint processing_chunk_overlap_size = 1e3;
@@ -62,9 +64,10 @@ bool p_fit_stage(QString timeseries_path, QString firings_path, QString firings_
     bigint K = MLCompute::max(labels);
     QList<IntList> time_channel_mask;
     for (bigint i = 0; i < K; i++) {
-        Mda32 template0;
+        Mda32 template0, template0_stdev;
         templates.getChunk(template0, 0, 0, i, M, T, 1);
-        time_channel_mask << P_fit_stage::get_time_channel_mask(template0, time_channel_mask_thresh); //use only the channels with highest maxval
+        templates_stdev.getChunk(template0_stdev, 0, 0, i, M, T, 1);
+        time_channel_mask << P_fit_stage::get_time_channel_mask(template0, template0_stdev, time_channel_mask_thresh); //use only the channels with highest maxval
         qDebug().noquote() << QString("k=%1, mask.size=%2").arg(i + 1).arg(time_channel_mask[i].count());
     }
 
@@ -166,7 +169,7 @@ Mda sort_firings_by_time(const Mda& firings)
     return F;
 }
 
-Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, const QVector<bigint>& labels, bigint clip_size)
+void compute_templates(Mda32& templates_out, Mda32& templates_stdevs_out, const DiskReadMda32& X, const QVector<double>& times, const QVector<bigint>& labels, bigint clip_size)
 {
     bigint M = X.N1();
     bigint T = clip_size;
@@ -176,7 +179,8 @@ Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, co
 
     bigint Tmid = (bigint)((T + 1) / 2) - 1;
 
-    Mda32 templates(M, T, K);
+    Mda sums(M, T, K);
+    Mda sumsqrs(M, T, K);
     QList<bigint> counts;
     for (bigint k = 0; k < K; k++)
         counts << 0;
@@ -189,27 +193,39 @@ Mda32 compute_templates(const DiskReadMda32& X, const QVector<double>& times, co
                 qWarning() << "Problem reading chunk in compute_templates of fit_stage";
             }
             dtype32* Xptr = X0.dataPtr();
-            dtype32* Tptr = templates.dataPtr(0, 0, k - 1);
+            double* sums_ptr = sums.dataPtr(0, 0, k - 1);
+            double* sumsqrs_ptr = sumsqrs.dataPtr(0, 0, k - 1);
             for (bigint i = 0; i < M * T; i++) {
-                Tptr[i] += Xptr[i];
+                sums_ptr[i] += Xptr[i];
+                sumsqrs_ptr[i] += Xptr[i] * Xptr[i];
             }
             counts[k - 1]++;
         }
     }
+    templates_out.allocate(M, T, K);
+    templates_stdevs_out.allocate(M, T, K);
     for (bigint k = 0; k < K; k++) {
         for (bigint t = 0; t < T; t++) {
             for (bigint m = 0; m < M; m++) {
-                if (counts[k]) {
-                    templates.set(templates.get(m, t, k) / counts[k], m, t, k);
+                double n = counts[k];
+                double s1 = sums.get(m, t, k);
+                double s2 = sumsqrs.get(m, t, k);
+                double mu = 0;
+                if (n) {
+                    mu = s1 / n;
+                    templates_out.set(mu, m, t, k);
                 }
+                if (n > 1) {
+                    double val = sqrt((s2 - 2 * mu * s1 + n * mu * mu) / (n - 1));
+                    templates_stdevs_out.set(val, m, t, k);
+                }
+                //finish
             }
         }
     }
-
-    return templates;
 }
 
-QList<bigint> get_time_channel_mask(Mda32 template0, double thresh)
+QList<bigint> get_time_channel_mask(const Mda32& template0, const Mda32& template0_stdev, double thresh)
 {
     bigint M = template0.N1();
     bigint T = template0.N2();
@@ -218,6 +234,9 @@ QList<bigint> get_time_channel_mask(Mda32 template0, double thresh)
     for (bigint t = 0; t < T; t++) {
         for (bigint m = 0; m < M; m++) {
             double val = qAbs(template0.value(m, t));
+            double val1 = template0_stdev.value(m, t);
+            if (val1)
+                val = val / val1;
             if (val > thresh)
                 ret << ii;
             ii++;
