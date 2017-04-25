@@ -275,7 +275,7 @@ Mda32 estimate_noise_shape(DiskReadMda32& X, int T, int ch)
         peaks << rand_clips.get(ch, Tmid, i);
     }
 
-    Mda noise_shape_0(M,T);
+    Mda noise_shape_0(M, T);
     double* noise_shape_0_ptr = noise_shape_0.dataPtr();
     float* rand_clips_ptr = rand_clips.dataPtr();
     int bbb = 0;
@@ -301,7 +301,8 @@ Mda32 estimate_noise_shape(DiskReadMda32& X, int T, int ch)
         }
     }
     noise_shape_0_norm = sqrt(noise_shape_0_norm);
-    if (!noise_shape_0_norm) noise_shape_0_norm=1;
+    if (!noise_shape_0_norm)
+        noise_shape_0_norm = 1;
 
     Mda32 noise_shape;
     noise_shape.allocate(M, T);
