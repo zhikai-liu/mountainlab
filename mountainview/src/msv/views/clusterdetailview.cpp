@@ -61,7 +61,7 @@ public:
     //input
     //QString mscmdserver_url;
     QString mlproxy_url;
-    DiskReadMda timeseries;
+    DiskReadMda32 timeseries;
     DiskReadMda firings;
     int clip_size;
     QSet<int> clusters_to_force_show;

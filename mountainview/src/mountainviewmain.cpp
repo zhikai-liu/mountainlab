@@ -51,6 +51,7 @@
 #include <QFileDialog>
 #include <QSettings>
 #include <clipsviewplugin.h>
+#include <diskreadmda32.h>
 //#include <mvclusterordercontrol.h>
 #include <clustermetricsplugin.h>
 #include <curationprogramplugin.h>
@@ -358,17 +359,17 @@ int main(int argc, char* argv[])
             }
             if (CLP.named_parameters.contains("raw")) {
                 QString raw_path = CLP.named_parameters["raw"].toString();
-                dc.addTimeseries("Raw Data", DiskReadMda(raw_path));
+                dc.addTimeseries("Raw Data", DiskReadMda32(raw_path));
                 dc.setCurrentTimeseriesName("Raw Data");
             }
             if (CLP.named_parameters.contains("filt")) {
                 QString filt_path = CLP.named_parameters["filt"].toString();
-                dc.addTimeseries("Filtered Data", DiskReadMda(filt_path));
+                dc.addTimeseries("Filtered Data", DiskReadMda32(filt_path));
                 dc.setCurrentTimeseriesName("Filtered Data");
             }
             if (CLP.named_parameters.contains("pre")) {
                 QString pre_path = CLP.named_parameters["pre"].toString();
-                dc.addTimeseries("Preprocessed Data", DiskReadMda(pre_path));
+                dc.addTimeseries("Preprocessed Data", DiskReadMda32(pre_path));
                 dc.setCurrentTimeseriesName("Preprocessed Data");
             }
             if (CLP.named_parameters.contains("mlproxy_url")) {
@@ -429,32 +430,34 @@ int main(int argc, char* argv[])
             TPV.show();
             bool done_checking = false;
             QJsonObject obj;
-            while (!done_checking) {
-                QString json = TextFile::read(mv2_fname);
-                obj = QJsonDocument::fromJson(json.toLatin1()).object();
-                if (check_whether_prv_objects_need_to_be_downloaded_or_regenerated(obj)) {
-                    ResolvePrvsDialog dlg;
-                    if (dlg.exec() == QDialog::Accepted) {
-                        if (dlg.choice() == ResolvePrvsDialog::OpenPrvGui) {
-                            int exit_code = system(("prv-gui " + mv2_fname).toUtf8().data());
-                            Q_UNUSED(exit_code)
-                            done_checking = false; //check again
-                        }
-                        else if (dlg.choice() == ResolvePrvsDialog::AutomaticallyDownloadAndRegenerate) {
-                            try_to_automatically_download_and_regenerate_prv_objects(obj);
-                            done_checking = false; //check again
+            QString json = TextFile::read(mv2_fname);
+            obj = QJsonDocument::fromJson(json.toLatin1()).object();
+            if (CLP.named_parameters.contains("_prvgui")) {
+                while (!done_checking) {
+                    if (check_whether_prv_objects_need_to_be_downloaded_or_regenerated(obj)) {
+                        ResolvePrvsDialog dlg;
+                        if (dlg.exec() == QDialog::Accepted) {
+                            if (dlg.choice() == ResolvePrvsDialog::OpenPrvGui) {
+                                int exit_code = system(("prv-gui " + mv2_fname).toUtf8().data());
+                                Q_UNUSED(exit_code)
+                                done_checking = false; //check again
+                            }
+                            else if (dlg.choice() == ResolvePrvsDialog::AutomaticallyDownloadAndRegenerate) {
+                                try_to_automatically_download_and_regenerate_prv_objects(obj);
+                                done_checking = false; //check again
+                            }
+                            else {
+                                done_checking = true;
+                            }
                         }
                         else {
-                            done_checking = true;
+                            return -1;
                         }
                     }
-                    else {
-                        return -1;
-                    }
+                    else
+                        done_checking = true;
                 }
-                else
-                    done_checking = true;
-            };
+            }
             context->setFromMV2FileObject(obj);
             context->setMV2FileName(mv2_fname);
         }
@@ -513,7 +516,7 @@ int main(int argc, char* argv[])
             if (fp.isEmpty())
                 fp = firings_paths.value(0);
             SpikeSpyViewData view;
-            view.timeseries = DiskReadMda(tsp);
+            view.timeseries = DiskReadMda32(tsp);
             view.firings = DiskReadMda(fp);
             W->addView(view);
         }

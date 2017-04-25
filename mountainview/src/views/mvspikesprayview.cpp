@@ -31,7 +31,7 @@
 class MVSpikeSprayComputer {
 public:
     //input
-    DiskReadMda timeseries;
+    DiskReadMda32 timeseries;
     DiskReadMda firings;
     QString mlproxy_url;
     QSet<int> labels_to_use;
