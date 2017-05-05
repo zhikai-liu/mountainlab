@@ -7,7 +7,7 @@ TEMPLATE = subdirs
 #COMPONENTS = mdaconvert  mountainprocess mountainview prv prv-gui
 
 isEmpty(COMPONENTS) {
-    COMPONENTS = mda mdaconvert mountainprocess mountainsort mountainview mountaincompare prv prv-gui mountainsort2
+    COMPONENTS = mda mdaconvert mlcache mountainprocess mountainsort mountainview mountaincompare prv prv-gui mountainsort2
 }
 
 CONFIG += ordered
@@ -26,6 +26,7 @@ defineReplace(ifcomponent) {
 
 SUBDIRS += $$ifcomponent(mdaconvert,mdaconvert/src/mdaconvert.pro)
 SUBDIRS += $$ifcomponent(mda,mda/src/mda.pro)
+SUBDIRS += $$ifcomponent(mlcache,mlcache/src/mlcache.pro)
 SUBDIRS += $$ifcomponent(mountainbrowser,mountainbrowser/src/mountainbrowser.pro)
 SUBDIRS += $$ifcomponent(mountainprocess,mountainprocess/src/mountainprocess.pro)
 SUBDIRS += $$ifcomponent(mountainsort,mountainsort/src/mountainsort.pro)

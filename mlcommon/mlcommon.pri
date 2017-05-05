@@ -3,7 +3,7 @@ MLCOMMONLIB = $$PWD/lib/libmlcommon.a
 LIBS += -L$$PWD/lib $$MLCOMMONLIB
 unix:PRE_TARGETDEPS += $$MLCOMMONLIB
 
-QT += network
+QT += network sql
 
 #The old version was as follows
 #INCLUDEPATH += $$PWD/include $$PWD/include/cachemanager

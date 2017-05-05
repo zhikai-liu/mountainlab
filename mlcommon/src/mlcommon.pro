@@ -1,4 +1,4 @@
-QT = core network
+QT = core network sql
 
 DEFINES += USE_REMOTE_READ_MDA
 
@@ -26,7 +26,10 @@ HEADERS += mlcommon.h sumit.h \
     ../include/icounter.h \
     ../include/qprocessmanager.h \
     ../include/signalhandler.h \
-    ../include/mllog.h
+    ../include/mllog.h \
+    ../include/cachemanager/mlcache.h \
+    ../include/cachemanager/mlcache_backend.h \
+    ../include/cachemanager/mlcache_sqlite.h
 
 SOURCES += \
     mlcommon.cpp sumit.cpp \
@@ -38,7 +41,9 @@ SOURCES += \
     icounter.cpp \
     qprocessmanager.cpp \
     signalhandler.cpp \
-    mllog.cpp
+    mllog.cpp \
+    cachemanager/mlcache.cpp \
+    cachemanager/mlcache_sqlite.cpp
 
 INCLUDEPATH += ../include/mda
 VPATH += ../include/mda
