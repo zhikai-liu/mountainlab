@@ -621,8 +621,8 @@ bool is_bursting_parent_candidate(const Mda32& template0, const Mda32& template0
 {
     float maxabs = 0, maxabs_parent = 0;
     for (bigint i = 0; i < template0.totalSize(); i++) {
-        maxabs = qMax(fabs(template0.value(i)), maxabs);
-        maxabs_parent = qMax(fabs(template0_parent.value(i)), maxabs_parent);
+        maxabs = qMax((float)fabs(template0.value(i)), maxabs);
+        maxabs_parent = qMax((float)fabs(template0_parent.value(i)), maxabs_parent);
     }
     if (maxabs_parent < maxabs)
         return false;
