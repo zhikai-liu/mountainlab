@@ -66,17 +66,17 @@ bool merge_across_channels_v2(const QString& timeseries_path, const QString& fir
     printf("Find candidate pairs to consider...\n");
     //find the candidate pairs for merging
     Mda candidate_pairs(K, K);
-    QList<QVector<int>> all_label_inds;
-    for (int kk=0; kk<K; kk++) {
-        all_label_inds << find_label_inds(labels,kk+1);
+    QList<QVector<int> > all_label_inds;
+    for (int kk = 0; kk < K; kk++) {
+        all_label_inds << find_label_inds(labels, kk + 1);
     }
     for (int k1 = 0; k1 < K; k1++) {
         //QVector<int> inds1 = find_label_inds(labels, k1 + 1);
-        QVector<int> *inds1 = &all_label_inds[k1];
+        QVector<int>* inds1 = &all_label_inds[k1];
         if (!inds1->isEmpty()) {
 
             for (int k2 = 0; k2 < K; k2++) {
-                QVector<int> *inds2 = &all_label_inds[k2];
+                QVector<int>* inds2 = &all_label_inds[k2];
                 if (!inds2->isEmpty()) {
                     int peakchan1 = peakchans[(*inds1)[0]]; //the peak channel should be the same for all events with this labels, so we just need to look at the first one
                     int peakchan2 = peakchans[(*inds2)[0]];
@@ -164,7 +164,6 @@ bool merge_across_channels_v2(const QString& timeseries_path, const QString& fir
     }
 
     printf("Finalizing...\n");
-
 
     //set the output
     Mda firings_out(firings.N1(), inds_to_use.count());
