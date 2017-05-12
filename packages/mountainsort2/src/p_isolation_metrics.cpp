@@ -106,7 +106,8 @@ bool p_isolation_metrics(QStringList timeseries_list, QString firings_path, QStr
             }
         }
 
-        templates0 = compute_templates_0(X, times, labels, opts.clip_size);
+        //templates0 = compute_templates_0(X, times, labels, opts.clip_size);
+        templates0 = compute_templates_in_parallel(X, times, labels, opts.clip_size);
     }
 
     qDebug().noquote() << "Determining pairs to compare...";

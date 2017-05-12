@@ -22,7 +22,7 @@ QList<int> reverse_order(const QList<int>& inds);
 bool merge_across_channels_v2(const QString& timeseries_path, const QString& firings_path, const QString& firings_out_path, const merge_across_channels_v2_opts& opts)
 {
     //Read the input arrays
-    DiskReadMda X(timeseries_path);
+    DiskReadMda32 X(timeseries_path);
     Mda firingsA;
     firingsA.read(firings_path);
 
@@ -45,7 +45,8 @@ bool merge_across_channels_v2(const QString& timeseries_path, const QString& fir
     int K = MLCompute::max<int>(labels);
 
     //compute the average waveforms (aka templates)
-    Mda templates = compute_templates_0(X, times, labels, opts.clip_size);
+    //Mda templates = compute_templates_0(X, times, labels, opts.clip_size);
+    Mda32 templates = compute_templates_in_parallel(X, times, labels, opts.clip_size);
 
     Mda channel_peaks(M, K);
     for (int k = 0; k < K; k++) {
@@ -99,31 +100,47 @@ bool merge_across_channels_v2(const QString& timeseries_path, const QString& fir
     QList<bool> clusters_to_use;
     for (int k = 0; k < K; k++)
         clusters_to_use << false;
+#pragma omp parallel for
     for (int ii = 0; ii < inds1.count(); ii++) {
-        int ik = inds1[ii];
-        QVector<int> inds_k = find_label_inds(labels, ik + 1);
         QVector<double> times_k;
-        for (int a = 0; a < inds_k.count(); a++) {
-            times_k << times[inds_k[a]];
-        }
         QVector<double> other_times;
-        for (int ik2 = 0; ik2 < K; ik2++) {
-            if (candidate_pairs.value(ik, ik2)) {
-                printf("Merge candidate pair: %d,%d\n", ik + 1, ik2 + 1);
-                if (clusters_to_use[ik2]) { //we are already using the other one
-                    QVector<int> inds_k2 = find_label_inds(labels, ik2 + 1);
-                    for (int a = 0; a < inds_k2.count(); a++) {
-                        other_times << times[inds_k2[a]];
+        bool to_use;
+        int ik;
+#pragma omp critical
+        {
+            ik = inds1[ii];
+            QVector<int> inds_k = find_label_inds(labels, ik + 1);
+
+            for (int a = 0; a < inds_k.count(); a++) {
+                times_k << times[inds_k[a]];
+            }
+
+            for (int ik2 = 0; ik2 < K; ik2++) {
+                if (candidate_pairs.value(ik, ik2)) {
+                    printf("Merge candidate pair: %d,%d\n", ik + 1, ik2 + 1);
+                    if (clusters_to_use[ik2]) { //we are already using the other one
+                        QVector<int> inds_k2 = find_label_inds(labels, ik2 + 1);
+                        for (int a = 0; a < inds_k2.count(); a++) {
+                            other_times << times[inds_k2[a]];
+                        }
                     }
                 }
             }
         }
         if (cluster_is_already_being_used(times_k, other_times, opts)) {
-            clusters_to_use[ik] = false;
-            num_removed++;
+            to_use = false;
         }
         else {
-            clusters_to_use[ik] = true;
+            to_use = true;
+        }
+#pragma omp critical
+        {
+            if (to_use)
+                clusters_to_use[ik] = true;
+            else {
+                clusters_to_use[ik] = false;
+                num_removed++;
+            }
         }
     }
 
