@@ -90,7 +90,7 @@ void get_sums_and_counts_for_templates(Mda& sums, Mda& counts, const Mda32& X, b
             int k = labels[i];
             if ((k >= 1) && (k <= K)) {
                 Mda32 clip;
-                X.getChunk(clip, 0, 0, t - Tmid, M, T, 1);
+                X.getChunk(clip, 0, t - Tmid, M, T);
                 for (int t = 0; t < T; t++) {
                     for (int m = 0; m < M; m++) {
                         sums.setValue(sums.value(m, t, k - 1) + clip.value(m, t), m, t, k - 1);
@@ -118,7 +118,7 @@ Mda32 compute_templates_in_parallel(const DiskReadMda32& X, const QVector<double
         Mda32 chunk;
 #pragma omp critical
         {
-            X.readChunk(chunk, 0, 0, t - clip_size, M, T, chunk_size + 2 * clip_size);
+            X.readChunk(chunk, 0, t - clip_size, M, chunk_size + 2 * clip_size);
         }
         Mda sums0;
         Mda counts0;
