@@ -1,7 +1,7 @@
 console.log ('Running prvbucketserver...');
 
 function print_usage() {
-	console.log ('Usage: prvbucketserver [data_directory] --listen_port=[port] [--listen_hostname=[host]]');
+	console.log ('Usage: prvbucketserver [data_directory] --listen_port=[port] --server_url=[http://localhost:8000] [--listen_hostname=[host]]');
 }
 
 //// requires
@@ -11,22 +11,18 @@ var fs=require('fs');
 
 CLP=new CLParams(process.argv);
 console.log(CLP.namedParameters);
-
-var prv_exe=__dirname+'/../../bin/prv'
-
-// The first argument is the data directory -- the base path from which files will be served
-var data_directory=CLP.unnamedParameters[0]||'';
-if (!data_directory) {
-	print_usage();
-	process.exit(-1);
-}
-
 // The listen port comes from the command-line option
 var listen_port=CLP.namedParameters['listen_port']||0;
 var listen_hostname=CLP.namedParameters['listen_hostname']||'';
-if (!listen_port) {
+var server_url=CLP.namedParameters['server_url']||'';
+var prv_exe=__dirname+'/../../bin/prv'
+var url_path='/prvbucket';
+
+// The first argument is the data directory -- the base path from which files will be served
+var data_directory=CLP.unnamedParameters[0]||'';
+if ((!data_directory)||(!listen_port)||(!('server_url' in CLP.namedParameters))) {
 	print_usage();
-	process.exit(-1);	
+	process.exit(-1);
 }
 
 // Exit this program when the user presses ctrl+C
@@ -39,13 +35,15 @@ var SERVER=http.createServer(function (REQ, RESP) {
 
 	//parse the url of the request
 	var url_parts = url.parse(REQ.url,true);
+	var host=url_parts.host;
 	var path=url_parts.pathname;
 	var query=url_parts.query;
+	console.log(JSON.stringify(url_parts));
+	console.log('host='+host);
 	
 	//by default, the action will be 'download'
 	var action=query.a||'download';	
 	var info=query.info||'{}';
-	var url_path='/prvbucket';
 
 	if (REQ.method == 'OPTIONS') {
 		var headers = {};
@@ -117,13 +115,18 @@ var SERVER=http.createServer(function (REQ, RESP) {
 			});
 		}
 		else if (action=="locate") {
-			if ((!query.checksum)||(!query.size)) {
+			if ((!query.checksum)||(!query.size)||(!('fcs' in query))) {
 				send_json_response({success:false,error:"Invalid query."});	
 				return;
 			}
-			run_process_and_read_stdout(prv_exe,['locate','--path='+absolute_data_directory(),'--checksum='+query.checksum,'--size='+query.size,'--fcs='+(query.fcs||'')],function(txt) {
+			run_process_and_read_stdout(prv_exe,['locate','--search_path='+absolute_data_directory(),'--checksum='+query.checksum,'--size='+query.size,'--fcs='+(query.fcs||'')],function(txt) {
 				txt=txt.trim();
+				if (!starts_with(txt,absolute_data_directory()+'/')) {
+					send_as_text_or_link('<not found>');
+					return;
+				}
 				if (txt) txt=txt.slice(absolute_data_directory().length+1);
+				if (server_url) txt=server_url+url_path+'/'+txt;
 				send_as_text_or_link(txt);
 			});	
 		}
@@ -327,6 +330,10 @@ function compute_file_checksum(fname,callback) {
 	run_process_and_read_stdout(prv_exe,['sha1sum',fname],function(txt) {
 		callback(txt.trim());
 	});
+}
+
+function starts_with(str,substr) {
+	return (str.slice(0,substr.length)==substr);
 }
 
 function CLParams(argv) {

@@ -606,21 +606,12 @@ public:
         parser.addOption(QCommandLineOption("fcs", "fcs", "[optional]"));
         parser.addOption(QCommandLineOption("original_path", "original_path", "[optional]"));
         parser.addOption(QCommandLineOption("size", "size", "[]"));
-        parser.addOption(QCommandLineOption("server", "name of the server to search", "[server name]"));
+        parser.addOption(QCommandLineOption("search_path", "search_path", "path to search (leave empty to search default locations)"));
+        parser.addOption(QCommandLineOption("server", "server", "[url of prvbucket server to search]"));
         parser.addOption(QCommandLineOption("verbose", "verbose"));
-        if (m_cmd == "locate") {
-            parser.addOption(QCommandLineOption("local-only", "do not look on remote servers"));
-        }
-        QCommandLineOption pathOption("path", "path to search", "size");
-
-        /*
-          @ww: Apparently setHidden was not part of Qt 5.5, so I am commenting it out.
-          The Qt5 version packaged for Ubuntu 16.04 appears to be 5.5.
-          And that is what I am using for my Docker testing
-        */
-        //pathOption.setHidden(true);
-
-        parser.addOption(pathOption);
+        //if (m_cmd == "locate") {
+        //    parser.addOption(QCommandLineOption("local-only", "do not look on remote servers"));
+        //}
     }
     int execute(const QCommandLineParser& parser)
     {
@@ -663,18 +654,25 @@ public:
         }
         if (obj.contains("original_checksum")) {
             QVariantMap params;
-            if (parser.isSet("path"))
-                params.insert("path", parser.value("path"));
+            if (parser.isSet("search_path"))
+                params.insert("search_path", parser.value("search_path"));
             if (parser.isSet("server"))
                 params.insert("server", parser.value("server"));
+            QString fname_or_url = locate_file(obj, params, verbose);
             if (m_cmd == "locate") {
-                bool allow_downloads = true;
-                if (parser.isSet("local-only"))
-                    allow_downloads = false;
-                locate_file(obj, params, allow_downloads, verbose);
+                println(fname_or_url);
             }
-            else
-                download_file(obj, params);
+            else {
+                //println("download: "+fname_or_url);
+                QString cmd;
+                if (is_url(fname_or_url)) {
+                    cmd = QString("curl %1").arg(fname_or_url);
+                }
+                else {
+                    cmd = QString("cat %1").arg(fname_or_url);
+                }
+                return system(cmd.toUtf8().data());
+            }
         }
         else {
             //it must be a directory
@@ -686,34 +684,31 @@ public:
 private:
     QString m_cmd;
 
-    int locate_file(const QJsonObject& obj, const QVariantMap& params, bool allow_downloads, bool verbose) const
+    QString locate_file(const QJsonObject& obj, const QVariantMap& params, bool verbose) const
     {
         PrvFile prvf(obj);
         PrvFileLocateOptions opts;
         if (params.contains("server")) {
             opts.search_locally = false;
             opts.search_remotely = true;
-            opts.remote_servers = get_remote_servers(params["server"].toString());
+            opts.remote_servers << params["server"].toString();
         }
-        else if (params.contains("path")) {
+        else if (params.contains("search_path")) {
             opts.search_locally = true;
             opts.search_remotely = false;
-            opts.local_search_paths << params["path"].toString();
+            opts.local_search_paths.clear();
+            opts.local_search_paths << params["search_path"].toString();
         }
         else {
             opts.local_search_paths = get_local_search_paths();
-            opts.search_remotely = allow_downloads;
-            if (allow_downloads) {
-                opts.remote_servers = get_remote_servers();
-            }
+            opts.search_remotely = false;
         }
 
         opts.verbose = verbose;
         QString fname_or_url = prvf.locate(opts);
         if (fname_or_url.isEmpty())
-            return -1;
-        println(fname_or_url);
-        return 0;
+            return "";
+        return fname_or_url;
     }
 
     int locate_directory(const QJsonObject& obj, bool verbose) const
@@ -731,6 +726,7 @@ private:
         return 0;
     }
 
+    /*
     int download_file(const QJsonObject& obj, const QVariantMap& params) const
     {
         PrvFile prvf(obj);
@@ -758,6 +754,7 @@ private:
         }
         return system(cmd.toUtf8().data());
     }
+    */
 };
 
 QList<QJsonObject> get_all_input_prv_objects(QJsonObject obj)
