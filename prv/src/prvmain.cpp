@@ -666,7 +666,7 @@ public:
                 //println("download: "+fname_or_url);
                 QString cmd;
                 if (is_url(fname_or_url)) {
-                    cmd = QString("curl %1").arg(fname_or_url);
+                    cmd = QString("wget %1").arg(fname_or_url);
                 }
                 else {
                     cmd = QString("cat %1").arg(fname_or_url);
