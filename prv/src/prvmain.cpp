@@ -190,14 +190,20 @@ private:
     {
         Q_UNUSED(params)
         QString checksum = MLUtil::computeSha1SumOfFile(path);
-        if (checksum.isEmpty())
+        if (checksum.isEmpty()) {
+            QJsonObject obj;
+            obj["error"] = "checksum is empty for " + path;
+            println(QJsonDocument(obj).toJson());
             return -1;
-        QJsonObject obj;
-        obj["checksum"] = checksum;
-        obj["fcs"] = "head1000-" + MLUtil::computeSha1SumOfFileHead(path, 1000);
-        obj["size"] = QFileInfo(path).size();
-        println(QJsonDocument(obj).toJson());
-        return 0;
+        }
+        {
+            QJsonObject obj;
+            obj["checksum"] = checksum;
+            obj["fcs"] = "head1000-" + MLUtil::computeSha1SumOfFileHead(path, 1000);
+            obj["size"] = QFileInfo(path).size();
+            println(QJsonDocument(obj).toJson());
+            return 0;
+        }
     }
 };
 
@@ -598,8 +604,9 @@ public:
     QString commandName() const { return m_cmd; }
     void prepareParser(QCommandLineParser& parser)
     {
-        if (m_cmd == "locate") {
-            parser.addPositionalArgument("file_name", "PRV file name", "[file_name]");
+        parser.addPositionalArgument("file_name", "PRV file name", "[file_name]");
+        if (m_cmd == "download") {
+            parser.addPositionalArgument("output_file_name", "output file name", "[output_file_name]");
         }
         // --checksum=[] --fcs=[optional] --size=[]
         parser.addOption(QCommandLineOption("checksum", "checksum", "[]"));
@@ -664,13 +671,25 @@ public:
             }
             else {
                 //println("download: "+fname_or_url);
+                QString dst_fname = args.value(1);
                 QString cmd;
                 if (is_url(fname_or_url)) {
-                    cmd = QString("wget %1").arg(fname_or_url);
+                    QString tmp = "";
+                    if (!dst_fname.isEmpty()) {
+                        if (QFileInfo(dst_fname).isDir())
+                            tmp += "-P " + dst_fname;
+                        else
+                            tmp += "-O " + dst_fname;
+                    }
+                    cmd = QString("wget %1 %2").arg(fname_or_url).arg(tmp);
                 }
                 else {
-                    cmd = QString("cat %1").arg(fname_or_url);
+                    QString tmp = "";
+                    if (!dst_fname.isEmpty())
+                        tmp += "> " + dst_fname;
+                    cmd = QString("cat %1 %2").arg(fname_or_url).arg(tmp);
                 }
+                println(QString("Running: %1").arg(cmd));
                 return system(cmd.toUtf8().data());
             }
         }
