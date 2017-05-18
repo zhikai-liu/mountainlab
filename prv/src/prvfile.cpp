@@ -421,7 +421,15 @@ QString PrvFilePrivate::find_remote_file(int size, const QString& checksum, cons
         //QString url_path = server0["path"].toString();
         //QString passcode = server0["passcode"].toString();
         //QString url0 = host + ":" + QString::number(port) + url_path + QString("/?a=locate&checksum=%1&fcs=%2&size=%3&passcode=%4").arg(checksum).arg(fcs_optional).arg(size).arg(passcode);
-        QString url0 = remote_servers[i].toString() + QString("/prvbucket?a=locate&checksum=%1&size=%2&fcs=%3").arg(checksum).arg(size).arg(fcs_optional);
+        QString server_url = remote_servers[i].toString();
+        QJsonArray prv_servers = MLUtil::configValue("prv", "servers").toArray();
+        for (int k = 0; k < prv_servers.count(); k++) {
+            QJsonObject obj = prv_servers[k].toObject();
+            if (obj["name"].toString() == server_url) {
+                server_url = obj["host"].toString() + obj["port"].toString();
+            }
+        }
+        QString url0 = server_url + QString("/prvbucket?a=locate&checksum=%1&size=%2&fcs=%3").arg(checksum).arg(size).arg(fcs_optional);
         if (opts.verbose) {
             printf("%s\n", url0.toUtf8().data());
         }
