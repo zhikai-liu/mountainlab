@@ -583,12 +583,14 @@ public:
 
         bool verbose = parser.isSet("verbose");
 
-        QJsonObject obj;
+        QMap<QString, QJsonObject> objects;
         if (parser.isSet("checksum")) {
+            QJsonObject obj;
             obj["original_checksum"] = parser.value("checksum");
             obj["original_fcs"] = parser.value("fcs");
             obj["original_size"] = parser.value("size").toLongLong();
             obj["original_path"] = parser.value("original_path");
+            objects[""] = obj;
         }
         else {
             QString src_path = args.value(0);
@@ -600,62 +602,97 @@ public:
                 qWarning() << "No such file: " + src_path;
                 return -1;
             }
+
             if (src_path.endsWith(".prv")) {
+                QJsonObject obj;
                 obj = QJsonDocument::fromJson(TextFile::read(src_path).toUtf8()).object();
+                objects[""] = obj;
             }
             else {
-                if (m_cmd == "locate") {
-                    obj["original_checksum"] = MLUtil::computeSha1SumOfFile(src_path);
-                    obj["original_fcs"] = "head1000-" + MLUtil::computeSha1SumOfFileHead(src_path, 1000);
-                    obj["original_size"] = QFileInfo(src_path).size();
-                }
-                else {
-                    println("prv file must have .prv extension");
+                objects = find_prv_objects_in_json_file(src_path);
+                if (objects.isEmpty()) {
+                    println("No prv objects found in file.");
                     return -1;
                 }
             }
         }
-        if (obj.contains("original_checksum")) {
-            QVariantMap params;
-            if (parser.isSet("search_path"))
-                params.insert("search_path", parser.value("search_path"));
-            if (parser.isSet("server"))
-                params.insert("server", parser.value("server"));
-            QString fname_or_url = locate_file(obj, params, verbose);
-            if (fname_or_url.isEmpty()) {
-                println("Unable to locate file");
+
+        QString dst_fname = args.value(1);
+        if ((!dst_fname.isEmpty()) && (!QFileInfo(dst_fname).isDir())) {
+            if (objects.count() > 1) {
+                println("Destination path must be an existing directory.");
                 return -1;
             }
-            if (m_cmd == "locate") {
-                println(fname_or_url);
+        }
+
+        QStringList keys = objects.keys();
+        qSort(keys);
+        foreach (QString key, keys) {
+            if (!key.isEmpty()) {
+                println("\n" + key + ":");
             }
-            else {
-                println("download: " + fname_or_url);
-                QString dst_fname = args.value(1);
-                QString cmd;
-                if (is_url(fname_or_url)) {
-                    QString tmp = "";
-                    if (!dst_fname.isEmpty()) {
-                        if (QFileInfo(dst_fname).isDir())
-                            tmp += "-P " + dst_fname;
-                        else
-                            tmp += "-O " + dst_fname;
-                    }
-                    cmd = QString("wget %1 %2").arg(fname_or_url).arg(tmp);
+            QJsonObject obj = objects[key];
+            if (obj.contains("original_checksum")) {
+                QVariantMap params;
+                if (parser.isSet("search_path"))
+                    params.insert("search_path", parser.value("search_path"));
+                if (parser.isSet("server"))
+                    params.insert("server", parser.value("server"));
+                QString fname_or_url = locate_file(obj, params, verbose);
+                if (fname_or_url.isEmpty()) {
+                    println("Unable to locate file");
+                    return -1;
+                }
+                if (m_cmd == "locate") {
+                    println(fname_or_url);
                 }
                 else {
-                    QString tmp = "";
-                    if (!dst_fname.isEmpty())
-                        tmp += "> " + dst_fname;
-                    cmd = QString("cat %1 %2").arg(fname_or_url).arg(tmp);
+                    if (is_url(fname_or_url)) {
+                        QVariantMap params0 = params;
+                        params0["server"] = ""; //search locally
+                        QString fname_local = locate_file(obj, params0, false);
+                        if (!fname_local.isEmpty()) {
+                            println("File already on local machine (" + key + "): " + fname_local);
+                        }
+                        else {
+                            println("downloading: " + fname_or_url);
+                            QString tmp = "";
+                            if (!dst_fname.isEmpty()) {
+                                if (QFileInfo(dst_fname).isDir())
+                                    tmp += "-P " + dst_fname;
+                                else
+                                    tmp += "-c -O " + dst_fname; //-c = clobber
+                            }
+                            QString cmd = QString("wget %1 %2").arg(fname_or_url).arg(tmp);
+                            println(QString("Running: %1").arg(cmd));
+                            if (system(cmd.toUtf8().data()) < 0)
+                                return -1;
+                        }
+                    }
+                    else if (QFile::exists(fname_or_url)) {
+                        /*
+                        println("download: " + fname_or_url);
+                        QString tmp = "";
+                        if (!dst_fname.isEmpty())
+                            tmp += "> " + dst_fname;
+                        QString cmd = QString("cat %1 %2").arg(fname_or_url).arg(tmp);
+                        println(QString("Running: %1").arg(cmd));
+                        if (system(cmd.toUtf8().data())<0)
+                            return -1;
+                            */
+                    }
+                    else {
+                    }
                 }
-                println(QString("Running: %1").arg(cmd));
-                return system(cmd.toUtf8().data());
             }
-        }
-        else {
-            //it must be a directory
-            locate_directory(obj, verbose);
+            else {
+                //it must be a directory
+                QString fname_or_url = locate_directory(obj, verbose);
+                if (fname_or_url.isEmpty())
+                    return -1;
+                println(fname_or_url);
+                return 0;
+            }
         }
         return 0;
     }
@@ -667,7 +704,7 @@ private:
     {
         PrvFile prvf(obj);
         PrvFileLocateOptions opts;
-        if (params.contains("server")) {
+        if (!params.value("server").toString().isEmpty()) {
             opts.search_locally = false;
             opts.search_remotely = true;
             opts.remote_servers << params["server"].toString();
@@ -690,7 +727,7 @@ private:
         return fname_or_url;
     }
 
-    int locate_directory(const QJsonObject& obj, bool verbose) const
+    QString locate_directory(const QJsonObject& obj, bool verbose) const
     {
         PrvFile prvf(obj);
         PrvFileLocateOptions opts;
@@ -699,10 +736,66 @@ private:
         opts.verbose = verbose;
         opts.local_search_paths = get_local_search_paths();
         QString fname_or_url = prvf.locateDirectory(opts);
-        if (fname_or_url.isEmpty())
-            return -1;
-        println(fname_or_url);
-        return 0;
+        return fname_or_url;
+    }
+
+    QMap<QString, QJsonObject> find_prvs(QString label, const QJsonValue& X)
+    {
+        QMap<QString, QJsonObject> ret;
+        if (X.isObject()) {
+            QJsonObject obj = X.toObject();
+            if ((obj.contains("original_checksum")) && (obj.contains("original_size"))) {
+                ret[label] = obj;
+                return ret;
+            }
+            else {
+                QStringList keys = obj.keys();
+                foreach (QString key, keys) {
+                    QString label0 = key;
+                    if (label0 == "data")
+                        label0 = label;
+                    else {
+                        label0 = label + "/" + label0;
+                    }
+                    QMap<QString, QJsonObject> ret0 = find_prvs(label0, obj[key]);
+                    QStringList keys0 = ret0.keys();
+                    foreach (QString key0, keys0) {
+                        ret[key0] = ret0[key0];
+                    }
+                }
+                return ret;
+            }
+        }
+        else if (X.isArray()) {
+            QJsonArray array = X.toArray();
+            for (int i = 0; i < array.count(); i++) {
+                QString label0 = label + QString("[%1]").arg(i);
+                QMap<QString, QJsonObject> ret0 = find_prvs(label0, array[i]);
+                QStringList keys0 = ret0.keys();
+                foreach (QString key0, keys0) {
+                    ret[key0] = ret0[key0];
+                }
+            }
+            return ret;
+        }
+        else {
+            return ret;
+        }
+    }
+
+    QMap<QString, QJsonObject> find_prv_objects_in_json_file(QString fname)
+    {
+        QMap<QString, QJsonObject> ret;
+
+        QJsonParseError err;
+        QJsonObject obj = QJsonDocument::fromJson(TextFile::read(fname).toUtf8(), &err).object();
+        if (err.error != QJsonParseError::NoError) {
+            println("Error parsing JSON text.");
+            return ret;
+        }
+
+        ret = find_prvs("", obj);
+        return ret;
     }
 
     /*
