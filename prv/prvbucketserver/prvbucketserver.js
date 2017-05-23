@@ -72,6 +72,11 @@ var SERVER=http.createServer(function (REQ, RESP) {
 		}
 
 		if (action=="download") {
+			if (!safe_to_serve_file(path)) {
+				console.log ('Not safe to serve file: '+path);
+				send_json_response({success:false,error:"Unable to serve file."});		
+				return;
+			}
 			var fname=absolute_data_directory()+"/"+path;
 			console.log ('Download: '+fname);
 			if (!require('fs').existsSync(fname)) {
@@ -334,6 +339,13 @@ function compute_file_checksum(fname,callback) {
 
 function starts_with(str,substr) {
 	return (str.slice(0,substr.length)==substr);
+}
+
+function safe_to_serve_file(path) {
+	//TODO: be more rigorous here
+	if (path.indexOf('..')>=0)
+		return false;
+	return true;
 }
 
 function CLParams(argv) {
