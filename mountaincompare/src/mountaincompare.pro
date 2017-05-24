@@ -48,8 +48,8 @@ SOURCES += mountaincomparemain.cpp \
 
 INCLUDEPATH += ../../mountainview/src/controlwidgets
 VPATH += ../../mountainview/src/controlwidgets
-HEADERS += mvopenviewscontrol.h mvtimeseriescontrol.h createtimeseriesdialog.h
-SOURCES += mvopenviewscontrol.cpp mvtimeseriescontrol.cpp createtimeseriesdialog.cpp
+HEADERS += mvopenviewscontrol.h mvtimeseriescontrol.h createtimeseriesdialog.h mvclustervisibilitycontrol.h
+SOURCES += mvopenviewscontrol.cpp mvtimeseriescontrol.cpp createtimeseriesdialog.cpp mvclustervisibilitycontrol.cpp
 FORMS += createtimeseriesdialog.ui
 
 INCLUDEPATH += ../../mountainview/src/views

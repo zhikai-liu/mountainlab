@@ -36,7 +36,7 @@ public:
     static QByteArray read_binary_file(const QString& fname);
     static bool write_binary_file(const QString& fname, const QByteArray& data);
     QString find_file(bigint size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts);
-    QString find_remote_file(int size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts);
+    QString find_remote_file(bigint size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts);
     void copy_from(const PrvFile& other);
 };
 
@@ -411,7 +411,7 @@ bool PrvFilePrivate::write_binary_file(const QString& fname, const QByteArray& d
     return ret;
 }
 
-QString PrvFilePrivate::find_remote_file(int size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts)
+QString PrvFilePrivate::find_remote_file(bigint size, const QString& checksum, const QString& fcs_optional, const PrvFileLocateOptions& opts)
 {
     QJsonArray remote_servers = opts.remote_servers;
     for (int i = 0; i < remote_servers.count(); i++) {

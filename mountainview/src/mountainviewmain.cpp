@@ -382,36 +382,6 @@ int main(int argc, char* argv[])
                 QString window_title = CLP.named_parameters["window_title"].toString();
                 W->setWindowTitle(window_title);
             }
-            if (CLP.named_parameters.contains("geom")) {
-                QString geom_path = CLP.named_parameters["geom"].toString();
-                ElectrodeGeometry eg = ElectrodeGeometry::loadFromGeomFile(geom_path);
-                dc.setElectrodeGeometry(eg);
-            }
-            if (CLP.named_parameters.contains("cluster_metrics")) {
-                QString cluster_metrics_path = CLP.named_parameters["cluster_metrics"].toString();
-                dc.loadClusterMetricsFromFile(cluster_metrics_path);
-            }
-            /*if (CLP.named_parameters.contains("cluster_pair_metrics")) {
-                QString cluster_pair_metrics_path = CLP.named_parameters["cluster_pair_metrics"].toString();
-                dc.loadClusterPairMetricsFromFile(cluster_pair_metrics_path);
-            }*/
-            if (CLP.named_parameters.contains("curation")) {
-                QString curation_program_path = CLP.named_parameters["curation"].toString();
-                QString js = TextFile::read(curation_program_path);
-                if (js.isEmpty()) {
-                    qWarning() << "Curation program is empty." << curation_program_path;
-                }
-                dc.setOption("curation_program", js);
-            }
-
-            if (CLP.named_parameters.contains("clusters")) {
-                QStringList clusters_subset_str = CLP.named_parameters["clusters"].toString().split(",", QString::SkipEmptyParts);
-                QList<int> clusters_subset;
-                foreach (QString label, clusters_subset_str) {
-                    clusters_subset << label.toInt();
-                }
-                dc.setClustersSubset(clusters_subset.toSet());
-            }
 
             QJsonObject mv2 = dc.toMV2FileObject();
             QString debug = QJsonDocument(mv2["timeseries"].toObject()).toJson();
@@ -462,6 +432,38 @@ int main(int argc, char* argv[])
             }
             context->setFromMV2FileObject(obj);
             context->setMV2FileName(mv2_fname);
+        }
+        {
+            if (CLP.named_parameters.contains("geom")) {
+                QString geom_path = CLP.named_parameters["geom"].toString();
+                ElectrodeGeometry eg = ElectrodeGeometry::loadFromGeomFile(geom_path);
+                context->setElectrodeGeometry(eg);
+            }
+            if (CLP.named_parameters.contains("cluster_metrics")) {
+                QString cluster_metrics_path = CLP.named_parameters["cluster_metrics"].toString();
+                context->loadClusterMetricsFromFile(cluster_metrics_path);
+            }
+            /*if (CLP.named_parameters.contains("cluster_pair_metrics")) {
+                QString cluster_pair_metrics_path = CLP.named_parameters["cluster_pair_metrics"].toString();
+                context->loadClusterPairMetricsFromFile(cluster_pair_metrics_path);
+            }*/
+            if (CLP.named_parameters.contains("curation")) {
+                QString curation_program_path = CLP.named_parameters["curation"].toString();
+                QString js = TextFile::read(curation_program_path);
+                if (js.isEmpty()) {
+                    qWarning() << "Curation program is empty." << curation_program_path;
+                }
+                context->setOption("curation_program", js);
+            }
+
+            if (CLP.named_parameters.contains("clusters")) {
+                QStringList clusters_subset_str = CLP.named_parameters["clusters"].toString().split(",", QString::SkipEmptyParts);
+                QList<int> clusters_subset;
+                foreach (QString label, clusters_subset_str) {
+                    clusters_subset << label.toInt();
+                }
+                context->setClustersSubset(clusters_subset.toSet());
+            }
         }
 
         set_nice_size(W);

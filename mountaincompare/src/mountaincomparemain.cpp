@@ -25,6 +25,7 @@
 #include <QThreadPool>
 #include <QtConcurrentRun>
 #include <mvclipswidget.h>
+#include <mvclustervisibilitycontrol.h>
 #include <mvclusterwidget.h>
 #include <mvopenviewscontrol.h>
 #include <mvtimeseriescontrol.h>
@@ -82,6 +83,7 @@ int main(int argc, char* argv[])
     setbuf(stdout, 0);
 
     CLParams CLP(argc, argv);
+    QStringList args=CLP.unnamed_parameters;
 
     QStringList keys = CLP.named_parameters.keys();
     foreach (QString key, keys) {
@@ -108,6 +110,33 @@ int main(int argc, char* argv[])
     context->setChannelColors(channel_colors);
     context->setClusterColors(label_colors);
     MVMainWindow* W = new MVMainWindow(context);
+
+    QString arg1=args.value(0);
+    QString arg2=args.value(1);
+    if (arg1.endsWith(".mv2")) {
+        QString json = TextFile::read(arg1);
+        QJsonObject obj = QJsonDocument::fromJson(json.toLatin1()).object();
+        MVContext dc; //dummy context
+        dc.setFromMV2FileObject(obj);
+        context->setSampleRate(dc.sampleRate());
+        QStringList names=dc.timeseriesNames();
+        foreach (QString name,names) {
+            context->addTimeseries(name,dc.timeseries(name));
+            context->setCurrentTimeseriesName(name);
+        }
+        context->mvContext1()->setElectrodeGeometry(dc.electrodeGeometry());
+        context->mvContext2()->setElectrodeGeometry(dc.electrodeGeometry());
+        context->mvContext1()->setAllClusterAttributes(dc.allClusterAttributes());
+        context->setFirings1(dc.firings());
+    }
+    if (arg2.endsWith(".mv2")) {
+        QString json = TextFile::read(arg2);
+        QJsonObject obj = QJsonDocument::fromJson(json.toLatin1()).object();
+        MVContext dc; //dummy context
+        dc.setFromMV2FileObject(obj);
+        context->mvContext2()->setAllClusterAttributes(dc.allClusterAttributes());
+        context->setFirings2(dc.firings());
+    }
 
     if (CLP.named_parameters.contains("samplerate")) {
         context->setSampleRate(CLP.named_parameters.value("samplerate", 0).toDouble());
@@ -186,6 +215,8 @@ int main(int argc, char* argv[])
 
     W->addControl(new MVOpenViewsControl(context, W), true);
     W->addControl(new MVTimeseriesControl(context->mvContext1(), W), true);
+    W->addControl(new MVClusterVisibilityControl(context->mvContext1(), W), false);
+    W->addControl(new MVClusterVisibilityControl(context->mvContext2(), W), false);
 
     TaskProgressView* TPV = new TaskProgressView;
     TPV->show();

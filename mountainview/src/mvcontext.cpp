@@ -532,6 +532,11 @@ QJsonObject MVContext::clusterAttributes(int num) const
     return d->m_cluster_attributes.value(num);
 }
 
+QMap<int, QJsonObject> MVContext::allClusterAttributes() const
+{
+    return d->m_cluster_attributes;
+}
+
 QList<int> MVContext::clusterAttributesKeys() const
 {
     return d->m_cluster_attributes.keys();
@@ -570,6 +575,13 @@ void MVContext::setClusterAttributes(int num, const QJsonObject& obj)
     d->m_cluster_attributes[num] = obj;
     emit this->clusterAttributesChanged(num);
     /// TODO: (HIGH) only emit this if there really was a change
+    emit this->clusterVisibilityChanged();
+}
+
+void MVContext::setAllClusterAttributes(const QMap<int, QJsonObject> &X)
+{
+    d->m_cluster_attributes=X;
+    emit this->clusterAttributesChanged(-1);
     emit this->clusterVisibilityChanged();
 }
 
