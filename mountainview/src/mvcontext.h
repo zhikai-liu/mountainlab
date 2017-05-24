@@ -97,7 +97,7 @@ public:
     QMap<int, QJsonObject> allClusterAttributes() const;
     QList<int> clusterAttributesKeys() const;
     void setClusterAttributes(int num, const QJsonObject& obj);
-    void setAllClusterAttributes(const QMap<int, QJsonObject> &X);
+    void setAllClusterAttributes(const QMap<int, QJsonObject>& X);
     QSet<QString> clusterTags(int num) const; //part of attributes
     QList<QString> clusterTagsList(int num) const;
     QSet<QString> allClusterTags() const;

@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
     setbuf(stdout, 0);
 
     CLParams CLP(argc, argv);
-    QStringList args=CLP.unnamed_parameters;
+    QStringList args = CLP.unnamed_parameters;
 
     QStringList keys = CLP.named_parameters.keys();
     foreach (QString key, keys) {
@@ -111,17 +111,17 @@ int main(int argc, char* argv[])
     context->setClusterColors(label_colors);
     MVMainWindow* W = new MVMainWindow(context);
 
-    QString arg1=args.value(0);
-    QString arg2=args.value(1);
+    QString arg1 = args.value(0);
+    QString arg2 = args.value(1);
     if (arg1.endsWith(".mv2")) {
         QString json = TextFile::read(arg1);
         QJsonObject obj = QJsonDocument::fromJson(json.toLatin1()).object();
         MVContext dc; //dummy context
         dc.setFromMV2FileObject(obj);
         context->setSampleRate(dc.sampleRate());
-        QStringList names=dc.timeseriesNames();
-        foreach (QString name,names) {
-            context->addTimeseries(name,dc.timeseries(name));
+        QStringList names = dc.timeseriesNames();
+        foreach (QString name, names) {
+            context->addTimeseries(name, dc.timeseries(name));
             context->setCurrentTimeseriesName(name);
         }
         context->mvContext1()->setElectrodeGeometry(dc.electrodeGeometry());
