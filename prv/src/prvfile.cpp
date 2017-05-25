@@ -426,7 +426,7 @@ QString PrvFilePrivate::find_remote_file(bigint size, const QString& checksum, c
         for (int k = 0; k < prv_servers.count(); k++) {
             QJsonObject obj = prv_servers[k].toObject();
             if (obj["name"].toString() == server_url) {
-                server_url = obj["host"].toString() + obj["port"].toString();
+                server_url = obj["host"].toString() + ":" + QString("%1").arg(obj["port"].toInt());
             }
         }
         QString url0 = server_url + QString("/prvbucket?a=locate&checksum=%1&size=%2&fcs=%3").arg(checksum).arg(size).arg(fcs_optional);
