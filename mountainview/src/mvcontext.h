@@ -181,6 +181,7 @@ public:
     /////////////////////////////////////////////////
     DiskReadMda firings();
     void setFirings(const DiskReadMda& F);
+    int K();
 
     /////////////////////////////////////////////////
     // these should be set once at beginning

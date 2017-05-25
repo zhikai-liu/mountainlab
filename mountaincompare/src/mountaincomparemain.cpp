@@ -192,9 +192,32 @@ int main(int argc, char* argv[])
         QStringList list = MLUtil::toStringList(CLP.named_parameters["clusters2"]);
         clusters2_to_use = MLUtil::stringListToIntList(list).toSet();
     }
-    qDebug() << "***************************************************************************";
-    qDebug() << clusters1_to_use;
-    qDebug() << clusters2_to_use;
+    if ((CLP.named_parameters.contains("exclude_rejected"))||(CLP.named_parameters.contains("exclude_rejected1"))) {
+        if (clusters1_to_use.isEmpty()) {
+            for (int k=1; k<=context->mvContext1()->K(); k++) {
+                clusters1_to_use.insert(k);
+            }
+        }
+        QList<int> ks=clusters1_to_use.toList();
+        foreach (int k,ks) {
+            QSet<QString> tags=context->mvContext1()->clusterTags(k);
+            if (tags.contains("rejected"))
+                clusters1_to_use.remove(k);
+        }
+    }
+    if ((CLP.named_parameters.contains("exclude_rejected"))||(CLP.named_parameters.contains("exclude_rejected2"))) {
+        if (clusters2_to_use.isEmpty()) {
+            for (int k=1; k<=context->mvContext2()->K(); k++) {
+                clusters2_to_use.insert(k);
+            }
+        }
+        QList<int> ks=clusters2_to_use.toList();
+        foreach (int k,ks) {
+            QSet<QString> tags=context->mvContext2()->clusterTags(k);
+            if (tags.contains("rejected"))
+                clusters2_to_use.remove(k);
+        }
+    }
 
     //W->loadPlugin(new ClusterDetailPlugin());
     //W->loadPlugin(new ClipsViewPlugin());
