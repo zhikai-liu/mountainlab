@@ -61,3 +61,21 @@ bool p_split_firings(QStringList timeseries_paths, QString firings_path, QString
 
 namespace P_split_firings {
 }
+
+bool p_extract_firings(QString firings, const QSet<int>& clusters, QString firings_out)
+{
+    Mda FF1(firings);
+    QVector<bigint> inds_to_use;
+    for (bigint i = 0; i < FF1.N2(); i++) {
+        int label = FF1.value(2, i);
+        if (clusters.contains(label))
+            inds_to_use << i;
+    }
+    Mda FF2(FF1.N1(), inds_to_use.count());
+    for (bigint i = 0; i < FF2.N2(); i++) {
+        for (int j = 0; j < FF2.N1(); j++) {
+            FF2.setValue(FF1.value(j, inds_to_use[i]), j, i);
+        }
+    }
+    return FF2.write64(firings_out);
+}

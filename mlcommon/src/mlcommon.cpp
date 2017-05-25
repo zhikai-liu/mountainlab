@@ -494,6 +494,9 @@ QList<int> MLUtil::stringListToIntList(const QStringList& list)
                 ret << i;
             }
         }
+        else if (str.contains(",")) {
+            ret.append(MLUtil::stringListToIntList(str.split(",")));
+        }
         else {
             ret << str.toInt();
         }

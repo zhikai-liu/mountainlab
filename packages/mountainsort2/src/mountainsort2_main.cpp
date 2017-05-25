@@ -212,6 +212,13 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
+        ProcessorSpec X("mountainsort.extract_firings", "0.11");
+        X.addInputs("firings");
+        X.addOutputs("firings_out");
+        X.addInputs("clusters");
+        processors.push_back(X.get_spec());
+    }
+    {
         ProcessorSpec X("mountainsort.combine_cluster_metrics", "0.1");
         X.addInputs("metrics_list");
         X.addOutputs("metrics_out");
@@ -516,6 +523,13 @@ int main(int argc, char* argv[])
         QString firings = CLP.named_parameters["firings"].toString();
         QStringList firings_out_list = MLUtil::toStringList(CLP.named_parameters["firings_out_list"]);
         ret = p_split_firings(timeseries_list, firings, firings_out_list);
+    }
+    else if (arg1 == "mountainsort.extract_firings") {
+        QString firings = CLP.named_parameters["firings"].toString();
+        QString firings_out = CLP.named_parameters["firings_out"].toString();
+        QStringList clusters_str = MLUtil::toStringList(CLP.named_parameters["clusters"]);
+        QSet<int> clusters = MLUtil::stringListToIntList(clusters_str).toSet();
+        ret = p_extract_firings(firings, clusters, firings_out);
     }
     else if (arg1 == "mountainsort.concat_timeseries") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);

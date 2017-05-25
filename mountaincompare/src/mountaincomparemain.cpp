@@ -182,17 +182,19 @@ int main(int argc, char* argv[])
         context->mvContext1()->setElectrodeGeometry(eg);
         context->mvContext2()->setElectrodeGeometry(eg);
     }
-
-    /*
-    if (CLP.named_parameters.contains("clusters")) {
-        QStringList clusters_subset_str = CLP.named_parameters["clusters"].toString().split(",", QString::SkipEmptyParts);
-        QList<int> clusters_subset;
-        foreach (QString label, clusters_subset_str) {
-            clusters_subset << label.toInt();
-        }
-        context->setClustersSubset(clusters_subset.toSet());
+    QSet<int> clusters1_to_use;
+    if (CLP.named_parameters.contains("clusters1")) {
+        QStringList list = MLUtil::toStringList(CLP.named_parameters["clusters1"]);
+        clusters1_to_use = MLUtil::stringListToIntList(list).toSet();
     }
-    */
+    QSet<int> clusters2_to_use;
+    if (CLP.named_parameters.contains("clusters2")) {
+        QStringList list = MLUtil::toStringList(CLP.named_parameters["clusters2"]);
+        clusters2_to_use = MLUtil::stringListToIntList(list).toSet();
+    }
+    qDebug() << "***************************************************************************";
+    qDebug() << clusters1_to_use;
+    qDebug() << clusters2_to_use;
 
     //W->loadPlugin(new ClusterDetailPlugin());
     //W->loadPlugin(new ClipsViewPlugin());
@@ -224,9 +226,14 @@ int main(int argc, char* argv[])
     Initialize_confusion_matrix* ICM = new Initialize_confusion_matrix; //need pointer to go into lambda expression
     ICM->firings1 = context->firings1().makePath();
     ICM->firings2 = context->firings2().makePath();
+    ICM->clusters1_to_use = clusters1_to_use;
+    ICM->clusters2_to_use = clusters2_to_use;
     ICM->relabel = CLP.named_parameters.contains("relabel");
     QObject::connect(ICM, &Initialize_confusion_matrix::finishedInGui, [=]() {
-        if (ICM->relabel)
+        context->setFirings1(DiskReadMda(ICM->firings1_out));
+        if (!ICM->relabel)
+            context->setFirings2(DiskReadMda(ICM->firings2_out));
+        else
             context->setFirings2(DiskReadMda(ICM->firings2_relabeled));
         context->setConfusionMatrix(DiskReadMda(ICM->confusion_matrix));
         context->setMatchedFirings(DiskReadMda(ICM->matched_firings));
