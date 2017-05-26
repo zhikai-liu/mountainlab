@@ -11,8 +11,8 @@
 
 struct merge_across_channels_v2_opts {
     int clip_size = 100;
-    double min_peak_ratio_to_consider = 0.7;
-    double event_fraction_threshold = 0.5;
+    double min_peak_ratio_to_consider = 0.3; //reduced on 5/26/17 0.7->0.3
+    double event_fraction_threshold = 0.3; //reduced on 5/26/17 0.5->0.3
 };
 
 bool merge_across_channels_v2(const QString& timeseries, const QString& firings, const QString& firings_out, const merge_across_channels_v2_opts& opts);
