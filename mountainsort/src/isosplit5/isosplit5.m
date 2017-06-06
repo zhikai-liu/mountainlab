@@ -79,6 +79,11 @@ ttt=tic;
 data.centers=compute_centers(X,data.labels);
 timers.compute_centers=timers.compute_centers+toc(ttt);
 
+if (opts.verbose)
+    fA=figure;
+    info.frames={};
+end;
+
 %% Repeat while something has been merged in the pass
 final_pass=false; % plus we do one final pass at the end
 data.comparisons_made=zeros(Kmax,Kmax); % Keep a matrix of comparisons that have been made in this pass
@@ -123,11 +128,15 @@ while 1 % Passes
 %             end;
 %             labels_mapped=labels_map(data.labels);
             ooo.draw_axes=false;
-            ooo.draw_legend=true;
-            figure; ms_view_clusters_0(X(:,:),data.labels,ooo);
+            ooo.draw_legend=false;
+            if (length(unique(data.labels))<=10)
+                ooo.draw_legend=true;
+            end;
+            figure(fA); ms_view_clusters_0(X(:,:),data.labels,ooo);
             %title(sprintf('iteration %d',iteration_number));
             set(gca,'xtick',[]); set(gca,'ytick',[]);
             pause(opts.verbose_pause_duration);
+            info.frames{end+1}=getframe;
         end;
         
         old_labels=data.labels; % So we can determine the number of label changes for diagnostics

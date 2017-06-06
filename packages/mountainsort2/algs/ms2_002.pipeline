@@ -59,7 +59,7 @@ function main(params) {
 	}
 	if (filt.length===0) {
 		//console.err('No raw files or sessions found.');
-		console.error('Unable to find raw.mda.prv');
+		console.err('Unable to find raw.mda.prv');
 		return;
 	}
 
