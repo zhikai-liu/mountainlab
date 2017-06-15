@@ -38,7 +38,7 @@ public:
     QMap<QString, TimeseriesStruct> m_timeseries;
     QString m_current_timeseries_name;
     DiskReadMda m_firings;
-    int m_K=0;
+    int m_K = 0;
     DiskReadMda m_firings_subset;
     double m_sample_rate = 0;
     QString m_mlproxy_url; //this is to disappear
@@ -469,17 +469,17 @@ void MVContext::setCurrentTimeseriesName(QString name)
 void MVContext::setFirings(const DiskReadMda& F)
 {
     d->m_firings = F;
-    d->m_K=0; //trigger recompute
+    d->m_K = 0; //trigger recompute
     emit firingsChanged();
 }
 
 int MVContext::K()
 {
     if (!d->m_K) {
-        for (bigint i=0; i<d->m_firings.N2(); i++) {
-            int label=d->m_firings.value(2,i);
-            if (label>d->m_K)
-                d->m_K=label;
+        for (bigint i = 0; i < d->m_firings.N2(); i++) {
+            int label = d->m_firings.value(2, i);
+            if (label > d->m_K)
+                d->m_K = label;
         }
     }
     return d->m_K;

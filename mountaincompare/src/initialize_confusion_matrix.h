@@ -75,7 +75,7 @@ public:
             QVariantMap params;
             params["firings1"] = firings1_out;
             params["firings2"] = firings2_out;
-            params["match_matching_offset"] = 30;
+            params["match_matching_offset"] = 5;
             if (relabel)
                 params["relabel_firings2"] = "true";
             //params["_force_run"] = "true";

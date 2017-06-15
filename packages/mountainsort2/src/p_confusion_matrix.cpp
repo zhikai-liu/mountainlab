@@ -81,11 +81,11 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
 
     // Count up every pair that satisfies opts.max_matching_offset -- but don't count redundantly
     printf("Counting all pairs...\n");
-    bigint total_counts[K1 + 1][K2 + 1];
+    bigint total_counts_12[K1 + 1][K2 + 1];
     {
         for (int k2 = 0; k2 < K2 + 1; k2++) {
             for (int k1 = 0; k1 < K1 + 1; k1++) {
-                total_counts[k1][k2] = 0;
+                total_counts_12[k1][k2] = 0;
             }
         }
 
@@ -109,31 +109,59 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
                 i2 = old_i2;
                 for (int kk = 1; kk <= K2; kk++) {
                     if (present[kk])
-                        total_counts[events1[i1].label][kk]++;
+                        total_counts_12[events1[i1].label][kk]++;
                 }
             }
         }
     }
 
-    printf("Counting events in firings2 to normalize the scores...\n");
-    bigint total_events2_counts[K2 + 1];
-    for (int k2 = 0; k2 < K2 + 1; k2++) {
-        total_events2_counts[k2] = 0;
-    }
-    for (int k2 = 1; k2 <= K2; k2++) {
-        for (int k1 = 1; k1 <= K1; k1++) {
-            total_events2_counts[k2] += total_counts[k1][k2];
+    // Count up every pair that satisfies opts.max_matching_offset -- but don't count redundantly
+    printf("Counting all pairs...\n");
+    bigint total_counts_21[K2 + 1][K1 + 1];
+    {
+        for (int k1 = 0; k1 < K1 + 1; k1++) {
+            for (int k2 = 0; k2 < K2 + 1; k2++) {
+                total_counts_21[k2][k1] = 0;
+            }
+        }
+
+        bigint i1 = 0;
+        for (bigint i2 = 0; i2 < events2.count(); i2++) {
+            if (events2[i2].label > 0) {
+                int present[K1 + 1];
+                for (int k1 = 0; k1 < K1 + 1; k1++) {
+                    present[k1] = 0;
+                }
+                double t2 = events2[i2].time;
+                while ((i1 < events1.count()) && (events1[i1].time < t2 - opts.max_matching_offset))
+                    i1++;
+                bigint old_i1 = i1;
+                while ((i1 < events1.count()) && (events1[i1].time <= t2 + opts.max_matching_offset)) {
+                    if (events1[i1].label > 0) {
+                        present[events1[i1].label] = 1;
+                    }
+                    i1++;
+                }
+                i1 = old_i1;
+                for (int kk = 1; kk <= K1; kk++) {
+                    if (present[kk])
+                        total_counts_21[events2[i2].label][kk]++;
+                }
+            }
         }
     }
 
-    bigint total_events1_counts[K1 + 1];
-    for (int k1 = 0; k1 < K1 + 1; k1++) {
-        total_events1_counts[k1] = 0;
+    bigint event_counts1[K1 + 1];
+    for (bigint i = 0; i <= K1; i++)
+        event_counts1[i] = 0;
+    for (bigint i = 0; i < events1.count(); i++) {
+        event_counts1[events1[i].label]++;
     }
-    for (int k1 = 1; k1 <= K1; k1++) {
-        for (int k2 = 1; k2 <= K2; k2++) {
-            total_events1_counts[k1] += total_counts[k1][k2];
-        }
+    bigint event_counts2[K2 + 1];
+    for (bigint i = 0; i <= K2; i++)
+        event_counts2[i] = 0;
+    for (bigint i = 0; i < events2.count(); i++) {
+        event_counts2[events2[i].label]++;
     }
 
     std::vector<bigint> assignments1(events1.count(), -1);
@@ -161,14 +189,15 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
                     while ((i2 < events2.count()) && (events2[i2].time <= t1 + opts.max_matching_offset)) {
                         if ((events2[i2].label > 0) && (assignments2[i2] < 0)) { //only consider it if it has a label and unassigned
                             double time0 = events2[i2].time;
-                            bigint numer = total_counts[events1[i1].label][events2[i2].label]; //this is the count between the two labels
-                            //normalize by the sum of the total number of i1 and i2 events
-                            double denom1 = total_events1_counts[events1[i1].label];
-                            double denom2 = total_events2_counts[events2[i2].label];
-                            double denom = denom1 + denom2 - numer;
-                            if (!denom)
-                                denom = 1; //don't divide by zero!
-                            double match_score = numer / denom;
+                            bigint numer12 = total_counts_12[events1[i1].label][events2[i2].label];
+                            bigint numer21 = total_counts_21[events2[i2].label][events1[i1].label];
+                            bigint denom12 = event_counts1[events1[i1].label];
+                            bigint denom21 = event_counts2[events2[i2].label];
+                            if (denom12 == 0)
+                                denom12 = 1; //don't divide by zero
+                            if (denom21 == 0)
+                                denom21 = 1;
+                            double match_score = qMin(numer12 * 1.0 / denom12, numer21 * 1.0 / denom21);
 
                             if (match_score >= best_match_score) {
                                 double abs_offset = fabs(time0 - t1);
@@ -207,14 +236,15 @@ bool p_confusion_matrix(QString firings1, QString firings2, QString confusion_ma
                     while ((i1 < events1.count()) && (events1[i1].time <= t2 + opts.max_matching_offset)) {
                         if ((events1[i1].label > 0) && (assignments1[i1] < 0)) { //only consider it if it has a label and unassigned
                             double time0 = events1[i1].time;
-                            bigint numer = total_counts[events1[i1].label][events2[i2].label]; //this is the count between the two labels
-                            //normalize by the sum of the total number of i1 and i2 events
-                            double denom1 = total_events1_counts[events1[i1].label];
-                            double denom2 = total_events2_counts[events2[i2].label];
-                            double denom = denom1 + denom2 - numer;
-                            if (!denom)
-                                denom = 1; //don't divide by zero!
-                            double match_score = numer / denom;
+                            bigint numer12 = total_counts_12[events1[i1].label][events2[i2].label];
+                            bigint numer21 = total_counts_21[events2[i2].label][events1[i1].label];
+                            bigint denom12 = event_counts1[events1[i1].label];
+                            bigint denom21 = event_counts2[events2[i2].label];
+                            if (denom12 == 0)
+                                denom12 = 1; //don't divide by zero
+                            if (denom21 == 0)
+                                denom21 = 1;
+                            double match_score = qMin(numer12 * 1.0 / denom12, numer21 * 1.0 / denom21);
 
                             if (match_score >= best_match_score) {
                                 double abs_offset = fabs(time0 - t2);

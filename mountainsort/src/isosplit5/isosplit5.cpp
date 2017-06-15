@@ -161,8 +161,11 @@ void parcelate2(int* labels, bigint M, bigint N, float* X, bigint target_parcel_
     while ((bigint)parcels.size() < target_num_parcels) {
         bool candidate_found = false;
         for (bigint i = 0; i < (bigint)parcels.size(); i++) {
-            if ((parcels[i].radius > 0) && (parcels[i].indices.size() > (unsigned bigint)target_parcel_size))
-                candidate_found = true;
+            std::vector<bigint>* indices = &parcels[i].indices;
+            if (indices->size() > target_parcel_size) {
+                if (parcels[i].radius > 0)
+                    candidate_found = true;
+            }
         }
         if (!candidate_found) {
             // nothing else will ever be split

@@ -23,6 +23,7 @@ function main(params) {
 		prescribed_event_times:'', //you can supply your own file of event times (only works for multineighborhood=false). Otherwise, if empty, it will detect the events as part of processing
 		compute_bursting_parents:'true'
 	});
+	setNumThreads(params.num_threads);
 	var clip_size=Math.floor(params.clip_size_msec/1000*params.samplerate);
 
 	var inpath=params.inpath;
@@ -149,12 +150,12 @@ function main(params) {
 
 	var cluster_metrics=Process('mountainsort.cluster_metrics',
 			{timeseries:pre,firings:firings},
-			{samplerate:params.samplerate,_request_num_threads:params.num_threads}
+			{samplerate:params.samplerate}
 	).cluster_metrics_out;
 
 	var im_out=Process('mountainsort.isolation_metrics',
 			{timeseries:pre,firings:firings},
-			{_request_num_threads:params.num_threads,compute_bursting_parents:params.compute_bursting_parents},
+			{compute_bursting_parents:params.compute_bursting_parents},
 			{metrics_out:'',pair_metrics_out:''}
 	);
 	var isolation_metrics=im_out.metrics_out;
