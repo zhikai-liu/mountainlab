@@ -156,7 +156,7 @@ common.read_mda_header=function(path,callback) {
 
 common.lock_counts={};
 common.grab_lock=function(lock_name,callback) {
-	var max_lock_counts=1;
+	var max_lock_counts=100;
 	if (!common.lock_counts[lock_name])
 		common.lock_counts[lock_name]=0;
 	if (common.lock_counts[lock_name]<max_lock_counts) {
