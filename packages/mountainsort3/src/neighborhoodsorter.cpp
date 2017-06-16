@@ -3,8 +3,7 @@
 #include "dimension_reduce_clips.h"
 #include "sort_clips.h"
 #include "consolidate_clusters.h"
-
-#include <QMutexLocker>
+#include "get_sort_indices.h"
 #include <mda.h>
 
 class NeighborhoodSorterPrivate {
@@ -16,8 +15,7 @@ public:
     QVector<int> m_labels;
     Mda32 m_clips;
     Mda32 m_reduced_clips;
-    Mda m_templates;
-    QMutex m_mutex;
+    Mda32 m_templates;
 };
 
 NeighborhoodSorter::NeighborhoodSorter()
@@ -46,7 +44,7 @@ void NeighborhoodSorter::setOptions(const P_multineighborhood_sort_opts &opts)
     d->m_opts=opts;
 }
 
-void NeighborhoodSorter::chunkDetect(const NeighborhoodChunk &chunk)
+QVector<double> NeighborhoodSorter::chunkDetect(const NeighborhoodChunk &chunk)
 {
     QVector<double> data0(chunk.data.N2());
     for (bigint i=0; i<chunk.data.N2(); i++) {
@@ -54,15 +52,19 @@ void NeighborhoodSorter::chunkDetect(const NeighborhoodChunk &chunk)
         data0[i]=val;
     }
     QVector<double> timepoints=detect_events(data0,d->m_opts.detect_threshold,d->m_opts.detect_interval,d->m_opts.detect_sign);
-    {
-        QMutexLocker locker(&d->m_mutex);
-        for (bigint i=0; i<timepoints.count(); i++) {
-            double t0=timepoints[i]-chunk.t_offset+chunk.t1;
-            if ((chunk.t1<=t0)&&(t0<chunk.t2+1)) {
-                d->m_timepoints << t0;
-            }
+    QVector<double> ret;
+    for (bigint i=0; i<timepoints.count(); i++) {
+        double t0=timepoints[i]-chunk.t_offset+chunk.t1;
+        if ((chunk.t1<=t0)&&(t0<chunk.t2+1)) {
+            ret << t0;
         }
     }
+    return ret;
+}
+
+void NeighborhoodSorter::addTimepoints(const QVector<double> &timepoints)
+{
+    d->m_timepoints.append(timepoints);
 }
 
 void NeighborhoodSorter::initializeExtractClips()
@@ -72,6 +74,13 @@ void NeighborhoodSorter::initializeExtractClips()
     int T=d->m_opts.clip_size;
     bigint L=d->m_timepoints.count();
     d->m_clips.allocate(M2,T,L);
+}
+
+bool debug_is_all_zeros(const Mda32 &X) {
+    for (bigint ii=0; ii<X.totalSize(); ii++) {
+        if (X.get(ii)) return false;
+    }
+    return true;
 }
 
 void NeighborhoodSorter::chunkExtractClips(const NeighborhoodChunk &chunk)
@@ -87,8 +96,20 @@ void NeighborhoodSorter::chunkExtractClips(const NeighborhoodChunk &chunk)
         bigint t0=d->m_timepoints[iii]-chunk.t1+chunk.t_offset;
         Mda32 tmp;
         chunk.data.getChunk(tmp,0,t0-Tmid,M2,T);
+        if (debug_is_all_zeros(tmp)) {
+#pragma omp critical(debug1)
+            {
+                qWarning() << "Is all zeros! Aborting." << t0 << M2 << T;
+                chunk.data.write32("/home/magland/debug_all_zeros.mda");
+                for (int aa=0; aa<10; aa++) {
+                    qDebug() << ":::::::::::::" << (bigint)(d->m_timepoints.value(iii-aa)-chunk.t1+chunk.t_offset);
+                }
+                abort();
+            }
+        }
+#pragma omp critical(ns_setchunk1)
         {
-            QMutexLocker locker(&d->m_mutex); //is this necessary?
+            //is this okay in multi-threaded?
             d->m_clips.setChunk(tmp,0,0,iii);
         }
         iii++;
@@ -114,34 +135,51 @@ void NeighborhoodSorter::computeTemplates()
     int M2=d->m_channels.count();
     int T=d->m_opts.clip_size;
     int K=MLCompute::max(d->m_labels);
-    d->m_templates.allocate(M2,T,K);
+    Mda template_sums(M2,T,K);
     QVector<double> label_counts(K,0);
-    for (bigint i=0; i<d->m_labels.count(); i++) {
-        int k0=d->m_labels[i];
-        if (k0>0) {
-            label_counts[k0-1]++;
-            Mda32 tmp;
-            d->m_clips.getChunk(tmp,0,0,i,M2,T,1);
-            for (int t=0; t<T; t++) {
-                for (int m=0; m<M2; m++) {
-                    d->m_templates.set(d->m_templates.get(m,t,k0-1)+tmp.get(m,t),m,t,k0-1);
+#pragma omp parallel
+    {
+        Mda local_template_sums(M2,T,K);
+        QVector<double> local_label_counts(K,0);
+#pragma omp for
+        for (bigint i=0; i<d->m_labels.count(); i++) {
+            int k0=d->m_labels[i];
+            if (k0>0) {
+                local_label_counts[k0-1]++;
+                Mda32 tmp;
+                d->m_clips.getChunk(tmp,0,0,i,M2,T,1);
+                for (int t=0; t<T; t++) {
+                    for (int m=0; m<M2; m++) {
+                        local_template_sums.set(local_template_sums.get(m,t,k0-1)+tmp.get(m,t),m,t,k0-1);
+                    }
                 }
             }
         }
-
+#pragma omp critical(ns_compute_templates1)
+        {
+            for (int k=1; k<=K; k++) {
+                label_counts[k-1]+=local_label_counts[k-1];
+                for (int t=0; t<T; t++) {
+                    for (int m=0; m<M2; m++) {
+                        template_sums.set(template_sums.get(m,t,k-1)+local_template_sums.get(m,t,k-1),m,t,k-1);
+                    }
+                }
+            }
+        }
     }
+    d->m_templates.allocate(M2,T,K);
     for (int k=1; k<=K; k++) {
         double denom=label_counts[k-1];
         if (!denom) denom=1;
         for (int t=0; t<T; t++) {
             for (int m=0; m<M2; m++) {
-                d->m_templates.set(d->m_templates.get(m,t,k-1)/denom,m,t,k-1);
+                d->m_templates.set(template_sums.get(m,t,k-1)/denom,m,t,k-1);
             }
         }
     }
 }
 
-Mda NeighborhoodSorter::templates() const
+Mda32 NeighborhoodSorter::templates() const
 {
     return d->m_templates;
 }
@@ -152,6 +190,7 @@ void NeighborhoodSorter::consolidateClusters()
     int T=d->m_opts.clip_size;
     QVector<bigint> event_inds;
     Consolidate_clusters_opts oo;
+    oo.consolidation_factor=d->m_opts.consolidation_factor;
     consolidate_clusters(event_inds,d->m_timepoints,d->m_labels,d->m_templates,oo);
     bigint L_new=d->m_timepoints.count();
 
@@ -177,3 +216,10 @@ void NeighborhoodSorter::consolidateClusters()
 
     this->computeTemplates();
 }
+
+void NeighborhoodSorter::getTimesLabels(QVector<double> &times, QVector<int> &labels)
+{
+    times=d->m_timepoints;
+    labels=d->m_labels;
+}
+

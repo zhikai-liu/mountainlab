@@ -1,8 +1,8 @@
 #include "consolidate_clusters.h"
 
-bool should_use_template(const Mda& template0, Consolidate_clusters_opts opts);
+bool should_use_template(const Mda32& template0, Consolidate_clusters_opts opts);
 
-void consolidate_clusters(QVector<bigint> &event_inds,QVector<double> &timepoints,QVector<int> &labels,const Mda &templates,Consolidate_clusters_opts opts) {
+void consolidate_clusters(QVector<bigint> &event_inds,QVector<double> &timepoints,QVector<int> &labels,const Mda32 &templates,Consolidate_clusters_opts opts) {
     bigint L = labels.count();
     int M=templates.N1();
     int T=templates.N2();
@@ -11,7 +11,7 @@ void consolidate_clusters(QVector<bigint> &event_inds,QVector<double> &timepoint
     QVector<int> to_use(K + 1,0);
 
     for (int k = 1; k <= K; k++) {
-        Mda template0;
+        Mda32 template0;
         templates.getChunk(template0, 0, 0, k - 1, M,T, 1);
         if (should_use_template(template0, opts)) {
             to_use[k] = 1;
@@ -46,7 +46,7 @@ void consolidate_clusters(QVector<bigint> &event_inds,QVector<double> &timepoint
     labels=new_labels;
 }
 
-bool should_use_template(const Mda& template0, Consolidate_clusters_opts opts)
+bool should_use_template(const Mda32& template0, Consolidate_clusters_opts opts)
 {
     int central_channel=0;
 

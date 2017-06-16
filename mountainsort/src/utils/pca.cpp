@@ -92,7 +92,7 @@ void pca_subsampled(Mda32& components, Mda32& features, Mda32& sigma, const Mda3
     bigint M = X.N1();
     bigint N = X.N2();
 
-    qDebug().noquote() << QString("PCA %1x%2x%3 (max_samples=%4)").arg(M).arg(N).arg(num_features).arg(max_samples);
+    //qDebug().noquote() << QString("PCA %1x%2x%3 (max_samples=%4)").arg(M).arg(N).arg(num_features).arg(max_samples);
 
     if (N <= max_samples) {
         pca(components, features, sigma, X, num_features, subtract_mean);
@@ -294,6 +294,7 @@ Mda32 mult_AtransB(const Mda32& A, const Mda32& B) // gemm for two 2D MDAs.   in
     const dtype32* Aptr = A.constDataPtr();
     const dtype32* Bptr = B.constDataPtr();
     dtype32* Cptr = C.dataPtr();
+
     bigint iC = 0;
     for (bigint n = 0; n < N; n++) {
         for (bigint m = 0; m < M; m++) {

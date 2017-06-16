@@ -18,10 +18,18 @@ QJsonObject get_spec()
     QJsonArray processors;
 
     {
-        ProcessorSpec X("mountainsort.multineighborhood_sort", "0.1");
+        ProcessorSpec X("mountainsort.multineighborhood_sort", "0.15c");
         X.addInputs("timeseries","geom");
         X.addOutputs("firings_out");
-        X.addRequiredParameters("adjacency_radius");
+        X.addOptionalParameter("adjacency_radius","",0);
+        X.addOptionalParameter("consolidate_clusters","","true");
+        X.addOptionalParameter("consolidation_factor","",0.9);
+        X.addOptionalParameter("clip_size","",50);
+        X.addOptionalParameter("detect_interval","",10);
+        X.addOptionalParameter("detect_threshold","",3);
+        X.addOptionalParameter("detect_sign","",0);
+        X.addOptionalParameter("merge_across_channels","","true");
+        X.addOptionalParameter("fit_stage","","true");
         processors.push_back(X.get_spec());
     }
 
@@ -60,7 +68,15 @@ int main(int argc, char* argv[])
         QString geom = CLP.named_parameters["geom"].toString();
         QString firings_out = CLP.named_parameters["firings_out"].toString();
         P_multineighborhood_sort_opts opts;
-        opts.adjacency_radius=CLP.named_parameters.value("adjacency_radius",0).toDouble();
+        opts.adjacency_radius=CLP.named_parameters.value("adjacency_radius").toDouble();
+        opts.consolidate_clusters=(CLP.named_parameters.value("consolidate_clusters").toString()=="true");
+        opts.consolidation_factor=CLP.named_parameters.value("consolidation_factor").toDouble();
+        opts.clip_size=CLP.named_parameters.value("clip_size").toDouble();
+        opts.detect_interval=CLP.named_parameters.value("detect_interval").toDouble();
+        opts.detect_threshold=CLP.named_parameters.value("detect_threshold").toDouble();
+        opts.detect_sign=CLP.named_parameters.value("detect_sign").toInt();
+        opts.merge_across_channels=(CLP.named_parameters.value("merge_across_channels").toString()=="true");
+        opts.fit_stage=(CLP.named_parameters.value("fit_stage").toString()=="true");
         ret=p_multineighborhood_sort(timeseries,geom,firings_out,opts);
     }
     else {
