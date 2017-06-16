@@ -1,6 +1,8 @@
 #include "dimension_reduce_clips.h"
 #include "pca.h"
 
+#include <QTime>
+
 void dimension_reduce_clips(Mda32& ret, const Mda32& clips, bigint num_features_per_channel, bigint max_samples)
 {
     bigint M = clips.N1();
@@ -27,6 +29,7 @@ void dimension_reduce_clips(Mda32& ret, const Mda32& clips, bigint num_features_
             }
         }
         Mda32 CC, FF, sigma;
+        QTime timerA; timerA.start();
         pca_subsampled(CC, FF, sigma, reshaped, num_features_per_channel, false, max_samples);
         float* FF_ptr = FF.dataPtr();
         aa = 0;

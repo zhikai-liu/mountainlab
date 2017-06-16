@@ -22,7 +22,8 @@ public:
     QList<bigint> channels() const;
     void setOptions(const P_multineighborhood_sort_opts &opts);
 
-    void chunkDetect(const NeighborhoodChunk &chunk);
+    QVector<double> chunkDetect(const NeighborhoodChunk &chunk);
+    void addTimepoints(const QVector<double> &timepoints);
 
     void initializeExtractClips();
     void chunkExtractClips(const NeighborhoodChunk &chunk);
@@ -31,9 +32,11 @@ public:
     void sortClips();
 
     void computeTemplates();
-    Mda templates() const;
+    Mda32 templates() const;
 
     void consolidateClusters();
+
+    void getTimesLabels(QVector<double> &times,QVector<int> &labels);
 private:
     NeighborhoodSorterPrivate *d;
 };

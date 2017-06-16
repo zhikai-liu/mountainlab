@@ -32,7 +32,7 @@ QVector<int> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indice
     bigint T = clips.N2();
     bigint L0 = indices.count();
 
-    qDebug().noquote() << QString("Sorting clips %1x%2x%3").arg(M).arg(T).arg(L0);
+    //qDebug().noquote() << QString("Sorting clips %1x%2x%3").arg(M).arg(T).arg(L0);
 
     Mda32 FF;
     {
@@ -60,8 +60,13 @@ QVector<int> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indice
     {
         QTime timer;
         timer.start();
-        isosplit5(labels0.data(), opts.num_features, L0, FF.dataPtr(), i5_opts);
-        qDebug().noquote() << QString("Time elapsed for isosplit (%1x%2) - K=%3: %4 sec").arg(FF.N1()).arg(FF.N2()).arg(MLCompute::max(labels0)).arg(timer.elapsed() * 1.0 / 1000);
+        if (!isosplit5(labels0.data(), opts.num_features, L0, FF.dataPtr(), i5_opts)) {
+            qWarning() << "Isosplit5 returned with an error. Aborting";
+            clips.write32("/home/magland/tmp/debug_clips.mda");
+            FF.write32("/home/magland/tmp/debug_FF.mda");
+            abort();
+        }
+        //qDebug().noquote() << QString("Time elapsed for isosplit (%1x%2) - K=%3: %4 sec").arg(FF.N1()).arg(FF.N2()).arg(MLCompute::max(labels0)).arg(timer.elapsed() * 1.0 / 1000);
     }
 
     bigint K0 = MLCompute::max(labels0);

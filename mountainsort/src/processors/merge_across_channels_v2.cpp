@@ -98,7 +98,7 @@ bool merge_across_channels_v2(const QString& timeseries_path, const QString& fir
     //sort by largest peak so we can go through in order
     QVector<double> abs_peaks_on_own_channels;
     for (int k = 0; k < K; k++) {
-        abs_peaks_on_own_channels << channel_peaks.value(peakchans[k] - 1, k);
+        abs_peaks_on_own_channels << channel_peaks.value(peakchans[k] - 1, k); //oops I think this was an error!! peakchans[k] is not right!
     }
     QList<int> inds1 = get_sort_indices(abs_peaks_on_own_channels);
     inds1 = reverse_order(inds1);

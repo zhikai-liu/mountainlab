@@ -31,7 +31,10 @@ SOURCES += \
     dimension_reduce_clips.h \
     dimension_reduce_clips.cpp \
     sort_clips.cpp \
-    consolidate_clusters.cpp
+    consolidate_clusters.cpp \
+    merge_across_channels.cpp \
+    fit_stage.cpp \
+    reorder_labels.cpp
 
 HEADERS += \
     mountainsort3_main.h \
@@ -39,7 +42,10 @@ HEADERS += \
     neighborhoodsorter.h \
     detect_events.h \
     sort_clips.h \
-    consolidate_clusters.h
+    consolidate_clusters.h \
+    merge_across_channels.h \
+    fit_stage.h \
+    reorder_labels.h
 
 INCLUDEPATH += ../../../mountainsort/src/isosplit5
 VPATH += ../../../mountainsort/src/isosplit5

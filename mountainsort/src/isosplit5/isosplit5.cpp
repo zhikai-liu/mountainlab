@@ -140,7 +140,7 @@ std::vector<bigint> p2_randsample(bigint N, bigint K)
     */
 }
 
-void parcelate2(int* labels, bigint M, bigint N, float* X, bigint target_parcel_size, bigint target_num_parcels, const parcelate2_opts& p2opts)
+bool parcelate2(int* labels, bigint M, bigint N, float* X, bigint target_parcel_size, bigint target_num_parcels, const parcelate2_opts& p2opts)
 {
     std::vector<p2_parcel> parcels;
 
@@ -162,7 +162,7 @@ void parcelate2(int* labels, bigint M, bigint N, float* X, bigint target_parcel_
         bool candidate_found = false;
         for (bigint i = 0; i < (bigint)parcels.size(); i++) {
             std::vector<bigint>* indices = &parcels[i].indices;
-            if (indices->size() > target_parcel_size) {
+            if ((bigint)indices->size() > target_parcel_size) {
                 if (parcels[i].radius > 0)
                     candidate_found = true;
             }
@@ -231,8 +231,10 @@ void parcelate2(int* labels, bigint M, bigint N, float* X, bigint target_parcel_
                     PP.radius = p2_compute_max_distance(PP.centroid, M, X, PP.indices);
                     if (PP.indices.size() > 0)
                         parcels.push_back(PP);
-                    else
+                    else {
                         printf("Unexpected problem. New parcel has no points -- perhaps dataset contains duplicate points? -- original size = %ld.\n", sz);
+                        return false;
+                    }
                 }
                 if ((bigint)parcels[p_index].indices.size() == sz) {
                     printf("Warning: Size did not change after splitting parcel.\n");
@@ -250,9 +252,11 @@ void parcelate2(int* labels, bigint M, bigint N, float* X, bigint target_parcel_
         //centroids=get_parcel_centroids(parcels);
         //labels=knnsearch(centroids',X','K',1)';
     }
+
+    return true;
 }
 
-void isosplit5(int* labels, bigint M, bigint N, float* X, isosplit5_opts opts)
+bool isosplit5(int* labels, bigint M, bigint N, float* X, isosplit5_opts opts)
 {
 
     // compute the initial clusters
@@ -261,7 +265,8 @@ void isosplit5(int* labels, bigint M, bigint N, float* X, isosplit5_opts opts)
     // !! important not to do a final reassign because then the shapes will not be conducive to isosplit iterations -- hexagons are not good for isosplit!
     parcelate2_opts p2opts;
     p2opts.final_reassign = false;
-    parcelate2(labels, M, N, X, target_parcel_size, target_num_parcels, p2opts);
+    if (!parcelate2(labels, M, N, X, target_parcel_size, target_num_parcels, p2opts))
+        return false;
     int Kmax = ns_isosplit5::compute_max(N, labels);
 
     float* centroids = (float*)malloc(sizeof(float) * M * Kmax);
@@ -443,6 +448,8 @@ void isosplit5(int* labels, bigint M, bigint N, float* X, isosplit5_opts opts)
 
     free(centroids);
     free(covmats);
+
+    return true;
 }
 
 /*
