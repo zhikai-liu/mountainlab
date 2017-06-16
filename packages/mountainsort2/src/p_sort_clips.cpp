@@ -131,7 +131,7 @@ Mda32 dimension_reduce_clips(Mda32& clips, bigint num_features_per_channel, bigi
     return ret;
 }
 
-QVector<int> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indices, Sort_clips_opts opts)
+QVector<bigint> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indices, Sort_clips_opts opts)
 {
     bigint M = clips.N1();
     bigint T = clips.N2();
