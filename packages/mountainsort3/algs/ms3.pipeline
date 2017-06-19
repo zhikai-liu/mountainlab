@@ -1,0 +1,276 @@
+function main(params) {
+	set_default_parameters(params,{
+		samplerate:30000, //Hz
+		freq_min:300,freq_max:6000,freq_wid:1000,quantization_unit:0, //bandpass filter
+		clip_size_msec:1.67, //clip size for event extraction (default is 50 samples at 30 KHz)
+		detect_interval_msec:0.33, //min separation between two events on same channel (default is 10 samples at 30 KHz)
+		detect_threshold:3.0, //stdevs away from noise
+		detect_sign:0, //-1,0,1
+		whiten:'true', //boolean
+		merge_across_channels:'true', //boolean
+		fit_stage:'true', //boolean
+		num_threads:0,
+		consolidate_clusters:'true', //applies to multineighborhood
+		consolidation_factor:0.9, //applies to multineighborhood and consolidate_clusters=true
+		mask_out_artifacts:'false',		
+		mask_out_artifacts_interval:2000, //applies to mask_out_artifacts=true
+		mask_out_artifacts_threshold:6, //applies to mask_out_artifacts=true
+		adjacency_radius:0,
+		channels:'', //comma-separated list of channels to analyze
+		compute_bursting_parents:'true',
+		compute_metrics:'false'
+	});
+	setNumThreads(params.num_threads);
+	var clip_size=Math.floor(params.clip_size_msec/1000*params.samplerate);
+	var detect_interval=Math.floor(params.detect_interval_msec/1000*params.samplerate);
+
+	var inpath=params.inpath;
+	var outpath=params.outpath;
+
+	if (!params.geom) {
+		if (file_exists(inpath+'/geom.csv')) {
+			params.geom=inpath+'/geom.csv';
+		}
+		else {
+			params.adjacency_radius=1; //the geom will be set to all [0,0], and all the channels will be sorted together
+		}
+	}
+
+	var filt;
+	var raw;
+	//var sessions=[];
+	if (file_exists(inpath+'/raw.mda.prv')) {
+		raw=inpath+'/raw.mda.prv';
+		if (params.channels) {
+			raw=extract_channels(raw,params.channels);
+			if (params.geom) {
+				params.geom=extract_geom_channels(params.geom,params.channels);
+			}
+		}
+		if (params.freq_min)
+			filt=bandpass_filter(raw,params.samplerate,params.freq_min,params.freq_max,params.freq_wid,params.quantization_unit);
+		else
+			filt=raw;
+	}
+	else {
+		filt=[];
+	}
+	if (filt.length===0) {
+		//console.err('No raw files or sessions found.');
+		console.err('Unable to find raw.mda.prv');
+		return;
+	}
+
+	var pre=filt;
+	if (params.mask_out_artifacts=='true') {
+		pre=Process('mask_out_artifacts',
+					{timeseries:pre},
+					{interval_size:params.mask_out_artifacts_interval,threshold:params.mask_out_artifacts_threshold}
+		).timeseries_out;
+	}
+	if (params.whiten=='true') {
+		var whitening_quantization_unit=0;
+		//if (params.quantization_unit) whitening_quantization_unit=0.01;
+		var old=pre;
+		pre=Process('mountainsort.whiten',{
+						timeseries:pre
+					},{quantization_unit:whitening_quantization_unit}
+				).timeseries_out;
+		//there was a bug so removing the following line for now
+		//RemoveIntermediate(old); //save disk space without ruining provenance
+	}
+
+	var ppp={};
+	ppp.adjacency_radius=params.adjacency_radius;
+	ppp.consolidate_clusters=params.consolidate_clusters;
+	ppp.consolidation_factor=params.consolidation_factor;
+	ppp.clip_size=clip_size;
+	ppp.detect_interval=detect_interval;
+	ppp.detect_threshold=params.detect_threshold;
+	ppp.detect_sign=params.detect_sign;
+	ppp.merge_across_channels=params.merge_across_channels;
+	ppp.fit_stage=params.fit_stage;
+	var firings=Process('mountainsort.multineighborhood_sort',
+					{
+						timeseries:pre,
+						geom:params.geom
+					},
+					ppp).firings_out;
+
+	var templates=Process('mountainsort.compute_templates',
+		{timeseries:pre,firings:firings},
+		{clip_size:clip_size}
+	).templates_out;
+	/*firings=Process('mountainsort.reorder_labels',
+		{templates:templates,firings:firings},
+		{}
+	).firings_out;*/
+
+	if (params.compute_metrics=='true') {
+		var cluster_metrics=Process('mountainsort.cluster_metrics',
+				{timeseries:pre,firings:firings},
+				{samplerate:params.samplerate}
+		).cluster_metrics_out;
+
+		var im_out=Process('mountainsort.isolation_metrics',
+				{timeseries:pre,firings:firings},
+				{compute_bursting_parents:params.compute_bursting_parents},
+				{metrics_out:'',pair_metrics_out:''}
+		);
+		var isolation_metrics=im_out.metrics_out;
+		var pair_metrics=im_out.pair_metrics_out;
+
+		cluster_metrics=Process('mountainsort.combine_cluster_metrics',
+				{metrics_list:[cluster_metrics,isolation_metrics]},
+				{}
+		).metrics_out;
+		write_file(cluster_metrics,params.outpath+'/cluster_metrics.json');
+		write_file(pair_metrics,params.outpath+'/cluster_pair_metrics.json');
+	}
+
+	// Write the output
+	write_file(firings,params.outpath+'/firings.mda');	
+	if (params.geom) {
+		write_file(params.geom,params.outpath+'/geom.csv');
+	}
+	if (typeof(raw)=='string') {
+		console.log('################################# '+raw);
+		write_prv(raw,params.outpath+'/raw.mda.prv');
+		write_prv(filt,params.outpath+'/filt.mda.prv');
+		write_prv(pre,params.outpath+'/pre.mda.prv');
+	}
+	else {
+		remove_file(params.outpath+'/raw.mda.prv'); //to be safe
+		remove_file(params.outpath+'/filt.mda.prv'); //to be safe
+		remove_file(params.outpath+'/pre.mda.prv'); //to be safe
+	}
+
+	run_pipeline();
+}
+
+function extract_channels(timeseries,channels) {
+	console.log ('extract_channels: '+timeseries+' '+channels);
+	
+	var ret=Process('mountainsort.extract_neighborhood_timeseries',
+		{timeseries:timeseries},
+		{channels:channels}
+	).timeseries_out;
+	return ret;
+}
+
+function extract_geom_channels(geom,channels) {
+	console.log ('extract_geom_channels: '+geom+' '+channels);
+	
+	var ret=Process('mountainsort.extract_geom_channels',
+		{geom:geom},
+		{channels:channels}
+	).geom_out;
+	return ret;
+}
+
+function bandpass_filter(raw,samplerate,freq_min,freq_max,freq_wid,quantization_unit) {
+	console.log ('bandpass_filter: '+raw);
+	if ((!freq_min)&&(!freq_max)) {
+		return raw;
+	}
+	else {
+		var filt=Process('mountainsort.bandpass_filter',
+			{timeseries:raw},
+			{samplerate:samplerate,freq_min:freq_min,freq_max:freq_max,freq_wid:freq_wid,quantization_unit:quantization_unit}
+		).timeseries_out;
+		return filt;
+	}
+}
+
+function find_all_sessions(inpath,relpath) {
+	if (!relpath) relpath='';
+	var ret=[];
+	var dir0=dir(inpath);
+	var folders0=dir0.folders||[];
+	for (var i in folders0) {
+		var fname=inpath+'/'+folders0[i].name+'/raw.mda.prv';
+		if (file_exists(fname)) {
+			ret.push({path:inpath+'/'+folders0[i].name,relpath:relpath+'/'+folders0[i].name});
+		}
+		else {
+			var ret0=find_all_sessions(inpath+'/'+folders0[i].name,relpath+'/'+folders0[i].name);
+			for (var j in ret0)
+				ret.push(ret0[j]);
+		}
+	}
+	return ret;
+}
+
+function run_pipeline() {
+	_MP2.runPipeline();
+}
+
+function Process(processor_name,inputs,parameters,outputs) {
+	if (!parameters) parameters={};
+	if (!outputs) outputs=''; // empty outputs means that they will be created as temporary files and the return object will contain the paths to these temporary files
+	var ret=_MP2.addProcess(
+		processor_name,
+		JSON.stringify(inputs),
+		JSON.stringify(parameters),
+		JSON.stringify(outputs)
+	);
+	return JSON.parse(ret);
+}
+
+function RemoveIntermediate(file) {
+	_MP2.removeIntermediate(file);
+}
+
+function setNumThreads(num_threads) {
+	_MP2.setNumThreads(num_threads);
+}
+
+function write_file(input,output) {
+	_MP2.addCopyFile(input,output);
+	/*
+	_MP2.addProcess(
+		'copy',
+		JSON.stringify({input:input}),
+		JSON.stringify({}),
+		JSON.stringify({output:output})
+	);
+	*/
+}
+
+function write_prv(input,output) {
+	_MP2.addPrv(input,output);
+}
+
+function remove_file(path) {
+	_MP2.removeFile(path);
+}
+
+function clone(obj) {
+	return JSON.parse(JSON.stringify(obj));
+}
+
+var console={
+	log:function(msg) {_MP2.log(msg);},
+	err:function(msg) {_MP2.log('Pipeline error: '+msg);}
+};
+
+function set_default_parameters(params,defaults) {
+	for (var pname in defaults) {
+		if (!(pname in params)) {
+			params[pname]=defaults[pname];
+		}
+	}
+}
+
+
+function file_exists(path) {
+	return _MP2.fileExists(path);
+}
+
+function dir(path) {
+	return JSON.parse(_MP2.dir(path));
+}
+
+function mkdir(path) {
+	_MP2.mkdir(path);
+}
