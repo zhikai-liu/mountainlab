@@ -18,7 +18,7 @@ QJsonObject get_spec()
     QJsonArray processors;
 
     {
-        ProcessorSpec X("mountainsort.multineighborhood_sort", "0.15c");
+        ProcessorSpec X("mountainsort.multineighborhood_sort", "0.15j");
         X.addInputs("timeseries","geom");
         X.addOutputs("firings_out");
         X.addOptionalParameter("adjacency_radius","",0);

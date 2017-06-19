@@ -88,3 +88,34 @@ bool should_use_template(const Mda32& template0, Consolidate_clusters_opts opts)
 
     return true;
 }
+
+QMap<int, int> consolidate_clusters(const Mda32 &templates, Consolidate_clusters_opts opts)
+{
+    int M=templates.N1();
+    int T=templates.N2();
+    int K=templates.N3();
+    QVector<int> to_use(K + 1,0);
+
+    for (int k = 1; k <= K; k++) {
+        Mda32 template0;
+        templates.getChunk(template0, 0, 0, k - 1, M,T, 1);
+        if (should_use_template(template0, opts)) {
+            to_use[k] = 1;
+        }
+    }
+
+    QMap<int, int> label_map;
+    label_map[0] = 0;
+    int knext = 1;
+    for (int k = 1; k <= K; k++) {
+        if (to_use[k]) {
+            label_map[k] = knext;
+            knext++;
+        }
+        else {
+            label_map[k] = 0;
+        }
+    };
+
+    return label_map;
+}
