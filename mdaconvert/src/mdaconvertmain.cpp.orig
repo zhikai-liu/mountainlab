@@ -15,8 +15,12 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+<<<<<<< Updated upstream
 #include <QTime>
+||||||| merged common ancestors
+=======
 #include <QLoggingCategory>
+>>>>>>> Stashed changes
 #include <diskreadmda.h>
 #include <diskreadmda32.h>
 #include "diskwritemda.h"
@@ -301,6 +305,7 @@ bool extract_channels(QString input_fname, QString output_fname, const QMap<QStr
 
 bool extract_time_chunk(QString input_fname, QString output_fname, const QMap<QString, QVariant>& params)
 {
+<<<<<<< Updated upstream
     DiskReadMda32 X(input_fname);
     MDAIO_HEADER H = X.mdaioHeader();
 
@@ -314,26 +319,21 @@ bool extract_time_chunk(QString input_fname, QString output_fname, const QMap<QS
 
     bigint segment_size=1e4;
     QTime progress_timer; progress_timer.start();
-    for (bigint t=t1; t<=t2; t+=segment_size) {
-        bigint s1=t;
-        bigint s2=t+segment_size-1;
-        if (s2>t2) s2=t2;
-
+    for (bigint t=0; t<X.N2(); t+=segment_size) {
         if (progress_timer.elapsed()>2000) {
-            qDebug().noquote() << QString("Extracting chunk %1 of %2").arg((t-t1)/segment_size+1).arg(((t2-t1+1)+segment_size-1)/segment_size);
-            qDebug().noquote() << QString("t1=%1, t2=%2, s1=%3, s2=%4, size(X)=(%5,%6), size(Y)=(%7,%8)").arg(t1).arg(t2).arg(s1).arg(s2).arg(X.N1()).arg(X.N2()).arg(Y.N1()).arg(Y.N2());
+            qDebug().noquote() << QString("Extracting chunk %1 of %2").arg(t/segment_size+1).arg((X.N2()+segment_size-1)/segment_size);
             progress_timer.restart();
         }
-
+        bigint s1=t;
+        bigint s2=t+segment_size-1;
+        if (s2>=X.N2()) s2=X.N2()-1;
         Mda32 tmp;
         if (!X.readChunk(tmp,0,s1,X.N1(),s2-s1+1)) {
             qWarning() << "Unexpected failure to readChunk in input array.";
             return false;
         }
-        if (!Y.writeChunk(tmp,0,s1-t1)) {
+        if (!Y.writeChunk(tmp,0,s1)) {
             qWarning() << "Unexpected failure to writeChunk in output array";
-            qWarning() << QString("t1=%1, t2=%2, s1=%3, s2=%4, size(X)=(%5,%6), size(Y)=(%7,%8)").arg(t1).arg(t2).arg(s1).arg(s2).arg(X.N1()).arg(X.N2()).arg(Y.N1()).arg(Y.N2());;
-            qWarning() << QString("s1-t1=%1").arg(s1-t1);
             return false;
         }
     }
@@ -346,7 +346,10 @@ bool extract_time_chunk(QString input_fname, QString output_fname, const QMap<QS
 
 bool extract_time_chunk_old(QString input_fname, QString output_fname, const QMap<QString, QVariant>& params)
 {
+||||||| merged common ancestors
+=======
     qCInfo(mdaconvertmsg) << "BEGIN";
+>>>>>>> Stashed changes
     DiskReadMda X(input_fname);
     Mda Y;
 

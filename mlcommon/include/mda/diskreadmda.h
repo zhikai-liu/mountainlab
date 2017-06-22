@@ -6,6 +6,7 @@
 #ifndef DISKREADMDA_H
 #define DISKREADMDA_H
 
+#include <QLoggingCategory>
 #include "mda.h"
 #include "mdaio.h"
 
@@ -72,5 +73,7 @@ private:
 
 ///Unit test
 void diskreadmda_unit_test();
+
+Q_DECLARE_LOGGING_CATEGORY(diskreadmdacat)
 
 #endif // DISKREADMDA_H

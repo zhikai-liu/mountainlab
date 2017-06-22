@@ -15,6 +15,7 @@
 #include "dimension_reduce_clips.h"
 #include "sort_clips.h"
 #include "consolidate_clusters.h"
+#include <QCache>
 
 QList<int> get_channels_from_geom(const Mda &geom,bigint m,double adjacency_radius);
 void extract_channels(Mda32 &ret,const Mda32 &X,const QList<int> &channels);
@@ -45,6 +46,10 @@ bool p_multineighborhood_sort(QString timeseries,QString geom,QString firings_ou
     //important so we can parallelize in both time and space
     omp_set_nested(1);
     int progress_msec=2000;
+
+    QCache<int,Mda32> chunkCache;
+    chunkCache.setMaxCost(20000); // 20GB
+
 
     // The timeseries array (preprocessed - M x N)
     DiskReadMda32 X(timeseries);
@@ -94,10 +99,13 @@ bool p_multineighborhood_sort(QString timeseries,QString geom,QString firings_ou
 #pragma omp parallel for num_threads(num_time_threads) //parallel in time
         for (int it=0; it<time_chunk_infos.count(); it++) {
             TimeChunkInfo TCI=time_chunk_infos[it];
+            Mda32* time_chunk_cached = new Mda32;
             Mda32 time_chunk;
 #pragma omp critical(read_time_chunk)
             {
-                X.readChunk(time_chunk,0,TCI.t1-TCI.t_padding,M,TCI.size+2*TCI.t_padding);
+                X.readChunk(*time_chunk_cached,0,TCI.t1-TCI.t_padding,M,TCI.size+2*TCI.t_padding);
+                time_chunk = *time_chunk_cached;
+                chunkCache.insert(it, time_chunk_cached, time_chunk_cached->totalSize()/1e6);
                 num_time_chunks_read++;
                 if (progress_timer.elapsed()>progress_msec) {
                     qDebug().noquote() << QString("Detect: Read %1 time chunks of %2...").arg(num_time_chunks_read).arg(time_chunk_infos.count());
@@ -153,10 +161,18 @@ bool p_multineighborhood_sort(QString timeseries,QString geom,QString firings_ou
 #pragma omp parallel for num_threads(num_time_threads) //parallel in time
         for (int it=0; it<time_chunk_infos.count(); it++) {
             TimeChunkInfo TCI=time_chunk_infos[it];
+            Mda32* time_chunk_cached;
             Mda32 time_chunk;
 #pragma omp critical(read_time_chunk)
             {
-                X.readChunk(time_chunk,0,TCI.t1-TCI.t_padding,M,TCI.size+2*TCI.t_padding);
+                time_chunk_cached = chunkCache.object(it);
+                if (!time_chunk_cached) {
+                    qDebug() << "Cache miss at" << it;
+                    time_chunk_cached = new Mda32;
+                    X.readChunk(*time_chunk_cached,0,TCI.t1-TCI.t_padding,M,TCI.size+2*TCI.t_padding);
+                    time_chunk = *time_chunk_cached;
+                    chunkCache.insert(it, time_chunk_cached, time_chunk_cached->totalSize()/1e6);
+                }
                 num_time_chunks_read++;
                 if (progress_timer.elapsed()>progress_msec) {
                     qDebug().noquote() << QString("Extract clips: Read %1 time chunks of %2...").arg(num_time_chunks_read).arg(time_chunk_infos.count());
@@ -365,10 +381,19 @@ bool p_multineighborhood_sort(QString timeseries,QString geom,QString firings_ou
         for (int it=0; it<time_chunk_infos.count(); it++) {
             TimeChunkInfo TCI=time_chunk_infos[it];
             double t=TCI.t1;
+            Mda32* time_chunk_cached;
             Mda32 time_chunk;
+
 #pragma omp critical(read_time_chunk)
             {
-                X.readChunk(time_chunk,0,TCI.t1-TCI.t_padding,M,TCI.size+2*TCI.t_padding);
+                time_chunk_cached = chunkCache.object(it);
+                if (!time_chunk_cached) {
+                    qDebug() << "Cache miss at" << it;
+                    time_chunk_cached = new Mda32;
+                    X.readChunk(*time_chunk_cached,0,TCI.t1-TCI.t_padding,M,TCI.size+2*TCI.t_padding);
+                    time_chunk = *time_chunk_cached;
+                    chunkCache.insert(it, time_chunk_cached, time_chunk_cached->totalSize()/1e6);
+                }
                 num_time_chunks_read++;
                 if (progress_timer.elapsed()>progress_msec) {
                     qDebug().noquote() << QString("Fit stage: Read %1 time chunks of %2...").arg(num_time_chunks_read).arg(time_chunk_infos.count());
@@ -514,8 +539,33 @@ void sort_events_by_time(QVector<double> &times,QVector<int> &labels,QVector<int
     central_channels=central_channels2;
 }
 
+#include <QElapsedTimer>
+#include <cassert>
+
 QVector<bigint> get_inds_for_times_in_range(const QVector<double> &times,double t1,double t2) {
     QVector<bigint> ret;
+#if 1
+//    QElapsedTimer t;
+//    qint64 less_time = 0;
+//    qint64 greater_time = 0;
+//    qint64 copy_time = 0;
+//    qint64 el = 0;
+//    t.start();
+    auto less = std::lower_bound(times.begin(), times.end(), t1);
+//    less_time = t.nsecsElapsed();
+    auto greater = std::lower_bound(less, times.end(), t2);
+//    greater_time = t.nsecsElapsed();
+    int idx = less-times.begin();
+    int idxl = greater-times.begin();
+    ret.reserve(idxl-idx);
+//    QElapsedTimer ct;
+//    ct.start();
+    for(bigint ii=idx; ii < idxl; ++ii) ret << ii;
+//    copy_time = ct.nsecsElapsed();
+//    el = t.nsecsElapsed();
+//    ret.clear();
+//    t.restart();
+#else
     bigint ii=0;
     while ((ii<times.count())&&(times[ii]<t1)) {
         ii++;
@@ -524,6 +574,9 @@ QVector<bigint> get_inds_for_times_in_range(const QVector<double> &times,double 
         ret << ii;
         ii++;
     }
+
+#endif
+//    qDebug() << times.count() << idx << idxl << "(" << less_time <<"," << greater_time <<"," << copy_time << "ns)" << (el/1000) << "vs" << (t.nsecsElapsed()/1000) << "us";
     return ret;
 }
 

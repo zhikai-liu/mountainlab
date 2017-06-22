@@ -1,3 +1,5 @@
+#define QT_MESSAGELOGCONTEXT
+
 #include "diskreadmda.h"
 #include <stdio.h>
 #include "mdaio.h"
@@ -12,11 +14,13 @@
 #include <QJsonArray>
 #include <icounter.h>
 #include <objectregistry.h>
-
+#include <QLoggingCategory>
 #define MAX_PATH_LEN 10000
 #define DEFAULT_CHUNK_SIZE 1e5
 
 /// TODO (LOW) make tmp directory with different name on server, so we can really test if it is doing the computation in the right place
+
+Q_LOGGING_CATEGORY(diskreadmdacat, "mda.diskreadmda")
 
 class DiskReadMdaPrivate {
 public:
@@ -432,6 +436,7 @@ MDAIO_HEADER DiskReadMda::mdaioHeader() const
 
 bool DiskReadMda::reshape(bigint N1b, bigint N2b, bigint N3b, bigint N4b, bigint N5b, bigint N6b)
 {
+    qCDebug(diskreadmdacat) << "Reshaping to" << N1b << N2b << N3b << N4b << N5b << N6b;
     bigint size_b = N1b * N2b * N3b * N4b * N5b * N6b;
     if (size_b != this->totalSize()) {
         qWarning() << "Cannot reshape because sizes do not match" << this->totalSize() << N1b << N2b << N3b << N4b << N5b << N6b;
@@ -547,6 +552,7 @@ bool read_chunk_from_concat_list(Mda& chunk, const QList<DiskReadMda>& list, big
 
 bool DiskReadMda::readChunk(Mda& X, bigint i, bigint size) const
 {
+    qCDebug(diskreadmdacat) << "reading" << size << "starting from" << i;
     if (d->m_use_memory_mda) {
         d->m_memory_mda.getChunk(X, i, size);
         return true;
@@ -575,6 +581,7 @@ bool DiskReadMda::readChunk(Mda& X, bigint i, bigint size) const
 
 bool DiskReadMda::readChunk(Mda& X, bigint i1, bigint i2, bigint size1, bigint size2) const
 {
+    qCDebug(diskreadmdacat) << "reading" << QList<bigint>({size1, size2}) << "starting from" << QList<bigint>({i1, i2});
     if (size2 == 0) {
         return readChunk(X, i1, size1);
     }
