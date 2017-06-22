@@ -307,7 +307,7 @@ bool extract_time_chunk(QString input_fname, QString output_fname, const QMap<QS
 
         if (progress_timer.elapsed()>2000) {
             qDebug().noquote() << QString("Extracting chunk %1 of %2").arg((t-t1)/segment_size+1).arg(((t2-t1+1)+segment_size-1)/segment_size);
-            qDebug().noquote() << QString("t1=%1, t2=%2, s1=%2, s2=%3, size(X)=(%4,%5), size(Y)=(%6,%7)").arg(t1).arg(t2).arg(s1).arg(s2).arg(X.N1()).arg(X.N2()).arg(Y.N1()).arg(Y.N2());
+            qDebug().noquote() << QString("t1=%1, t2=%2, s1=%3, s2=%4, size(X)=(%5,%6), size(Y)=(%7,%8)").arg(t1).arg(t2).arg(s1).arg(s2).arg(X.N1()).arg(X.N2()).arg(Y.N1()).arg(Y.N2());
             progress_timer.restart();
         }
 
@@ -318,7 +318,7 @@ bool extract_time_chunk(QString input_fname, QString output_fname, const QMap<QS
         }
         if (!Y.writeChunk(tmp,0,s1-t1)) {
             qWarning() << "Unexpected failure to writeChunk in output array";
-            qWarning() << QString("t1=%1, t2=%2, s1=%2, s2=%3, size(X)=(%4,%5), size(Y)=(%6,%7)").arg(t1).arg(t2).arg(s1).arg(s2).arg(X.N1()).arg(X.N2()).arg(Y.N1()).arg(Y.N2());
+            qWarning() << QString("t1=%1, t2=%2, s1=%3, s2=%4, size(X)=(%5,%6), size(Y)=(%7,%8)").arg(t1).arg(t2).arg(s1).arg(s2).arg(X.N1()).arg(X.N2()).arg(Y.N1()).arg(Y.N2());;
             qWarning() << QString("s1-t1=%1").arg(s1-t1);
             return false;
         }
