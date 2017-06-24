@@ -65,7 +65,9 @@ public:
                 qCritical() << QString("Unable to allocate Mda of size %1x%2x%3x%4x%5x%6 (total=%7)").arg(N1).arg(N2).arg(N3).arg(N4).arg(N5).arg(N6).arg(totalSize());
                 exit(-1);
             }
-            if (value != 0.0)
+            // initialize memory only if not zero (already initialized by allocateZeros)
+            // and not NaN (indicating we don't care about the contents)
+            if (!std::isnan(value) && value != 0.0)
                 std::fill(data(), data() + totalSize(), value);
         }
         return true;

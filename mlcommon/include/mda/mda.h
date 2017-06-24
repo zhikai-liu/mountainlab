@@ -34,6 +34,7 @@ public:
     virtual ~Mda();
     ///Allocate an array of size N1xN2x...xN6
     bool allocate(bigint N1, bigint N2, bigint N3 = 1, bigint N4 = 1, bigint N5 = 1, bigint N6 = 1);
+    bool allocateNoInitialize(bigint N1, bigint N2, bigint N3 = 1, bigint N4 = 1, bigint N5 = 1, bigint N6 = 1);
     bool allocateFill(double value, bigint N1, bigint N2, bigint N3 = 1, bigint N4 = 1, bigint N5 = 1, bigint N6 = 1);
     ///Create an array with content read from the .mda file specified by path
     bool read(const QString& path);

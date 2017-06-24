@@ -64,6 +64,11 @@ bool Mda::allocate(bigint N1, bigint N2, bigint N3, bigint N4, bigint N5, bigint
     return d->allocate(0, N1, N2, N3, N4, N5, N6);
 }
 
+bool Mda::allocateNoInitialize(bigint N1, bigint N2, bigint N3, bigint N4, bigint N5, bigint N6)
+{
+    return d->allocate(std::nan(""), N1, N2, N3, N4, N5, N6);
+}
+
 bool Mda::allocateFill(double value, bigint N1, bigint N2, bigint N3, bigint N4, bigint N5, bigint N6)
 {
     return d->allocate(value, N1, N2, N3, N4, N5, N6);

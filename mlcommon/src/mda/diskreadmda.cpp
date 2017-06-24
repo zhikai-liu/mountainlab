@@ -556,10 +556,13 @@ bool DiskReadMda::readChunk(Mda& X, bigint i, bigint size) const
     }
     if (!d->open_file_if_needed())
         return false;
-    X.allocate(size, 1);
     bigint jA = qMax(i, (bigint)0);
     bigint jB = qMin(i + size - 1, d->total_size() - 1);
     bigint size_to_read = jB - jA + 1;
+    if (jA-i == 0 && size_to_read == size)
+        X.allocateNoInitialize(size, 1);
+    else
+        X.allocate(size, 1);
     if (size_to_read > 0) {
         fseeko(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (jA), SEEK_SET);
         bigint bytes_read = mda_read_float64(&X.dataPtr()[jA - i], &d->m_header, size_to_read, d->m_file);
@@ -591,10 +594,13 @@ bool DiskReadMda::readChunk(Mda& X, bigint i1, bigint i2, bigint size1, bigint s
         return false;
     if ((size1 == N1()) && (i1 == 0)) {
         //easy case
-        X.allocate(size1, size2);
         bigint jA = qMax(i2, (bigint)0);
         bigint jB = qMin(i2 + size2 - 1, N2() - 1);
         bigint size2_to_read = jB - jA + 1;
+        if ((jA-i2)*size1 == 0 && size2_to_read == size2)
+            X.allocateNoInitialize(size1, size2);
+        else
+            X.allocate(size1, size2);
         if (size2_to_read > 0) {
             fseeko(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (i1 + N1() * jA), SEEK_SET);
             bigint bytes_read = mda_read_float64(&X.dataPtr()[(jA - i2) * size1], &d->m_header, size1 * size2_to_read, d->m_file);
@@ -636,10 +642,13 @@ bool DiskReadMda::readChunk(Mda& X, bigint i1, bigint i2, bigint i3, bigint size
         return false;
     if ((size1 == N1()) && (size2 == N2())) {
         //easy case
-        X.allocate(size1, size2, size3);
         bigint jA = qMax(i3, (bigint)0);
         bigint jB = qMin(i3 + size3 - 1, N3() - 1);
         bigint size3_to_read = jB - jA + 1;
+        if (((jA-i3)*size1*size2) == 0 && size3_to_read == size3)
+            X.allocateNoInitialize(size1, size2, size3);
+        else
+            X.allocate(size1, size2, size3);
         if (size3_to_read > 0) {
             fseeko(d->m_file, d->m_header.header_size + d->m_header.num_bytes_per_entry * (i1 + N1() * i2 + N1() * N2() * jA), SEEK_SET);
             bigint bytes_read = mda_read_float64(&X.dataPtr()[(jA - i3) * size1 * size2], &d->m_header, size1 * size2 * size3_to_read, d->m_file);

@@ -46,6 +46,11 @@ bool Mda32::allocate(bigint N1, bigint N2, bigint N3, bigint N4, bigint N5, bigi
     return d->allocate((float)0, N1, N2, N3, N4, N5, N6);
 }
 
+bool Mda32::allocateNoInitialize(bigint N1, bigint N2, bigint N3, bigint N4, bigint N5, bigint N6)
+{
+    return d->allocate(std::nanf(""), N1, N2, N3, N4, N5, N6);
+}
+
 bool Mda32::read(const QString& path)
 {
     return read(path.toLatin1().data());
