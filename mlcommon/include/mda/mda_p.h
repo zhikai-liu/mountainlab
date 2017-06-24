@@ -57,15 +57,15 @@ public:
             setTotalSize(0);
 
         if (totalSize() > 0) {
-            allocate(totalSize());
+            if (value == 0)
+                allocateZeros(totalSize());
+            else
+                allocate(totalSize());
             if (!constData()) {
                 qCritical() << QString("Unable to allocate Mda of size %1x%2x%3x%4x%5x%6 (total=%7)").arg(N1).arg(N2).arg(N3).arg(N4).arg(N5).arg(N6).arg(totalSize());
                 exit(-1);
             }
-            if (value == 0.0) {
-                std::memset(data(), 0, totalSize() * sizeof(value_type));
-            }
-            else
+            if (value != 0.0)
                 std::fill(data(), data() + totalSize(), value);
         }
         return true;
@@ -83,6 +83,14 @@ public:
             return;
         incrementBytesAllocatedCounter(totalSize() * sizeof(value_type));
     }
+    // allocate and zero-fill array using calloc (faster than malloc+memset)
+    void allocateZeros(bigint size) {
+        m_data = (value_type*)calloc(size, sizeof(value_type));
+        if (!m_data)
+            return;
+        incrementBytesAllocatedCounter(totalSize() * sizeof(value_type));
+    }
+
     void deallocate()
     {
         if (!m_data)
