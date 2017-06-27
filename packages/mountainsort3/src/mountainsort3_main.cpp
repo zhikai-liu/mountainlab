@@ -77,7 +77,8 @@ int main(int argc, char* argv[])
         opts.detect_sign=CLP.named_parameters.value("detect_sign").toInt();
         opts.merge_across_channels=(CLP.named_parameters.value("merge_across_channels").toString()=="true");
         opts.fit_stage=(CLP.named_parameters.value("fit_stage").toString()=="true");
-        ret=p_multineighborhood_sort(timeseries,geom,firings_out,opts);
+        QString temp_path=CLP.named_parameters.value("_tempdir").toString();
+        ret=p_multineighborhood_sort(timeseries,geom,firings_out,temp_path,opts);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

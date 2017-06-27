@@ -24,7 +24,7 @@ struct P_multineighborhood_sort_opts {
     bool fit_stage=true;
 };
 
-bool p_multineighborhood_sort(QString timeseries,QString geom,QString firings_out,const P_multineighborhood_sort_opts &opts);
+bool p_multineighborhood_sort(QString timeseries,QString geom,QString firings_out,QString temp_path,const P_multineighborhood_sort_opts &opts);
 
 #endif // P_MULTINEIGHBORHOOD_SORT_H
 
