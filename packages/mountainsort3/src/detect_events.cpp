@@ -92,10 +92,6 @@ QVector<double> detect_events(const QVector<double>& X, double detect_threshold,
                 }
             }
         }
-//        if (last_best_ind>=0)
-//            qDebug() << "Last best ind:" << last_best_ind << timepoints_to_consider[last_best_ind] << vals_to_consider[last_best_ind] << "ind" << i << timepoints_to_consider[i] << vals_to_consider[i];
-//        else
-//            qDebug() << "Last best ind:" << last_best_ind << "ind" << i << timepoints_to_consider[i] << vals_to_consider[i] << detect_interval << "++";
         if (last_best_ind>=0) {
             if (vals_to_consider[i]>vals_to_consider[last_best_ind]) {
                 to_use[i]=true;
@@ -115,7 +111,6 @@ QVector<double> detect_events(const QVector<double>& X, double detect_threshold,
     QVector<double> times;
     for (bigint i=0; i<timepoints_to_consider.count(); i++) {
         if (to_use[i]) {
-            //qDebug() << timepoints_to_consider[i];
             times << timepoints_to_consider[i];
         }
     }
