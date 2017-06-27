@@ -45,33 +45,11 @@ struct TimeChunkInfo {
     bigint size; //number of timepoints (excluding padding on left and right)
 };
 
-bool p_multineighborhood_sort(QString timeseries,QString geom,QString firings_out,QString temp_path,const P_multineighborhood_sort_opts &opts) {
-    if (temp_path.isEmpty()) {
-        qWarning() << "temporary path is empty.";
-        return false;
-    }
-
-    //important so we can parallelize in both time and space
-    omp_set_nested(1);
+void STEP_detect_events(const DiskReadMda32 &X,const QMap<int,NeighborhoodData*> &neighborhoods,P_multineighborhood_sort_opts opts) {
     int progress_msec=2000;
 
-    // The timeseries array (preprocessed - M x N)
-    DiskReadMda32 X(timeseries);
-    int M=X.N1(); // # channels
-    bigint N=X.N2(); // # timepoints
-
-    // The geometry file (dxM - where d is usually 2)
-    Mda Geom(geom);
-
-    // Allocate the neighborhood objects
-    QMap<int,NeighborhoodData*> neighborhoods;
-    for (int m=1; m<=M; m++) {
-        NeighborhoodData *nbhd=new NeighborhoodData;
-        nbhd->channels=get_channels_from_geom(Geom,m,opts.adjacency_radius);
-        neighborhoods[m]=nbhd;
-    }
-
-    int num_neighborhood_threads=qMin(M,omp_get_max_threads());
+    bigint M=X.N1();
+    bigint N=X.N2();
 
     bigint RAM_available_for_chunks_bytes=1e9;
     int num_time_threads=omp_get_max_threads();
@@ -156,6 +134,31 @@ bool p_multineighborhood_sort(QString timeseries,QString geom,QString firings_ou
         }
         qDebug().noquote() << "Elapsed (detect): " << timer.elapsed()*1.0/1000;
     }
+}
+
+void STEP_extract_clips(const DiskReadMda32 &X,const QMap<int,NeighborhoodData*> &neighborhoods,P_multineighborhood_sort_opts opts,QString temp_path) {
+    int progress_msec=2000;
+
+    bigint M=X.N1();
+    bigint N=X.N2();
+
+    bigint RAM_available_for_chunks_bytes=1e9;
+    int num_time_threads=omp_get_max_threads();
+    bigint chunk_size=RAM_available_for_chunks_bytes/(M*num_time_threads*4);
+    if (chunk_size<1000) chunk_size=1000;
+    if (chunk_size>N) chunk_size=N;
+    bigint chunk_overlap_size=1000;
+
+    // Prepare the information on the time chunks
+    QList<TimeChunkInfo> time_chunk_infos;
+    for (bigint t=0; t<N; t+=chunk_size) {
+        TimeChunkInfo info;
+        info.t1=t;
+        info.t_padding=chunk_overlap_size;
+        info.size=chunk_size;
+        if (t+info.size>N) info.size=N-t;
+        time_chunk_infos << info;
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// EXTRACT CLIPS
@@ -193,7 +196,7 @@ bool p_multineighborhood_sort(QString timeseries,QString geom,QString firings_ou
                 double elapsed_sec=timerA.elapsed()*1.0/1000;
                 qDebug().noquote() << QString("Elapsed for reading: %1 (%2 MB/sec)").arg(timerA.restart()).arg(num_bytes_read/1e6/(elapsed_sec));
             }
-#pragma omp parallel for
+    #pragma omp parallel for
             for (int j=0; j<infos.count(); j++) {
                 TimeChunkInfo TCI=infos[j];
                 Mda32 time_chunk=time_chunks[j];
@@ -210,7 +213,7 @@ bool p_multineighborhood_sort(QString timeseries,QString geom,QString firings_ou
                     }
                     Mda32 clips0;
                     extract_clips(clips0,neighborhood_time_chunk,times0,opts.clip_size);
-#pragma omp critical(set_extracted_clips)
+    #pragma omp critical(set_extracted_clips)
                     {
                         for (bigint a=0; a<times_inds.count(); a++) {
                             Mda32 clip0;
@@ -237,6 +240,56 @@ bool p_multineighborhood_sort(QString timeseries,QString geom,QString firings_ou
 
         qDebug().noquote() << "Elapsed (extract clips): " << timer.elapsed()*1.0/1000;
     }
+}
+
+bool p_multineighborhood_sort(QString timeseries,QString geom,QString firings_out,QString temp_path,const P_multineighborhood_sort_opts &opts) {
+    if (temp_path.isEmpty()) {
+        qWarning() << "temporary path is empty.";
+        return false;
+    }
+
+    //important so we can parallelize in both time and space
+    omp_set_nested(1);
+    int progress_msec=2000;
+
+    // The timeseries array (preprocessed - M x N)
+    DiskReadMda32 X(timeseries);
+    int M=X.N1(); // # channels
+    bigint N=X.N2(); // # timepoints
+
+    // The geometry file (dxM - where d is usually 2)
+    Mda Geom(geom);
+
+    // Allocate the neighborhood objects
+    QMap<int,NeighborhoodData*> neighborhoods;
+    for (int m=1; m<=M; m++) {
+        NeighborhoodData *nbhd=new NeighborhoodData;
+        nbhd->channels=get_channels_from_geom(Geom,m,opts.adjacency_radius);
+        neighborhoods[m]=nbhd;
+    }
+
+    int num_neighborhood_threads=qMin(M,omp_get_max_threads());
+
+    bigint RAM_available_for_chunks_bytes=1e9;
+    int num_time_threads=omp_get_max_threads();
+    bigint chunk_size=RAM_available_for_chunks_bytes/(M*num_time_threads*4);
+    if (chunk_size<1000) chunk_size=1000;
+    if (chunk_size>N) chunk_size=N;
+    bigint chunk_overlap_size=1000;
+
+    // Prepare the information on the time chunks
+    QList<TimeChunkInfo> time_chunk_infos;
+    for (bigint t=0; t<N; t+=chunk_size) {
+        TimeChunkInfo info;
+        info.t1=t;
+        info.t_padding=chunk_overlap_size;
+        info.size=chunk_size;
+        if (t+info.size>N) info.size=N-t;
+        time_chunk_infos << info;
+    }
+
+    STEP_detect_events(X,neighborhoods,opts);
+    STEP_extract_clips(X,neighborhoods,opts,temp_path);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// REDUCE CLIPS
