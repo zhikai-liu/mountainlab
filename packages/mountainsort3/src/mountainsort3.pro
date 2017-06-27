@@ -34,7 +34,8 @@ SOURCES += \
     consolidate_clusters.cpp \
     merge_across_channels.cpp \
     fit_stage.cpp \
-    reorder_labels.cpp
+    reorder_labels.cpp \
+    p_mountainsort3.cpp
 
 HEADERS += \
     mountainsort3_main.h \
@@ -45,7 +46,8 @@ HEADERS += \
     consolidate_clusters.h \
     merge_across_channels.h \
     fit_stage.h \
-    reorder_labels.h
+    reorder_labels.h \
+    p_mountainsort3.h
 
 INCLUDEPATH += ../../../mountainsort/src/isosplit5
 VPATH += ../../../mountainsort/src/isosplit5
