@@ -62,8 +62,8 @@ QVector<int> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indice
         timer.start();
         if (!isosplit5(labels0.data(), opts.num_features, L0, FF.dataPtr(), i5_opts)) {
             qWarning() << "Isosplit5 returned with an error. Aborting";
-            clips.write32("/home/magland/tmp/debug_clips.mda");
-            FF.write32("/home/magland/tmp/debug_FF.mda");
+            //clips.write32("/home/magland/tmp/debug_clips.mda");
+            //FF.write32("/home/magland/tmp/debug_FF.mda");
             abort();
         }
         //qDebug().noquote() << QString("Time elapsed for isosplit (%1x%2) - K=%3: %4 sec").arg(FF.N1()).arg(FF.N2()).arg(MLCompute::max(labels0)).arg(timer.elapsed() * 1.0 / 1000);
