@@ -11,6 +11,7 @@
 #include <QCoreApplication>
 #include "mountainsort3_main.h"
 #include "p_multineighborhood_sort.h"
+#include "p_mountainsort3.h"
 #include "omp.h"
 
 QJsonObject get_spec()
@@ -19,6 +20,21 @@ QJsonObject get_spec()
 
     {
         ProcessorSpec X("mountainsort.multineighborhood_sort", "0.15j");
+        X.addInputs("timeseries","geom");
+        X.addOutputs("firings_out");
+        X.addOptionalParameter("adjacency_radius","",0);
+        X.addOptionalParameter("consolidate_clusters","","true");
+        X.addOptionalParameter("consolidation_factor","",0.9);
+        X.addOptionalParameter("clip_size","",50);
+        X.addOptionalParameter("detect_interval","",10);
+        X.addOptionalParameter("detect_threshold","",3);
+        X.addOptionalParameter("detect_sign","",0);
+        X.addOptionalParameter("merge_across_channels","","true");
+        X.addOptionalParameter("fit_stage","","true");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.mountainsort3", "0.1");
         X.addInputs("timeseries","geom");
         X.addOutputs("firings_out");
         X.addOptionalParameter("adjacency_radius","",0);
@@ -79,6 +95,23 @@ int main(int argc, char* argv[])
         opts.fit_stage=(CLP.named_parameters.value("fit_stage").toString()=="true");
         QString temp_path=CLP.named_parameters.value("_tempdir").toString();
         ret=p_multineighborhood_sort(timeseries,geom,firings_out,temp_path,opts);
+    }
+    if (arg1 == "mountainsort.mountainsort3") {
+        QString timeseries = CLP.named_parameters["timeseries"].toString();
+        QString geom = CLP.named_parameters["geom"].toString();
+        QString firings_out = CLP.named_parameters["firings_out"].toString();
+        P_mountainsort3_opts opts;
+        opts.adjacency_radius=CLP.named_parameters.value("adjacency_radius").toDouble();
+        opts.consolidate_clusters=(CLP.named_parameters.value("consolidate_clusters").toString()=="true");
+        opts.consolidation_factor=CLP.named_parameters.value("consolidation_factor").toDouble();
+        opts.clip_size=CLP.named_parameters.value("clip_size").toDouble();
+        opts.detect_interval=CLP.named_parameters.value("detect_interval").toDouble();
+        opts.detect_threshold=CLP.named_parameters.value("detect_threshold").toDouble();
+        opts.detect_sign=CLP.named_parameters.value("detect_sign").toInt();
+        opts.merge_across_channels=(CLP.named_parameters.value("merge_across_channels").toString()=="true");
+        opts.fit_stage=(CLP.named_parameters.value("fit_stage").toString()=="true");
+        QString temp_path=CLP.named_parameters.value("_tempdir").toString();
+        ret=p_mountainsort3(timeseries,geom,firings_out,temp_path,opts);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;
