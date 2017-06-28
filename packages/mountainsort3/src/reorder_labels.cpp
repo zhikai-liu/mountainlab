@@ -53,7 +53,8 @@ template_comparer_struct compute_comparer(const Mda32& template0, int index)
 }
 
 //returns a label map
-QMap<int, int> reorder_labels(const Mda32 &templates) {
+QMap<int, int> reorder_labels(const Mda32& templates)
+{
     QList<template_comparer_struct> list;
     for (int i = 0; i < templates.N3(); i++) {
         Mda32 template0;

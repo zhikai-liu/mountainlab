@@ -4,6 +4,6 @@
 #include <QMap>
 #include <mda32.h>
 
-QMap<int, int> reorder_labels(const Mda32 &templates);
+QMap<int, int> reorder_labels(const Mda32& templates);
 
 #endif // REORDER_LABELS_H

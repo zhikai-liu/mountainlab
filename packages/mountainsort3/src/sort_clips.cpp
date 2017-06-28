@@ -8,7 +8,7 @@ namespace P_sort_clips {
 QVector<int> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indices, Sort_clips_opts opts);
 }
 
-QVector<int> sort_clips(const Mda32 &clips,const Sort_clips_opts &opts)
+QVector<int> sort_clips(const Mda32& clips, const Sort_clips_opts& opts)
 {
     //bigint M = clips.N1();
     //bigint T = clips.N2();
@@ -136,4 +136,3 @@ Mda32 compute_templates(Mda32& clips, const QVector<int>& labels)
     return ret;
 }
 }
-

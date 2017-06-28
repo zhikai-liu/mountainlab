@@ -293,33 +293,36 @@ bool extract_time_chunk(QString input_fname, QString output_fname, const QMap<QS
     bigint t1 = params["t1"].toDouble(); //to double to handle scientific notation
     bigint t2 = params["t2"].toDouble();
     DiskWriteMda Y;
-    if (!Y.open(H.data_type,output_fname,X.N1(),t2-t1+1)) {
-        qWarning() << "Unable to open/allocate output array: "+output_fname;
+    if (!Y.open(H.data_type, output_fname, X.N1(), t2 - t1 + 1)) {
+        qWarning() << "Unable to open/allocate output array: " + output_fname;
         return false;
     }
 
-    bigint segment_size=1e4;
-    QTime progress_timer; progress_timer.start();
-    for (bigint t=t1; t<=t2; t+=segment_size) {
-        bigint s1=t;
-        bigint s2=t+segment_size-1;
-        if (s2>t2) s2=t2;
+    bigint segment_size = 1e4;
+    QTime progress_timer;
+    progress_timer.start();
+    for (bigint t = t1; t <= t2; t += segment_size) {
+        bigint s1 = t;
+        bigint s2 = t + segment_size - 1;
+        if (s2 > t2)
+            s2 = t2;
 
-        if (progress_timer.elapsed()>2000) {
-            qDebug().noquote() << QString("Extracting chunk %1 of %2").arg((t-t1)/segment_size+1).arg(((t2-t1+1)+segment_size-1)/segment_size);
+        if (progress_timer.elapsed() > 2000) {
+            qDebug().noquote() << QString("Extracting chunk %1 of %2").arg((t - t1) / segment_size + 1).arg(((t2 - t1 + 1) + segment_size - 1) / segment_size);
             qDebug().noquote() << QString("t1=%1, t2=%2, s1=%3, s2=%4, size(X)=(%5,%6), size(Y)=(%7,%8)").arg(t1).arg(t2).arg(s1).arg(s2).arg(X.N1()).arg(X.N2()).arg(Y.N1()).arg(Y.N2());
             progress_timer.restart();
         }
 
         Mda32 tmp;
-        if (!X.readChunk(tmp,0,s1,X.N1(),s2-s1+1)) {
+        if (!X.readChunk(tmp, 0, s1, X.N1(), s2 - s1 + 1)) {
             qWarning() << "Unexpected failure to readChunk in input array.";
             return false;
         }
-        if (!Y.writeChunk(tmp,0,s1-t1)) {
+        if (!Y.writeChunk(tmp, 0, s1 - t1)) {
             qWarning() << "Unexpected failure to writeChunk in output array";
-            qWarning() << QString("t1=%1, t2=%2, s1=%3, s2=%4, size(X)=(%5,%6), size(Y)=(%7,%8)").arg(t1).arg(t2).arg(s1).arg(s2).arg(X.N1()).arg(X.N2()).arg(Y.N1()).arg(Y.N2());;
-            qWarning() << QString("s1-t1=%1").arg(s1-t1);
+            qWarning() << QString("t1=%1, t2=%2, s1=%3, s2=%4, size(X)=(%5,%6), size(Y)=(%7,%8)").arg(t1).arg(t2).arg(s1).arg(s2).arg(X.N1()).arg(X.N2()).arg(Y.N1()).arg(Y.N2());
+            ;
+            qWarning() << QString("s1-t1=%1").arg(s1 - t1);
             return false;
         }
     }
@@ -328,7 +331,6 @@ bool extract_time_chunk(QString input_fname, QString output_fname, const QMap<QS
 
     return true;
 }
-
 
 bool extract_time_chunk_old(QString input_fname, QString output_fname, const QMap<QString, QVariant>& params)
 {

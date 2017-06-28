@@ -29,7 +29,8 @@ void dimension_reduce_clips(Mda32& ret, const Mda32& clips, bigint num_features_
             }
         }
         Mda32 CC, FF, sigma;
-        QTime timerA; timerA.start();
+        QTime timerA;
+        timerA.start();
         pca_subsampled(CC, FF, sigma, reshaped, num_features_per_channel, false, max_samples);
         float* FF_ptr = FF.dataPtr();
         aa = 0;
@@ -46,9 +47,10 @@ void dimension_reduce_clips(Mda32& ret, const Mda32& clips, bigint num_features_
     }
 }
 
-void dimension_reduce_clips(QString clips_path,QString reduced_clips_path, bigint num_features_per_channel, bigint max_samples) {
+void dimension_reduce_clips(QString clips_path, QString reduced_clips_path, bigint num_features_per_channel, bigint max_samples)
+{
     Mda32 clips(clips_path);
     Mda32 reduced_clips;
-    dimension_reduce_clips(reduced_clips,clips,num_features_per_channel,max_samples);
+    dimension_reduce_clips(reduced_clips, clips, num_features_per_channel, max_samples);
     reduced_clips.write32(reduced_clips_path);
 }
