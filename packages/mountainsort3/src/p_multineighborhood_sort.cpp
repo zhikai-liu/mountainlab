@@ -505,7 +505,6 @@ bool p_multineighborhood_sort(QString timeseries, QString geom, QString firings_
                     ii++;
                 }
                 Fit_stage_opts oo;
-                oo.clip_size = opts.clip_size;
                 QVector<bigint> local_inds_to_use = fit_stage(time_chunk, local_times, local_labels, templates, oo);
 #pragma omp critical(fit_stage_set_inds_to_use1)
                 {

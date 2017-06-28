@@ -63,17 +63,19 @@ void GlobalTemplateComputer::addTimeChunk(const Mda32& X, bigint padding_left, b
         QVector<int> local_labels;
         Mda local_sums(M, T, K);
         QVector<bigint> local_counts(K, 0);
+        bigint local_N;
 #pragma omp critical
         {
             for (bigint a = omp_get_thread_num(); a < d->m_times.count(); a += omp_get_num_threads()) {
                 local_times << d->m_times[a];
                 local_labels << d->m_labels[a];
             }
+            local_N=d->m_N;
         }
 #pragma omp for
         for (bigint i = 0; i < local_times.count(); i++) {
             double t0 = local_times[i];
-            double t1 = t0 + 1;
+            double t1 = t0-local_N+padding_left;
             if ((padding_left <= t1) && (t1 < X.N2() - padding_left - padding_right)) {
                 int k0 = local_labels[i];
                 if (k0 > 0) {

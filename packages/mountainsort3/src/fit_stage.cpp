@@ -5,7 +5,7 @@ typedef QList<bigint> BigintList;
 QList<bigint> get_time_channel_mask(const Mda32& template0, double thresh);
 bool is_dirty(float* dirty_ptr, const QList<bigint>& tchmask);
 double compute_score(bigint M, bigint T, float* X_ptr, float* template0, const QList<bigint>& tchmask);
-QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<double>& scores, const Fit_stage_opts& opts);
+QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<double>& scores, const Fit_stage_opts& opts,int clip_size);
 void subtract_scaled_template(bigint N, double* X, double* template0, double scale_min, double scale_max);
 void subtract_scaled_template(bigint M, bigint T, float* X_ptr, float* dirty_ptr, float* template0, const QList<bigint>& tchmask, double scale_min, double scale_max);
 
@@ -108,7 +108,7 @@ QVector<bigint> fit_stage(Mda32& X, const QVector<double>& times, const QVector<
             }
         }
         //Look at those events to try and see if we should use them
-        QVector<bigint> to_use = find_events_to_use(times_to_try, scores_to_try, opts);
+        QVector<bigint> to_use = find_events_to_use(times_to_try, scores_to_try, opts, templates.N2());
 
         //at this point, nothing is dirty
         for (bigint i = 0; i < dirty.totalSize(); i++) {
@@ -187,7 +187,7 @@ double compute_score(bigint M, bigint T, float* X_ptr, float* template0, const Q
     return before_sumsqr - after_sumsqr;
 }
 
-QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<double>& scores, const Fit_stage_opts& opts)
+QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<double>& scores, const Fit_stage_opts& opts, int clip_size)
 {
     QVector<bigint> to_use;
     bigint L = times.count();
@@ -200,7 +200,7 @@ QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<d
                 // but let's check nearby events that may have a larger score
 
                 bigint j = i;
-                while ((j >= 0) && (times[j] >= times[i] - opts.clip_size)) {
+                while ((j >= 0) && (times[j] >= times[i] - clip_size)) {
                     if ((i != j) && (scores[j] >= scores[i])) {
                         to_use[i] = 0; //actually not using it because there is something bigger to the left
                     }
@@ -209,7 +209,7 @@ QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<d
             }
             {
                 bigint j = i;
-                while ((j < times.count()) && (times[j] <= times[i] + opts.clip_size)) {
+                while ((j < times.count()) && (times[j] <= times[i] + clip_size)) {
                     if (scores[j] > scores[i]) {
                         to_use[i] = 0; //actually not using it because there is something bigger to the right
                     }
