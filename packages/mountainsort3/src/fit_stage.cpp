@@ -9,14 +9,15 @@ QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<d
 void subtract_scaled_template(bigint N, double* X, double* template0, double scale_min, double scale_max);
 void subtract_scaled_template(bigint M, bigint T, float* X_ptr, float* dirty_ptr, float* template0, const QList<bigint>& tchmask, double scale_min, double scale_max);
 
-QVector<bigint> fit_stage(Mda32 &X,const QVector<double> &times,const QVector<int> &labels,Mda32 &templates,Fit_stage_opts opts) {
-    int M=X.N1();
+QVector<bigint> fit_stage(Mda32& X, const QVector<double>& times, const QVector<int>& labels, Mda32& templates, Fit_stage_opts opts)
+{
+    int M = X.N1();
     //bigint N=X.N2();
-    int T=templates.N2();
-    int K=templates.N3();
-    bigint L=times.count();
+    int T = templates.N2();
+    int K = templates.N3();
+    bigint L = times.count();
 
-    QVector<bool> ret(L,false);
+    QVector<bool> ret(L, false);
 
     QList<BigintList> time_channel_mask;
     QList<int> mask_sizes_for_display;
@@ -25,7 +26,6 @@ QVector<bigint> fit_stage(Mda32 &X,const QVector<double> &times,const QVector<in
         templates.getChunk(template0, 0, 0, i, M, T, 1);
         time_channel_mask << get_time_channel_mask(template0, opts.time_channel_mask_thresh); //use only the channels with highest maxval
         mask_sizes_for_display << time_channel_mask[i].count();
-
     }
     //qDebug().noquote() << QString("Mask sizes:") << mask_sizes_for_display;
 

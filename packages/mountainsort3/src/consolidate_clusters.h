@@ -8,8 +8,7 @@ struct Consolidate_clusters_opts {
     double consolidation_factor = 0.9;
 };
 
-void consolidate_clusters(QVector<bigint> &event_inds,QVector<double> &timepoints,QVector<int> &labels,const Mda32 &templates,Consolidate_clusters_opts opts);
-QMap<int,int> consolidate_clusters(const Mda32 &templates,Consolidate_clusters_opts opts);
+void consolidate_clusters(QVector<bigint>& event_inds, QVector<double>& timepoints, QVector<int>& labels, const Mda32& templates, Consolidate_clusters_opts opts);
+QMap<int, int> consolidate_clusters(const Mda32& templates, Consolidate_clusters_opts opts);
 
 #endif // CONSOLIDATE_CLUSTERS_H
-

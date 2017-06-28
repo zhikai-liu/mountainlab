@@ -13,7 +13,7 @@ public:
 
     void setNumThreads(int num_threads);
     void setOptions(P_mountainsort3_opts opts);
-    void addTimeChunk(const Mda32 &X,bigint padding_left,bigint padding_right);
+    void addTimeChunk(const Mda32& X, bigint padding_left, bigint padding_right);
     void sort();
     QVector<double> times() const;
     QVector<int> labels() const;
@@ -21,8 +21,7 @@ public:
     bigint numTimepoints();
 
 private:
-    NeighborhoodSorterPrivate *d;
+    NeighborhoodSorterPrivate* d;
 };
 
 #endif // NEIGHBORHOODSORTER_H
-

@@ -2,17 +2,18 @@
 
 bool should_use_template(const Mda32& template0, Consolidate_clusters_opts opts);
 
-void consolidate_clusters(QVector<bigint> &event_inds,QVector<double> &timepoints,QVector<int> &labels,const Mda32 &templates,Consolidate_clusters_opts opts) {
+void consolidate_clusters(QVector<bigint>& event_inds, QVector<double>& timepoints, QVector<int>& labels, const Mda32& templates, Consolidate_clusters_opts opts)
+{
     bigint L = labels.count();
-    int M=templates.N1();
-    int T=templates.N2();
+    int M = templates.N1();
+    int T = templates.N2();
     int K = MLCompute::max(labels);
 
-    QVector<int> to_use(K + 1,0);
+    QVector<int> to_use(K + 1, 0);
 
     for (int k = 1; k <= K; k++) {
         Mda32 template0;
-        templates.getChunk(template0, 0, 0, k - 1, M,T, 1);
+        templates.getChunk(template0, 0, 0, k - 1, M, T, 1);
         if (should_use_template(template0, opts)) {
             to_use[k] = 1;
         }
@@ -36,19 +37,19 @@ void consolidate_clusters(QVector<bigint> &event_inds,QVector<double> &timepoint
     QVector<double> new_timepoints;
     for (int i = 0; i < L; i++) {
         int k0 = label_map.value(labels[i]);
-        if (k0>0) {
+        if (k0 > 0) {
             event_inds << i;
             new_timepoints << timepoints[i];
             new_labels << k0;
         }
     }
-    timepoints=new_timepoints;
-    labels=new_labels;
+    timepoints = new_timepoints;
+    labels = new_labels;
 }
 
 bool should_use_template(const Mda32& template0, Consolidate_clusters_opts opts)
 {
-    int central_channel=0;
+    int central_channel = 0;
 
     int peak_location_tolerance = 10;
 
@@ -89,16 +90,16 @@ bool should_use_template(const Mda32& template0, Consolidate_clusters_opts opts)
     return true;
 }
 
-QMap<int, int> consolidate_clusters(const Mda32 &templates, Consolidate_clusters_opts opts)
+QMap<int, int> consolidate_clusters(const Mda32& templates, Consolidate_clusters_opts opts)
 {
-    int M=templates.N1();
-    int T=templates.N2();
-    int K=templates.N3();
-    QVector<int> to_use(K + 1,0);
+    int M = templates.N1();
+    int T = templates.N2();
+    int K = templates.N3();
+    QVector<int> to_use(K + 1, 0);
 
     for (int k = 1; k <= K; k++) {
         Mda32 template0;
-        templates.getChunk(template0, 0, 0, k - 1, M,T, 1);
+        templates.getChunk(template0, 0, 0, k - 1, M, T, 1);
         if (should_use_template(template0, opts)) {
             to_use[k] = 1;
         }

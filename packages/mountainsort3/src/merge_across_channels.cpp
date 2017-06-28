@@ -1,13 +1,14 @@
 #include "merge_across_channels.h"
 #include "get_sort_indices.h"
 
-QList<QVector<bigint>> find_label_inds(const QVector<int>& labels, int K);
+QList<QVector<bigint> > find_label_inds(const QVector<int>& labels, int K);
 bool peaks_are_within_range_to_consider(double p1, double p2, Merge_across_channels_opts opts);
 bool peaks_are_within_range_to_consider(double p11, double p12, double p21, double p22, Merge_across_channels_opts opts);
 QList<int> reverse_order(const QList<int>& inds);
 bool cluster_is_already_being_used(const QVector<double>& times_in, const QVector<double>& other_times_in, Merge_across_channels_opts opts);
 
-void merge_across_channels(QVector<double> &times,QVector<int> &labels,QVector<int> &central_channels,const Mda32 &templates, Merge_across_channels_opts opts) {
+void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector<int>& central_channels, const Mda32& templates, Merge_across_channels_opts opts)
+{
     //Important: We assume the times are already sorted!!
 
     int M = templates.N1();
@@ -32,11 +33,11 @@ void merge_across_channels(QVector<double> &times,QVector<int> &labels,QVector<i
     //printf("Find candidate pairs to consider...\n");
     //find the candidate pairs for merging
     Mda32 candidate_pairs(K, K);
-    QList<QVector<bigint> > all_label_inds = find_label_inds(labels,K);
+    QList<QVector<bigint> > all_label_inds = find_label_inds(labels, K);
 
     QVector<int> central_channels_for_clusters;
-    for (int k=1; k<=K; k++) {
-        QVector<bigint>* inds1 = &all_label_inds[k-1];
+    for (int k = 1; k <= K; k++) {
+        QVector<bigint>* inds1 = &all_label_inds[k - 1];
         if (!inds1->isEmpty()) {
             int chan = central_channels[(*inds1)[0]]; //the peak channel should be the same for all events with this labels, so we just need to look at the first one
             central_channels_for_clusters << chan;
@@ -92,7 +93,7 @@ void merge_across_channels(QVector<double> &times,QVector<int> &labels,QVector<i
 #pragma omp critical(merge_across_channels1)
         {
             ik = inds1[ii];
-            QVector<bigint> *inds_k = &all_label_inds[ik];
+            QVector<bigint>* inds_k = &all_label_inds[ik];
 
             for (int a = 0; a < inds_k->count(); a++) {
                 times_k << times[(*inds_k)[a]];
@@ -102,7 +103,7 @@ void merge_across_channels(QVector<double> &times,QVector<int> &labels,QVector<i
                 if (candidate_pairs.value(ik, ik2)) {
                     //printf("Merge candidate pair: %d,%d\n", ik + 1, ik2 + 1);
                     if (clusters_to_use[ik2]) { //we are already using the other one
-                        QVector<bigint> *inds_k2 = &all_label_inds[ik2];
+                        QVector<bigint>* inds_k2 = &all_label_inds[ik2];
                         for (int a = 0; a < inds_k2->count(); a++) {
                             other_times << times[(*inds_k2)[a]];
                         }
@@ -143,27 +144,28 @@ void merge_across_channels(QVector<double> &times,QVector<int> &labels,QVector<i
     QVector<double> times2(inds_to_use.count());
     QVector<int> labels2(inds_to_use.count());
     QVector<int> central_channels2(inds_to_use.count());
-    for (bigint i=0; i<inds_to_use.count(); i++) {
-        times2[i]=times[inds_to_use[i]];
-        labels2[i]=labels[inds_to_use[i]];
-        central_channels2[i]=central_channels[inds_to_use[i]];
+    for (bigint i = 0; i < inds_to_use.count(); i++) {
+        times2[i] = times[inds_to_use[i]];
+        labels2[i] = labels[inds_to_use[i]];
+        central_channels2[i] = central_channels[inds_to_use[i]];
     }
 
     qDebug().noquote() << QString("Using %1 of %2 events after %3 redundant clusters removed").arg(times2.count()).arg(times.count()).arg(num_removed);
-    times=times2;
-    labels=labels2;
-    central_channels=central_channels2;
+    times = times2;
+    labels = labels2;
+    central_channels = central_channels2;
 }
 
-QList<QVector<bigint>> find_label_inds(const QVector<int>& labels, int K) {
-    QList<QVector<bigint>> ret;
-    for (int k=0; k<K; k++) {
+QList<QVector<bigint> > find_label_inds(const QVector<int>& labels, int K)
+{
+    QList<QVector<bigint> > ret;
+    for (int k = 0; k < K; k++) {
         ret << QVector<bigint>();
     }
     for (bigint i = 0; i < labels.count(); i++) {
-        int k0=labels[i];
-        if (k0>0) {
-            ret[k0-1] << i;
+        int k0 = labels[i];
+        if (k0 > 0) {
+            ret[k0 - 1] << i;
         }
     }
     return ret;

@@ -9,6 +9,6 @@ struct Merge_across_channels_opts {
     double event_fraction_threshold = 0.3; //reduced on 5/26/17 0.5->0.3
 };
 
-void merge_across_channels(QVector<double> &times,QVector<int> &labels,QVector<int> &central_channels,const Mda32 &templates, Merge_across_channels_opts opts);
+void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector<int>& central_channels, const Mda32& templates, Merge_across_channels_opts opts);
 
 #endif // MERGE_ACROSS_CHANNELS_H
