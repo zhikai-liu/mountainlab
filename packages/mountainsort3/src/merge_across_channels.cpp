@@ -7,7 +7,7 @@ bool peaks_are_within_range_to_consider(double p11, double p12, double p21, doub
 QList<int> reverse_order(const QList<int>& inds);
 bool cluster_is_already_being_used(const QVector<double>& times_in, const QVector<double>& other_times_in, Merge_across_channels_opts opts);
 
-void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector<int>& central_channels, const Mda32& templates, Merge_across_channels_opts opts)
+void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector<int>& central_channels, Mda32& templates, Merge_across_channels_opts opts)
 {
     //Important: We assume the times are already sorted!!
 
@@ -128,6 +128,16 @@ void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector
         }
     }
 
+    QMap<int,int> label_map;
+    int k2=1;
+    for (int k=1; k<=K; k++) {
+        if (clusters_to_use[k-1]) {
+            label_map[k]=k2;
+            k2++;
+        }
+        else label_map[k]=0;
+    }
+
     //printf("Eliminating clusters not to use...\n");
 
     //now we eliminate the clusters not to use
@@ -146,14 +156,30 @@ void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector
     QVector<int> central_channels2(inds_to_use.count());
     for (bigint i = 0; i < inds_to_use.count(); i++) {
         times2[i] = times[inds_to_use[i]];
-        labels2[i] = labels[inds_to_use[i]];
+        int kk=labels[inds_to_use[i]];
+        if (kk>0) kk=label_map[kk];
+        labels2[i] = kk;
         central_channels2[i] = central_channels[inds_to_use[i]];
+    }
+    int K2=MLCompute::max(labels2);
+    Mda32 templates2(M,T,K2);
+    for (int k2=1; k2<=K2; k2++) {
+        int k1=0;
+        for (int a=1; a<=K; a++) {
+            if (label_map[a]==k2) k1=a;
+        }
+        if (k1>0) {
+            Mda32 tmp;
+            templates.getChunk(tmp,0,0,k1-1,M,T,1);
+            templates2.setChunk(tmp,0,0,k2-1);
+        }
     }
 
     qDebug().noquote() << QString("Using %1 of %2 events after %3 redundant clusters removed").arg(times2.count()).arg(times.count()).arg(num_removed);
     times = times2;
     labels = labels2;
     central_channels = central_channels2;
+    templates=templates2;
 }
 
 QList<QVector<bigint> > find_label_inds(const QVector<int>& labels, int K)

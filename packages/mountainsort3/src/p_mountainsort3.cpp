@@ -1,3 +1,4 @@
+#include "fitstagecomputer.h"
 #include "p_mountainsort3.h"
 
 #include <QTime>
@@ -36,6 +37,8 @@ QList<QList<int> > get_neighborhood_batches(int M, int batch_size)
 
 QVector<double> reorder(const QVector<double>& X, const QList<bigint>& inds);
 QVector<int> reorder(const QVector<int>& X, const QList<bigint>& inds);
+QVector<double> get_subarray(const QVector<double>& X, const QVector<bigint>& inds);
+QVector<int> get_subarray(const QVector<int>& X, const QVector<bigint>& inds);
 
 struct ProgressReporter {
     void startProcessingStep(QString name)
@@ -112,6 +115,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
         neighborhood_channels[m] = get_channels_from_geom(geom, m, opts.adjacency_radius);
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
     // Read data and add to neighborhood sorters
     PR.startProcessingStep("Read data and add to neighborhood sorters");
     for (bigint i = 0; i < time_chunk_infos.count(); i++) {
@@ -142,6 +146,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
     }
     PR.endProcessingStep();
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
     // Sort in each neighborhood sorter
     PR.startProcessingStep("Sort in each neighborhood");
     for (int j = 0; j < neighborhood_batches.count(); j++) {
@@ -164,6 +169,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
     }
     PR.endProcessingStep();
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
     // Collect the events and sort them by time
     PR.startProcessingStep("Collect events and sort them by time");
     QVector<double> times;
@@ -186,6 +192,83 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
     central_channels = reorder(central_channels, sort_inds);
     PR.endProcessingStep();
 
+    qDeleteAll(neighborhood_sorters);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compute global templates
+    PR.startProcessingStep("Compute global templates");
+    Mda32 templates;
+    {
+        GlobalTemplateComputer GTC;
+        GTC.setNumThreads(tot_threads);
+        GTC.setClipSize(opts.clip_size);
+        GTC.setTimesLabels(times, labels);
+        for (bigint i = 0; i < time_chunk_infos.count(); i++) {
+            TimeChunkInfo TCI = time_chunk_infos[i];
+            Mda32 time_chunk;
+            X.readChunk(time_chunk, 0, TCI.t1 - TCI.t_padding, M, TCI.size + 2 * TCI.t_padding);
+            PR.addBytesRead(time_chunk.totalSize() * sizeof(float));
+            GTC.addTimeChunk(time_chunk, TCI.t_padding, TCI.t_padding);
+            PR.addBytesProcessed(time_chunk.totalSize() * sizeof(float));
+        }
+        templates = GTC.templates();
+    }
+    PR.endProcessingStep();
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Merge across channels
+    PR.startProcessingStep("Merge across channels");
+    {
+        Merge_across_channels_opts oo;
+        oo.clip_size = opts.clip_size;
+        merge_across_channels(times, labels, central_channels, templates, oo);
+    }
+    PR.endProcessingStep();
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compute global templates
+    PR.startProcessingStep("Compute global templates");
+    {
+        GlobalTemplateComputer GTC;
+        GTC.setNumThreads(tot_threads);
+        GTC.setClipSize(opts.clip_size);
+        GTC.setTimesLabels(times, labels);
+        for (bigint i = 0; i < time_chunk_infos.count(); i++) {
+            TimeChunkInfo TCI = time_chunk_infos[i];
+            Mda32 time_chunk;
+            X.readChunk(time_chunk, 0, TCI.t1 - TCI.t_padding, M, TCI.size + 2 * TCI.t_padding);
+            PR.addBytesRead(time_chunk.totalSize() * sizeof(float));
+            GTC.addTimeChunk(time_chunk, TCI.t_padding, TCI.t_padding);
+            PR.addBytesProcessed(time_chunk.totalSize() * sizeof(float));
+        }
+        templates = GTC.templates();
+    }
+    PR.endProcessingStep();
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Fit stage
+    PR.startProcessingStep("Fit stage");
+    FitStageComputer FSC;
+    FSC.setTemplates(templates);
+    FSC.setTimesLabels(times, labels);
+    for (bigint i = 0; i < time_chunk_infos.count(); i++) {
+        TimeChunkInfo TCI = time_chunk_infos[i];
+        Mda32 time_chunk;
+        X.readChunk(time_chunk, 0, TCI.t1 - TCI.t_padding, M, TCI.size + 2 * TCI.t_padding);
+        PR.addBytesRead(time_chunk.totalSize() * sizeof(float));
+        FSC.processTimeChunk(TCI.t1,time_chunk, TCI.t_padding, TCI.t_padding);
+        PR.addBytesProcessed(time_chunk.totalSize() * sizeof(float));
+    }
+    FSC.finalize();
+    QVector<bigint> event_inds_to_use=FSC.eventIndicesToUse();
+    qDebug().noquote() << QString("Using %1 of %2 events (%3%) after fit stage").arg(event_inds_to_use.count()).arg(times.count()).arg(event_inds_to_use.count()*1.0/times.count()*100);
+    times=get_subarray(times,event_inds_to_use);
+    labels=get_subarray(labels,event_inds_to_use);
+    central_channels=get_subarray(central_channels,event_inds_to_use);
+    PR.endProcessingStep();
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
     // Create and write firings output
     PR.startProcessingStep("Create and write firings output");
     {
@@ -198,34 +281,6 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
         }
 
         firings.write64(firings_out);
-    }
-    PR.endProcessingStep();
-
-    qDeleteAll(neighborhood_sorters);
-
-    // Compute global templates
-    PR.startProcessingStep("Compute global templates");
-    GlobalTemplateComputer GTC;
-    GTC.setNumThreads(tot_threads);
-    GTC.setClipSize(opts.clip_size);
-    GTC.setTimesLabels(times, labels);
-    for (bigint i = 0; i < time_chunk_infos.count(); i++) {
-        TimeChunkInfo TCI = time_chunk_infos[i];
-        Mda32 time_chunk;
-        X.readChunk(time_chunk, 0, TCI.t1 - TCI.t_padding, M, TCI.size + 2 * TCI.t_padding);
-        PR.addBytesRead(time_chunk.totalSize() * sizeof(float));
-        GTC.addTimeChunk(time_chunk, TCI.t_padding, TCI.t_padding);
-        PR.addBytesProcessed(time_chunk.totalSize() * sizeof(float));
-    }
-    PR.endProcessingStep();
-    Mda32 templates = GTC.templates();
-
-    // Merge across channels
-    PR.startProcessingStep("Merge across channels");
-    {
-        Merge_across_channels_opts oo;
-        oo.clip_size = opts.clip_size;
-        merge_across_channels(times, labels, central_channels, templates, oo);
     }
     PR.endProcessingStep();
 
@@ -307,4 +362,23 @@ QVector<int> reorder(const QVector<int>& X, const QList<bigint>& inds)
     }
     return ret;
 }
+
+QVector<double> get_subarray(const QVector<double>& X, const QVector<bigint>& inds)
+{
+    QVector<double> ret(inds.count());
+    for (bigint i = 0; i < inds.count(); i++) {
+        ret[i] = X[inds[i]];
+    }
+    return ret;
+}
+
+QVector<int> get_subarray(const QVector<int>& X, const QVector<bigint>& inds)
+{
+    QVector<int> ret(inds.count());
+    for (bigint i = 0; i < inds.count(); i++) {
+        ret[i] = X[inds[i]];
+    }
+    return ret;
+}
+
 }
