@@ -10,9 +10,9 @@ public:
     FitStageComputer();
     virtual ~FitStageComputer();
 
-    void setTemplates(const Mda32 &templates);
+    void setTemplates(const Mda32& templates);
     void setTimesLabels(const QVector<double>& times, const QVector<int>& labels);
-    void processTimeChunk(bigint t,const Mda32& X, bigint padding_left, bigint padding_right);
+    void processTimeChunk(bigint t, const Mda32& X, bigint padding_left, bigint padding_right);
 
     void finalize();
     QVector<bigint> eventIndicesToUse() const; //the output
@@ -22,4 +22,3 @@ private:
 };
 
 #endif // FitStageCOMPUTER_H
-

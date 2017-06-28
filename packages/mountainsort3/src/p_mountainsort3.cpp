@@ -215,7 +215,6 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
     }
     PR.endProcessingStep();
 
-
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
     // Merge across channels
     PR.startProcessingStep("Merge across channels");
@@ -257,15 +256,15 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
         Mda32 time_chunk;
         X.readChunk(time_chunk, 0, TCI.t1 - TCI.t_padding, M, TCI.size + 2 * TCI.t_padding);
         PR.addBytesRead(time_chunk.totalSize() * sizeof(float));
-        FSC.processTimeChunk(TCI.t1,time_chunk, TCI.t_padding, TCI.t_padding);
+        FSC.processTimeChunk(TCI.t1, time_chunk, TCI.t_padding, TCI.t_padding);
         PR.addBytesProcessed(time_chunk.totalSize() * sizeof(float));
     }
     FSC.finalize();
-    QVector<bigint> event_inds_to_use=FSC.eventIndicesToUse();
-    qDebug().noquote() << QString("Using %1 of %2 events (%3%) after fit stage").arg(event_inds_to_use.count()).arg(times.count()).arg(event_inds_to_use.count()*1.0/times.count()*100);
-    times=get_subarray(times,event_inds_to_use);
-    labels=get_subarray(labels,event_inds_to_use);
-    central_channels=get_subarray(central_channels,event_inds_to_use);
+    QVector<bigint> event_inds_to_use = FSC.eventIndicesToUse();
+    qDebug().noquote() << QString("Using %1 of %2 events (%3%) after fit stage").arg(event_inds_to_use.count()).arg(times.count()).arg(event_inds_to_use.count() * 1.0 / times.count() * 100);
+    times = get_subarray(times, event_inds_to_use);
+    labels = get_subarray(labels, event_inds_to_use);
+    central_channels = get_subarray(central_channels, event_inds_to_use);
     PR.endProcessingStep();
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -380,5 +379,4 @@ QVector<int> get_subarray(const QVector<int>& X, const QVector<bigint>& inds)
     }
     return ret;
 }
-
 }
