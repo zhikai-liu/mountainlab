@@ -1,9 +1,13 @@
 #include "p_mountainsort3.h"
 
+#include <QTime>
 #include <diskreadmda32.h>
 #include <mda.h>
 #include <mda32.h>
 #include "omp.h"
+#include "neighborhoodsorter.h"
+#include "get_sort_indices.h"
+#include "merge_across_channels.h"
 
 namespace MountainSort3 {
 
@@ -13,20 +17,9 @@ struct TimeChunkInfo {
     bigint size; //number of timepoints (excluding padding on left and right)
 };
 
-struct NeighborhoodData {
-    QList<int> channels;
-    QVector<double> times;
-    QVector<int> labels;
-    Mda32 clips;
-    Mda32 reduced_clips;
-    Mda32 templates;
-};
 QList<int> get_channels_from_geom(const Mda &geom,bigint m,double adjacency_radius);
-QVector<double> extract_channel(const Mda32 &X,int channel);
 void extract_channels(Mda32 &ret,const Mda32 &X,const QList<int> &channels);
-QVector<double> detect_events(const QVector<double>& X, double detect_threshold, double detect_interval, int sign);
-
-QVector<double> parallel_detect_events(const QVector<double>& X, P_mountainsort3_opts opts, int num_threads);
+QList<TimeChunkInfo> get_time_chunk_infos(bigint M,bigint N,int num_threads);
 
 QList<QList<int>> get_neighborhood_batches(int M,int batch_size) {
     QList<QList<int>> batches;
@@ -39,40 +32,171 @@ QList<QList<int>> get_neighborhood_batches(int M,int batch_size) {
     return batches;
 }
 
+QVector<double> reorder(const QVector<double> &X,const QList<bigint> &inds);
+QVector<int> reorder(const QVector<int> &X,const QList<bigint> &inds);
+
+struct ProgressReporter {
+    void startProcessingStep(QString name) {
+        qDebug().noquote() << QString("[%1]: Starting...").arg(name);
+        m_processing_step_name=name;
+        m_processing_step_timer.start();
+        m_progress_timer.start();
+        m_bytes_processed=0;
+        m_bytes_read=0;
+    }
+    void addBytesProcessed(double bytes) {
+        double elapsed_sec=m_progress_timer.elapsed()*1.0/1000;
+        double mb=bytes/1e6;
+        m_bytes_processed+=bytes;
+        qDebug().noquote() << QString("[%1]: Processed %2 MB (%3 MB/sec): Total %4 MB").arg(m_processing_step_name).arg(mb).arg(mb/elapsed_sec).arg(m_bytes_processed/1e6);
+        m_progress_timer.restart();
+    }
+    void addBytesRead(double bytes) {
+        double elapsed_sec=m_progress_timer.elapsed()*1.0/1000;
+        double mb=bytes/1e6;
+        m_bytes_read+=bytes;
+        qDebug().noquote() << QString("[%1]: Read %2 MB (%3 MB/sec): Total %4 MB").arg(m_processing_step_name).arg(mb).arg(mb/elapsed_sec).arg(m_bytes_read/1e6);
+        m_progress_timer.restart();
+    }
+
+    void endProcessingStep() {
+        double elapsed_sec=m_processing_step_timer.elapsed()*1.0/1000;
+        double mb=m_bytes_processed/1e6;
+        qDebug().noquote() << QString("[%1]: Elapsed time -- %2 sec (%3 MB/sec)\n").arg(m_processing_step_name).arg(elapsed_sec).arg(mb/elapsed_sec);
+    }
+
+private:
+    QString m_processing_step_name;
+    QTime m_processing_step_timer;
+    QTime m_progress_timer;
+    double m_bytes_processed=0;
+    double m_bytes_read=0;
+
+};
+
 }
 
 using namespace MountainSort3;
 
 bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QString temp_path, const P_mountainsort3_opts &opts)
 {
-    int max_threads=omp_get_max_threads();
+    int tot_threads=omp_get_max_threads();
+    omp_set_nested(1);
+
+    ProgressReporter PR;
 
     DiskReadMda32 X(timeseries);
     bigint M=X.N1();
-    //bigint N=X.N2();
+    bigint N=X.N2();
+    qDebug().noquote() << QString("Starting sort: %1 channels, %2 timepoints").arg(M).arg(N);
 
     Mda Geom(geom);
 
-    QMap<int,NeighborhoodData*> neighborhoods;
-    for (bigint m=1; m<=M; m++) {
-        neighborhoods[m]=new NeighborhoodData;
-        neighborhoods[m]->channels=get_channels_from_geom(geom,m,opts.adjacency_radius);
-    }
-
-    int num_simultaneous_neighborhoods=qMin(max_threads,(int)M);
+    int num_simultaneous_neighborhoods=qMin(tot_threads,(int)M);
+    int num_threads_within_neighboords=qMax(1,tot_threads/num_simultaneous_neighborhoods);
     QList<QList<int>> neighborhood_batches=get_neighborhood_batches(M,num_simultaneous_neighborhoods);
+    QList<TimeChunkInfo> time_chunk_infos=get_time_chunk_infos(M,N,num_simultaneous_neighborhoods);
 
-
-    /*
-    //detect
+    QMap<int,NeighborhoodSorter*> neighborhood_sorters;
+    QMap<int,QList<int>> neighborhood_channels;
     for (bigint m=1; m<=M; m++) {
-        QList<int> single_channel;
-        QVector<double> X0=extract_channel(X,neighborhoods[m]->channels.value(0));
-        neighborhoods[m]->times=parallel_detect_events(X0,opts,max_threads);
+        neighborhood_sorters[m]=new NeighborhoodSorter;
+        neighborhood_sorters[m]->setOptions(opts);
+        neighborhood_sorters[m]->setNumThreads(num_threads_within_neighboords);
+        neighborhood_channels[m]=get_channels_from_geom(geom,m,opts.adjacency_radius);
     }
-    */
 
-    qDeleteAll(neighborhoods);
+    // Read data and add to neighborhood sorters
+    PR.startProcessingStep("Read data and add to neighborhood sorters");
+    for (bigint i=0; i<time_chunk_infos.count(); i++) {
+        TimeChunkInfo TCI=time_chunk_infos[i];
+        Mda32 time_chunk;
+        qDebug().noquote() << QString("Reading time chunk of size %1...").arg(TCI.size+2*TCI.t_padding);
+        X.readChunk(time_chunk,0,TCI.t1-TCI.t_padding,M,TCI.size+2*TCI.t_padding);
+        PR.addBytesRead(time_chunk.totalSize()*sizeof(float));
+        for (int j=0; j<neighborhood_batches.count(); j++) {
+            QList<int> neighborhoods=neighborhood_batches[j];
+            double bytes0=0;
+#pragma omp parallel for num_threads(num_simultaneous_neighborhoods)
+            for (int k=0; k<neighborhoods.count(); k++) {
+                int m;
+#pragma omp critical(m1)
+                {
+                    m=neighborhoods[k]; //I don't know why this needs to be in a critical section
+                }
+                Mda32 neighborhood_time_chunk;
+                extract_channels(neighborhood_time_chunk,time_chunk,neighborhood_channels[m]);
+                neighborhood_sorters[m]->addTimeChunk(neighborhood_time_chunk,TCI.t_padding,TCI.t_padding);
+#pragma omp critical(a1)
+                {
+                    bytes0+=neighborhood_time_chunk.N2()*sizeof(float);
+                }
+            }
+            PR.addBytesProcessed(bytes0);
+        }
+    }
+    PR.endProcessingStep();
+
+    // Sort in each neighborhood sorter
+    PR.startProcessingStep("Sort in each neighborhood");
+    for (int j=0; j<neighborhood_batches.count(); j++) {
+        QList<int> neighborhoods=neighborhood_batches[j];
+        double bytes0=0;
+#pragma omp parallel for num_threads(num_simultaneous_neighborhoods)
+        for (int k=0; k<neighborhoods.count(); k++) {
+            int m;
+#pragma omp critical(m2)
+            {
+                m=neighborhoods[k]; //I don't know why this needs to be in a critical section
+            }
+            neighborhood_sorters[m]->sort();
+#pragma omp critical(a1)
+            {
+               bytes0+=neighborhood_sorters[m]->numTimepoints()*sizeof(float);
+            }
+        }
+        PR.addBytesProcessed(bytes0);
+    }
+    PR.endProcessingStep();
+
+    // Collect the events and sort them by time
+    PR.startProcessingStep("Collect events and sort them by time");
+    QVector<double> times;
+    QVector<int> labels;
+    QVector<int> central_channels;
+    int K_offset=0;
+    for (bigint m=1; m<=M; m++) {
+        QVector<double> times0=neighborhood_sorters[m]->times();
+        QVector<int> labels0=neighborhood_sorters[m]->labels();
+        for (bigint a=0; a<labels0.count(); a++)
+            labels0[a]+=K_offset;
+        times.append(times0);
+        labels.append(labels0);
+        K_offset=qMax(K_offset,MLCompute::max(labels0));
+        central_channels.append(QVector<int>(neighborhood_sorters[m]->labels().count(),m));
+    }
+    QList<bigint> sort_inds=get_sort_indices_bigint(times);
+    times=reorder(times,sort_inds);
+    labels=reorder(labels,sort_inds);
+    central_channels=reorder(central_channels,sort_inds);
+    PR.endProcessingStep();
+
+    // Create and write firings output
+    PR.startProcessingStep("Create and write firings output");
+    {
+        bigint L=times.count();
+        Mda firings(3,L);
+        for (bigint i=0; i<L; i++) {
+            firings.set(central_channels[i],0,i);
+            firings.set(times[i],1,i);
+            firings.set(labels[i],2,i);
+        }
+
+        firings.write64(firings_out);
+    }
+    PR.endProcessingStep();
+
+    qDeleteAll(neighborhood_sorters);
     return true;
 }
 
@@ -107,86 +231,9 @@ void extract_channels(Mda32 &ret,const Mda32 &X,const QList<int> &channels) {
     }
 }
 
-QVector<double> extract_channel(const Mda32 &X,int channel) {
-    QVector<double> ret(X.N2());
-    for (bigint i=0; i<X.N2(); i++) {
-        ret[i]=X.get(channel-1,i);
-    }
-    return ret;
-}
-
-QVector<double> detect_events(const QVector<double>& X, double detect_threshold, double detect_interval, int sign)
-{
-    double mean = MLCompute::mean(X);
-    double stdev = MLCompute::stdev(X);
-    double threshold2 = detect_threshold * stdev;
-    //double threshold2=detect_threshold;
-
-    QVector<bigint> timepoints_to_consider;
-    QVector<double> vals_to_consider;
-    for (bigint n=0; n<X.count(); n++) {
-        //double val=X[n];
-        double val=X[n]-mean;
-        if (sign < 0)
-            val = -val;
-        else if (sign == 0)
-            val = fabs(val);
-        if (val>threshold2) {
-            timepoints_to_consider << n;
-            vals_to_consider << val;
-        }
-    }
-    QVector<bool> to_use(timepoints_to_consider.count(),false);
-    bigint last_best_ind=-1;
-    for (bigint i=0; i<timepoints_to_consider.count(); i++) {
-        if (last_best_ind>=0) {
-            if (timepoints_to_consider[last_best_ind]<timepoints_to_consider[i]-detect_interval) {
-                last_best_ind=-1;
-                //last best ind is not within range. so update it
-                if ((i>0)&&(timepoints_to_consider[i-1]>=timepoints_to_consider[i]-detect_interval)) {
-                    last_best_ind=i-1;
-                    bigint jj=last_best_ind;
-                    while ((jj-1>=0)&&(timepoints_to_consider[jj-1]>=timepoints_to_consider[i]-detect_interval)) {
-                        if (vals_to_consider[jj-1]>vals_to_consider[last_best_ind]) {
-                            last_best_ind=jj-1;
-                        }
-                        jj--;
-                    }
-                }
-                else {
-                    last_best_ind=-1;
-                }
-            }
-        }
-        if (last_best_ind>=0) {
-            if (vals_to_consider[i]>vals_to_consider[last_best_ind]) {
-                to_use[i]=true;
-                to_use[last_best_ind]=false;
-                last_best_ind=i;
-            }
-            else {
-                to_use[i]=false;
-            }
-        }
-        else {
-            to_use[i]=true;
-            last_best_ind=i;
-        }
-    }
-
-    QVector<double> times;
-    for (bigint i=0; i<timepoints_to_consider.count(); i++) {
-        if (to_use[i]) {
-            times << timepoints_to_consider[i];
-        }
-    }
-    return times;
-}
-
-QList<TimeChunkInfo> get_time_chunk_infos(bigint M,bigint N,int num_threads) {
+QList<TimeChunkInfo> get_time_chunk_infos(bigint M,bigint N,int num_simultaneous) {
     bigint RAM_available_for_chunks_bytes=1e9;
-    int num_time_threads=omp_get_max_threads();
-    bigint chunk_size=RAM_available_for_chunks_bytes/(M*num_time_threads*4);
+    bigint chunk_size=RAM_available_for_chunks_bytes/(M*num_simultaneous*4);
     if (chunk_size<1000) chunk_size=1000;
     if (chunk_size>N) chunk_size=N;
     bigint chunk_overlap_size=1000;
@@ -205,29 +252,20 @@ QList<TimeChunkInfo> get_time_chunk_infos(bigint M,bigint N,int num_threads) {
     return time_chunk_infos;
 }
 
-QVector<double> parallel_detect_events(const QVector<double>& X, P_mountainsort3_opts opts, int num_threads) {
-    QVector<double> times;
-
-    bigint N=X.count();
-    QList<TimeChunkInfo> time_chunk_infos=get_time_chunk_infos(1,N,num_threads);
-
-    for (int i=0; i<time_chunk_infos.count(); i++) {
-        TimeChunkInfo TCI=time_chunk_infos[i];
-        QVector<double> X0=X.mid(TCI.t1-TCI.t_padding,TCI.size+2*TCI.t_padding);
-        QVector<double> times0=detect_events(X0,opts.detect_threshold,opts.detect_interval,opts.detect_sign);
-        QVector<double> times1;
-        for (bigint a=0; a<times0.count(); a++) {
-            if ((TCI.t_padding<=times0[a])&&(times0[a]-TCI.t_padding<TCI.size)) {
-                times1 << times0[a]-TCI.t_padding+TCI.t1;
-            }
-        }
-#pragma omp critical(parallel_detect_events_append_times)
-        {
-            times.append(times1);
-        }
+QVector<double> reorder(const QVector<double> &X,const QList<bigint> &inds) {
+    QVector<double> ret(inds.count());
+    for (bigint i=0; i<inds.count(); i++) {
+        ret[i]=X[inds[i]];
     }
-    qSort(times);
-    return times;
+    return ret;
+}
+
+QVector<int> reorder(const QVector<int> &X,const QList<bigint> &inds) {
+    QVector<int> ret(inds.count());
+    for (bigint i=0; i<inds.count(); i++) {
+        ret[i]=X[inds[i]];
+    }
+    return ret;
 }
 
 }
