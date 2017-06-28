@@ -4,10 +4,10 @@ TEMPLATE = subdirs
 # qmake
 # qmake "COMPONENTS = mountainview"
 
-#COMPONENTS = mdaconvert  mountainprocess mountainview prv prv-gui
+#COMPONENTS = mdaconvert  mountainprocess mountainview prv
 
 isEmpty(COMPONENTS) {
-    COMPONENTS = mda mdaconvert mountainprocess mountainsort mountainview mountaincompare prv prv-gui mountainsort2 mountainsort3
+    COMPONENTS = mda mdaconvert mountainprocess mountainsort mountainview mountaincompare prv mountainsort2 mountainsort3
 }
 
 CONFIG += ordered
@@ -32,7 +32,6 @@ SUBDIRS += $$ifcomponent(mountainsort,mountainsort/src/mountainsort.pro)
 SUBDIRS += $$ifcomponent(mountainview,mountainview/src/mountainview.pro)
 SUBDIRS += $$ifcomponent(mountaincompare,mountaincompare/src/mountaincompare.pro)
 SUBDIRS += $$ifcomponent(prv,prv/src/prv.pro)
-SUBDIRS += $$ifcomponent(prv-gui,prv-gui/src/prv-gui.pro)
 SUBDIRS += $$ifcomponent(mountainview-eeg,packages/mountainlab-eeg/mountainview-eeg/src/mountainview-eeg.pro)
 SUBDIRS += $$ifcomponent(mountainsort2,packages/mountainsort2/src/mountainsort2.pro)
 SUBDIRS += $$ifcomponent(mountainsort2,packages/mountainsort3/src/mountainsort3.pro)
