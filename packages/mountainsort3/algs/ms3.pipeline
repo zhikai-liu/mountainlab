@@ -90,7 +90,7 @@ function main(params) {
 	ppp.detect_sign=params.detect_sign;
 	ppp.merge_across_channels=params.merge_across_channels;
 	ppp.fit_stage=params.fit_stage;
-	var firings=Process('mountainsort.multineighborhood_sort',
+	var firings=Process('mountainsort.mountainsort3',
 					{
 						timeseries:pre,
 						geom:params.geom
