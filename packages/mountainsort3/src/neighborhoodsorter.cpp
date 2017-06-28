@@ -127,8 +127,6 @@ void NeighborhoodSorter::sort()
 
     // Compute templates
     d->m_templates = d->compute_templates_from_clips(d->m_clips, d->m_labels, d->m_num_threads);
-
-    d->m_templates.write32("/home/magland/tmp/templates.mda");
 }
 
 QVector<double> NeighborhoodSorter::times() const
