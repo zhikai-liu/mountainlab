@@ -16,7 +16,17 @@ This involves installing prerequisites, cloning the repository, compiling, and e
 
 Once installed do the following:
 
+> mlconfig
+
+You will be asked if you want to change the temporary directory path. This is the directory where all temporary and intermediate files are stored. It should be in a location wiht a lot of free disk space. You may safely delete the data periodically, but do not do this during processing.
+
+Next, you will be asked if you want to edit your prv search paths. In short, the prv system is a way of managing large raw data files. You can read more about the prv system [here](doc/prv_system.md).
+
+Alternatively, the mountainlab configuration file can be edited directly. Although we recommend using the mlconfig utility, it is possible to change the same parameters by navigating to the mountainlab directory:
+
 > cd mountainlab
+
+and creating a mountainlab user configuration file named mountainlab.user.json:
 
 > cp mountainlab.default.json mountainlab.user.json
 
@@ -49,13 +59,13 @@ Your mountainsort.user.json file should now look something like:
 }
 ```
 
-You should at least change the following configuration parameters:
+As with the mlconfig utility, you should at least change the following configuration parameters:
 
 general.temporary_path (default="/tmp"). This is a very important setting as it specifies the folder where all the temporary files and intermediate processing files are stored. Put it on a disk with a lot of space. Ideally it would be on an SSD drive but that's not necessary. More about the temporary directory elsewhere
 
 prv.local_search_paths (default=["examples"]). Add the full path of the base directory where your raw data reside. The system will search recursively for the raw data files. More on that below. For example, set it to ["examples","/path/to/prvdata"].
 
-The other settings are described in [[todo: prv_system and processing_layers]].
+The other settings are described in the [prv system](doc/prv_system.md) and [processing layers](doc/processing_layers.md) [[todo: prv_system and processing_layers]].
 
 ### 2. Prepare the raw data
 
@@ -88,16 +98,19 @@ ds2 datasets/dataset2_name
 The first column is an abreviated name and the second column is the relative path to the dataset folder.
 
 pipelines.txt is an index to the processing pipelines. For example:
-ms2 mountainsort_002.pipeline --curation=curation.script
+```json
+ms2mn ms2_002.pipeline --whiten=true --detect_sign=-1 --multineighborhood=true --adjacency_radius=100 --mask_out_artifacts=true --curation=curation.script
 ms_nf3 mountainsort_001.pipeline --curation=curation.script --num_features=3 --num_features2=3
-The first column is an abreviated name. The second column is the name of the processing pipeline. The mountainsort_002.pipeline is distributed with MountainLab and is found in mountainlab/mountainsort/pipelines. That directory is searched by default because of the settings in mountainlab.user.json. Then each line contains processing parameters.
+```
+The first column is an abreviated name. The second column is the name of the processing pipeline. Anything else in the line is an option that will override the defaults of the pipeline, and is thus not required. 
+The ms2_002.pipeline is distributed with MountainLab and is found in mountainlab/packages/algs/mountainsort2/algs. mountainsort_001.pipeline is distributed with MountainLab and is found in mountainlab/mountainsort/pipelines. These two directories are searched by default because of the settings in mountainlab.user.json.
 
 curation.script is optional and contains rules for rejecting or tagging clusters based on metrics computed as part of the sorting pipeline. You can find an example in mountainlab/examples/003_kron_mountainsort/curation.script. To include it in your sorting pipeline, you must 
 
 1. Have a curation.script in the same location as the pipelines.txt and datasets.txt
-2. Add the curation flag, --curation=curation.script to the pipelines.txt as seen above.
+2. Add the curation flag, --curation=curation.script to the pipelines.txt as seen above. Alternatively, the flag can be added when launching the GUI, mountainview.
 
-The curation script and the cluster and cluster-pair metrics are described in greater detail in [[todo: metrics and MountainView]].
+The curation script and the cluster and cluster-pair metrics are described in greater detail in [metrics and automated curation](doc/metrics_automated_curation.md).
 
 raw.mda.prv must be created using the prv-create utility as follows:
 
@@ -142,7 +155,7 @@ Then launch the sorting using:
 
 The output will go into the outputs/ms2–ds1 folder. In particular you will get a firings.mda file, which is [described here](doc/mda_format.md).
 
-Further description of the daemon is found [[todo: processing_layers]].
+Further description of the daemon is found [here](doc/procesing_layers.md).
 
 ### 5. View the results
 
