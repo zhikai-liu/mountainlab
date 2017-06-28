@@ -5,7 +5,7 @@ typedef QList<bigint> BigintList;
 QList<bigint> get_time_channel_mask(const Mda32& template0, double thresh);
 bool is_dirty(float* dirty_ptr, const QList<bigint>& tchmask);
 double compute_score(bigint M, bigint T, float* X_ptr, float* template0, const QList<bigint>& tchmask);
-QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<double>& scores, const Fit_stage_opts& opts,int clip_size);
+QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<double>& scores, const Fit_stage_opts& opts, int clip_size);
 void subtract_scaled_template(bigint N, double* X, double* template0, double scale_min, double scale_max);
 void subtract_scaled_template(bigint M, bigint T, float* X_ptr, float* dirty_ptr, float* template0, const QList<bigint>& tchmask, double scale_min, double scale_max);
 
