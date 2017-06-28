@@ -8,6 +8,7 @@
 #include "neighborhoodsorter.h"
 #include "get_sort_indices.h"
 #include "merge_across_channels.h"
+#include "globaltemplatecomputer.h"
 
 namespace MountainSort3 {
 
@@ -37,6 +38,7 @@ QVector<int> reorder(const QVector<int> &X,const QList<bigint> &inds);
 
 struct ProgressReporter {
     void startProcessingStep(QString name) {
+        qDebug().noquote() << "";
         qDebug().noquote() << QString("[%1]: Starting...").arg(name);
         m_processing_step_name=name;
         m_processing_step_timer.start();
@@ -63,6 +65,7 @@ struct ProgressReporter {
         double elapsed_sec=m_processing_step_timer.elapsed()*1.0/1000;
         double mb=m_bytes_processed/1e6;
         qDebug().noquote() << QString("[%1]: Elapsed time -- %2 sec (%3 MB/sec)\n").arg(m_processing_step_name).arg(elapsed_sec).arg(mb/elapsed_sec);
+        qDebug().noquote() << "";
     }
 
 private:
@@ -111,7 +114,6 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
     for (bigint i=0; i<time_chunk_infos.count(); i++) {
         TimeChunkInfo TCI=time_chunk_infos[i];
         Mda32 time_chunk;
-        qDebug().noquote() << QString("Reading time chunk of size %1...").arg(TCI.size+2*TCI.t_padding);
         X.readChunk(time_chunk,0,TCI.t1-TCI.t_padding,M,TCI.size+2*TCI.t_padding);
         PR.addBytesRead(time_chunk.totalSize()*sizeof(float));
         for (int j=0; j<neighborhood_batches.count(); j++) {
@@ -197,6 +199,34 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
     PR.endProcessingStep();
 
     qDeleteAll(neighborhood_sorters);
+
+    // Compute global templates
+    PR.startProcessingStep("Compute global templates");
+    GlobalTemplateComputer GTC;
+    GTC.setNumThreads(tot_threads);
+    GTC.setClipSize(opts.clip_size);
+    GTC.setTimesLabels(times,labels);
+    for (bigint i=0; i<time_chunk_infos.count(); i++) {
+        TimeChunkInfo TCI=time_chunk_infos[i];
+        Mda32 time_chunk;
+        X.readChunk(time_chunk,0,TCI.t1-TCI.t_padding,M,TCI.size+2*TCI.t_padding);
+        PR.addBytesRead(time_chunk.totalSize()*sizeof(float));
+        GTC.addTimeChunk(time_chunk,TCI.t_padding,TCI.t_padding);
+        PR.addBytesProcessed(time_chunk.totalSize()*sizeof(float));
+    }
+    PR.endProcessingStep();
+    Mda32 templates=GTC.templates();
+
+
+    // Merge across channels
+    PR.startProcessingStep("Merge across channels");
+    {
+        Merge_across_channels_opts oo;
+        oo.clip_size=opts.clip_size;
+        merge_across_channels(times,labels,central_channels,templates,oo);
+    }
+    PR.endProcessingStep();
+
     return true;
 }
 
@@ -232,7 +262,7 @@ void extract_channels(Mda32 &ret,const Mda32 &X,const QList<int> &channels) {
 }
 
 QList<TimeChunkInfo> get_time_chunk_infos(bigint M,bigint N,int num_simultaneous) {
-    bigint RAM_available_for_chunks_bytes=1e9;
+    bigint RAM_available_for_chunks_bytes=10e9;
     bigint chunk_size=RAM_available_for_chunks_bytes/(M*num_simultaneous*4);
     if (chunk_size<1000) chunk_size=1000;
     if (chunk_size>N) chunk_size=N;
