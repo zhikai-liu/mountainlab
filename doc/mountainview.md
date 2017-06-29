@@ -1,6 +1,6 @@
 ### MountainView GUI
 
-After completing a sorting, you can visualize the sorting results using MountainView, the GUI.
+After completing a sorting, you can visualize the sorting results using MountainView, the GUI. Also, you can compare the results of two different sortings from the same data using a related GUI element, [MountainCompare](mountaincompare.md).
 
 ### Launching MountainView
 
