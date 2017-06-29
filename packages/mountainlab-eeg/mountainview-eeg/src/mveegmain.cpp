@@ -103,10 +103,10 @@ QList<QColor> generate_colors_old(const QColor& bg, const QColor& fg, int noColo
 
 void set_nice_size(QWidget* W);
 bool check_whether_prv_objects_need_to_be_downloaded_or_regenerated(QJsonObject obj);
-bool check_whether_prv_objects_need_to_be_downloaded_or_regenerated(QList<PrvRecord> prvs);
+//bool check_whether_prv_objects_need_to_be_downloaded_or_regenerated(QList<PrvRecord> prvs);
 
 void try_to_automatically_download_and_regenerate_prv_objects(QJsonObject obj);
-void try_to_automatically_download_and_regenerate_prv_objects(QList<PrvRecord> prvs);
+//void try_to_automatically_download_and_regenerate_prv_objects(QList<PrvRecord> prvs);
 
 void sig_handler(int signum)
 {
