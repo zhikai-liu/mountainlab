@@ -8,11 +8,11 @@
 
 ### A note about processing
 
-MountainLab processing is defined in layers. This tutorial shows the recommended way to do the processing. However you are by no means restricted to doing it this way -- for example, the need to launch a processing daemon may seem like overkill. All processing routines may be traced back to simple executables. An explanation of the processing layers and different ways to invoke spike sorting is found [[todo: processing layers]].
+MountainLab processing is defined in layers. This tutorial shows the recommended way to do the processing. However you are by no means restricted to doing it this way -- for example, the need to launch a processing daemon may seem like overkill. All processing routines may be traced back to simple executables. An explanation of the processing layers and different ways to invoke spike sorting is found [processing layers](processing_layers.md).
 
 ### 1. Install and configure MountainLab
 
-This involves installing prerequisites, cloning the repository, compiling, and editing mountainlab.user.json. Installation instructions are [found here](doc/installation.md). You should test the installation by running the example before proceeding.
+This involves installing prerequisites, cloning the repository, compiling, and editing mountainlab.user.json. Installation instructions are [found here](installation.md). You should test the installation by running the example before proceeding.
 
 Once installed do the following:
 
@@ -20,7 +20,7 @@ Once installed do the following:
 
 You will be asked if you want to change the temporary directory path. This is the directory where all temporary and intermediate files are stored. It should be in a location wiht a lot of free disk space. You may safely delete the data periodically, but do not do this during processing.
 
-Next, you will be asked if you want to edit your prv search paths. In short, the prv system is a way of managing large raw data files. You can read more about the prv system [here](doc/prv_system.md).
+Next, you will be asked if you want to edit your prv search paths. In short, the prv system is a way of managing large raw data files. You can read more about the prv system [here](prv_system.md).
 
 Alternatively, the mountainlab configuration file can be edited directly. Although we recommend using the mlconfig utility, it is possible to change the same parameters by navigating to the mountainlab directory:
 
@@ -65,7 +65,7 @@ general.temporary_path (default="/tmp"). This is a very important setting as it 
 
 prv.local_search_paths (default=["examples"]). Add the full path of the base directory where your raw data reside. The system will search recursively for the raw data files. More on that below. For example, set it to ["examples","/path/to/prvdata"].
 
-The other settings are described in the [prv system](doc/prv_system.md) and [processing layers](doc/processing_layers.md) [[todo: prv_system and processing_layers]].
+The other settings are described in the [prv system](prv_system.md) and [processing layers](processing_layers.md) [[todo: prv_system and processing_layers]].
 
 ### 2. Prepare the raw data
 
@@ -155,7 +155,7 @@ Then launch the sorting using:
 
 The output will go into the outputs/ms2–ds1 folder. In particular you will get a firings.mda file, which is [described here](doc/mda_format.md).
 
-Further description of the daemon is found [here](doc/procesing_layers.md).
+Further description of the daemon is found [here](procesing_layers.md).
 
 ### 5. View the results
 
