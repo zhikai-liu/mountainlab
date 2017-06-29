@@ -10,7 +10,6 @@ public:
     P_mountainsort3_opts m_opts;
 
     bigint m_M = 0;
-    bigint m_N = 0;
     int m_num_threads = 1;
     QVector<double> m_times;
     QVector<Mda32> m_clips_to_append;
@@ -50,7 +49,7 @@ void NeighborhoodSorter::setOptions(P_mountainsort3_opts opts)
     d->m_opts = opts;
 }
 
-void NeighborhoodSorter::addTimeChunk(const Mda32& X, bigint padding_left, bigint padding_right)
+void NeighborhoodSorter::addTimeChunk(bigint t,const Mda32& X, bigint padding_left, bigint padding_right)
 {
     d->m_M = X.N1();
     int T = d->m_opts.clip_size;
@@ -73,9 +72,8 @@ void NeighborhoodSorter::addTimeChunk(const Mda32& X, bigint padding_left, bigin
         Mda32 clip0;
         X.getChunk(clip0, 0, t0 - Tmid, X.N1(), T);
         d->m_clips_to_append << clip0;
-        d->m_times << t0 - padding_left + d->m_N;
+        d->m_times << t0 - padding_left + t;
     }
-    d->m_N += X.N2() - padding_left - padding_right;
 }
 
 void NeighborhoodSorter::sort()
@@ -142,11 +140,6 @@ QVector<int> NeighborhoodSorter::labels() const
 Mda32 NeighborhoodSorter::templates() const
 {
     return d->m_templates;
-}
-
-bigint NeighborhoodSorter::numTimepoints()
-{
-    return d->m_N;
 }
 
 void NeighborhoodSorterPrivate::dimension_reduce_clips(Mda32& ret, const Mda32& clips, bigint num_features_per_channel, bigint max_samples)

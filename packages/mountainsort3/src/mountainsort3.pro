@@ -36,7 +36,8 @@ SOURCES += \
     fit_stage.cpp \
     reorder_labels.cpp \
     p_mountainsort3.cpp \
-    globaltemplatecomputer.cpp fitstagecomputer.cpp
+    globaltemplatecomputer.cpp fitstagecomputer.cpp \
+    p_preprocess.cpp
 
 HEADERS += \
     mountainsort3_main.h \
@@ -49,7 +50,8 @@ HEADERS += \
     fit_stage.h \
     reorder_labels.h \
     p_mountainsort3.h \
-    globaltemplatecomputer.h fitstagecomputer.h
+    globaltemplatecomputer.h fitstagecomputer.h \
+    p_preprocess.h
 
 INCLUDEPATH += ../../../mountainsort/src/isosplit5
 VPATH += ../../../mountainsort/src/isosplit5
