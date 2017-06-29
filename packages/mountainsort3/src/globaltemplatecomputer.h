@@ -13,10 +13,9 @@ public:
     void setNumThreads(int num_threads);
     void setClipSize(int clip_size);
     void setTimesLabels(const QVector<double>& times, const QVector<int>& labels);
-    void addTimeChunk(const Mda32& X, bigint padding_left, bigint padding_right);
+    void processTimeChunk(bigint t,const Mda32& X, bigint padding_left, bigint padding_right);
 
     Mda32 templates() const; //the output
-    bigint numTimepoints();
 
 private:
     GlobalTemplateComputerPrivate* d;

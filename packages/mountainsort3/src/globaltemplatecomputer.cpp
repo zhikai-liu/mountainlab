@@ -12,7 +12,6 @@ public:
     QVector<double> m_times;
     QVector<int> m_labels;
     int m_K = 0;
-    bigint m_N = 0;
 
     Mda m_waveform_sums;
     QVector<bigint> m_waveform_counts;
@@ -46,7 +45,7 @@ void GlobalTemplateComputer::setTimesLabels(const QVector<double>& times, const 
     d->m_K = MLCompute::max(labels);
 }
 
-void GlobalTemplateComputer::addTimeChunk(const Mda32& X, bigint padding_left, bigint padding_right)
+void GlobalTemplateComputer::processTimeChunk(bigint t,const Mda32& X, bigint padding_left, bigint padding_right)
 {
     int M = X.N1();
     int T = d->m_clip_size;
@@ -63,24 +62,22 @@ void GlobalTemplateComputer::addTimeChunk(const Mda32& X, bigint padding_left, b
         QVector<int> local_labels;
         Mda local_sums(M, T, K);
         QVector<bigint> local_counts(K, 0);
-        bigint local_N;
 #pragma omp critical
         {
             for (bigint a = omp_get_thread_num(); a < d->m_times.count(); a += omp_get_num_threads()) {
                 local_times << d->m_times[a];
                 local_labels << d->m_labels[a];
             }
-            local_N = d->m_N;
         }
 #pragma omp for
         for (bigint i = 0; i < local_times.count(); i++) {
             double t0 = local_times[i];
-            double t1 = t0 - local_N + padding_left;
+            double t1 = t0 - t + padding_left;
             if ((padding_left <= t1) && (t1 < X.N2() - padding_left - padding_right)) {
                 int k0 = local_labels[i];
                 if (k0 > 0) {
                     Mda32 tmp;
-                    X.getChunk(tmp, 0, t0 - Tmid, M, T);
+                    X.getChunk(tmp, 0, t1 - Tmid, M, T);
                     for (int t = 0; t < T; t++) {
                         for (int m = 0; m < M; m++) {
                             local_sums.set(local_sums.get(m, t, k0 - 1) + tmp.get(m, t), m, t, k0 - 1);
@@ -102,7 +99,6 @@ void GlobalTemplateComputer::addTimeChunk(const Mda32& X, bigint padding_left, b
             }
         }
     }
-    d->m_N += X.N2();
 }
 
 Mda32 GlobalTemplateComputer::templates() const
@@ -123,7 +119,3 @@ Mda32 GlobalTemplateComputer::templates() const
     return templates;
 }
 
-bigint GlobalTemplateComputer::numTimepoints()
-{
-    return d->m_N;
-}
