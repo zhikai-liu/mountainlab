@@ -55,9 +55,9 @@ SOURCES += clusterdetailplugin.cpp clusterdetailview.cpp \
 FORMS += clusterdetailviewpropertiesdialog.ui \
     controlwidgets/createtimeseriesdialog.ui
 
-INCLUDEPATH += ../../prv-gui/src
-HEADERS += ../../prv-gui/src/prvgui.h
-SOURCES += ../../prv-gui/src/prvgui.cpp
+#INCLUDEPATH += ../../prv-gui/src
+#HEADERS += ../../prv-gui/src/prvgui.h
+#SOURCES += ../../prv-gui/src/prvgui.cpp
 
 HEADERS += clipsviewplugin.h mvclipsview.h
 SOURCES += clipsviewplugin.cpp mvclipsview.cpp

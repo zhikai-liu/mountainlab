@@ -55,7 +55,7 @@
 //#include <mvclusterordercontrol.h>
 #include <clustermetricsplugin.h>
 #include <curationprogramplugin.h>
-#include "prvgui.h"
+//#include "prvgui.h"
 #include <objectregistry.h>
 #include <icounter.h>
 
@@ -141,11 +141,11 @@ QList<QColor> generate_colors_old(const QColor& bg, const QColor& fg, int noColo
 #include "signal.h"
 
 void set_nice_size(QWidget* W);
-bool check_whether_prv_objects_need_to_be_downloaded_or_regenerated(QJsonObject obj);
-bool check_whether_prv_objects_need_to_be_downloaded_or_regenerated(QList<PrvRecord> prvs);
+//bool check_whether_prv_objects_need_to_be_downloaded_or_regenerated(QJsonObject obj);
+//bool check_whether_prv_objects_need_to_be_downloaded_or_regenerated(QList<PrvRecord> prvs);
 
-void try_to_automatically_download_and_regenerate_prv_objects(QJsonObject obj);
-void try_to_automatically_download_and_regenerate_prv_objects(QList<PrvRecord> prvs);
+//void try_to_automatically_download_and_regenerate_prv_objects(QJsonObject obj);
+//void try_to_automatically_download_and_regenerate_prv_objects(QList<PrvRecord> prvs);
 
 void sig_handler(int signum)
 {
@@ -400,10 +400,11 @@ int main(int argc, char* argv[])
         if (!mv2_fname.isEmpty()) {
             TaskProgressView TPV;
             TPV.show();
-            bool done_checking = false;
+            //bool done_checking = false;
             QJsonObject obj;
             QString json = TextFile::read(mv2_fname);
             obj = QJsonDocument::fromJson(json.toLatin1()).object();
+            /*
             if (CLP.named_parameters.contains("_prvgui")) {
                 while (!done_checking) {
                     if (check_whether_prv_objects_need_to_be_downloaded_or_regenerated(obj)) {
@@ -430,6 +431,7 @@ int main(int argc, char* argv[])
                         done_checking = true;
                 }
             }
+            */
             context->setFromMV2FileObject(obj);
             context->setMV2FileName(mv2_fname);
         }
@@ -931,12 +933,15 @@ void setup_main_window(MVMainWindow* W)
     //W->registerViewFactory(new MVFireTrackFactory(W));
 }
 
+/*
 bool check_whether_prv_objects_need_to_be_downloaded_or_regenerated(QJsonObject obj)
 {
     QList<PrvRecord> prvs = find_prvs("", obj);
     return check_whether_prv_objects_need_to_be_downloaded_or_regenerated(prvs);
 }
+*/
 
+/*
 QString check_if_on_local_disk(PrvRecord prv)
 {
     QString cmd = "prv";
@@ -967,6 +972,7 @@ void try_to_automatically_download_and_regenerate_prv_objects(QJsonObject obj)
     QList<PrvRecord> prvs = find_prvs("", obj);
     return try_to_automatically_download_and_regenerate_prv_objects(prvs);
 }
+*/
 
 void system_call_keeping_gui_alive(QString cmd, QString task_label)
 {
@@ -983,6 +989,7 @@ void system_call_keeping_gui_alive(QString cmd, QString task_label)
     task.log() << P.readAll();
 }
 
+/*
 void try_to_automatically_download_and_regenerate_prv_objects(QList<PrvRecord> prvs)
 {
     foreach (PrvRecord prv, prvs) {
@@ -997,3 +1004,4 @@ void try_to_automatically_download_and_regenerate_prv_objects(QList<PrvRecord> p
         }
     }
 }
+*/
