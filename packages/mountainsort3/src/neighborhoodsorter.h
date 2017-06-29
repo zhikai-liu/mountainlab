@@ -23,4 +23,16 @@ private:
     NeighborhoodSorterPrivate* d;
 };
 
+class DiskBackedMda32 {
+public:
+    DiskBackedMda32();
+    DiskBackedMda32(const Mda32 &X);
+    virtual ~DiskBackedMda32();
+    void store(const Mda32 &X);
+    void retrieve(Mda32 &X) const;
+    void remove();
+private:
+    QString m_tmp_path;
+};
+
 #endif // NEIGHBORHOODSORTER_H
