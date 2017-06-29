@@ -69,7 +69,7 @@ Finally, launch the viewer:
 kron-view results ms2 example1
 ```
 
-See the other docs for details on what's going on here.
+See the other docs for details on what's going on here, and try to [sort your own data](the_first_sort.md).
 
 ### Step 4: If necessary, contact Jeremy
 
