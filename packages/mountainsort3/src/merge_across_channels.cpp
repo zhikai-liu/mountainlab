@@ -6,10 +6,12 @@ bool peaks_are_within_range_to_consider(double p1, double p2, Merge_across_chann
 bool peaks_are_within_range_to_consider(double p11, double p12, double p21, double p22, Merge_across_channels_opts opts);
 QList<int> reverse_order(const QList<int>& inds);
 bool cluster_is_already_being_used(const QVector<double>& times_in, const QVector<double>& other_times_in, Merge_across_channels_opts opts);
+int get_optimal_time_shift_between_templates(const Mda32 &template0,const Mda32 &template_ref,int max_dt);
 
 void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector<int>& central_channels, Mda32& templates, Merge_across_channels_opts opts)
 {
     //Important: We assume the times are already sorted!!
+    templates.write32("/home/magland/tmp/templates0.mda");
 
     int M = templates.N1();
     int T = templates.N2();
@@ -70,6 +72,7 @@ void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector
             }
         }
     }
+    candidate_pairs.write32("/home/magland/tmp/candidate_pairs.mda");
 
     //sort by largest peak so we can go through in order
     QVector<double> abs_peaks_on_own_channels;
@@ -84,15 +87,17 @@ void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector
     QList<bool> clusters_to_use;
     for (int k = 0; k < K; k++)
         clusters_to_use << false;
-#pragma omp parallel for
+//Warning: This  cannot be parallelized -- it is sequential!
     for (int ii = 0; ii < inds1.count(); ii++) {
         QVector<double> times_k;
         QVector<double> other_times;
         bool to_use;
         int ik;
-#pragma omp critical(merge_across_channels1)
         {
             ik = inds1[ii];
+            Mda32 template1;
+            templates.getChunk(template1,0,0,ik,M,T,1);
+
             QVector<bigint>* inds_k = &all_label_inds[ik];
 
             for (int a = 0; a < inds_k->count(); a++) {
@@ -103,21 +108,24 @@ void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector
                 if (candidate_pairs.value(ik, ik2)) {
                     //printf("Merge candidate pair: %d,%d\n", ik + 1, ik2 + 1);
                     if (clusters_to_use[ik2]) { //we are already using the other one
+                        Mda32 template2;
+                        templates.getChunk(template2,0,0,ik2,M,T,1);
+                        int optimal_time_shift=get_optimal_time_shift_between_templates(template2,template1,10);
                         QVector<bigint>* inds_k2 = &all_label_inds[ik2];
                         for (int a = 0; a < inds_k2->count(); a++) {
-                            other_times << times[(*inds_k2)[a]];
+                            other_times << times[(*inds_k2)[a]]+optimal_time_shift;
                         }
                     }
                 }
             }
         }
-        if (cluster_is_already_being_used(times_k, other_times, opts)) {
-            to_use = false;
+        to_use=true;
+        if (other_times.count()>0) {
+            if (cluster_is_already_being_used(times_k, other_times, opts)) {
+                qDebug().noquote() << QString("Cluster %1 is already being used (discarding)").arg(ik+1);
+                to_use = false;
+            }
         }
-        else {
-            to_use = true;
-        }
-#pragma omp critical(merge_across_channels1)
         {
             if (to_use)
                 clusters_to_use[ik] = true;
@@ -233,47 +241,51 @@ bool cluster_is_already_being_used(const QVector<double>& times_in, const QVecto
         return false;
     if (other_times_in.isEmpty())
         return false;
-    int T = opts.clip_size;
+    //int T = opts.clip_size;
     QVector<double> times = times_in;
     QVector<double> other_times = other_times_in;
     qSort(times);
     qSort(other_times);
-    QList<int> counts; //size = 2*T+1
-    for (int a = 0; a < 2 * T + 1; a++) {
-        counts << 0;
-    }
+    bigint count=0;
     int ii_other = 0;
+    int max_dt=4;
     for (int ii = 0; ii < times.count(); ii++) {
         double t0 = times[ii];
-        while ((ii_other + 1 < other_times.count()) && (other_times[ii_other] < t0 - T))
+        bool found_a_match=false;
+        while ((ii_other + 1 < other_times.count()) && (other_times[ii_other] < t0 - max_dt))
             ii_other++;
-        while ((ii_other < other_times.count()) && (other_times[ii_other] <= t0 + T)) {
-            int diff = (int)(other_times[ii_other] - t0);
-            if ((-T <= diff) && (diff <= T)) {
-                counts[diff + T]++;
-            }
+        while ((ii_other < other_times.count()) && (other_times[ii_other] <= t0 + max_dt)) {
+            found_a_match=true;
             ii_other++;
         }
+        if (found_a_match) count++;
     }
-    //look at +/- 3 timepoints
-    int max_dt = 3;
-    double best_frac = 0;
-    int best_t = 0;
-    for (int t = max_dt; t + max_dt < 2 * T + 1; t++) {
-        int count0 = 0;
-        for (int t2 = t - max_dt; t2 <= t + max_dt; t2++) {
-            count0 += counts[t2];
-        }
-        double frac = count0 * 1.0 / times.count();
-        if (frac > best_frac) {
-            best_frac = frac;
-            best_t = t;
-        }
-    }
-    if (best_frac >= opts.event_fraction_threshold) {
-        qDebug().noquote() << QString("Cluster is already being used: frac=%1, dt=%2").arg(best_frac).arg(best_t - T);
+    double frac=count*1.0/times.count();
+    if (frac >= opts.event_fraction_threshold) {
+        //qDebug().noquote() << QString("Cluster is already being used: frac=%1").arg(frac);
         //qDebug().noquote() << counts.mid(best_t - max_dt, max_dt * 2 + 1);
         return true;
     }
     return false;
+}
+
+int get_optimal_time_shift_between_templates(const Mda32 &template0,const Mda32 &template_ref,int max_dt) {
+    int M=template_ref.N1();
+    int T=template_ref.N2();
+    double best_ip=0;
+    int best_dt=0;
+    for (int dt=-max_dt; dt<=max_dt; dt++) {
+        double ip=0;
+        for (int t=0; t<T; t++) {
+            int t_ref=(t+dt)%T;
+            for (int m=0; m<M; m++) {
+                ip+=template0.get(m,t)*template_ref.get(m,t_ref);
+            }
+        }
+        if (ip>best_ip) {
+            best_ip=ip;
+            best_dt=dt;
+        }
+    }
+    return best_dt;
 }
