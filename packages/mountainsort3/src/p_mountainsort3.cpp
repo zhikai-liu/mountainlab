@@ -237,13 +237,15 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
     // Merge across channels
-    PR.startProcessingStep("Merge across channels");
-    {
-        Merge_across_channels_opts oo;
-        oo.clip_size = opts.clip_size;
-        merge_across_channels(times, labels, central_channels, templates, oo);
+    if (opts.merge_across_channels) {
+        PR.startProcessingStep("Merge across channels");
+        {
+            Merge_across_channels_opts oo;
+            oo.clip_size = opts.clip_size;
+            merge_across_channels(times, labels, central_channels, templates, oo);
+        }
+        PR.endProcessingStep();
     }
-    PR.endProcessingStep();
 
     /*
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -269,35 +271,37 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
     */
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
-    PR.startProcessingStep("Fit stage",M*N*sizeof(float));
-    time_chunk_infos = get_time_chunk_infos(M, N, tot_threads, tot_threads);
-    FitStageComputer FSC;
-    FSC.setTemplates(templates);
-    FSC.setTimesLabels(times, labels);
-    for (bigint i = 0; i < time_chunk_infos.count(); i+=tot_threads) {
-        QList<TimeChunkInfo> infos=time_chunk_infos.mid(i,tot_threads);
-        QList<Mda32> time_chunks;
-        double bytes0=0;
-        for (int j=0; j<infos.count(); j++) {
-            Mda32 time_chunk;
-            X.readChunk(time_chunk, 0, infos[j].t1 - infos[j].t_padding, M, infos[j].size + 2 * infos[j].t_padding);
-            time_chunks << time_chunk;
-            bytes0+=time_chunk.totalSize() * sizeof(float);
-        }
-        PR.addBytesRead(bytes0);
+    if (opts.fit_stage) {
+        PR.startProcessingStep("Fit stage",M*N*sizeof(float));
+        time_chunk_infos = get_time_chunk_infos(M, N, tot_threads, tot_threads);
+        FitStageComputer FSC;
+        FSC.setTemplates(templates);
+        FSC.setTimesLabels(times, labels);
+        for (bigint i = 0; i < time_chunk_infos.count(); i+=tot_threads) {
+            QList<TimeChunkInfo> infos=time_chunk_infos.mid(i,tot_threads);
+            QList<Mda32> time_chunks;
+            double bytes0=0;
+            for (int j=0; j<infos.count(); j++) {
+                Mda32 time_chunk;
+                X.readChunk(time_chunk, 0, infos[j].t1 - infos[j].t_padding, M, infos[j].size + 2 * infos[j].t_padding);
+                time_chunks << time_chunk;
+                bytes0+=time_chunk.totalSize() * sizeof(float);
+            }
+            PR.addBytesRead(bytes0);
 #pragma omp parallel for num_threads(tot_threads)
-        for (int j=0; j<infos.count(); j++) {
-            FSC.processTimeChunk(infos[j].t1, time_chunks[j], infos[j].t_padding, infos[j].t_padding);
+            for (int j=0; j<infos.count(); j++) {
+                FSC.processTimeChunk(infos[j].t1, time_chunks[j], infos[j].t_padding, infos[j].t_padding);
+            }
+            PR.addBytesProcessed(bytes0);
         }
-        PR.addBytesProcessed(bytes0);
+        FSC.finalize();
+        QVector<bigint> event_inds_to_use = FSC.eventIndicesToUse();
+        qDebug().noquote() << QString("Using %1 of %2 events (%3%) after fit stage").arg(event_inds_to_use.count()).arg(times.count()).arg(event_inds_to_use.count() * 1.0 / times.count() * 100);
+        times = get_subarray(times, event_inds_to_use);
+        labels = get_subarray(labels, event_inds_to_use);
+        central_channels = get_subarray(central_channels, event_inds_to_use);
+        PR.endProcessingStep();
     }
-    FSC.finalize();
-    QVector<bigint> event_inds_to_use = FSC.eventIndicesToUse();
-    qDebug().noquote() << QString("Using %1 of %2 events (%3%) after fit stage").arg(event_inds_to_use.count()).arg(times.count()).arg(event_inds_to_use.count() * 1.0 / times.count() * 100);
-    times = get_subarray(times, event_inds_to_use);
-    labels = get_subarray(labels, event_inds_to_use);
-    central_channels = get_subarray(central_channels, event_inds_to_use);
-    PR.endProcessingStep();
 
     /*
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
