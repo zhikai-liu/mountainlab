@@ -31,6 +31,7 @@ public:
     static QVector<double> get_subarray(const QVector<double>& X, const QVector<bigint>& inds);
     static QVector<int> get_subarray(const QVector<int>& X, const QVector<bigint>& inds);
     static Mda32 get_subclips(const Mda32& clips, const QVector<bigint>& inds);
+    static void get_clip(Mda32 &clip,const Mda32 &X,const QList<int> &channels,bigint t0,int T);
 };
 
 NeighborhoodSorter::NeighborhoodSorter()
@@ -54,14 +55,18 @@ void NeighborhoodSorter::setMaxRAM(bigint max_ram_bytes)
     d->m_max_ram_bytes = max_ram_bytes;
 }
 
-void NeighborhoodSorter::addTimeChunk(bigint t, const Mda32& X, bigint padding_left, bigint padding_right)
+
+
+void NeighborhoodSorter::addTimeChunk(bigint t, const Mda32& X, const QList<int> &channels, bigint padding_left, bigint padding_right)
 {
-    d->m_M = X.N1();
+    d->m_M = channels.count();
+    if (channels.count()==0) return;
+    int central_channel=channels[0];
     int T = d->m_opts.clip_size;
-    int Tmid = (int)((T + 1) / 2) - 1;
+    //int Tmid = (int)((T + 1) / 2) - 1;
     QVector<double> X0;
     for (bigint i = 0; i < X.N2(); i++) {
-        X0 << X.value(0, i);
+        X0 << X.value(central_channel-1, i);
     }
 
     QVector<double> times0 = detect_events(X0, d->m_opts.detect_threshold, d->m_opts.detect_interval, d->m_opts.detect_sign);
@@ -72,11 +77,12 @@ void NeighborhoodSorter::addTimeChunk(bigint t, const Mda32& X, bigint padding_l
             times1 << t0;
         }
     }
+
     Mda32 clips0(X.N1(), T, times1.count());
     for (bigint i = 0; i < times1.count(); i++) {
         double t0 = times1[i];
         Mda32 clip0;
-        X.getChunk(clip0, 0, t0 - Tmid, X.N1(), T);
+        d->get_clip(clip0,X,channels,t0,T);
         clips0.setChunk(clip0, 0, 0, i);
         d->m_times << t0 - padding_left + t;
     }
@@ -356,5 +362,16 @@ void DiskBackedMda32::remove()
 {
     if (!m_tmp_path.isEmpty()) {
         QFile::remove(m_tmp_path);
+    }
+}
+
+void NeighborhoodSorterPrivate::get_clip(Mda32 &clip,const Mda32 &X,const QList<int> &channels,bigint t0,int T) {
+    int M=channels.count();
+    int Tmid = (int)((T + 1) / 2) - 1;
+    clip.allocate(M,T);
+    for (int t=0; t<T; t++) {
+        for (int m=0; m<M; m++) {
+            clip.set(X.value(channels[m],t0+t-Tmid),m,t);
+        }
     }
 }

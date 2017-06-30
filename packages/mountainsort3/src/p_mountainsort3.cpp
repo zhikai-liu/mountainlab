@@ -22,7 +22,7 @@ struct TimeChunkInfo {
 };
 
 QList<int> get_channels_from_geom(const Mda& geom, bigint m, double adjacency_radius);
-void extract_channels(Mda32& ret, const Mda32& X, const QList<int>& channels);
+//void extract_channels(Mda32& ret, const Mda32& X, const QList<int>& channels);
 QList<TimeChunkInfo> get_time_chunk_infos(bigint M, bigint N, int num_threads, bigint min_num_chunks);
 
 QList<QList<int> > get_neighborhood_batches(int M, int batch_size)
@@ -157,12 +157,11 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
                 {
                     m = neighborhoods[k]; //I don't know why this needs to be in a critical section
                 }
-                Mda32 neighborhood_time_chunk;
-                extract_channels(neighborhood_time_chunk, time_chunk, neighborhood_channels[m]);
-                neighborhood_sorters[m]->addTimeChunk(TCI.t1, neighborhood_time_chunk, TCI.t_padding, TCI.t_padding);
+                //extract_channels(neighborhood_time_chunk, time_chunk, neighborhood_channels[m]);
+                neighborhood_sorters[m]->addTimeChunk(TCI.t1, time_chunk, neighborhood_channels[m], TCI.t_padding, TCI.t_padding);
 #pragma omp critical(a1)
                 {
-                    bytes0 += neighborhood_time_chunk.N2() * sizeof(float);
+                    bytes0 += time_chunk.N2() * sizeof(float);
                 }
             }
             PR.addBytesProcessed(bytes0);
@@ -443,6 +442,7 @@ QList<int> get_channels_from_geom(const Mda& geom, bigint m, double adjacency_ra
     return ret;
 }
 
+/*
 void extract_channels(Mda32& ret, const Mda32& X, const QList<int>& channels)
 {
     bigint M2 = channels.count();
@@ -450,14 +450,15 @@ void extract_channels(Mda32& ret, const Mda32& X, const QList<int>& channels)
     ret.allocate(M2, N);
     for (bigint t = 0; t < N; t++) {
         for (bigint ii = 0; ii < M2; ii++) {
-            ret.set(X.value(channels[ii] - 1, t), ii, t);
+            ret.set(X.get(channels[ii] - 1, t), ii, t);
         }
     }
 }
+*/
 
 QList<TimeChunkInfo> get_time_chunk_infos(bigint M, bigint N, int num_simultaneous, bigint min_num_chunks)
 {
-    bigint RAM_available_for_chunks_bytes = 1e8;
+    bigint RAM_available_for_chunks_bytes = 1e9;
     bigint chunk_size = RAM_available_for_chunks_bytes / (M * num_simultaneous * 4);
     if (chunk_size > N)
         chunk_size = N;
