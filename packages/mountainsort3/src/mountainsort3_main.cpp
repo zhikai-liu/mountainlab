@@ -48,7 +48,7 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("mountainsort.mountainsort3", "0.13g");
+        ProcessorSpec X("mountainsort.mountainsort3", "0.13h");
         X.addInputs("timeseries", "geom");
         X.addOutputs("firings_out");
         X.addOptionalParameter("adjacency_radius", "", 0);
