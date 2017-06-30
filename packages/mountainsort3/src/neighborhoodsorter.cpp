@@ -13,7 +13,7 @@ public:
     NeighborhoodSorter* q;
     P_mountainsort3_opts m_opts;
 
-    bigint m_max_ram_bytes=1e9;
+    bigint m_max_ram_bytes = 1e9;
     bigint m_M = 0;
     QVector<double> m_times;
     QVector<DiskBackedMda32> m_accumulated_clips;
@@ -51,10 +51,10 @@ void NeighborhoodSorter::setOptions(P_mountainsort3_opts opts)
 
 void NeighborhoodSorter::setMaxRAM(bigint max_ram_bytes)
 {
-    d->m_max_ram_bytes=max_ram_bytes;
+    d->m_max_ram_bytes = max_ram_bytes;
 }
 
-void NeighborhoodSorter::addTimeChunk(bigint t,const Mda32& X, bigint padding_left, bigint padding_right)
+void NeighborhoodSorter::addTimeChunk(bigint t, const Mda32& X, bigint padding_left, bigint padding_right)
 {
     d->m_M = X.N1();
     int T = d->m_opts.clip_size;
@@ -72,16 +72,16 @@ void NeighborhoodSorter::addTimeChunk(bigint t,const Mda32& X, bigint padding_le
             times1 << t0;
         }
     }
-    Mda32 clips0(X.N1(),T,times1.count());
+    Mda32 clips0(X.N1(), T, times1.count());
     for (bigint i = 0; i < times1.count(); i++) {
         double t0 = times1[i];
         Mda32 clip0;
         X.getChunk(clip0, 0, t0 - Tmid, X.N1(), T);
-        clips0.setChunk(clip0,0,0,i);
+        clips0.setChunk(clip0, 0, 0, i);
         d->m_times << t0 - padding_left + t;
     }
     d->m_accumulated_clips_buffer << clips0;
-    if (d->size_of_accumulated_clips_buffer()>d->m_max_ram_bytes)
+    if (d->size_of_accumulated_clips_buffer() > d->m_max_ram_bytes)
         d->clear_accumulated_clips_buffer();
 }
 
@@ -91,32 +91,32 @@ void NeighborhoodSorter::sort(int num_threads)
 
     // get the clips
     Mda32 clips;
-    clips.allocate(d->m_M,T,d->m_times.count());
+    clips.allocate(d->m_M, T, d->m_times.count());
 
-    if (d->m_accumulated_clips.count()>0) {
+    if (d->m_accumulated_clips.count() > 0) {
         d->clear_accumulated_clips_buffer(); //important!
 
-        bigint ii=0;
-        for (bigint j=0; j<d->m_accumulated_clips.count(); j++) {
+        bigint ii = 0;
+        for (bigint j = 0; j < d->m_accumulated_clips.count(); j++) {
             Mda32 clips0;
             d->m_accumulated_clips[j].retrieve(clips0);
             d->m_accumulated_clips[j].remove(); //remove the temporary file
-            clips.setChunk(clips0,0,0,ii);
-            ii+=clips0.N3();
+            clips.setChunk(clips0, 0, 0, ii);
+            ii += clips0.N3();
         }
-        if (ii!=d->m_times.count()) {
+        if (ii != d->m_times.count()) {
             qWarning() << "Unexpected error putting together the clips in NeighborhoodSorter::sort()." << ii << d->m_times.count();
             abort();
         }
     }
     else {
-        bigint ii=0;
-        for (bigint j=0; j<d->m_accumulated_clips_buffer.count(); j++) {
-            Mda32 clips0=d->m_accumulated_clips_buffer[j];
-            clips.setChunk(clips0,0,0,ii);
-            ii+=clips0.N3();
+        bigint ii = 0;
+        for (bigint j = 0; j < d->m_accumulated_clips_buffer.count(); j++) {
+            Mda32 clips0 = d->m_accumulated_clips_buffer[j];
+            clips.setChunk(clips0, 0, 0, ii);
+            ii += clips0.N3();
         }
-        if (ii!=d->m_times.count()) {
+        if (ii != d->m_times.count()) {
             qWarning() << "Unexpected error putting together the clips in NeighborhoodSorter::sort() (*)." << ii << d->m_times.count();
             abort();
         }
@@ -176,25 +176,25 @@ Mda32 NeighborhoodSorter::templates() const
 
 bigint NeighborhoodSorterPrivate::size_of_accumulated_clips_buffer()
 {
-    bigint ret=0;
-    for (bigint i=0; i<m_accumulated_clips_buffer.count(); i++) {
-        ret+=m_accumulated_clips_buffer[i].totalSize()*sizeof(float);
+    bigint ret = 0;
+    for (bigint i = 0; i < m_accumulated_clips_buffer.count(); i++) {
+        ret += m_accumulated_clips_buffer[i].totalSize() * sizeof(float);
     }
     return ret;
 }
 
 void NeighborhoodSorterPrivate::clear_accumulated_clips_buffer()
 {
-    bigint L=0;
-    for (bigint i=0; i<m_accumulated_clips_buffer.count(); i++) {
-        L+=m_accumulated_clips_buffer[i].N3();
+    bigint L = 0;
+    for (bigint i = 0; i < m_accumulated_clips_buffer.count(); i++) {
+        L += m_accumulated_clips_buffer[i].N3();
     }
-    if (L>0) {
-        Mda32 clips0(m_M,m_opts.clip_size,L);
-        bigint jj=0;
-        for (bigint i=0; i<m_accumulated_clips_buffer.count(); i++) {
-            clips0.setChunk(m_accumulated_clips_buffer[i],0,0,jj);
-            jj+=m_accumulated_clips_buffer[i].N3();
+    if (L > 0) {
+        Mda32 clips0(m_M, m_opts.clip_size, L);
+        bigint jj = 0;
+        for (bigint i = 0; i < m_accumulated_clips_buffer.count(); i++) {
+            clips0.setChunk(m_accumulated_clips_buffer[i], 0, 0, jj);
+            jj += m_accumulated_clips_buffer[i].N3();
         }
         DiskBackedMda32 tmp(clips0);
         m_accumulated_clips << tmp;
@@ -326,10 +326,9 @@ Mda32 NeighborhoodSorterPrivate::get_subclips(const Mda32& clips, const QVector<
 
 DiskBackedMda32::DiskBackedMda32()
 {
-
 }
 
-DiskBackedMda32::DiskBackedMda32(const Mda32 &X)
+DiskBackedMda32::DiskBackedMda32(const Mda32& X)
 {
     this->store(X);
 }
@@ -339,16 +338,16 @@ DiskBackedMda32::~DiskBackedMda32()
     //don't remove here -- user must call remove() explicitly
 }
 
-void DiskBackedMda32::store(const Mda32 &X)
+void DiskBackedMda32::store(const Mda32& X)
 {
     if (m_tmp_path.isEmpty()) {
-        m_tmp_path=CacheManager::globalInstance()->makeLocalFile(MLUtil::makeRandomId()+".DiskBackedMda32.mda");
-        CacheManager::globalInstance()->setTemporaryFileExpirePid(m_tmp_path,QCoreApplication::applicationPid());
+        m_tmp_path = CacheManager::globalInstance()->makeLocalFile(MLUtil::makeRandomId() + ".DiskBackedMda32.mda");
+        CacheManager::globalInstance()->setTemporaryFileExpirePid(m_tmp_path, QCoreApplication::applicationPid());
     }
     X.write32(m_tmp_path);
 }
 
-void DiskBackedMda32::retrieve(Mda32 &X) const
+void DiskBackedMda32::retrieve(Mda32& X) const
 {
     X.read(m_tmp_path);
 }
@@ -359,4 +358,3 @@ void DiskBackedMda32::remove()
         QFile::remove(m_tmp_path);
     }
 }
-

@@ -14,11 +14,11 @@ struct TimeChunkInfo {
     bigint size; //number of timepoints (excluding padding on left and right)
 };
 QList<TimeChunkInfo> get_time_chunk_infos(bigint M, bigint N, int num_simultaneous, bigint min_num_chunks, bigint overlap_size);
-void get_whitening_matrix_by_sampling(Mda &matrix,const DiskReadMda32 &X,P_preprocess_opts opts);
-void preprocess_time_chunk(Mda32 &Y,const Mda32 &X,const Mda &whitening_matrix,P_preprocess_opts opts);
+void get_whitening_matrix_by_sampling(Mda& matrix, const DiskReadMda32& X, P_preprocess_opts opts);
+void preprocess_time_chunk(Mda32& Y, const Mda32& X, const Mda& whitening_matrix, P_preprocess_opts opts);
 
 struct ProgressReporter {
-    void startProcessingStep(QString name,double total_expected_bytes_to_process=0)
+    void startProcessingStep(QString name, double total_expected_bytes_to_process = 0)
     {
         qDebug().noquote() << "";
         qDebug().noquote() << QString("Starting  [%1]...").arg(name);
@@ -29,7 +29,7 @@ struct ProgressReporter {
         m_bytes_read = 0;
         m_bytes_written = 0;
         m_read_time_sec = 0;
-        m_total_expected_bytes_to_process=total_expected_bytes_to_process;
+        m_total_expected_bytes_to_process = total_expected_bytes_to_process;
     }
     void addBytesProcessed(double bytes)
     {
@@ -38,7 +38,7 @@ struct ProgressReporter {
         m_bytes_processed += bytes;
         QString status;
         if (m_total_expected_bytes_to_process) {
-            status=QString("%1%").arg(m_bytes_processed*100.0/m_total_expected_bytes_to_process);
+            status = QString("%1%").arg(m_bytes_processed * 100.0 / m_total_expected_bytes_to_process);
         }
         qDebug().noquote() << QString("Processed %2 MB in %3 sec (%4 MB/sec): Total %5 MB [%1] (%6)...").arg(m_processing_step_name).arg(mb).arg(elapsed_sec).arg(mb / elapsed_sec).arg(m_bytes_processed / 1e6).arg(status);
         m_progress_timer.restart();
@@ -68,9 +68,10 @@ struct ProgressReporter {
         double mb = m_bytes_processed / 1e6;
         qDebug().noquote() << QString("Elapsed time -- %2 sec (%3 MB/sec) [%1]...\n").arg(m_processing_step_name).arg(elapsed_sec).arg(mb / elapsed_sec);
         qDebug().noquote() << "";
-        m_summary_text+=QString("%2 sec (includes %3 sec reading, %4 sec writing) [%1]\n").arg(m_processing_step_name).arg(elapsed_sec).arg(m_read_time_sec).arg(m_write_time_sec);
+        m_summary_text += QString("%2 sec (includes %3 sec reading, %4 sec writing) [%1]\n").arg(m_processing_step_name).arg(elapsed_sec).arg(m_read_time_sec).arg(m_write_time_sec);
     }
-    void printSummaryText() {
+    void printSummaryText()
+    {
         qDebug().noquote() << "";
         qDebug().noquote() << m_summary_text;
         qDebug().noquote() << "";
@@ -84,58 +85,58 @@ private:
     double m_bytes_processed = 0;
     double m_bytes_read = 0;
     double m_bytes_written = 0;
-    double m_read_time_sec =0;
-    double m_write_time_sec =0;
+    double m_read_time_sec = 0;
+    double m_write_time_sec = 0;
     QString m_summary_text;
 };
-
 }
 
 using namespace Preprocess;
 
-bool p_preprocess(QString timeseries,QString timeseries_out,QString temp_path,P_preprocess_opts opts) {
+bool p_preprocess(QString timeseries, QString timeseries_out, QString temp_path, P_preprocess_opts opts)
+{
 
     DiskReadMda32 X(timeseries);
-    int M=X.N1();
-    bigint N=X.N2();
+    int M = X.N1();
+    bigint N = X.N2();
 
-    int tot_threads=omp_get_max_threads();
+    int tot_threads = omp_get_max_threads();
     QList<TimeChunkInfo> time_chunk_infos;
 
     Mda whitening_matrix;
 
     if (opts.whiten)
-        get_whitening_matrix_by_sampling(whitening_matrix,X,opts);
+        get_whitening_matrix_by_sampling(whitening_matrix, X, opts);
 
     ProgressReporter PR;
 
-    DiskWriteMda Y(MDAIO_TYPE_FLOAT32,timeseries_out,M,N);
+    DiskWriteMda Y(MDAIO_TYPE_FLOAT32, timeseries_out, M, N);
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
-    PR.startProcessingStep("Preprocess",M*N*sizeof(float));
+    PR.startProcessingStep("Preprocess", M * N * sizeof(float));
     time_chunk_infos = get_time_chunk_infos(M, N, tot_threads, tot_threads, 10000);
-    for (bigint i = 0; i < time_chunk_infos.count(); i+=tot_threads) {
-        QList<TimeChunkInfo> infos=time_chunk_infos.mid(i,tot_threads);
+    for (bigint i = 0; i < time_chunk_infos.count(); i += tot_threads) {
+        QList<TimeChunkInfo> infos = time_chunk_infos.mid(i, tot_threads);
         QList<Mda32> time_chunks;
         QList<Mda32> time_chunks_out;
-        double bytes0=0;
-        for (int j=0; j<infos.count(); j++) {
+        double bytes0 = 0;
+        for (int j = 0; j < infos.count(); j++) {
             Mda32 time_chunk;
             X.readChunk(time_chunk, 0, infos[j].t1 - infos[j].t_padding, M, infos[j].size + 2 * infos[j].t_padding);
             time_chunks << time_chunk;
             time_chunks_out << Mda32();
-            bytes0+=time_chunk.totalSize() * sizeof(float);
+            bytes0 += time_chunk.totalSize() * sizeof(float);
         }
         PR.addBytesRead(bytes0);
 
 #pragma omp parallel for num_threads(tot_threads)
-        for (int j=0; j<infos.count(); j++) {
+        for (int j = 0; j < infos.count(); j++) {
             Mda32 tmp;
-            preprocess_time_chunk(tmp,time_chunks[i],whitening_matrix,opts);
-            tmp.getChunk(time_chunks_out[j],0,infos[j].t_padding,M,infos[j].size);
+            preprocess_time_chunk(tmp, time_chunks[i], whitening_matrix, opts);
+            tmp.getChunk(time_chunks_out[j], 0, infos[j].t_padding, M, infos[j].size);
         }
         PR.addBytesProcessed(bytes0);
 
-        for (int j=0; j<infos.count(); j++) {
+        for (int j = 0; j < infos.count(); j++) {
             Y.writeChunk(time_chunks_out[j], 0, infos[j].t1);
         }
         PR.addBytesWritten(bytes0);
@@ -152,8 +153,8 @@ QList<TimeChunkInfo> get_time_chunk_infos(bigint M, bigint N, int num_simultaneo
     bigint chunk_size = RAM_available_for_chunks_bytes / (M * num_simultaneous * 4);
     if (chunk_size > N)
         chunk_size = N;
-    if (N<chunk_size*min_num_chunks) {
-        chunk_size=N/min_num_chunks;
+    if (N < chunk_size * min_num_chunks) {
+        chunk_size = N / min_num_chunks;
     }
     if (chunk_size < 20000)
         chunk_size = 20000;
@@ -174,13 +175,14 @@ QList<TimeChunkInfo> get_time_chunk_infos(bigint M, bigint N, int num_simultaneo
     return time_chunk_infos;
 }
 
-void get_whitening_matrix_by_sampling(Mda &matrix,const DiskReadMda32 &X,P_preprocess_opts opts) {
+void get_whitening_matrix_by_sampling(Mda& matrix, const DiskReadMda32& X, P_preprocess_opts opts)
+{
     //finish
 }
 
-void preprocess_time_chunk(Mda32 &Y,const Mda32 &X,const Mda &whitening_matrix,P_preprocess_opts opts) {
+void preprocess_time_chunk(Mda32& Y, const Mda32& X, const Mda& whitening_matrix, P_preprocess_opts opts)
+{
     //finish
-    Y=X;
+    Y = X;
 }
-
 }

@@ -45,7 +45,7 @@ void GlobalTemplateComputer::setTimesLabels(const QVector<double>& times, const 
     d->m_K = MLCompute::max(labels);
 }
 
-void GlobalTemplateComputer::processTimeChunk(bigint t,const Mda32& X, bigint padding_left, bigint padding_right)
+void GlobalTemplateComputer::processTimeChunk(bigint t, const Mda32& X, bigint padding_left, bigint padding_right)
 {
     int M = X.N1();
     int T = d->m_clip_size;
@@ -118,4 +118,3 @@ Mda32 GlobalTemplateComputer::templates() const
     }
     return templates;
 }
-
