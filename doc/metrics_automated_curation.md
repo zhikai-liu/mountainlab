@@ -28,7 +28,7 @@ We would like to define the noise overlap of cluster A to be the overlap metric 
 
 where the weight bi(m0,  t0) is the value of the spike at its central channel and central  time sample. We then define the noise overlap to be the overlap metric applied  to the sets of event clips after projecting out the dimension defined by the  expected noise shape:
 
-![](noiseoverlap.png)
+*m*<sub>noise</sub>(A) = *m*<sub>overlap</sub>(Ã,B̃)
 
 The noise overlap and isolation metrics are always between 0 and 1 and in a sense represent the fraction of points that overlap either with another cluster (isolation metric) or with the noise cluster (noise overlap metric). However, they should not be interpreted as an estimate of the misclassification rate, although we expect it to be predictive of this quantity. Indeed, due to the way they are computed, these values will depend on factors such as the dimensionality of the feature space and the noise properties of the underlying data. Therefore the annotation thresholds should be chosen to suit the application.
 
