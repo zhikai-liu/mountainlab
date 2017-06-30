@@ -65,7 +65,7 @@ general.temporary_path (default="/tmp"). This is a very important setting as it 
 
 prv.local_search_paths (default=["examples"]). Add the full path of the base directory where your raw data reside. The system will search recursively for the raw data files. More on that below. For example, set it to ["examples","/path/to/prvdata"].
 
-The other settings are described in the [prv system](prv_system.md) and [processing layers](processing_layers.md) [[todo: prv_system and processing_layers]].
+The other settings are described in the [prv system](prv_system.md) and [processing layers](processing_layers.md)
 
 ### 2. Prepare the raw data
 
@@ -110,7 +110,7 @@ curation.script is optional and contains rules for rejecting or tagging clusters
 1. Have a curation.script in the same location as the pipelines.txt and datasets.txt
 2. Add the curation flag, --curation=curation.script to the pipelines.txt as seen above. Alternatively, the flag can be added when launching the GUI, mountainview.
 
-The curation script and the cluster and cluster-pair metrics are described in greater detail in [metrics and automated curation](doc/metrics_automated_curation.md).
+The curation script and the cluster and cluster-pair metrics are described in greater detail in [metrics and automated curation](metrics_automated_curation.md).
 
 raw.mda.prv must be created using the prv-create utility as follows:
 
@@ -153,7 +153,7 @@ Then launch the sorting using:
 
 > kron-run ms2 ds1
 
-The output will go into the outputs/ms2–ds1 folder. In particular you will get a firings.mda file, which is [described here](doc/mda_format.md).
+The output will go into the outputs/ms2–ds1 folder. In particular you will get a firings.mda file, which is [described here](mda_format.md).
 
 Further description of the daemon is found [here](procesing_layers.md).
 
@@ -163,4 +163,4 @@ To view the results use the following command:
 
 > kron-view results ms2 ds1
 
-Don't forget the word "results". This launches the MountainView GUI. Further description of the GUI can be found [[todo: MountainView]].
+Don't forget the word "results". This launches the MountainView GUI. Further description of the GUI can be found [here](mountainview.md).
