@@ -452,7 +452,7 @@ void extract_channels(Mda32& ret, const Mda32& X, const QList<int>& channels)
 
 QList<TimeChunkInfo> get_time_chunk_infos(bigint M, bigint N, int num_simultaneous, bigint min_num_chunks)
 {
-    bigint RAM_available_for_chunks_bytes = 1e9;
+    bigint RAM_available_for_chunks_bytes = 1e8;
     bigint chunk_size = RAM_available_for_chunks_bytes / (M * num_simultaneous * 4);
     if (chunk_size > N)
         chunk_size = N;
