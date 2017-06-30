@@ -6,7 +6,7 @@ bool peaks_are_within_range_to_consider(double p1, double p2, Merge_across_chann
 bool peaks_are_within_range_to_consider(double p11, double p12, double p21, double p22, Merge_across_channels_opts opts);
 QList<int> reverse_order(const QList<int>& inds);
 bool cluster_is_already_being_used(const QVector<double>& times_in, const QVector<double>& other_times_in, Merge_across_channels_opts opts);
-int get_optimal_time_shift_between_templates(const Mda32 &template0,const Mda32 &template_ref,int max_dt);
+int get_optimal_time_shift_between_templates(const Mda32& template0, const Mda32& template_ref, int max_dt);
 
 void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector<int>& central_channels, Mda32& templates, Merge_across_channels_opts opts)
 {
@@ -87,7 +87,7 @@ void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector
     QList<bool> clusters_to_use;
     for (int k = 0; k < K; k++)
         clusters_to_use << false;
-//Warning: This  cannot be parallelized -- it is sequential!
+    //Warning: This  cannot be parallelized -- it is sequential!
     for (int ii = 0; ii < inds1.count(); ii++) {
         QVector<double> times_k;
         QVector<double> other_times;
@@ -96,7 +96,7 @@ void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector
         {
             ik = inds1[ii];
             Mda32 template1;
-            templates.getChunk(template1,0,0,ik,M,T,1);
+            templates.getChunk(template1, 0, 0, ik, M, T, 1);
 
             QVector<bigint>* inds_k = &all_label_inds[ik];
 
@@ -109,20 +109,20 @@ void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector
                     //printf("Merge candidate pair: %d,%d\n", ik + 1, ik2 + 1);
                     if (clusters_to_use[ik2]) { //we are already using the other one
                         Mda32 template2;
-                        templates.getChunk(template2,0,0,ik2,M,T,1);
-                        int optimal_time_shift=get_optimal_time_shift_between_templates(template2,template1,10);
+                        templates.getChunk(template2, 0, 0, ik2, M, T, 1);
+                        int optimal_time_shift = get_optimal_time_shift_between_templates(template2, template1, 10);
                         QVector<bigint>* inds_k2 = &all_label_inds[ik2];
                         for (int a = 0; a < inds_k2->count(); a++) {
-                            other_times << times[(*inds_k2)[a]]+optimal_time_shift;
+                            other_times << times[(*inds_k2)[a]] + optimal_time_shift;
                         }
                     }
                 }
             }
         }
-        to_use=true;
-        if (other_times.count()>0) {
+        to_use = true;
+        if (other_times.count() > 0) {
             if (cluster_is_already_being_used(times_k, other_times, opts)) {
-                qDebug().noquote() << QString("Cluster %1 is already being used (discarding)").arg(ik+1);
+                qDebug().noquote() << QString("Cluster %1 is already being used (discarding)").arg(ik + 1);
                 to_use = false;
             }
         }
@@ -246,21 +246,22 @@ bool cluster_is_already_being_used(const QVector<double>& times_in, const QVecto
     QVector<double> other_times = other_times_in;
     qSort(times);
     qSort(other_times);
-    bigint count=0;
+    bigint count = 0;
     int ii_other = 0;
-    int max_dt=4;
+    int max_dt = 4;
     for (int ii = 0; ii < times.count(); ii++) {
         double t0 = times[ii];
-        bool found_a_match=false;
+        bool found_a_match = false;
         while ((ii_other + 1 < other_times.count()) && (other_times[ii_other] < t0 - max_dt))
             ii_other++;
         while ((ii_other < other_times.count()) && (other_times[ii_other] <= t0 + max_dt)) {
-            found_a_match=true;
+            found_a_match = true;
             ii_other++;
         }
-        if (found_a_match) count++;
+        if (found_a_match)
+            count++;
     }
-    double frac=count*1.0/times.count();
+    double frac = count * 1.0 / times.count();
     if (frac >= opts.event_fraction_threshold) {
         //qDebug().noquote() << QString("Cluster is already being used: frac=%1").arg(frac);
         //qDebug().noquote() << counts.mid(best_t - max_dt, max_dt * 2 + 1);
@@ -269,22 +270,23 @@ bool cluster_is_already_being_used(const QVector<double>& times_in, const QVecto
     return false;
 }
 
-int get_optimal_time_shift_between_templates(const Mda32 &template0,const Mda32 &template_ref,int max_dt) {
-    int M=template_ref.N1();
-    int T=template_ref.N2();
-    double best_ip=0;
-    int best_dt=0;
-    for (int dt=-max_dt; dt<=max_dt; dt++) {
-        double ip=0;
-        for (int t=0; t<T; t++) {
-            int t_ref=(t+dt)%T;
-            for (int m=0; m<M; m++) {
-                ip+=template0.get(m,t)*template_ref.get(m,t_ref);
+int get_optimal_time_shift_between_templates(const Mda32& template0, const Mda32& template_ref, int max_dt)
+{
+    int M = template_ref.N1();
+    int T = template_ref.N2();
+    double best_ip = 0;
+    int best_dt = 0;
+    for (int dt = -max_dt; dt <= max_dt; dt++) {
+        double ip = 0;
+        for (int t = 0; t < T; t++) {
+            int t_ref = (t + dt) % T;
+            for (int m = 0; m < M; m++) {
+                ip += template0.get(m, t) * template_ref.get(m, t_ref);
             }
         }
-        if (ip>best_ip) {
-            best_ip=ip;
-            best_dt=dt;
+        if (ip > best_ip) {
+            best_ip = ip;
+            best_dt = dt;
         }
     }
     return best_dt;

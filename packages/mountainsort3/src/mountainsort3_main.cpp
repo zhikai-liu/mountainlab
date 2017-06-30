@@ -38,13 +38,13 @@ QJsonObject get_spec()
         ProcessorSpec X("mountainsort.preprocess", "0.1");
         X.addInputs("timeseries");
         X.addOutputs("timeseries_out");
-        X.addOptionalParameter("bandpass_filter","","true");
+        X.addOptionalParameter("bandpass_filter", "", "true");
         X.addOptionalParameter("freq_min", "", 300);
         X.addOptionalParameter("freq_max", "", 6000);
-        X.addOptionalParameter("mask_out_artifacts","","false");
-        X.addOptionalParameter("mask_out_artifacts_threshold","",6);
-        X.addOptionalParameter("mask_out_artifacts_interval","",2000);
-        X.addOptionalParameter("whiten","","true");
+        X.addOptionalParameter("mask_out_artifacts", "", "false");
+        X.addOptionalParameter("mask_out_artifacts_threshold", "", 6);
+        X.addOptionalParameter("mask_out_artifacts_interval", "", 2000);
+        X.addOptionalParameter("whiten", "", "true");
         processors.push_back(X.get_spec());
     }
     {
@@ -114,13 +114,13 @@ int main(int argc, char* argv[])
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
         P_preprocess_opts opts;
-        opts.bandpass_filter=(CLP.named_parameters.value("bandpass_filter").toString() == "true");
-        opts.freq_min=CLP.named_parameters.value("freq_min").toDouble();
-        opts.freq_max=CLP.named_parameters.value("freq_max").toDouble();
-        opts.mask_out_artifacts=(CLP.named_parameters.value("mask_out_artifacts").toString() == "true");
-        opts.mask_out_artifacts_threshold=CLP.named_parameters.value("mask_out_artifacts_threshold").toDouble();
-        opts.mask_out_artifacts_interval=CLP.named_parameters.value("mask_out_artifacts_interval").toDouble();
-        opts.whiten=(CLP.named_parameters.value("whiten").toString() == "true");
+        opts.bandpass_filter = (CLP.named_parameters.value("bandpass_filter").toString() == "true");
+        opts.freq_min = CLP.named_parameters.value("freq_min").toDouble();
+        opts.freq_max = CLP.named_parameters.value("freq_max").toDouble();
+        opts.mask_out_artifacts = (CLP.named_parameters.value("mask_out_artifacts").toString() == "true");
+        opts.mask_out_artifacts_threshold = CLP.named_parameters.value("mask_out_artifacts_threshold").toDouble();
+        opts.mask_out_artifacts_interval = CLP.named_parameters.value("mask_out_artifacts_interval").toDouble();
+        opts.whiten = (CLP.named_parameters.value("whiten").toString() == "true");
         QString temp_path = CLP.named_parameters.value("_tempdir").toString();
         ret = p_preprocess(timeseries, timeseries_out, temp_path, opts);
     }

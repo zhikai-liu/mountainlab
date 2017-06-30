@@ -43,7 +43,7 @@ QVector<double> get_subarray(const QVector<double>& X, const QVector<bigint>& in
 QVector<int> get_subarray(const QVector<int>& X, const QVector<bigint>& inds);
 
 struct ProgressReporter {
-    void startProcessingStep(QString name,double total_expected_bytes_to_process=0)
+    void startProcessingStep(QString name, double total_expected_bytes_to_process = 0)
     {
         qDebug().noquote() << "";
         qDebug().noquote() << QString("Starting  [%1]...").arg(name);
@@ -53,7 +53,7 @@ struct ProgressReporter {
         m_bytes_processed = 0;
         m_bytes_read = 0;
         m_read_time_sec = 0;
-        m_total_expected_bytes_to_process=total_expected_bytes_to_process;
+        m_total_expected_bytes_to_process = total_expected_bytes_to_process;
     }
     void addBytesProcessed(double bytes)
     {
@@ -62,7 +62,7 @@ struct ProgressReporter {
         m_bytes_processed += bytes;
         QString status;
         if (m_total_expected_bytes_to_process) {
-            status=QString("%1%").arg(m_bytes_processed*100.0/m_total_expected_bytes_to_process);
+            status = QString("%1%").arg(m_bytes_processed * 100.0 / m_total_expected_bytes_to_process);
         }
         qDebug().noquote() << QString("Processed %2 MB in %3 sec (%4 MB/sec): Total %5 MB [%1] (%6)...").arg(m_processing_step_name).arg(mb).arg(elapsed_sec).arg(mb / elapsed_sec).arg(m_bytes_processed / 1e6).arg(status);
         m_progress_timer.restart();
@@ -83,9 +83,10 @@ struct ProgressReporter {
         double mb = m_bytes_processed / 1e6;
         qDebug().noquote() << QString("Elapsed time -- %2 sec (%3 MB/sec) [%1]...\n").arg(m_processing_step_name).arg(elapsed_sec).arg(mb / elapsed_sec);
         qDebug().noquote() << "";
-        m_summary_text+=QString("%2 sec (includes %3 sec reading) [%1]\n").arg(m_processing_step_name).arg(elapsed_sec).arg(m_read_time_sec);
+        m_summary_text += QString("%2 sec (includes %3 sec reading) [%1]\n").arg(m_processing_step_name).arg(elapsed_sec).arg(m_read_time_sec);
     }
-    void printSummaryText() {
+    void printSummaryText()
+    {
         qDebug().noquote() << "";
         qDebug().noquote() << m_summary_text;
         qDebug().noquote() << "";
@@ -98,7 +99,7 @@ private:
     double m_total_expected_bytes_to_process = 0;
     double m_bytes_processed = 0;
     double m_bytes_read = 0;
-    double m_read_time_sec =0;
+    double m_read_time_sec = 0;
     QString m_summary_text;
 };
 }
@@ -125,8 +126,8 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
     QList<TimeChunkInfo> time_chunk_infos;
 
     // The amount of clips data (in the neighborhood sorters) that is permitted to stay in memory
-    bigint clips_RAM=20e9; //how to set this?
-    bigint clips_RAM_per_neighborhood=clips_RAM/M;
+    bigint clips_RAM = 20e9; //how to set this?
+    bigint clips_RAM_per_neighborhood = clips_RAM / M;
 
     QMap<int, NeighborhoodSorter*> neighborhood_sorters;
     QMap<int, QList<int> > neighborhood_channels;
@@ -139,7 +140,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
     // Read data and add to neighborhood sorters
-    PR.startProcessingStep("Read data and add to neighborhood sorters",M*N*sizeof(float));
+    PR.startProcessingStep("Read data and add to neighborhood sorters", M * N * sizeof(float));
     time_chunk_infos = get_time_chunk_infos(M, N, neighborhood_batches.count(), 1);
     for (bigint i = 0; i < time_chunk_infos.count(); i++) {
         TimeChunkInfo TCI = time_chunk_infos[i];
@@ -171,7 +172,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
     // Sort in each neighborhood sorter
-    PR.startProcessingStep("Sort in each neighborhood",M*N*sizeof(float));
+    PR.startProcessingStep("Sort in each neighborhood", M * N * sizeof(float));
     for (int j = 0; j < neighborhood_batches.count(); j++) {
         QList<int> neighborhoods = neighborhood_batches[j];
         double bytes0 = 0;
@@ -219,7 +220,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
     // Compute global templates
-    PR.startProcessingStep("Compute global templates",M*N*sizeof(float));
+    PR.startProcessingStep("Compute global templates", M * N * sizeof(float));
     time_chunk_infos = get_time_chunk_infos(M, N, 1, 1);
     Mda32 templates;
     {
@@ -232,7 +233,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
             Mda32 time_chunk;
             X.readChunk(time_chunk, 0, TCI.t1 - TCI.t_padding, M, TCI.size + 2 * TCI.t_padding);
             PR.addBytesRead(time_chunk.totalSize() * sizeof(float));
-            GTC.processTimeChunk(TCI.t1,time_chunk, TCI.t_padding, TCI.t_padding);
+            GTC.processTimeChunk(TCI.t1, time_chunk, TCI.t_padding, TCI.t_padding);
             PR.addBytesProcessed(time_chunk.totalSize() * sizeof(float));
         }
         templates = GTC.templates();
@@ -276,24 +277,24 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
     if (opts.fit_stage) {
-        PR.startProcessingStep("Fit stage",M*N*sizeof(float));
+        PR.startProcessingStep("Fit stage", M * N * sizeof(float));
         time_chunk_infos = get_time_chunk_infos(M, N, tot_threads, tot_threads);
         FitStageComputer FSC;
         FSC.setTemplates(templates);
         FSC.setTimesLabels(times, labels);
-        for (bigint i = 0; i < time_chunk_infos.count(); i+=tot_threads) {
-            QList<TimeChunkInfo> infos=time_chunk_infos.mid(i,tot_threads);
+        for (bigint i = 0; i < time_chunk_infos.count(); i += tot_threads) {
+            QList<TimeChunkInfo> infos = time_chunk_infos.mid(i, tot_threads);
             QList<Mda32> time_chunks;
-            double bytes0=0;
-            for (int j=0; j<infos.count(); j++) {
+            double bytes0 = 0;
+            for (int j = 0; j < infos.count(); j++) {
                 Mda32 time_chunk;
                 X.readChunk(time_chunk, 0, infos[j].t1 - infos[j].t_padding, M, infos[j].size + 2 * infos[j].t_padding);
                 time_chunks << time_chunk;
-                bytes0+=time_chunk.totalSize() * sizeof(float);
+                bytes0 += time_chunk.totalSize() * sizeof(float);
             }
             PR.addBytesRead(bytes0);
 #pragma omp parallel for num_threads(tot_threads)
-            for (int j=0; j<infos.count(); j++) {
+            for (int j = 0; j < infos.count(); j++) {
                 FSC.processTimeChunk(infos[j].t1, time_chunks[j], infos[j].t_padding, infos[j].t_padding);
             }
             PR.addBytesProcessed(bytes0);
@@ -460,8 +461,8 @@ QList<TimeChunkInfo> get_time_chunk_infos(bigint M, bigint N, int num_simultaneo
     bigint chunk_size = RAM_available_for_chunks_bytes / (M * num_simultaneous * 4);
     if (chunk_size > N)
         chunk_size = N;
-    if (N<chunk_size*min_num_chunks) {
-        chunk_size=N/min_num_chunks;
+    if (N < chunk_size * min_num_chunks) {
+        chunk_size = N / min_num_chunks;
     }
     if (chunk_size < 20000)
         chunk_size = 20000;
