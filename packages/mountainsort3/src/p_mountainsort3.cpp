@@ -124,13 +124,17 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
     QList<QList<int> > neighborhood_batches = get_neighborhood_batches(M, num_simultaneous_neighborhoods);
     QList<TimeChunkInfo> time_chunk_infos;
 
+    // The amount of clips data (in the neighborhood sorters) that is permitted to stay in memory
+    bigint clips_RAM=20e9; //how to set this?
+    bigint clips_RAM_per_neighborhood=clips_RAM/M;
+
     QMap<int, NeighborhoodSorter*> neighborhood_sorters;
     QMap<int, QList<int> > neighborhood_channels;
     for (bigint m = 1; m <= M; m++) {
         neighborhood_sorters[m] = new NeighborhoodSorter;
         neighborhood_sorters[m]->setOptions(opts);
-        neighborhood_sorters[m]->setNumThreads(num_threads_within_neighborhoods);
-        neighborhood_channels[m] = get_channels_from_geom(geom, m, opts.adjacency_radius);
+        neighborhood_channels[m] = get_channels_from_geom(Geom, m, opts.adjacency_radius);
+        neighborhood_sorters[m]->setMaxRAM(clips_RAM_per_neighborhood); //allow each neighborhood sorter to store a certain amount of clips in memory -- after that they store it temporarily on the disk
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -178,7 +182,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
             {
                 m = neighborhoods[k]; //I don't know why this needs to be in a critical section
             }
-            neighborhood_sorters[m]->sort();
+            neighborhood_sorters[m]->sort(num_threads_within_neighborhoods);
 #pragma omp critical(a1)
             {
                 bytes0 += X.N2() * sizeof(float);

@@ -11,10 +11,10 @@ public:
     NeighborhoodSorter();
     virtual ~NeighborhoodSorter();
 
-    void setNumThreads(int num_threads);
     void setOptions(P_mountainsort3_opts opts);
+    void setMaxRAM(bigint max_ram_bytes);
     void addTimeChunk(bigint t, const Mda32& X, bigint padding_left, bigint padding_right);
-    void sort();
+    void sort(int num_threads);
     QVector<double> times() const;
     QVector<int> labels() const;
     Mda32 templates() const;
