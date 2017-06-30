@@ -13,8 +13,8 @@ public:
     NeighborhoodSorter* q;
     P_mountainsort3_opts m_opts;
 
+    bigint m_max_ram_bytes=1e9;
     bigint m_M = 0;
-    int m_num_threads = 1;
     QVector<double> m_times;
     QVector<DiskBackedMda32> m_accumulated_clips;
     QVector<Mda32> m_accumulated_clips_buffer;
@@ -44,14 +44,14 @@ NeighborhoodSorter::~NeighborhoodSorter()
     delete d;
 }
 
-void NeighborhoodSorter::setNumThreads(int num_threads)
-{
-    d->m_num_threads = num_threads;
-}
-
 void NeighborhoodSorter::setOptions(P_mountainsort3_opts opts)
 {
     d->m_opts = opts;
+}
+
+void NeighborhoodSorter::setMaxRAM(bigint max_ram_bytes)
+{
+    d->m_max_ram_bytes=max_ram_bytes;
 }
 
 void NeighborhoodSorter::addTimeChunk(bigint t,const Mda32& X, bigint padding_left, bigint padding_right)
@@ -81,30 +81,46 @@ void NeighborhoodSorter::addTimeChunk(bigint t,const Mda32& X, bigint padding_le
         d->m_times << t0 - padding_left + t;
     }
     d->m_accumulated_clips_buffer << clips0;
-    if (d->size_of_accumulated_clips_buffer()>1e9)
+    if (d->size_of_accumulated_clips_buffer()>d->m_max_ram_bytes)
         d->clear_accumulated_clips_buffer();
 }
 
-void NeighborhoodSorter::sort()
+void NeighborhoodSorter::sort(int num_threads)
 {
     int T = d->m_opts.clip_size;
-
-    d->clear_accumulated_clips_buffer(); //important!
 
     // get the clips
     Mda32 clips;
     clips.allocate(d->m_M,T,d->m_times.count());
-    bigint ii=0;
-    for (bigint j=0; j<d->m_accumulated_clips.count(); j++) {
-        Mda32 clips0;
-        d->m_accumulated_clips[j].retrieve(clips0);
-        d->m_accumulated_clips[j].remove();
-        clips.setChunk(clips0,0,0,ii);
-        ii+=clips0.N3();
+
+    if (d->m_accumulated_clips.count()>0) {
+        d->clear_accumulated_clips_buffer(); //important!
+
+        bigint ii=0;
+        for (bigint j=0; j<d->m_accumulated_clips.count(); j++) {
+            Mda32 clips0;
+            d->m_accumulated_clips[j].retrieve(clips0);
+            d->m_accumulated_clips[j].remove(); //remove the temporary file
+            clips.setChunk(clips0,0,0,ii);
+            ii+=clips0.N3();
+        }
+        if (ii!=d->m_times.count()) {
+            qWarning() << "Unexpected error putting together the clips in NeighborhoodSorter::sort()." << ii << d->m_times.count();
+            abort();
+        }
     }
-    if (ii!=d->m_times.count()) {
-        qWarning() << "Unexpected error putting together the clips in NeighborhoodSorter::sort()." << ii << d->m_times.count();
-        abort();
+    else {
+        bigint ii=0;
+        for (bigint j=0; j<d->m_accumulated_clips_buffer.count(); j++) {
+            Mda32 clips0=d->m_accumulated_clips_buffer[j];
+            clips.setChunk(clips0,0,0,ii);
+            ii+=clips0.N3();
+        }
+        if (ii!=d->m_times.count()) {
+            qWarning() << "Unexpected error putting together the clips in NeighborhoodSorter::sort() (*)." << ii << d->m_times.count();
+            abort();
+        }
+        d->m_accumulated_clips_buffer.clear();
     }
 
     // dimension reduce clips
@@ -118,7 +134,7 @@ void NeighborhoodSorter::sort()
     d->m_labels = sort_clips(reduced_clips, ooo);
 
     // Compute templates
-    d->m_templates = d->compute_templates_from_clips(clips, d->m_labels, d->m_num_threads);
+    d->m_templates = d->compute_templates_from_clips(clips, d->m_labels, num_threads);
 
     // Consolidate clusters
     Consolidate_clusters_opts oo;
@@ -140,7 +156,7 @@ void NeighborhoodSorter::sort()
     }
 
     // Compute templates
-    d->m_templates = d->compute_templates_from_clips(clips, d->m_labels, d->m_num_threads);
+    d->m_templates = d->compute_templates_from_clips(clips, d->m_labels, num_threads);
 }
 
 QVector<double> NeighborhoodSorter::times() const
@@ -320,7 +336,7 @@ DiskBackedMda32::DiskBackedMda32(const Mda32 &X)
 
 DiskBackedMda32::~DiskBackedMda32()
 {
-    //don't remove here
+    //don't remove here -- user must call remove() explicitly
 }
 
 void DiskBackedMda32::store(const Mda32 &X)
