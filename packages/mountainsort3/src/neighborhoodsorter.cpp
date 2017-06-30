@@ -17,10 +17,14 @@ public:
     int m_num_threads = 1;
     QVector<double> m_times;
     QVector<DiskBackedMda32> m_accumulated_clips;
+    QVector<Mda32> m_accumulated_clips_buffer;
     double m_num_bytes = 0;
 
     QVector<int> m_labels;
     Mda32 m_templates;
+
+    bigint size_of_accumulated_clips_buffer();
+    void clear_accumulated_clips_buffer();
 
     static void dimension_reduce_clips(Mda32& ret, const Mda32& clips, bigint num_features_per_channel, bigint max_samples);
     static Mda32 compute_templates_from_clips(const Mda32& clips, const QVector<int>& labels, int num_threads);
@@ -76,15 +80,16 @@ void NeighborhoodSorter::addTimeChunk(bigint t,const Mda32& X, bigint padding_le
         clips0.setChunk(clip0,0,0,i);
         d->m_times << t0 - padding_left + t;
     }
-    {
-        DiskBackedMda32 tmp(clips0);
-        d->m_accumulated_clips << tmp;
-    }
+    d->m_accumulated_clips_buffer << clips0;
+    if (d->size_of_accumulated_clips_buffer()>1e9)
+        d->clear_accumulated_clips_buffer();
 }
 
 void NeighborhoodSorter::sort()
 {
     int T = d->m_opts.clip_size;
+
+    d->clear_accumulated_clips_buffer(); //important!
 
     // get the clips
     Mda32 clips;
@@ -151,6 +156,34 @@ QVector<int> NeighborhoodSorter::labels() const
 Mda32 NeighborhoodSorter::templates() const
 {
     return d->m_templates;
+}
+
+bigint NeighborhoodSorterPrivate::size_of_accumulated_clips_buffer()
+{
+    bigint ret=0;
+    for (bigint i=0; i<m_accumulated_clips_buffer.count(); i++) {
+        ret+=m_accumulated_clips_buffer[i].totalSize()*sizeof(float);
+    }
+    return ret;
+}
+
+void NeighborhoodSorterPrivate::clear_accumulated_clips_buffer()
+{
+    bigint L=0;
+    for (bigint i=0; i<m_accumulated_clips_buffer.count(); i++) {
+        L+=m_accumulated_clips_buffer[i].N3();
+    }
+    if (L>0) {
+        Mda32 clips0(m_M,m_opts.clip_size,L);
+        bigint jj=0;
+        for (bigint i=0; i<m_accumulated_clips_buffer.count(); i++) {
+            clips0.setChunk(m_accumulated_clips_buffer[i],0,0,jj);
+            jj+=m_accumulated_clips_buffer[i].N3();
+        }
+        DiskBackedMda32 tmp(clips0);
+        m_accumulated_clips << tmp;
+        m_accumulated_clips_buffer.clear();
+    }
 }
 
 void NeighborhoodSorterPrivate::dimension_reduce_clips(Mda32& ret, const Mda32& clips, bigint num_features_per_channel, bigint max_samples)
