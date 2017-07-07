@@ -137,27 +137,30 @@ void NeighborhoodSorter::sort(int num_threads)
     ooo.max_samples = d->m_opts.max_pca_samples;
     ooo.num_features = d->m_opts.num_features;
     d->m_labels = sort_clips(reduced_clips, ooo);
+    qDebug().noquote() << QString("Sorted %1 clips and found %2 clusters").arg(reduced_clips.N3()).arg(MLCompute::max(d->m_labels));
 
     // Compute templates
     d->m_templates = d->compute_templates_from_clips(clips, d->m_labels, num_threads);
 
     // Consolidate clusters
-    Consolidate_clusters_opts oo;
-    QMap<int, int> label_map = consolidate_clusters(d->m_templates, oo);
-    QVector<bigint> inds_to_keep;
-    for (bigint i = 0; i < d->m_labels.count(); i++) {
-        int k0 = d->m_labels[i];
-        if ((k0 > 0) && (label_map[k0] > 0))
-            inds_to_keep << i;
-    }
-    qDebug().noquote() << QString("Consolidate. Keeping %1 of %2 events").arg(inds_to_keep.count()).arg(d->m_labels.count());
-    d->m_times = d->get_subarray(d->m_times, inds_to_keep);
-    d->m_labels = d->get_subarray(d->m_labels, inds_to_keep);
-    clips = d->get_subclips(clips, inds_to_keep);
-    reduced_clips = d->get_subclips(reduced_clips, inds_to_keep);
-    for (bigint i = 0; i < d->m_labels.count(); i++) {
-        int k0 = label_map[d->m_labels[i]];
-        d->m_labels[i] = k0;
+    if (d->m_opts.consolidate_clusters) {
+        Consolidate_clusters_opts oo;
+        QMap<int, int> label_map = consolidate_clusters(d->m_templates, oo);
+        QVector<bigint> inds_to_keep;
+        for (bigint i = 0; i < d->m_labels.count(); i++) {
+            int k0 = d->m_labels[i];
+            if ((k0 > 0) && (label_map[k0] > 0))
+                inds_to_keep << i;
+        }
+        qDebug().noquote() << QString("Consolidate. Keeping %1 of %2 events").arg(inds_to_keep.count()).arg(d->m_labels.count());
+        d->m_times = d->get_subarray(d->m_times, inds_to_keep);
+        d->m_labels = d->get_subarray(d->m_labels, inds_to_keep);
+        clips = d->get_subclips(clips, inds_to_keep);
+        reduced_clips = d->get_subclips(reduced_clips, inds_to_keep);
+        for (bigint i = 0; i < d->m_labels.count(); i++) {
+            int k0 = label_map[d->m_labels[i]];
+            d->m_labels[i] = k0;
+        }
     }
 
     // Compute templates
@@ -371,7 +374,7 @@ void NeighborhoodSorterPrivate::get_clip(Mda32& clip, const Mda32& X, const QLis
     clip.allocate(M, T);
     for (int t = 0; t < T; t++) {
         for (int m = 0; m < M; m++) {
-            clip.set(X.value(channels[m], t0 + t - Tmid), m, t);
+            clip.set(X.value(channels[m] - 1, t0 + t - Tmid), m, t);
         }
     }
 }
