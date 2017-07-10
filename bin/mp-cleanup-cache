@@ -1,1 +1,2 @@
-../mountainprocess/bin/mp-cleanup-cache
+#!/bin/bash
+mountainprocess cleanup-cache "$@"
