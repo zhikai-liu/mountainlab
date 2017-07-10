@@ -11,11 +11,14 @@ The software comprises tools for processing electrophysiological recordings and 
 Contact the authors for information on the slack team for users and developers.
 
 ## Important notice ##
-I believe in continually simplifying the code base. That involves deleting a lot of stuff. Of course, when users start to depend on the software it is not right to pull the rug out from under them. It is always a challenge to decide which new version to pull into the master branch, which is the default branch when users visit this site.
+I believe in continually simplifying the code base. That sometimes involves deleting a lot of files. Of course, when users start to depend on the software it is not right to pull the rug out from under them. It is challenging to decide which new version to incorporate into the (default) master branch.
 
-Therefore we will be migrating into the following system. The master branch will ultimately not contain any code, but will rather be a table of contents to the various software versions (branches). This will allow you to stay on your preferred version until you are ready to switch to the newer stable version. In the short term, this branch (master) will still function. But I would recommend that you switch to the 2017_06 branch (below) which will be a snapshot (of master right now) with only critical bug fixes.
+We will therefore be migrating into the following system. The (default) master branch will ultimately not contain any code, but will rather be a table of contents to the various software versions (branches). This will allow you to stay on your preferred version until you are ready to switch to the newer stable version. In the short term, the master branch will still function. But I would recommend that you switch to the 2017_06 branch (below) which will be a snapshot (of master right now) with only critical bug fixes.
 
-[2017_06 branch](https://github.com/magland/mountainlab/tree/2017_06) - snapshot with only critical bug fix updates
+* [2017_06 branch](https://github.com/magland/mountainlab/tree/2017_06) - snapshot with only critical bug fix updates
+
+* [ms3](https://github.com/magland/mountainlab/tree/ms3) - development branch with the ms3 processing pipeline
+
 
 ## Installation
 
