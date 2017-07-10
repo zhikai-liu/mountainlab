@@ -40,16 +40,6 @@ We will therefore be migrating into the following system. The (default) master b
 
 [Cluster metrics and automated curation](doc/metrics_automated_curation.md)
 
-## Older information
-
-Here is an old tutorial for running spike sorting:
-
-https://mountainlab.vbulletin.net/articles/15-running-spike-sorting-using-mountainlab
-
-[About the software](https://mountainlab.vbulletin.net/articles/22-about-mountainlab)
-
-[Old: Forum](https://mountainlab.vbulletin.net/) -- including documentation and latest developments
-
 ## References
 
 [Barnett, Alex H., Jeremy F. Magland, and Leslie F. Greengard. "Validation of Neural Spike Sorting Algorithms without Ground-truth Information." Journal of Neuroscience Methods 264 (2016): 65-77.](http://www.ncbi.nlm.nih.gov/pubmed/26930629) [Link to arXiv](http://arxiv.org/abs/1508.06936)
