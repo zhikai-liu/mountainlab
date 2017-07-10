@@ -4,8 +4,8 @@ CONFIG -= app_bundle #Please apple, don't make a bundle today :)
 
 CONFIG += c++11
 
-include(../../../mlcommon/mlcommon.pri)
-include(../../../mlcommon/mda.pri)
+include(../../../cpp/mlcommon/mlcommon.pri)
+include(../../../cpp/mlcommon/mda.pri)
 
 DESTDIR = ../bin
 OBJECTS_DIR = ../build
@@ -81,12 +81,12 @@ HEADERS += \
     hungarian.h \
     p_generate_background_dataset.h
 
-INCLUDEPATH += ../../../mountainsort/src/isosplit5
-VPATH += ../../../mountainsort/src/isosplit5
+INCLUDEPATH += ../../../cpp/mountainsort/src/isosplit5
+VPATH += ../../../cpp/mountainsort/src/isosplit5
 HEADERS += isosplit5.h isocut5.h jisotonic5.h
 SOURCES += isosplit5.cpp isocut5.cpp jisotonic5.cpp
 
-INCLUDEPATH += ../../../mountainsort/src/utils
-VPATH += ../../../mountainsort/src/utils
+INCLUDEPATH += ../../../cpp/mountainsort/src/utils
+VPATH += ../../../cpp/mountainsort/src/utils
 HEADERS += pca.h get_sort_indices.h compute_templates_0.h
 SOURCES += pca.cpp get_sort_indices.cpp compute_templates_0.cpp
