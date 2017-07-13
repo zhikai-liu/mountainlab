@@ -8,16 +8,18 @@ QT       += testlib qml
 
 QT       -= gui
 
+DESTDIR = ../
 TARGET = tst_counterstest
 CONFIG   += console c++11
 CONFIG   -= app_bundle
 
 TEMPLATE = app
 
-include(../../../mlcommon/mlcommon.pri)
-include(../../../mvcommon/mvcommon.pri)
+include(../setupdirs.pri)
+include($${MOUNTAINLAB_CPP}/mlcommon/mlcommon.pri)
+include($${MOUNTAINLAB_CPP}/mvcommon/mvcommon.pri)
 
 
-INCLUDEPATH += ../../../mountainview/src/misc/
+INCLUDEPATH += $${MOUNTAINLAB_CPP}/mountainview/src/misc/
 SOURCES += tst_counterstest.cpp
 DEFINES += SRCDIR=\\\"$$PWD/\\\"

@@ -8,11 +8,13 @@ QT       += testlib
 
 QT       -= gui
 
+DESTDIR = ..
 TARGET = tst_processmanagertest
 CONFIG   += console c++11
 CONFIG   -= app_bundle
 
-include(../../../mlcommon/mlcommon.pri)
+include(../setupdirs.pri)
+include($${MOUNTAINLAB_CPP}/mlcommon/mlcommon.pri)
 
 TEMPLATE = app
 
