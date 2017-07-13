@@ -6,9 +6,9 @@ var fs=require('fs');
 var path=require('path');
 var child_process=require('child_process');
 
-var config=JSON.parse(fs.readFileSync(__dirname+'/../mountainlab.default.json','utf8'));
+var config=JSON.parse(fs.readFileSync(__dirname+'/../settings/mountainlab.default.json','utf8'));
 try {
-	var config_user_json=fs.readFileSync(__dirname+'/../mountainlab.user.json','utf8');
+	var config_user_json=fs.readFileSync(__dirname+'/../settings/mountainlab.user.json','utf8');
 	var config_user=JSON.parse(config_user_json);
 	config=extend(true,config,config_user);
 }
