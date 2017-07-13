@@ -710,7 +710,7 @@ void run_process(QString processor_name, QMap<QString, QVariant> inputs, QMap<QS
     if (force_run) {
         args << "--_force_run";
     }
-    QString exe = MLUtil::mountainlabBasePath() + "/mountainprocess/bin/mountainprocess";
+    QString exe = MLUtil::mountainlabBasePath() + "/cpp/mountainprocess/bin/mountainprocess";
     task.log() << "Running process:" << args.join(" ");
     QProcess P;
     P.start(exe, args);
@@ -862,7 +862,7 @@ QJsonValue MLUtil::configValue(const QString& group, const QString& key)
 {
     QString json1_fname = MLUtil::mountainlabBasePath() + "/settings/mountainlab.default.json";
     if (!QFile::exists(json1_fname)) {
-        qWarning() << "Unexpected problem. Configuration file does not exist: " + json1_fname;
+        qWarning() << "Unexpected problem. Configuration file does not exist *: " + json1_fname;
         abort();
         return QJsonValue();
     }

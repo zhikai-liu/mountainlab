@@ -163,7 +163,7 @@ void MountainProcessRunner::runProcess()
     //if (d->m_mscmdserver_url.isEmpty()) {
     if (d->m_mlproxy_url.isEmpty()) {
         //QString mountainsort_exe = mountainlabBasePath() + "/mountainsort/bin/mountainsort";
-        QString mountainprocess_exe = MLUtil::mountainlabBasePath() + "/mountainprocess/bin/mountainprocess";
+        QString mountainprocess_exe = MLUtil::mountainlabBasePath() + "/cpp/mountainprocess/bin/mountainprocess";
         QStringList args;
         args << "run-process";
         args << d->m_processor_name;
