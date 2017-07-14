@@ -14,7 +14,7 @@ MOC_DIR=../build
 TARGET = mountainsort
 TEMPLATE = app
 
-QMAKE_POST_LINK += cp $$PWD/../bin/mountainsort $$PWD/../../mountainprocess/#processors/mountainsort.mp
+QMAKE_POST_LINK += cp $$PWD/../bin/mountainsort $$PWD/../../mountainprocess/processors/mountainsort.mp
 
 INCLUDEPATH += utils core processors mda 3rdparty isosplit isosplit5
 
