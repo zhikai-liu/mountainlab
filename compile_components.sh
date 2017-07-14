@@ -100,3 +100,14 @@ else
 		fi
 	fi
 fi
+
+if [ -f mountainlab.user.json ]; then
+	echo "******************************************"
+	echo "It appears you are in a directory that used to"
+	echo "be occupied by an older version of mountainlab."
+	echo "I suspect that because mountainlab.user.json is"
+	echo "in the old location. It is highly recommended that"
+	echo "you do a fresh clone of mountainlab, checkout this"
+	echo "branch and then compile. Questions? Ask Jeremy."
+	echo "******************************************"
+fi
