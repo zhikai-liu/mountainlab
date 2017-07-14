@@ -26,6 +26,7 @@ HEADERS += mlcommon.h sumit.h \
     ../include/qprocessmanager.h \
     ../include/signalhandler.h \
     ../include/mllog.h \
+    ../include/tracing/tracing.h \
     ../include/mlvector.h \
     ../include/get_sort_indices.h
 
@@ -40,6 +41,7 @@ SOURCES += \
     qprocessmanager.cpp \
     signalhandler.cpp \
     mllog.cpp \
+    tracing/tracing.cpp \
     mlvector.cpp \
     get_sort_indices.cpp
 
