@@ -39,9 +39,9 @@ void FitStageComputer::setTimesLabels(const QVector<double>& times, const QVecto
 
 void FitStageComputer::processTimeChunk(bigint t, const Mda32& X, bigint padding_left, bigint padding_right)
 {
-    int M = X.N1();
-    int T = d->m_templates.N2();
-    int Tmid = (int)((T + 1) / 2) - 1;
+    //int M = X.N1();
+    //int T = d->m_templates.N2();
+    //int Tmid = (int)((T + 1) / 2) - 1;
 
     {
         QVector<bigint> local_event_inds;

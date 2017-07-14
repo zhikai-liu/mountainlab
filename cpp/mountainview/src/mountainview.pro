@@ -67,7 +67,7 @@ SOURCES += clustercontextmenuplugin.cpp
 
 
 SOURCES += mountainviewmain.cpp \
-    guides/individualmergedecisionpage.cpp \
+    #guides/individualmergedecisionpage.cpp \
     views/mvspikespraypanel.cpp \
     views/firetrackview.cpp \
     views/ftelectrodearrayview.cpp \
@@ -87,7 +87,8 @@ VPATH += multiscaletimeseries
 HEADERS += multiscaletimeseries.h
 SOURCES += multiscaletimeseries.cpp
 
-HEADERS += guides/individualmergedecisionpage.h \
+HEADERS += \
+    #guides/individualmergedecisionpage.h \
     views/mvspikespraypanel.h \
     views/firetrackview.h \
     views/ftelectrodearrayview.h \
@@ -103,8 +104,8 @@ HEADERS += guides/individualmergedecisionpage.h \
 #HEADERS += computationthread.h
 #SOURCES += computationthread.cpp
 
-HEADERS += guides/guidev1.h guides/guidev2.h
-SOURCES += guides/guidev1.cpp guides/guidev2.cpp
+#HEADERS += guides/guidev1.h guides/guidev2.h
+#SOURCES += guides/guidev1.cpp guides/guidev2.cpp
 
 INCLUDEPATH += views
 VPATH += views
@@ -114,7 +115,8 @@ mvclipswidget.h \
 mvclusterview.h mvclusterwidget.h mvcrosscorrelogramswidget3.h \
 mvdiscrimhistview.h mvfiringeventview2.h mvhistogramgrid.h \
 mvspikesprayview.h mvtimeseriesrendermanager.h mvtimeseriesview2.h \
-mvtimeseriesviewbase.h spikespywidget.h mvdiscrimhistview_guide.h \
+mvtimeseriesviewbase.h spikespywidget.h \
+#mvdiscrimhistview_guide.h \
 mvclusterlegend.h
 SOURCES += \
 correlationmatrixview.cpp histogramview.cpp mvamphistview2.cpp mvamphistview3.cpp histogramlayer.cpp \
@@ -122,7 +124,8 @@ mvclipswidget.cpp \
 mvclusterview.cpp mvclusterwidget.cpp mvcrosscorrelogramswidget3.cpp \
 mvdiscrimhistview.cpp mvfiringeventview2.cpp mvhistogramgrid.cpp \
 mvspikesprayview.cpp mvtimeseriesrendermanager.cpp mvtimeseriesview2.cpp \
-mvtimeseriesviewbase.cpp spikespywidget.cpp mvdiscrimhistview_guide.cpp \
+mvtimeseriesviewbase.cpp spikespywidget.cpp \
+#mvdiscrimhistview_guide.cpp \
 mvclusterlegend.cpp
 
 INCLUDEPATH += controlwidgets
@@ -139,10 +142,10 @@ VPATH += controlwidgets/mvexportcontrol
 HEADERS += mvexportcontrol.h
 SOURCES += mvexportcontrol.cpp
 
-INCLUDEPATH += guides
-VPATH += guides
-HEADERS += clustercurationguide.h
-SOURCES += clustercurationguide.cpp
+#INCLUDEPATH += guides
+#VPATH += guides
+#HEADERS += clustercurationguide.h
+#SOURCES += clustercurationguide.cpp
 
 ## TODO: REMOVE THIS:
 HEADERS += computationthread.h

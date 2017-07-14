@@ -42,19 +42,31 @@ then
   exit 1
 fi
 
+args0=""
+components0=""
+for var in "$@"; do
+	if [[ "$var" == "nogui" ]]; then
+		args0="$args0 \"GUI = off\""
+	elif [[ "$var" == "default" ]]; then
+		echo ""
+	else
+		components0="$components0 $var"
+	fi
+
+    [ "$var" == 'nogui' ] && ARGS+=("$var")
+done
+
 qmake -recursive
 
-if [[ $1 == "default" ]]; then
-eval qmake
-elif [ -z "$1" ]; then
-eval qmake
+if [ -z "$components0" ]; then
+eval qmake $args0
 else
-eval qmake \"COMPONENTS = $@\"
+eval qmake \"COMPONENTS = $components0\" $args0
 fi
 
-sha1sum_output_before=$(sha1sum mountainprocess/bin/mountainprocess)
+sha1sum_output_before=$(sha1sum cpp/mountainprocess/bin/mountainprocess)
 
-make -j 8
+make -j
 EXIT_CODE=$?
 if [[ $EXIT_CODE -ne 0 ]]; then
 	echo "Problem in compilation."
@@ -74,7 +86,7 @@ else
 		echo "******************************************"
 	fi
 
-	sha1sum_output_after=$(sha1sum mountainprocess/bin/mountainprocess)
+	sha1sum_output_after=$(sha1sum cpp/mountainprocess/bin/mountainprocess)
 	if [[ $sha1sum_output_before != $sha1sum_output_after ]]; then
 		output=$(bin/mp-daemon-state-summary)
 		if [[ $output == "Daemon is running"* ]]; then

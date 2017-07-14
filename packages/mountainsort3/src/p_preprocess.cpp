@@ -95,7 +95,7 @@ using namespace Preprocess;
 
 bool p_preprocess(QString timeseries, QString timeseries_out, QString temp_path, P_preprocess_opts opts)
 {
-
+    (void)temp_path;
     DiskReadMda32 X(timeseries);
     int M = X.N1();
     bigint N = X.N2();
@@ -177,11 +177,16 @@ QList<TimeChunkInfo> get_time_chunk_infos(bigint M, bigint N, int num_simultaneo
 
 void get_whitening_matrix_by_sampling(Mda& matrix, const DiskReadMda32& X, P_preprocess_opts opts)
 {
+    (void)matrix;
+    (void)X;
+    (void)opts;
     //finish
 }
 
 void preprocess_time_chunk(Mda32& Y, const Mda32& X, const Mda& whitening_matrix, P_preprocess_opts opts)
 {
+    (void)whitening_matrix;
+    (void)opts;
     //finish
     Y = X;
 }

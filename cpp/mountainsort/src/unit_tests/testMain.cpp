@@ -1,6 +1,6 @@
 #include "testMda.h"
 #include "testMdaIO.h"
-#include "testBandpassFilter.h"
+//#include "testBandpassFilter.h"
 
 template <typename TestClass>
 int runTest(int argc, char** argv)
@@ -17,6 +17,6 @@ int main(int argc, char** argv)
     QCoreApplication app(argc, argv);
     runTest<TestMda>(argc, argv);
     runTest<TestMdaIO>(argc, argv);
-    runTest<TestBandpassFilter>(argc, argv);
+    //runTest<TestBandpassFilter>(argc, argv);
     return 0;
 }

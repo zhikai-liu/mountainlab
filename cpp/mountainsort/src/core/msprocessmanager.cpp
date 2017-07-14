@@ -8,59 +8,60 @@
 #include <QCryptographicHash>
 
 #include "example_processor.h"
-#include "bandpass_filter_processor.h"
-#include "whiten_processor.h"
-#include "normalize_channels_processor.h"
-#include "detect_processor.h"
-#include "branch_cluster_v2_processor.h"
-#include "remove_duplicate_clusters_processor.h"
-#include "compute_outlier_scores_processor.h"
-#include "compute_detectability_scores_processor.h"
-#include "copy_processor.h"
-#include "mda2txt_processor.h"
 #include "mask_out_artifacts_processor.h"
-#include "fit_stage_processor.h"
 #include "compute_templates_processor.h"
 #include "mlcommon.h"
-#include "mv_firings_filter_processor.h"
 #include "mv_subfirings_processor.h"
 #include "mv_compute_templates_processor.h"
 #include "extract_clips_processor.h"
-#include "extract_clips_aa_processor.h"
-#include "link_firings_files_aa_processor.h"
-#include "combine_firings_files_aa_processor.h"
 #include "extract_clips_features_processor.h"
-#include "merge_labels_processor.h"
-#include "filter_events_processor.h"
-#include "confusion_matrix_processor.h"
-#include "extract_raw_processor.h"
-#include "merge_across_channels_processor.h"
-#include "merge_across_channels_v2_processor.h"
-#include "geom2adj_processor.h"
-#include "extract_geom_processor.h"
 #include "create_multiscale_timeseries_processor.h"
 #include "extract_channel_values_processor.h"
 #include "mv_discrimhist_processor.h"
-#include "mv_discrimhist_guide_processor.h"
-#include "mv_discrimhist_guide2_processor.h"
 #include "firings_subset_processor.h"
-#include "quantize_processor.h"
-#include "merge_stage_processor.h"
-#include "synthesize1_processor.h"
 #include "compute_amplitudes_processor.h"
-#include "merge_firings_processor.h"
-#include "add_noise_processor.h"
-#include "remove_noise_clusters_processor.h"
-#include "cluster_scores_processor.h"
-#include "noise_nearest_processor.h"
-#include "ms_metrics_processor.h"
-#include "basic_metrics_processor.h"
-#include "isocluster_v1_processor.h"
-#include "isocluster_v2_processor.h"
-#include "cluster_aa_processor.h"
-#include "isocluster_drift_v1_processor.h"
-#include "concat_mda_processor.h"
-#include "split_timeseries_processor.h"
+//#include "bandpass_filter_processor.h"
+//#include "whiten_processor.h"
+//#include "normalize_channels_processor.h"
+//#include "detect_processor.h"
+//#include "branch_cluster_v2_processor.h"
+//#include "remove_duplicate_clusters_processor.h"
+//#include "compute_outlier_scores_processor.h"
+//#include "compute_detectability_scores_processor.h"
+//#include "copy_processor.h"
+//#include "mda2txt_processor.h"
+//#include "fit_stage_processor.h"
+//#include "mv_firings_filter_processor.h"
+//#include "extract_clips_aa_processor.h"
+//#include "link_firings_files_aa_processor.h"
+//#include "combine_firings_files_aa_processor.h"
+//#include "merge_labels_processor.h"
+//#include "filter_events_processor.h"
+//#include "confusion_matrix_processor.h"
+//#include "extract_raw_processor.h"
+//#include "merge_across_channels_processor.h"
+//#include "merge_across_channels_v2_processor.h"
+//#include "geom2adj_processor.h"
+//#include "extract_geom_processor.h"
+//#include "mv_discrimhist_guide_processor.h"
+//#include "mv_discrimhist_guide2_processor.h"
+//#include "quantize_processor.h"
+//#include "merge_stage_processor.h"
+//#include "synthesize1_processor.h"
+//#include "merge_firings_processor.h"
+//#include "add_noise_processor.h"
+//#include "remove_noise_clusters_processor.h"
+//#include "cluster_scores_processor.h"
+//#include "noise_nearest_processor.h"
+//#include "ms_metrics_processor.h"
+//#include "basic_metrics_processor.h"
+//#include "isocluster_v1_processor.h"
+//#include "isocluster_v2_processor.h"
+//#include "cluster_aa_processor.h"
+//#include "isocluster_drift_v1_processor.h"
+//#include "concat_mda_processor.h"
+//#include "split_timeseries_processor.h"
+
 #include <sys/stat.h>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -97,61 +98,61 @@ MSProcessManager::~MSProcessManager()
 void MSProcessManager::loadDefaultProcessors()
 {
     loadProcessor(new example_Processor);
-    loadProcessor(new bandpass_filter_Processor);
-    loadProcessor(new whiten_Processor);
-    loadProcessor(new normalize_channels_Processor);
-    loadProcessor(new detect_Processor);
-    loadProcessor(new branch_cluster_v2_Processor);
-    loadProcessor(new remove_duplicate_clusters_Processor);
-    loadProcessor(new compute_outlier_scores_Processor);
-    loadProcessor(new compute_detectability_scores_Processor);
-    loadProcessor(new copy_Processor);
-    loadProcessor(new mda2txt_Processor);
+    //loadProcessor(new bandpass_filter_Processor);
+    //loadProcessor(new whiten_Processor);
+    //loadProcessor(new normalize_channels_Processor);
+    //loadProcessor(new detect_Processor);
+    //loadProcessor(new branch_cluster_v2_Processor);
+    //loadProcessor(new remove_duplicate_clusters_Processor);
+    //loadProcessor(new compute_outlier_scores_Processor);
+    //loadProcessor(new compute_detectability_scores_Processor);
+    //loadProcessor(new copy_Processor);
+    //loadProcessor(new mda2txt_Processor);
     loadProcessor(new mask_out_artifacts_Processor);
-    loadProcessor(new fit_stage_Processor);
+    //loadProcessor(new fit_stage_Processor);
     loadProcessor(new compute_templates_Processor);
     loadProcessor(new mv_compute_templates_Processor);
-    loadProcessor(new mv_firings_filter_Processor);
+    //loadProcessor(new mv_firings_filter_Processor);
     loadProcessor(new mv_subfirings_Processor);
     loadProcessor(new extract_clips_Processor);
-    loadProcessor(new extract_clips_aa_Processor);
-    loadProcessor(new link_firings_files_aa_Processor);
-    loadProcessor(new combine_firings_files_aa_Processor);
+    //loadProcessor(new extract_clips_aa_Processor);
+    //loadProcessor(new link_firings_files_aa_Processor);
+    //loadProcessor(new combine_firings_files_aa_Processor);
     loadProcessor(new extract_clips_features_Processor);
-    loadProcessor(new merge_labels_Processor);
-    loadProcessor(new filter_events_Processor);
-    loadProcessor(new confusion_matrix_Processor);
-    loadProcessor(new extract_raw_Processor);
-    loadProcessor(new merge_across_channels_Processor);
-    loadProcessor(new merge_across_channels_v2_Processor);
-    loadProcessor(new geom2adj_Processor);
-    loadProcessor(new extract_geom_Processor);
-    loadProcessor(new linear_adjacency_matrix_Processor);
+    //loadProcessor(new merge_labels_Processor);
+    //loadProcessor(new filter_events_Processor);
+    //loadProcessor(new confusion_matrix_Processor);
+    //loadProcessor(new extract_raw_Processor);
+    //loadProcessor(new merge_across_channels_Processor);
+    //loadProcessor(new merge_across_channels_v2_Processor);
+    //loadProcessor(new geom2adj_Processor);
+    //loadProcessor(new extract_geom_Processor);
+    //loadProcessor(new linear_adjacency_matrix_Processor);
     loadProcessor(new create_multiscale_timeseries_Processor);
     loadProcessor(new extract_channel_values_Processor);
     loadProcessor(new mv_discrimhist_Processor);
-    loadProcessor(new mv_discrimhist_guide_Processor);
-    loadProcessor(new mv_discrimhist_guide2_Processor);
+    //loadProcessor(new mv_discrimhist_guide_Processor);
+    //loadProcessor(new mv_discrimhist_guide2_Processor);
     loadProcessor(new firings_subset_Processor);
-    loadProcessor(new quantize_Processor);
-    loadProcessor(new merge_stage_Processor);
-    loadProcessor(new synthesize1_Processor);
+    //loadProcessor(new quantize_Processor);
+    //loadProcessor(new merge_stage_Processor);
+    //loadProcessor(new synthesize1_Processor);
     loadProcessor(new compute_amplitudes_Processor);
-    loadProcessor(new merge_firings_Processor);
-    loadProcessor(new add_noise_Processor);
-    loadProcessor(new remove_noise_clusters_Processor);
-    loadProcessor(new cluster_scores_Processor);
-    loadProcessor(new noise_nearest_Processor);
-    loadProcessor(new ms_metrics_Processor);
-    loadProcessor(new basic_metrics_Processor);
-    loadProcessor(new isocluster_v1_Processor);
-    loadProcessor(new isocluster_v2_Processor);
-    loadProcessor(new cluster_aa_Processor);
-    loadProcessor(new isocluster_drift_v1_Processor);
-    loadProcessor(new concat_mda_Processor);
-    loadProcessor(new split_timeseries_Processor);
-    loadProcessor(new concat_timeseries_Processor);
-    loadProcessor(new split_firings_Processor);
+    //loadProcessor(new merge_firings_Processor);
+    //loadProcessor(new add_noise_Processor);
+    //loadProcessor(new remove_noise_clusters_Processor);
+    //loadProcessor(new cluster_scores_Processor);
+    //loadProcessor(new noise_nearest_Processor);
+    //loadProcessor(new ms_metrics_Processor);
+    //loadProcessor(new basic_metrics_Processor);
+    //loadProcessor(new isocluster_v1_Processor);
+    //loadProcessor(new isocluster_v2_Processor);
+    //loadProcessor(new cluster_aa_Processor);
+    //loadProcessor(new isocluster_drift_v1_Processor);
+    //loadProcessor(new concat_mda_Processor);
+    //loadProcessor(new split_timeseries_Processor);
+    //loadProcessor(new concat_timeseries_Processor);
+    //loadProcessor(new split_firings_Processor);
 }
 
 bool MSProcessManager::containsProcessor(const QString& processor_name) const

@@ -189,6 +189,7 @@ double compute_score(bigint M, bigint T, float* X_ptr, float* template0, const Q
 
 QVector<bigint> find_events_to_use(const QVector<double>& times, const QVector<double>& scores, const Fit_stage_opts& opts, int clip_size)
 {
+    (void)opts;
     QVector<bigint> to_use;
     bigint L = times.count();
     for (bigint i = 0; i < L; i++)

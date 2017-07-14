@@ -108,6 +108,7 @@ using namespace MountainSort3;
 
 bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QString temp_path, const P_mountainsort3_opts& opts)
 {
+    (void)temp_path;
     int tot_threads = omp_get_max_threads();
     omp_set_nested(1);
 
