@@ -1,24 +1,24 @@
 function main(params) {
 	set_default_parameters(params,{
-		samplerate:30000, //Hz
-		freq_min:300,freq_max:6000,freq_wid:1000,quantization_unit:0, //bandpass filter
+		samplerate:30000, //Hz -- the sample rate of the raw input timeseries
+		freq_min:300,freq_max:6000,freq_wid:1000,quantization_unit:0, //bandpass filter between freq_min and freq_max (don't use quantization_unit for now)
 		clip_size_msec:1.67, //clip size for event extraction (default is 50 samples at 30 KHz)
 		detect_interval_msec:0.33, //min separation between two events on same channel (default is 10 samples at 30 KHz)
-		detect_threshold:3.0, //stdevs away from noise
-		detect_sign:0, //-1,0,1
-		whiten:'true', //boolean
-		merge_across_channels:'true', //boolean
-		fit_stage:'true', //boolean
-		num_threads:0,
-		consolidate_clusters:'true', //applies to multineighborhood
-		consolidation_factor:0.9, //applies to multineighborhood and consolidate_clusters=true
-		mask_out_artifacts:'false',		
+		detect_threshold:3.0, //stdevs away from noise. Events will be detected when the amplitude exceeds this value. Use -1,0, or 1 for detect_sign (see below)
+		detect_sign:0, //-1,0,1 -- -1 means it will detect negative amplitude threshold crossings, 0 means both negative or positive, 1 means positive only. It's a good idea to associate this one with the dataset (params.json) not the pipeline in pipelines.txt.
+		whiten:'true', //boolean -- whether to do channel whitening -- usually important for successful separation of clusters
+		merge_across_channels:'true', //boolean -- good idea to set this to true so that you don't have redundant clusters across channel neighborhoods. This is the second phase of cluster consolidation (see the paper)
+		fit_stage:'true', //boolean -- good idea to set this to true so that we don't have redundant events -- redundant events is different from redundant clusters (see the paper)
+		num_threads:0, // number of threads used for parallel processing. Zero means use all threads available (number of logical cores)
+		consolidate_clusters:'true', //bool -- good idea to set this true as it is the crucial first stage of removing redundate clusters -- basically, this parameter is only there for debugging purposes.
+		consolidation_factor:0.9, //applies to consolidation phases for removing clusters (see paper). Lower number is more likely to discard redundant clusters in the second phase rather than the first.
+		mask_out_artifacts:'false',	//If true, removes segments (time chunks) in the input data (after bandpass filter) that have energy that are outliers 
 		mask_out_artifacts_interval:2000, //applies to mask_out_artifacts=true
 		mask_out_artifacts_threshold:6, //applies to mask_out_artifacts=true
-		adjacency_radius:0,
-		channels:'', //comma-separated list of channels to analyze
-		compute_bursting_parents:'true',
-		compute_metrics:'false'
+		adjacency_radius:0, //determines neighborhood sizes and goes along with the input geom.csv -- same units as in that file. I believe zero means every channel is own neighborhood (probably bad idea, so please always specify this) -- somebody, please check on this to verify this is true
+		channels:'', //comma-separated list of channels to analyze. Empty means we analyze all of this. I think this optional feature needs to be debugged/tested.
+		compute_bursting_parents:'true', //Whether to auto-detect bursting pairs based on waveform shape and asymmetric cross-correlogram, which will be output in the metrics. I believe that cluster compute_metrics needs to be true. We should expose the threshold parameters for this. That's a todo.
+		compute_metrics:'false' //Whether to compute metrics, including isolation score and noise overlap. Maybe the default will change to true in the future.
 	});
 	setNumThreads(params.num_threads);
 	var clip_size=Math.floor(params.clip_size_msec/1000*params.samplerate);
