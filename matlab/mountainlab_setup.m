@@ -11,8 +11,8 @@ addpath([mfile_path,'/3rdparty/jsonlab']);
 addpath([mfile_path,'/unit_tests']);
 addpath([mfile_path,'/validation']);
 addpath([mfile_path,'/misc_examples']);
-addpath([mfile_path,'/../mountainsort/src/isosplit']);
-addpath([mfile_path,'/../mountainsort/src/isosplit5']);
+addpath([mfile_path,'/../cpp/mountainsort/src/isosplit']);
+addpath([mfile_path,'/../cpp/mountainsort/src/isosplit5']);
 %addpath([mfile_path,'/../spikespy/matlab']); %added on 4/12/16
 
 % the following removed by jfm, because instead I changed mscmd_exe.m.
