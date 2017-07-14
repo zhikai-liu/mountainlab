@@ -20,8 +20,8 @@
 #include "mv_discrimhist_processor.h"
 #include "firings_subset_processor.h"
 #include "compute_amplitudes_processor.h"
-//#include "bandpass_filter_processor.h"
-//#include "whiten_processor.h"
+#include "bandpass_filter_processor.h"
+#include "whiten_processor.h"
 //#include "normalize_channels_processor.h"
 //#include "detect_processor.h"
 //#include "branch_cluster_v2_processor.h"
@@ -98,8 +98,8 @@ MSProcessManager::~MSProcessManager()
 void MSProcessManager::loadDefaultProcessors()
 {
     loadProcessor(new example_Processor);
-    //loadProcessor(new bandpass_filter_Processor);
-    //loadProcessor(new whiten_Processor);
+    loadProcessor(new bandpass_filter_Processor);
+    loadProcessor(new whiten_Processor);
     //loadProcessor(new normalize_channels_Processor);
     //loadProcessor(new detect_Processor);
     //loadProcessor(new branch_cluster_v2_Processor);

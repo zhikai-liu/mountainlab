@@ -53,15 +53,15 @@ HEADERS += \
     processors/firings_subset_processor.h \
     processors/compute_amplitudes.h \
     processors/compute_amplitudes_processor.h \
-    processors/mv_compute_templates.h
+    processors/mv_compute_templates.h \
+    processors/bandpass_filter_processor.h \
+    processors/bandpass_filter0.h \
+    processors/whiten_processor.h \
+    processors/whiten.h
 
     #processors/example_processor.h \
-    #processors/bandpass_filter_processor.h \
-    #processors/bandpass_filter0.h \
     #processors/detect_processor.h \
     #processors/detect.h \
-    #processors/whiten_processor.h \
-    #processors/whiten.h \
     #processors/branch_cluster_v2_processor.h \
     #processors/branch_cluster_v2.h \
     #processors/branch_cluster_v3_processor.h \
@@ -181,15 +181,15 @@ SOURCES += \
     processors/firings_subset_processor.cpp \
     processors/compute_amplitudes.cpp \
     processors/compute_amplitudes_processor.cpp \
-    processors/mv_compute_templates.cpp
+    processors/mv_compute_templates.cpp \
+    processors/bandpass_filter_processor.cpp \
+    processors/bandpass_filter0.cpp \
+    processors/whiten_processor.cpp \
+    processors/whiten.cpp
 
     #processors/example_processor.cpp \
-    #processors/bandpass_filter_processor.cpp \
-    #processors/bandpass_filter0.cpp \
     #processors/detect_processor.cpp \
     #processors/detect.cpp \
-    #processors/whiten_processor.cpp \
-    #processors/whiten.cpp \
     #processors/branch_cluster_v2_processor.cpp \
     #processors/branch_cluster_v2.cpp \
     #processors/branch_cluster_v3_processor.cpp \
