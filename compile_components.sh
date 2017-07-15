@@ -66,7 +66,21 @@ fi
 
 sha1sum_output_before=$(sha1sum cpp/mountainprocess/bin/mountainprocess)
 
-make -j
+NPROCCMD=$(which nproc)
+
+if [ -z "$NPROCCMD" ]
+then
+  $NPROCCMD="lscpu|awk '/^CPU\(s\)/ { print $2; }'"
+fi
+
+NPROC=$($NPROCCMD)
+
+if [ -z "$NPROC" ]
+then
+  NPROC="2"
+fi
+echo "Building with $NPROC parallel jobs"
+make -j $NPROC
 EXIT_CODE=$?
 if [[ $EXIT_CODE -ne 0 ]]; then
 	echo "Problem in compilation."
