@@ -13,6 +13,7 @@
 #include "p_multineighborhood_sort.h"
 #include "p_preprocess.h"
 #include "p_mountainsort3.h"
+#include "p_run_metrics_script.h"
 #include "omp.h"
 
 QJsonObject get_spec()
@@ -60,6 +61,12 @@ QJsonObject get_spec()
         X.addOptionalParameter("detect_sign", "", 0);
         X.addOptionalParameter("merge_across_channels", "", "true");
         X.addOptionalParameter("fit_stage", "", "true");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.run_metrics_script", "0.1");
+        X.addInputs("metrics", "script");
+        X.addOutputs("metrics_out");
         processors.push_back(X.get_spec());
     }
 
@@ -140,6 +147,12 @@ int main(int argc, char* argv[])
         opts.fit_stage = (CLP.named_parameters.value("fit_stage").toString() == "true");
         QString temp_path = CLP.named_parameters.value("_tempdir").toString();
         ret = p_mountainsort3(timeseries, geom, firings_out, temp_path, opts);
+    }
+    else if (arg1 == "mountainsort.run_metrics_script") {
+        QString metrics = CLP.named_parameters["metrics"].toString();
+        QString script = CLP.named_parameters["script"].toString();
+        QString metrics_out = CLP.named_parameters["metrics_out"].toString();
+        ret = p_run_metrics_script(metrics, script, metrics_out);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

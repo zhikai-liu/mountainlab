@@ -1,5 +1,6 @@
 QT += core
 QT -= gui
+QT += qml
 CONFIG -= app_bundle #Please apple, don't make a bundle today :)
 
 CONFIG += c++11
@@ -37,7 +38,8 @@ SOURCES += \
     reorder_labels.cpp \
     p_mountainsort3.cpp \
     globaltemplatecomputer.cpp fitstagecomputer.cpp \
-    p_preprocess.cpp
+    p_preprocess.cpp \
+    p_run_metrics_script.cpp
 
 HEADERS += \
     mountainsort3_main.h \
@@ -51,7 +53,8 @@ HEADERS += \
     reorder_labels.h \
     p_mountainsort3.h \
     globaltemplatecomputer.h fitstagecomputer.h \
-    p_preprocess.h
+    p_preprocess.h \
+    p_run_metrics_script.h
 
 INCLUDEPATH += ../../../cpp/mountainsort/src/isosplit5
 VPATH += ../../../cpp/mountainsort/src/isosplit5

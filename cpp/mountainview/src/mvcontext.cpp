@@ -820,6 +820,13 @@ void MVContext::loadClusterMetricsFromFile(QString csv_or_json_file_path)
                 obj["metrics"] = metrics;
                 this->setClusterAttributes(k, obj);
             }
+            QJsonArray tags = C["tags"].toArray();
+            QSet<QString> tags_set;
+            for (int aa = 0; aa < tags.count(); aa++) {
+                if (!tags[aa].toString().isEmpty())
+                    tags_set.insert(tags[aa].toString());
+            }
+            this->setClusterTags(k, tags_set);
         }
     }
 }
