@@ -214,8 +214,8 @@ void write_text_file(const QString& path, const QString& txt)
 
 QJsonObject read_config()
 {
-    QString fname1 = qApp->applicationDirPath() + "/../../settings/mountainlab.default.json";
-    QString fname2 = qApp->applicationDirPath() + "/../../settings/mountainlab.user.json";
+    QString fname1 = qApp->applicationDirPath() + "/../../../settings/mountainlab.default.json";
+    QString fname2 = qApp->applicationDirPath() + "/../../../settings/mountainlab.user.json";
     QString json1 = read_text_file(fname1);
     QString json2 = read_text_file(fname2);
     if (json2.isEmpty())
@@ -228,8 +228,8 @@ QJsonObject read_config()
 
 void write_config(QJsonObject obj)
 {
-    QString fname1 = qApp->applicationDirPath() + "/../../settings/mountainlab.default.json";
-    QString fname2 = qApp->applicationDirPath() + "/../../settings/mountainlab.user.json";
+    QString fname1 = qApp->applicationDirPath() + "/../../../settings/mountainlab.default.json";
+    QString fname2 = qApp->applicationDirPath() + "/../../../settings/mountainlab.user.json";
     QString json1 = read_text_file(fname1);
     QJsonObject obj1 = QJsonDocument::fromJson(json1.toUtf8()).object();
     QJsonObject obj2 = dupstend_object(obj1, obj);

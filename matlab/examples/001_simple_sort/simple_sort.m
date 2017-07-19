@@ -2,7 +2,7 @@ function simple_sort
 
 % You must first compile mountainlab and run matlab/mountainlab_setup.m
 
-if ~exist('data','dir') mkdir('data'); end;
+if ~exist('data','dir'), mkdir('data'); end;
 samplerate=30000;
 
 % Simulate a random dataset and save to data/raw.mda
