@@ -1,0 +1,82 @@
+function main(obj) {
+
+    var clusters=load_clusters(obj);
+    console.log('Number of clusters: '+clusters.length);
+
+    // Initialize
+    for (var i in clusters) {
+        clusters[i].removeTag('rejected');
+        clusters[i].removeTag('MUA');
+        clusters[i].setMetric('isolation',1);
+        clusters[i].setMetric('overlap_cluster',0);
+    }
+
+    for (var i in clusters) {
+        if (clusters[i].metric('noise_overlap')>0.05) {
+            console.log('Reject for noise overlap: '+clusters[i].k());
+            clusters[i].addTag('rejected');
+            clusters[i].addTag('noise_overlap');
+        }
+    }
+
+    for (var i in clusters) {	
+        if (clusters[i].metric('peak_snr')<3) {
+            console.log('Reject for peak snr: '+clusters[i].k());
+            clusters[i].addTag('rejected');
+        }
+    }
+
+    for (var i in clusters) {	
+        var iso=clusters[i].metric('isolation');
+        if (iso<0.95) {
+            console.log('MUA: '+clusters[i].k()+' <--> '+clusters[i].metric('overlap_cluster')+' ('+iso+')');
+            clusters[i].addTag('MUA');
+        }
+    }
+}
+
+function Cluster(obj) {
+    var that=this;
+    obj.metrics=obj.metrics||{};
+    obj.tags=obj.tags||[];
+    this.k=function() {
+        return obj.label||0;
+    }
+    this.label=function() {
+        return obj.label||0;
+    }
+    this.hasTag=function(tag) {
+        for (var j in obj.tags) {
+            if (obj.tags[j]==tag) return true;
+        }
+        return false;
+    }
+    this.addTag=function(tag) {
+        if (that.hasTag(tag)) return;
+        obj.tags.push(tag);
+    }
+    this.removeTag=function(tag) {
+        var new_tags=[];
+        for (var j in obj.tags) {
+            if (obj.tags[j]!=tag) {
+                new_tags=obj.tags[j];
+            }
+            obj.tags=new_tags;
+        }
+    }
+    this.metric=function(name) {
+        return obj.metrics[name]||0;
+    }
+    this.setMetric=function(name,val) {
+        obj.metrics[name]=val;
+    }
+}
+
+function load_clusters(obj) {
+    var list=obj.clusters||[];
+    var ret=[];
+    for (var i in list) {
+        ret.push(new Cluster(list[i]));
+    }
+    return ret;
+}

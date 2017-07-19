@@ -53,3 +53,4 @@ Makefile*
 */bin
 */tmp
 *.m~
+*.tmp
