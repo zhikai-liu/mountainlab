@@ -9,7 +9,10 @@ cmd=[cmd,' ',processor_name];
 cmd=[cmd,' ',create_arg_string(inputs)];
 cmd=[cmd,' ',create_arg_string(outputs)];
 cmd=[cmd,' ',create_arg_string(params)];
-system_call(cmd);
+return_code=system_call(cmd);
+if (return_code~=0)
+    error('Error running processor: %s',processor_name);
+end;
 
 function str=create_arg_string(params)
 list={};
@@ -30,6 +33,6 @@ str=strjoin(list,' ');
 function str=create_val_string(val)
 str=num2str(val);
 
-function system_call(cmd)
+function return_code=system_call(cmd)
 cmd=sprintf('LD_LIBRARY_PATH=/usr/local/lib %s',cmd);
-system(cmd);
+return_code=system(cmd);
