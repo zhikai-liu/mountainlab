@@ -176,7 +176,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
     for (int j = 0; j < neighborhood_batches.count(); j++) {
         QList<int> neighborhoods = neighborhood_batches[j];
         double bytes0 = 0;
-#pragma omp parallel for num_threads(num_simultaneous_neighborhoods)
+//#pragma omp parallel for num_threads(num_simultaneous_neighborhoods)
         for (int k = 0; k < neighborhoods.count(); k++) {
             int m;
 #pragma omp critical(m2)

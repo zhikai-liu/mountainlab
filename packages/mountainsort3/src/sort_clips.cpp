@@ -32,7 +32,7 @@ QVector<int> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indice
     bigint T = clips.N2();
     bigint L0 = indices.count();
 
-    //qDebug().noquote() << QString("Sorting clips %1x%2x%3").arg(M).arg(T).arg(L0);
+    qDebug().noquote() << QString("Sorting clips %1x%2x%3").arg(M).arg(T).arg(L0);
 
     Mda32 FF;
     {
@@ -69,12 +69,14 @@ QVector<int> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indice
         //qDebug().noquote() << QString("Time elapsed for isosplit (%1x%2) - K=%3: %4 sec").arg(FF.N1()).arg(FF.N2()).arg(MLCompute::max(labels0)).arg(timer.elapsed() * 1.0 / 1000);
     }
 
+    qDebug() << __FILE__ << __LINE__;
     bigint K0 = MLCompute::max(labels0);
     if (K0 <= 1) {
         //only 1 cluster
         return labels0;
     }
     else {
+        qDebug() << __FILE__ << __LINE__;
         //branch method
         QVector<int> labels_new(L0);
         bigint k_offset = 0;
@@ -96,8 +98,10 @@ QVector<int> sort_clips_subset(const Mda32& clips, const QVector<bigint>& indice
             }
         }
 
+        qDebug() << __FILE__ << __LINE__;
         return labels_new;
     }
+    qDebug() << __FILE__ << __LINE__;
 }
 Mda32 compute_templates(Mda32& clips, const QVector<int>& labels)
 {

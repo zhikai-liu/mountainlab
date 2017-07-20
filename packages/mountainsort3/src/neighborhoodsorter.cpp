@@ -94,11 +94,14 @@ void NeighborhoodSorter::sort(int num_threads)
 {
     int T = d->m_opts.clip_size;
 
+    qDebug() << __FILE__ << __LINE__;
+
     // get the clips
     Mda32 clips;
     clips.allocate(d->m_M, T, d->m_times.count());
 
     if (d->m_accumulated_clips.count() > 0) {
+        qDebug() << __FILE__ << __LINE__;
         d->clear_accumulated_clips_buffer(); //important!
 
         bigint ii = 0;
@@ -115,6 +118,7 @@ void NeighborhoodSorter::sort(int num_threads)
         }
     }
     else {
+        qDebug() << __FILE__ << __LINE__;
         bigint ii = 0;
         for (bigint j = 0; j < d->m_accumulated_clips_buffer.count(); j++) {
             Mda32 clips0 = d->m_accumulated_clips_buffer[j];
@@ -128,10 +132,12 @@ void NeighborhoodSorter::sort(int num_threads)
         d->m_accumulated_clips_buffer.clear();
     }
 
+    qDebug() << __FILE__ << __LINE__;
     // dimension reduce clips
     Mda32 reduced_clips;
     d->dimension_reduce_clips(reduced_clips, clips, d->m_opts.num_features_per_channel, d->m_opts.max_pca_samples);
 
+    qDebug() << __FILE__ << __LINE__;
     // Sort
     Sort_clips_opts ooo;
     ooo.max_samples = d->m_opts.max_pca_samples;
@@ -139,9 +145,11 @@ void NeighborhoodSorter::sort(int num_threads)
     d->m_labels = sort_clips(reduced_clips, ooo);
     qDebug().noquote() << QString("Sorted %1 clips and found %2 clusters").arg(reduced_clips.N3()).arg(MLCompute::max(d->m_labels));
 
+    qDebug() << __FILE__ << __LINE__;
     // Compute templates
     d->m_templates = d->compute_templates_from_clips(clips, d->m_labels, num_threads);
 
+    qDebug() << __FILE__ << __LINE__;
     // Consolidate clusters
     if (d->m_opts.consolidate_clusters) {
         Consolidate_clusters_opts oo;
@@ -163,8 +171,10 @@ void NeighborhoodSorter::sort(int num_threads)
         }
     }
 
+    qDebug() << __FILE__ << __LINE__;
     // Compute templates
     d->m_templates = d->compute_templates_from_clips(clips, d->m_labels, num_threads);
+    qDebug() << __FILE__ << __LINE__;
 }
 
 QVector<double> NeighborhoodSorter::times() const
