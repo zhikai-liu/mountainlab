@@ -9,6 +9,7 @@
 #include "mvmainwindow.h"
 
 #include <QThread>
+#include <svcontext.h>
 
 class ClusterMetricsPluginPrivate;
 class ClusterMetricsPlugin : public MVAbstractPlugin {
@@ -37,18 +38,6 @@ private slots:
     //void openClipsForTemplate();
 };
 
-class ClusterPairMetricsFactory : public MVAbstractViewFactory {
-    Q_OBJECT
-public:
-    ClusterPairMetricsFactory(MVMainWindow* mw, QObject* parent = 0);
-    QString id() const Q_DECL_OVERRIDE;
-    QString name() const Q_DECL_OVERRIDE;
-    QString title() const Q_DECL_OVERRIDE;
-    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
-private slots:
-    //void openClipsForTemplate();
-};
-
 class basic_metrics_calculator : public QThread {
     Q_OBJECT
 public:
@@ -62,7 +51,7 @@ public:
     QString cluster_pair_metrics_path;
 
     //used in slot_on_finished
-    MVContext* mv_context;
+    SVContext* mv_context;
 
     void run();
 

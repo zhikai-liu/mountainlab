@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>msv/views/curationprogram.js</file>
-    </qresource>
-</RCC>
