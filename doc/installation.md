@@ -30,6 +30,7 @@ First time:
 ```bash
 git clone https://github.com/magland/mountainlab.git
 cd mountainlab
+git checkout ms3 # switch to stable mountainsort 3 branch
 ./compile_components.sh
 ```
 
