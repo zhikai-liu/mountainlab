@@ -4,8 +4,8 @@
 ** Created: 5/23/2016
 *******************************************************/
 
-#ifndef MVCONTEXT_H
-#define MVCONTEXT_H
+#ifndef SVContext_H
+#define SVContext_H
 
 #include "clustermerge.h"
 
@@ -16,7 +16,7 @@
 #include "mvutils.h"
 #include "diskreadmda.h"
 
-class MVContext;
+class SVContext;
 
 class ClusterVisibilityRule {
 public:
@@ -25,7 +25,7 @@ public:
     virtual ~ClusterVisibilityRule();
     void operator=(const ClusterVisibilityRule& other);
     bool operator==(const ClusterVisibilityRule& other) const;
-    bool isVisible(const MVContext* context, int cluster_num) const;
+    bool isVisible(const SVContext* context, int cluster_num) const;
     QJsonObject toJsonObject() const;
     static ClusterVisibilityRule fromJsonObject(const QJsonObject& X);
 
@@ -70,13 +70,13 @@ struct ElectrodeGeometry {
 #include "mvabstractcontext.h"
 #include "mvmisc.h"
 
-class MVContextPrivate;
-class MVContext : public MVAbstractContext {
+class SVContextPrivate;
+class SVContext : public MVAbstractContext {
     Q_OBJECT
 public:
-    friend class MVContextPrivate;
-    MVContext();
-    virtual ~MVContext();
+    friend class SVContextPrivate;
+    SVContext();
+    virtual ~SVContext();
 
     void clear();
 
@@ -191,7 +191,7 @@ public:
     void setMLProxyUrl(QString url);
 
     /////////////////////////////////////////////////
-    void copySettingsFrom(MVContext* other);
+    void copySettingsFrom(SVContext* other);
 
     /////////////////////////////////////////////////
     QMap<QString, QJsonObject> allPrvObjects();
@@ -221,7 +221,7 @@ private slots:
     void slot_firings_subset_calculator_finished();
 
 private:
-    MVContextPrivate* d;
+    SVContextPrivate* d;
 };
 
-#endif // MVCONTEXT_H
+#endif // SVContext_H

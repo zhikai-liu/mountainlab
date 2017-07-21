@@ -21,20 +21,19 @@ MOC_DIR=../build
 TARGET = spikeview1
 TEMPLATE = app
 
-RESOURCES += spikeview1.qrc
-
 INCLUDEPATH += msv/plugins msv/views
 VPATH += msv/plugins msv/views
 
 HEADERS += \
-    clustermetricsview.h \
-    clustermetricsplugin.h
+    clustermetricsview.h clustermetricsplugin.h
 
 SOURCES += \
-    clustermetricsview.cpp \
-    clusterpairmetricsview.cpp
+    clustermetricsview.cpp clustermetricsplugin.cpp
 
 FORMS +=
+
+HEADERS += mvopenviewscontrol.h get_sort_indices.h
+SOURCES += mvopenviewscontrol.cpp get_sort_indices.cpp
 
 SOURCES += spikeview1main.cpp
 

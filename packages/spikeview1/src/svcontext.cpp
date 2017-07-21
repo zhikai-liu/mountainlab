@@ -4,7 +4,7 @@
 ** Created: 5/23/2016
 *******************************************************/
 
-#include "mvcontext.h"
+#include "svcontext.h"
 #include <QAction>
 #include <QDebug>
 #include <QJsonDocument>
@@ -20,9 +20,9 @@ struct TimeseriesStruct {
     DiskReadMda32 data;
 };
 
-class MVContextPrivate {
+class SVContextPrivate {
 public:
-    MVContext* q;
+    SVContext* q;
     QMap<int, QJsonObject> m_cluster_attributes;
     //needed to do it this way rather than QMap<ClusterPair,QJsonObject>
     //because of a terrible bug that took me hours to conclude that it
@@ -65,9 +65,9 @@ QList<double> json_array_to_doublelist(const QJsonArray& X);
 QJsonArray strlist_to_json_array(const QList<QString>& X);
 QList<QString> json_array_to_strlist(const QJsonArray& X);
 
-MVContext::MVContext()
+SVContext::SVContext()
 {
-    d = new MVContextPrivate;
+    d = new SVContextPrivate;
     d->q = this;
     d->m_current_cluster = 0;
     d->m_current_timepoint = 0;
@@ -90,12 +90,12 @@ MVContext::MVContext()
     d->m_colors["firing_rate_disk"] = Qt::lightGray;
 }
 
-MVContext::~MVContext()
+SVContext::~SVContext()
 {
     delete d;
 }
 
-void MVContext::clear()
+void SVContext::clear()
 {
     d->m_cluster_attributes.clear();
     d->m_cluster_pair_attributes.clear();
@@ -203,7 +203,7 @@ QMap<QString, TimeseriesStruct> object_to_timeseries_map_for_mv2(QJsonObject X)
     return ret;
 }
 
-QJsonObject MVContext::toMVFileObject() const
+QJsonObject SVContext::toMVFileObject() const
 {
     // old
     QJsonObject X = d->m_original_object;
@@ -223,7 +223,7 @@ QJsonObject MVContext::toMVFileObject() const
     return X;
 }
 
-QJsonObject MVContext::toMV2FileObject() const
+QJsonObject SVContext::toMV2FileObject() const
 {
     QJsonObject X = d->m_original_object;
     X["cluster_attributes"] = cluster_attributes_to_object(d->m_cluster_attributes);
@@ -244,7 +244,7 @@ QJsonObject MVContext::toMV2FileObject() const
     return X;
 }
 
-void MVContext::setFromMVFileObject(QJsonObject X)
+void SVContext::setFromMVFileObject(QJsonObject X)
 {
     // old
     this->clear();
@@ -290,7 +290,7 @@ void MVContext::setFromMVFileObject(QJsonObject X)
     emit this->visibleChannelsChanged();
 }
 
-void MVContext::setFromMV2FileObject(QJsonObject X)
+void SVContext::setFromMV2FileObject(QJsonObject X)
 {
     this->clear();
     d->m_original_object = X; // to preserve unused fields
@@ -337,27 +337,27 @@ void MVContext::setFromMV2FileObject(QJsonObject X)
     emit this->clusterOrderChanged();
 }
 
-MVEvent MVContext::currentEvent() const
+MVEvent SVContext::currentEvent() const
 {
     return d->m_current_event;
 }
 
-int MVContext::currentCluster() const
+int SVContext::currentCluster() const
 {
     return d->m_current_cluster;
 }
 
-QList<int> MVContext::selectedClusters() const
+QList<int> SVContext::selectedClusters() const
 {
     return d->m_selected_clusters;
 }
 
-double MVContext::currentTimepoint() const
+double SVContext::currentTimepoint() const
 {
     return d->m_current_timepoint;
 }
 
-MVRange MVContext::currentTimeRange() const
+MVRange SVContext::currentTimeRange() const
 {
     if ((d->m_current_time_range.min <= 0) && (d->m_current_time_range.max <= 0)) {
         return MVRange(0LL, qMax(0LL, (long long)this->currentTimeseries().N2() - 1));
@@ -365,12 +365,12 @@ MVRange MVContext::currentTimeRange() const
     return d->m_current_time_range;
 }
 
-QList<QColor> MVContext::channelColors() const
+QList<QColor> SVContext::channelColors() const
 {
     return d->m_channel_colors;
 }
 
-QList<QColor> MVContext::clusterColors() const
+QList<QColor> SVContext::clusterColors() const
 {
     QList<QColor> ret;
     for (int i = 0; i < d->m_cluster_colors.count(); i++) {
@@ -379,22 +379,22 @@ QList<QColor> MVContext::clusterColors() const
     return ret;
 }
 
-DiskReadMda32 MVContext::currentTimeseries() const
+DiskReadMda32 SVContext::currentTimeseries() const
 {
     return timeseries(d->m_current_timeseries_name);
 }
 
-DiskReadMda32 MVContext::timeseries(QString name) const
+DiskReadMda32 SVContext::timeseries(QString name) const
 {
     return d->m_timeseries.value(name).data;
 }
 
-QString MVContext::currentTimeseriesName() const
+QString SVContext::currentTimeseriesName() const
 {
     return d->m_current_timeseries_name;
 }
 
-QColor MVContext::clusterColor(int k) const
+QColor SVContext::clusterColor(int k) const
 {
     if (k < 0)
         return Qt::black;
@@ -409,7 +409,7 @@ QColor MVContext::clusterColor(int k) const
     return d->m_cluster_colors[(k - 1) % d->m_cluster_colors.count()];
 }
 
-QColor MVContext::channelColor(int m) const
+QColor SVContext::channelColor(int m) const
 {
     if (m < 0)
         return Qt::black;
@@ -418,22 +418,22 @@ QColor MVContext::channelColor(int m) const
     return d->m_channel_colors[m % d->m_channel_colors.count()];
 }
 
-QColor MVContext::color(QString name, QColor default_color) const
+QColor SVContext::color(QString name, QColor default_color) const
 {
     return d->m_colors.value(name, default_color);
 }
 
-QMap<QString, QColor> MVContext::colors() const
+QMap<QString, QColor> SVContext::colors() const
 {
     return d->m_colors;
 }
 
-QStringList MVContext::timeseriesNames() const
+QStringList SVContext::timeseriesNames() const
 {
     return d->m_timeseries.keys();
 }
 
-void MVContext::addTimeseries(QString name, DiskReadMda32 timeseries)
+void SVContext::addTimeseries(QString name, DiskReadMda32 timeseries)
 {
     TimeseriesStruct X;
     X.data = timeseries;
@@ -444,7 +444,7 @@ void MVContext::addTimeseries(QString name, DiskReadMda32 timeseries)
         emit this->currentTimeseriesChanged();
 }
 
-DiskReadMda MVContext::firings()
+DiskReadMda SVContext::firings()
 {
     if (d->m_clusters_subset.isEmpty())
         return d->m_firings;
@@ -453,12 +453,12 @@ DiskReadMda MVContext::firings()
     }
 }
 
-double MVContext::sampleRate() const
+double SVContext::sampleRate() const
 {
     return d->m_sample_rate;
 }
 
-void MVContext::setCurrentTimeseriesName(QString name)
+void SVContext::setCurrentTimeseriesName(QString name)
 {
     if (d->m_current_timeseries_name == name)
         return;
@@ -466,14 +466,14 @@ void MVContext::setCurrentTimeseriesName(QString name)
     emit this->currentTimeseriesChanged();
 }
 
-void MVContext::setFirings(const DiskReadMda& F)
+void SVContext::setFirings(const DiskReadMda& F)
 {
     d->m_firings = F;
     d->m_K = 0; //trigger recompute
     emit firingsChanged();
 }
 
-int MVContext::K()
+int SVContext::K()
 {
     if (!d->m_K) {
         for (bigint i = 0; i < d->m_firings.N2(); i++) {
@@ -485,7 +485,7 @@ int MVContext::K()
     return d->m_K;
 }
 
-void MVContext::setSampleRate(double sample_rate)
+void SVContext::setSampleRate(double sample_rate)
 {
     /*
     if (!d->m_sample_rate) {
@@ -498,17 +498,17 @@ void MVContext::setSampleRate(double sample_rate)
     d->m_sample_rate = sample_rate;
 }
 
-QString MVContext::mlProxyUrl() const
+QString SVContext::mlProxyUrl() const
 {
     return d->m_mlproxy_url;
 }
 
-void MVContext::setMLProxyUrl(QString url)
+void SVContext::setMLProxyUrl(QString url)
 {
     d->m_mlproxy_url = url;
 }
 
-ClusterMerge MVContext::clusterMerge() const
+ClusterMerge SVContext::clusterMerge() const
 {
     ClusterMerge ret;
     QList<int> keys1 = d->m_cluster_pair_attributes.keys();
@@ -527,12 +527,12 @@ ClusterMerge MVContext::clusterMerge() const
     return ret;
 }
 
-bool MVContext::viewMerged() const
+bool SVContext::viewMerged() const
 {
     return d->m_view_merged;
 }
 
-void MVContext::setViewMerged(bool val)
+void SVContext::setViewMerged(bool val)
 {
     if (d->m_view_merged == val)
         return;
@@ -541,34 +541,34 @@ void MVContext::setViewMerged(bool val)
     emit this->viewMergedChanged();
 }
 
-QJsonObject MVContext::clusterAttributes(int num) const
+QJsonObject SVContext::clusterAttributes(int num) const
 {
     return d->m_cluster_attributes.value(num);
 }
 
-QMap<int, QJsonObject> MVContext::allClusterAttributes() const
+QMap<int, QJsonObject> SVContext::allClusterAttributes() const
 {
     return d->m_cluster_attributes;
 }
 
-QList<int> MVContext::clusterAttributesKeys() const
+QList<int> SVContext::clusterAttributesKeys() const
 {
     return d->m_cluster_attributes.keys();
 }
 
-QSet<QString> MVContext::clusterTags(int num) const
+QSet<QString> SVContext::clusterTags(int num) const
 {
     return jsonarray2stringset(clusterAttributes(num)["tags"].toArray());
 }
 
-QList<QString> MVContext::clusterTagsList(int num) const
+QList<QString> SVContext::clusterTagsList(int num) const
 {
     QList<QString> ret = clusterTags(num).toList();
     qSort(ret);
     return ret;
 }
 
-QSet<QString> MVContext::allClusterTags() const
+QSet<QString> SVContext::allClusterTags() const
 {
     QSet<QString> ret;
     ret.insert("accepted");
@@ -582,7 +582,7 @@ QSet<QString> MVContext::allClusterTags() const
     return ret;
 }
 
-void MVContext::setClusterAttributes(int num, const QJsonObject& obj)
+void SVContext::setClusterAttributes(int num, const QJsonObject& obj)
 {
     if (d->m_cluster_attributes.value(num) == obj)
         return;
@@ -592,21 +592,21 @@ void MVContext::setClusterAttributes(int num, const QJsonObject& obj)
     emit this->clusterVisibilityChanged();
 }
 
-void MVContext::setAllClusterAttributes(const QMap<int, QJsonObject>& X)
+void SVContext::setAllClusterAttributes(const QMap<int, QJsonObject>& X)
 {
     d->m_cluster_attributes = X;
     emit this->clusterAttributesChanged(-1);
     emit this->clusterVisibilityChanged();
 }
 
-void MVContext::setClusterTags(int num, const QSet<QString>& tags)
+void SVContext::setClusterTags(int num, const QSet<QString>& tags)
 {
     QJsonObject obj = clusterAttributes(num);
     obj["tags"] = stringset2jsonarray(tags);
     setClusterAttributes(num, obj);
 }
 
-QList<int> MVContext::clusterOrder(int max_K) const
+QList<int> SVContext::clusterOrder(int max_K) const
 {
     QList<int> ret;
     if (d->m_cluster_order_scores.isEmpty()) {
@@ -622,17 +622,17 @@ QList<int> MVContext::clusterOrder(int max_K) const
     return ret;
 }
 
-QString MVContext::clusterOrderScoresName() const
+QString SVContext::clusterOrderScoresName() const
 {
     return d->m_cluster_order_scores_name;
 }
 
-QList<double> MVContext::clusterOrderScores() const
+QList<double> SVContext::clusterOrderScores() const
 {
     return d->m_cluster_order_scores;
 }
 
-void MVContext::setClusterOrderScores(QString scores_name, const QList<double>& scores)
+void SVContext::setClusterOrderScores(QString scores_name, const QList<double>& scores)
 {
     if ((scores_name == d->m_cluster_order_scores_name) && (scores == d->m_cluster_order_scores))
         return;
@@ -641,12 +641,12 @@ void MVContext::setClusterOrderScores(QString scores_name, const QList<double>& 
     emit this->clusterOrderChanged();
 }
 
-QJsonObject MVContext::clusterPairAttributes(const ClusterPair& pair) const
+QJsonObject SVContext::clusterPairAttributes(const ClusterPair& pair) const
 {
     return d->m_cluster_pair_attributes.value(pair.k1()).value(pair.k2());
 }
 
-QList<ClusterPair> MVContext::clusterPairAttributesKeys() const
+QList<ClusterPair> SVContext::clusterPairAttributesKeys() const
 {
     QList<ClusterPair> ret;
     QList<int> keys1 = d->m_cluster_pair_attributes.keys();
@@ -660,7 +660,7 @@ QList<ClusterPair> MVContext::clusterPairAttributesKeys() const
     return ret;
 }
 
-void MVContext::setClusterPairAttributes(const ClusterPair& pair, const QJsonObject& obj)
+void SVContext::setClusterPairAttributes(const ClusterPair& pair, const QJsonObject& obj)
 {
     if (d->m_cluster_pair_attributes.value(pair.k1()).value(pair.k2()) == obj)
         return;
@@ -672,19 +672,19 @@ void MVContext::setClusterPairAttributes(const ClusterPair& pair, const QJsonObj
     }
 }
 
-QSet<QString> MVContext::clusterPairTags(const ClusterPair& pair) const
+QSet<QString> SVContext::clusterPairTags(const ClusterPair& pair) const
 {
     return jsonarray2stringset(clusterPairAttributes(pair)["tags"].toArray());
 }
 
-QList<QString> MVContext::clusterPairTagsList(const ClusterPair& pair) const
+QList<QString> SVContext::clusterPairTagsList(const ClusterPair& pair) const
 {
     QList<QString> ret = clusterPairTags(pair).toList();
     qSort(ret);
     return ret;
 }
 
-QSet<QString> MVContext::allClusterPairTags() const
+QSet<QString> SVContext::allClusterPairTags() const
 {
     QSet<QString> ret;
     ret.insert("merge_candidate");
@@ -699,19 +699,19 @@ QSet<QString> MVContext::allClusterPairTags() const
     return ret;
 }
 
-void MVContext::setClusterPairTags(const ClusterPair& pair, const QSet<QString>& tags)
+void SVContext::setClusterPairTags(const ClusterPair& pair, const QSet<QString>& tags)
 {
     QJsonObject obj = clusterPairAttributes(pair);
     obj["tags"] = stringset2jsonarray(tags);
     setClusterPairAttributes(pair, obj);
 }
 
-ClusterVisibilityRule MVContext::clusterVisibilityRule() const
+ClusterVisibilityRule SVContext::clusterVisibilityRule() const
 {
     return d->m_visibility_rule;
 }
 
-QList<int> MVContext::visibleClusters(int K) const
+QList<int> SVContext::visibleClusters(int K) const
 {
     QList<int> ret;
     for (int k = 1; k <= K; k++) {
@@ -722,7 +722,7 @@ QList<int> MVContext::visibleClusters(int K) const
     return ret;
 }
 
-bool MVContext::clusterIsVisible(int k) const
+bool SVContext::clusterIsVisible(int k) const
 {
     if (this->viewMerged()) {
         if (this->clusterMerge().representativeLabel(k) != k)
@@ -731,7 +731,7 @@ bool MVContext::clusterIsVisible(int k) const
     return d->m_visibility_rule.isVisible(this, k);
 }
 
-void MVContext::setClusterVisibilityRule(const ClusterVisibilityRule& rule)
+void SVContext::setClusterVisibilityRule(const ClusterVisibilityRule& rule)
 {
     if (d->m_visibility_rule == rule)
         return;
@@ -739,26 +739,26 @@ void MVContext::setClusterVisibilityRule(const ClusterVisibilityRule& rule)
     emit this->clusterVisibilityChanged();
 }
 
-QList<int> MVContext::clustersToForceShow() const
+QList<int> SVContext::clustersToForceShow() const
 {
     QList<int> ret = d->m_clusters_to_force_show.toList();
     qSort(ret);
     return ret;
 }
 
-void MVContext::setClustersToForceShow(const QList<int>& list)
+void SVContext::setClustersToForceShow(const QList<int>& list)
 {
     d->m_clusters_to_force_show = list.toSet();
 }
 
-QList<int> MVContext::visibleChannels() const
+QList<int> SVContext::visibleChannels() const
 {
     QList<int> ch = d->m_visible_channels.toList();
     qSort(ch);
     return ch;
 }
 
-void MVContext::setVisibleChannels(const QList<int>& channels)
+void SVContext::setVisibleChannels(const QList<int>& channels)
 {
     QSet<int> ch = channels.toSet();
     if (ch == d->m_visible_channels)
@@ -767,12 +767,12 @@ void MVContext::setVisibleChannels(const QList<int>& channels)
     emit visibleChannelsChanged();
 }
 
-ElectrodeGeometry MVContext::electrodeGeometry() const
+ElectrodeGeometry SVContext::electrodeGeometry() const
 {
     return d->m_electrode_geometry;
 }
 
-void MVContext::setElectrodeGeometry(const ElectrodeGeometry& geom)
+void SVContext::setElectrodeGeometry(const ElectrodeGeometry& geom)
 {
     if (d->m_electrode_geometry == geom)
         return;
@@ -780,7 +780,7 @@ void MVContext::setElectrodeGeometry(const ElectrodeGeometry& geom)
     emit this->electrodeGeometryChanged();
 }
 
-void MVContext::loadClusterMetricsFromFile(QString csv_or_json_file_path)
+void SVContext::loadClusterMetricsFromFile(QString csv_or_json_file_path)
 {
     if (csv_or_json_file_path.endsWith(".csv")) {
         QStringList lines = TextFile::read(csv_or_json_file_path).split("\n", QString::SkipEmptyParts);
@@ -831,7 +831,7 @@ void MVContext::loadClusterMetricsFromFile(QString csv_or_json_file_path)
     }
 }
 
-void MVContext::loadClusterPairMetricsFromFile(QString csv_file_path)
+void SVContext::loadClusterPairMetricsFromFile(QString csv_file_path)
 {
     QStringList lines = TextFile::read(csv_file_path).split("\n", QString::SkipEmptyParts);
     if (lines.isEmpty())
@@ -856,7 +856,7 @@ void MVContext::loadClusterPairMetricsFromFile(QString csv_file_path)
     }
 }
 
-QSet<int> MVContext::clustersSubset() const
+QSet<int> SVContext::clustersSubset() const
 {
     return d->m_clusters_subset;
 }
@@ -894,7 +894,7 @@ public:
     }
 };
 
-void MVContext::setClustersSubset(const QSet<int>& clusters_subset)
+void SVContext::setClustersSubset(const QSet<int>& clusters_subset)
 {
     if (d->m_clusters_subset == clusters_subset)
         return;
@@ -909,7 +909,7 @@ void MVContext::setClustersSubset(const QSet<int>& clusters_subset)
     }
 }
 
-void MVContext::setCurrentEvent(const MVEvent& evt)
+void SVContext::setCurrentEvent(const MVEvent& evt)
 {
     if (evt == d->m_current_event)
         return;
@@ -918,7 +918,7 @@ void MVContext::setCurrentEvent(const MVEvent& evt)
     this->setCurrentTimepoint(evt.time);
 }
 
-void MVContext::setCurrentCluster(int k)
+void SVContext::setCurrentCluster(int k)
 {
     if (k == d->m_current_cluster)
         return;
@@ -933,7 +933,7 @@ void MVContext::setCurrentCluster(int k)
     emit currentClusterChanged();
 }
 
-void MVContext::setSelectedClusters(const QList<int>& ks)
+void SVContext::setSelectedClusters(const QList<int>& ks)
 {
     QList<int> ks2 = QList<int>::fromSet(ks.toSet()); //remove duplicates and -1
     ks2.removeAll(-1);
@@ -948,7 +948,7 @@ void MVContext::setSelectedClusters(const QList<int>& ks)
     emit selectedClustersChanged();
 }
 
-void MVContext::setCurrentTimepoint(double tp)
+void SVContext::setCurrentTimepoint(double tp)
 {
     if (tp < 0)
         tp = 0;
@@ -960,7 +960,7 @@ void MVContext::setCurrentTimepoint(double tp)
     emit currentTimepointChanged();
 }
 
-void MVContext::setCurrentTimeRange(const MVRange& range_in)
+void SVContext::setCurrentTimeRange(const MVRange& range_in)
 {
     MVRange range = range_in;
     if (range.max >= this->currentTimeseries().N2()) {
@@ -982,23 +982,23 @@ void MVContext::setCurrentTimeRange(const MVRange& range_in)
     emit currentTimeRangeChanged();
 }
 
-void MVContext::setClusterColors(const QList<QColor>& colors)
+void SVContext::setClusterColors(const QList<QColor>& colors)
 {
     d->m_cluster_colors = colors;
     emit clusterColorsChanged(colors);
 }
 
-void MVContext::setChannelColors(const QList<QColor>& colors)
+void SVContext::setChannelColors(const QList<QColor>& colors)
 {
     d->m_channel_colors = colors;
 }
 
-void MVContext::setColors(const QMap<QString, QColor>& colors)
+void SVContext::setColors(const QMap<QString, QColor>& colors)
 {
     d->m_colors = colors;
 }
 
-void MVContext::copySettingsFrom(MVContext* other)
+void SVContext::copySettingsFrom(SVContext* other)
 {
     this->setChannelColors(other->channelColors());
     this->setClusterColors(other->clusterColors());
@@ -1008,7 +1008,7 @@ void MVContext::copySettingsFrom(MVContext* other)
     this->setOptions(other->options());
 }
 
-QMap<QString, QJsonObject> MVContext::allPrvObjects()
+QMap<QString, QJsonObject> SVContext::allPrvObjects()
 {
     QMap<QString, QJsonObject> ret;
     ret["firings"] = d->m_firings.toPrvObject();
@@ -1021,7 +1021,7 @@ QMap<QString, QJsonObject> MVContext::allPrvObjects()
     return ret;
 }
 
-void MVContext::slot_firings_subset_calculator_finished()
+void SVContext::slot_firings_subset_calculator_finished()
 {
     FiringsSubsetCalculator* CC = (FiringsSubsetCalculator*)qobject_cast<QThread*>(sender());
     if (!CC)
@@ -1031,7 +1031,7 @@ void MVContext::slot_firings_subset_calculator_finished()
     emit this->firingsChanged();
 }
 
-void MVContext::clickCluster(int k, Qt::KeyboardModifiers modifiers)
+void SVContext::clickCluster(int k, Qt::KeyboardModifiers modifiers)
 {
     if (modifiers & Qt::ControlModifier) {
         if (k < 0)
@@ -1056,12 +1056,12 @@ void MVContext::clickCluster(int k, Qt::KeyboardModifiers modifiers)
     }
 }
 
-QSet<ClusterPair> MVContext::selectedClusterPairs() const
+QSet<ClusterPair> SVContext::selectedClusterPairs() const
 {
     return d->m_selected_cluster_pairs;
 }
 
-void MVContext::setSelectedClusterPairs(const QSet<ClusterPair>& pairs)
+void SVContext::setSelectedClusterPairs(const QSet<ClusterPair>& pairs)
 {
     if (d->m_selected_cluster_pairs == pairs)
         return;
@@ -1069,7 +1069,7 @@ void MVContext::setSelectedClusterPairs(const QSet<ClusterPair>& pairs)
     emit this->selectedClusterPairsChanged();
 }
 
-void MVContext::clickClusterPair(const ClusterPair& pair, Qt::KeyboardModifiers modifiers)
+void SVContext::clickClusterPair(const ClusterPair& pair, Qt::KeyboardModifiers modifiers)
 {
     if (modifiers & Qt::ControlModifier) {
         if ((pair.k1() <= 0) || (pair.k2() <= 0))
@@ -1140,7 +1140,7 @@ void ClusterVisibilityRule::copy_from(const ClusterVisibilityRule& other)
     this->subset = other.subset;
 }
 
-bool ClusterVisibilityRule::isVisible(const MVContext* context, int cluster_num) const
+bool ClusterVisibilityRule::isVisible(const SVContext* context, int cluster_num) const
 {
     if (this->use_subset) {
         if (!subset.contains(cluster_num))
@@ -1363,7 +1363,7 @@ ElectrodeGeometry ElectrodeGeometry::loadFromGeomFile(const QString& path)
     return ret;
 }
 
-void MVContextPrivate::update_current_and_selected_clusters_according_to_merged()
+void SVContextPrivate::update_current_and_selected_clusters_according_to_merged()
 {
     if (m_view_merged) {
         ClusterMerge CM = q->clusterMerge();
@@ -1382,7 +1382,7 @@ void MVContextPrivate::update_current_and_selected_clusters_according_to_merged(
     }
 }
 
-void MVContextPrivate::set_default_options()
+void SVContextPrivate::set_default_options()
 {
     q->setOption("clip_size", 100);
     q->setOption("cc_max_dt_msec", 100);

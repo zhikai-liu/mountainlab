@@ -5,9 +5,11 @@
 #include <QMessageBox>
 #include <QProcess>
 #include <QStringList>
-#include "cachemanager.h"
 #include <QRunnable>
+#include <QJsonDocument>
+#include <taskprogressview.h>
 
+#include "cachemanager.h"
 #include "usagetracking.h"
 #include "mda.h"
 #include <QDesktopServices>
@@ -18,6 +20,8 @@
 #include "remotereadmda.h"
 #include "taskprogress.h"
 #include "signal.h"
+#include "svcontext.h"
+#include "mvopenviewscontrol.h"
 
 #include <objectregistry.h>
 #include <icounter.h>
@@ -112,14 +116,14 @@ int main(int argc, char* argv[])
 
     {
         printf("Creating Context...\n");
-        MVContext* context = new MVContext; //note that the view context does not get deleted. :(
+        SVContext* context = new SVContext; //note that the view context does not get deleted. :(
         context->setChannelColors(channel_colors);
         context->setClusterColors(label_colors);
         MVMainWindow* W = new MVMainWindow(context);
 
         if (mv2_fname.isEmpty()) {
             printf("Setting up context...\n");
-            MVContext dc; //dummy context
+            SVContext dc; //dummy context
             if (CLP.named_parameters.contains("samplerate")) {
                 dc.setSampleRate(CLP.named_parameters.value("samplerate", 0).toDouble());
             }
@@ -524,6 +528,7 @@ void set_nice_size(QWidget* W)
 
 void setup_main_window(MVMainWindow* W)
 {
+    /*
     W->loadPlugin(new ClusterDetailPlugin);
     W->loadPlugin(new ClusterMetricsPlugin);
     //W->loadPlugin(new IsolationMatrixPlugin);
@@ -547,6 +552,7 @@ void setup_main_window(MVMainWindow* W)
     W->registerViewFactory(new MVDiscrimHistFactory(W));
     //W->registerViewFactory(new MVDiscrimHistGuideFactory(W));
     //W->registerViewFactory(new MVFireTrackFactory(W));
+    */
 }
 
 /*

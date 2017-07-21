@@ -13,6 +13,7 @@
 #include <mountainprocessrunner.h>
 #include <taskprogress.h>
 #include "actionfactory.h"
+#include "svcontext.h"
 
 class ClusterMetricsViewPrivate {
 public:
@@ -36,7 +37,7 @@ ClusterMetricsView::ClusterMetricsView(MVAbstractContext* mvcontext)
     d->m_tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
     hlayout->addWidget(d->m_tree);
 
-    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    SVContext* c = qobject_cast<SVContext*>(mvContext());
     Q_ASSERT(c);
 
     this->recalculateOn(c, SIGNAL(clusterAttributesChanged(int)), false);
@@ -82,7 +83,7 @@ void ClusterMetricsView::prepareMimeData(QMimeData& mimeData, const QPoint& pos)
     QByteArray ba;
     QDataStream ds(&ba, QIODevice::WriteOnly);
 
-    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    SVContext* c = qobject_cast<SVContext*>(mvContext());
     Q_ASSERT(c);
 
     ds << c->selectedClusters();
@@ -93,7 +94,7 @@ void ClusterMetricsView::prepareMimeData(QMimeData& mimeData, const QPoint& pos)
 
 void ClusterMetricsView::slot_current_item_changed()
 {
-    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    SVContext* c = qobject_cast<SVContext*>(mvContext());
     Q_ASSERT(c);
 
     QTreeWidgetItem* it = d->m_tree->currentItem();
@@ -110,7 +111,7 @@ void ClusterMetricsView::slot_item_selection_changed()
 {
     //QList<QTreeWidgetItem*> items=d->m_tree->selectedItems();
 
-    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    SVContext* c = qobject_cast<SVContext*>(mvContext());
     Q_ASSERT(c);
 
     QSet<int> selected = c->selectedClusters().toSet();
@@ -131,7 +132,7 @@ void ClusterMetricsView::slot_item_selection_changed()
 
 void ClusterMetricsView::slot_update_current_cluster()
 {
-    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    SVContext* c = qobject_cast<SVContext*>(mvContext());
     Q_ASSERT(c);
 
     int current = c->currentCluster();
@@ -147,7 +148,7 @@ void ClusterMetricsView::slot_update_current_cluster()
 
 void ClusterMetricsView::slot_update_selected_clusters()
 {
-    MVContext* c = qobject_cast<MVContext*>(mvContext());
+    SVContext* c = qobject_cast<SVContext*>(mvContext());
     Q_ASSERT(c);
 
     QSet<int> selected = c->selectedClusters().toSet();
@@ -178,7 +179,7 @@ void ClusterMetricsViewPrivate::refresh_tree()
 {
     m_tree->clear();
 
-    MVContext* c = qobject_cast<MVContext*>(q->mvContext());
+    SVContext* c = qobject_cast<SVContext*>(q->mvContext());
     Q_ASSERT(c);
 
     QList<int> keys = c->clusterAttributesKeys();
