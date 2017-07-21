@@ -30,6 +30,8 @@ First time:
 ```bash
 git clone https://github.com/magland/mountainlab.git
 cd mountainlab
+# optional: check out a specific branch by name
+git checkout ms3
 ./compile_components.sh
 ```
 
