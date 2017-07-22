@@ -103,7 +103,7 @@ ms2mn ms2_002.pipeline --whiten=true --detect_sign=-1 --multineighborhood=true -
 ms_nf3 mountainsort_001.pipeline --curation=curation.script --num_features=3 --num_features2=3
 ```
 The first column is an abreviated name. The second column is the name of the processing pipeline. Anything else in the line is an option that will override the defaults of the pipeline, and is thus not required. 
-The ms2_002.pipeline is distributed with MountainLab and is found in mountainlab/packages/algs/mountainsort2/algs. mountainsort_001.pipeline is distributed with MountainLab and is found in mountainlab/mountainsort/pipelines. These two directories are searched by default because of the settings in mountainlab.user.json.
+The ms2_002.pipeline is distributed with MountainLab and is found in mountainlab/packages/mountainsort2/algs. mountainsort_001.pipeline is distributed with MountainLab and is found in mountainlab/mountainsort/pipelines. These two directories are searched by default because of the settings in mountainlab.default.json.
 
 curation.script is optional and contains rules for rejecting or tagging clusters based on metrics computed as part of the sorting pipeline. You can find an example in mountainlab/examples/003_kron_mountainsort/curation.script. To include it in your sorting pipeline, you must 
 
