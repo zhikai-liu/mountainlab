@@ -32,6 +32,7 @@ public:
     QMap<QString, QVariant> m_parameters;
     //QString m_mscmdserver_url;
     QString m_mlproxy_url;
+    bool m_allow_gui_thread=false;
     bool m_detach = false;
 
     QString create_temporary_output_file_name(const QString& remote_url, const QString& processor_name, const QMap<QString, QVariant>& params, const QString& parameter_name);
@@ -73,6 +74,11 @@ void MountainProcessRunner::setInputParameters(const QMap<QString, QVariant>& pa
 void MountainProcessRunner::setMLProxyUrl(const QString& url)
 {
     d->m_mlproxy_url = url;
+}
+
+void MountainProcessRunner::setAllowGuiThread(bool val)
+{
+    d->m_allow_gui_thread=val;
 }
 
 QJsonObject variantmap_to_json_obj(QVariantMap map)
@@ -153,9 +159,11 @@ QJsonObject http_post(QString url, QJsonObject req)
 void MountainProcessRunner::runProcess()
 {
 
-    if (MLUtil::inGuiThread()) {
-        qCritical() << "Cannot run mountain process in gui thread: " + d->m_processor_name;
-        exit(-1);
+    if (!d->m_allow_gui_thread) {
+        if (MLUtil::inGuiThread()) {
+            qCritical() << "Cannot run mountain process in gui thread: " + d->m_processor_name;
+            exit(-1);
+        }
     }
 
     TaskProgress task(TaskProgress::Calculate, "MS: " + d->m_processor_name);

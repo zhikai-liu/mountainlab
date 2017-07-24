@@ -298,6 +298,8 @@ void SVContext::setFromMV2FileObject(QJsonObject X)
     d->m_cluster_pair_attributes = object_to_cluster_pair_attributes(X["cluster_pair_attributes"].toObject());
     d->m_timeseries = object_to_timeseries_map_for_mv2(X["timeseries"].toObject());
     this->setCurrentTimeseriesName(X["current_timeseries_name"].toString());
+    if (this->currentTimeseries().N2()<=1)
+        this->setCurrentTimeseriesName("Raw Data");
     this->setFirings(DiskReadMda(X["firings"].toObject()));
     d->m_sample_rate = X["samplerate"].toDouble();
     if (X.contains("options")) {

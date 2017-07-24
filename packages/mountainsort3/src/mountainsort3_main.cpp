@@ -14,6 +14,8 @@
 #include "p_preprocess.h"
 #include "p_mountainsort3.h"
 #include "p_run_metrics_script.h"
+#include "p_spikeview_metrics.h"
+#include "p_spikeview_templates.h"
 #include "omp.h"
 
 QJsonObject get_spec()
@@ -67,6 +69,21 @@ QJsonObject get_spec()
         ProcessorSpec X("mountainsort.run_metrics_script", "0.1");
         X.addInputs("metrics", "script");
         X.addOutputs("metrics_out");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("spikeview.metrics1", "0.1");
+        X.addInputs("firings");
+        X.addOutputs("metrics_out");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("spikeview.templates", "0.1");
+        X.addInputs("timeseries","firings");
+        X.addOutputs("templates_out");
+        X.addOptionalOutputs("stdevs_out");
+        X.addOptionalParameter("clip_size","",100);
+        X.addOptionalParameter("max_events_per_template","",500);
         processors.push_back(X.get_spec());
     }
 
@@ -153,6 +170,21 @@ int main(int argc, char* argv[])
         QString script = CLP.named_parameters["script"].toString();
         QString metrics_out = CLP.named_parameters["metrics_out"].toString();
         ret = p_run_metrics_script(metrics, script, metrics_out);
+    }
+    else if (arg1 == "spikeview.metrics1") {
+        QString firings = CLP.named_parameters["firings"].toString();
+        QString metrics_out = CLP.named_parameters["metrics_out"].toString();
+        ret = p_spikeview_metrics1(firings, metrics_out);
+    }
+    else if (arg1 == "spikeview.templates") {
+        QString timeseries = CLP.named_parameters["timeseries"].toString();
+        QString firings = CLP.named_parameters["firings"].toString();
+        QString templates_out = CLP.named_parameters["templates_out"].toString();
+        QString stdevs_out = CLP.named_parameters["stdevs_out"].toString();
+        P_spikeview_templates_opts opts;
+        opts.clip_size=CLP.named_parameters["clip_size"].toInt();
+        opts.max_events_per_template=CLP.named_parameters["max_events_per_template"].toDouble();
+        ret = p_spikeview_templates(timeseries,firings,templates_out,stdevs_out,opts);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

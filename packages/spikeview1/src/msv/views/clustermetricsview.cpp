@@ -7,6 +7,7 @@
 #include "clustermetricsview.h"
 
 #include <QHBoxLayout>
+#include <QJsonDocument>
 #include <QLabel>
 #include <QRadioButton>
 #include <QTreeWidget>
@@ -175,6 +176,17 @@ private:
     }
 };
 
+struct metric_name_comparer {
+    bool operator()(const QString& a, const QString& b) const
+    {
+        if ((a.startsWith("sv."))&&(!b.startsWith("sv.")))
+            return true;
+        if ((!a.startsWith("sv."))&&(b.startsWith("sv.")))
+            return false;
+        return (a<b);
+    }
+};
+
 void ClusterMetricsViewPrivate::refresh_tree()
 {
     m_tree->clear();
@@ -194,7 +206,8 @@ void ClusterMetricsViewPrivate::refresh_tree()
     }
 
     QStringList metric_names = metric_names_set.toList();
-    qSort(metric_names);
+    qSort(metric_names.begin(), metric_names.end(), metric_name_comparer());
+    //qSort(metric_names);
 
     QStringList headers;
     headers << "Cluster";

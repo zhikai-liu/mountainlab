@@ -27,11 +27,17 @@
 #include <icounter.h>
 #include <mvmainwindow.h>
 #include <qprocessmanager.h>
+#include <mountainprocessrunner.h>
+
+#include <clustermetricsplugin.h>
+#include "templatesviewplugin.h"
 
 void setup_main_window(MVMainWindow* W);
 QColor brighten(QColor col, int amount);
 QList<QColor> generate_colors_ahb();
 QList<QColor> generate_colors_old(const QColor& bg, const QColor& fg, int noColors);
+
+QString compute_spikeview_metrics(SVContext *context);
 
 void set_nice_size(QWidget* W);
 
@@ -114,122 +120,138 @@ int main(int argc, char* argv[])
         mv2_fname = CLP.unnamed_parameters.value(0);
     }
 
+    printf("Creating Context...\n");
+    SVContext* context = new SVContext; //note that the view context does not get deleted. :(
+    context->setChannelColors(channel_colors);
+    context->setClusterColors(label_colors);
+
+    QString window_title;
+    if (mv2_fname.isEmpty()) {
+        printf("Setting up context...\n");
+        SVContext dc; //dummy context
+        if (CLP.named_parameters.contains("samplerate")) {
+            dc.setSampleRate(CLP.named_parameters.value("samplerate", 0).toDouble());
+        }
+        if (CLP.named_parameters.contains("firings")) {
+            QString firings_path = CLP.named_parameters["firings"].toString();
+            dc.setFirings(DiskReadMda(firings_path));
+            window_title=firings_path;
+        }
+        if (CLP.named_parameters.contains("raw")) {
+            QString raw_path = CLP.named_parameters["raw"].toString();
+            dc.addTimeseries("Raw Data", DiskReadMda32(raw_path));
+            dc.setCurrentTimeseriesName("Raw Data");
+        }
+        if (CLP.named_parameters.contains("filt")) {
+            QString filt_path = CLP.named_parameters["filt"].toString();
+            dc.addTimeseries("Filtered Data", DiskReadMda32(filt_path));
+            if (DiskReadMda32(filt_path).N2() > 1)
+                dc.setCurrentTimeseriesName("Filtered Data");
+        }
+        if (CLP.named_parameters.contains("pre")) {
+            QString pre_path = CLP.named_parameters["pre"].toString();
+            dc.addTimeseries("Preprocessed Data", DiskReadMda32(pre_path));
+            if (DiskReadMda32(pre_path).N2() > 1)
+                dc.setCurrentTimeseriesName("Preprocessed Data");
+        }
+        if (CLP.named_parameters.contains("mlproxy_url")) {
+            QString mlproxy_url = CLP.named_parameters.value("mlproxy_url", "").toString();
+            dc.setMLProxyUrl(mlproxy_url);
+        }
+        if (CLP.named_parameters.contains("window_title")) {
+            QString window_title0 = CLP.named_parameters["window_title"].toString();
+            window_title=window_title0;
+        }
+
+        QJsonObject mv2 = dc.toMV2FileObject();
+        QString debug = QJsonDocument(mv2["timeseries"].toObject()).toJson();
+        //printf("%s\n", debug.toUtf8().data());
+        mv2_fname = CacheManager::globalInstance()->makeLocalFile() + ".mv2";
+        QString mv2_text = QJsonDocument(mv2).toJson();
+        TextFile::write(mv2_fname, mv2_text);
+        CacheManager::globalInstance()->setTemporaryFileDuration(mv2_fname, 600);
+    }
+    if (!mv2_fname.isEmpty()) {
+        TaskProgressView TPV;
+        TPV.show();
+        //bool done_checking = false;
+        QJsonObject obj;
+        QString json = TextFile::read(mv2_fname);
+        obj = QJsonDocument::fromJson(json.toLatin1()).object();
+        context->setFromMV2FileObject(obj);
+        context->setMV2FileName(mv2_fname);
+    }
     {
-        printf("Creating Context...\n");
-        SVContext* context = new SVContext; //note that the view context does not get deleted. :(
-        context->setChannelColors(channel_colors);
-        context->setClusterColors(label_colors);
-        MVMainWindow* W = new MVMainWindow(context);
-
-        if (mv2_fname.isEmpty()) {
-            printf("Setting up context...\n");
-            SVContext dc; //dummy context
-            if (CLP.named_parameters.contains("samplerate")) {
-                dc.setSampleRate(CLP.named_parameters.value("samplerate", 0).toDouble());
-            }
-            if (CLP.named_parameters.contains("firings")) {
-                QString firings_path = CLP.named_parameters["firings"].toString();
-                dc.setFirings(DiskReadMda(firings_path));
-                W->setWindowTitle(firings_path);
-            }
-            if (CLP.named_parameters.contains("raw")) {
-                QString raw_path = CLP.named_parameters["raw"].toString();
-                dc.addTimeseries("Raw Data", DiskReadMda32(raw_path));
-                dc.setCurrentTimeseriesName("Raw Data");
-            }
-            if (CLP.named_parameters.contains("filt")) {
-                QString filt_path = CLP.named_parameters["filt"].toString();
-                dc.addTimeseries("Filtered Data", DiskReadMda32(filt_path));
-                if (DiskReadMda32(filt_path).N2() > 1)
-                    dc.setCurrentTimeseriesName("Filtered Data");
-            }
-            if (CLP.named_parameters.contains("pre")) {
-                QString pre_path = CLP.named_parameters["pre"].toString();
-                dc.addTimeseries("Preprocessed Data", DiskReadMda32(pre_path));
-                if (DiskReadMda32(pre_path).N2() > 1)
-                    dc.setCurrentTimeseriesName("Preprocessed Data");
-            }
-            if (CLP.named_parameters.contains("mlproxy_url")) {
-                QString mlproxy_url = CLP.named_parameters.value("mlproxy_url", "").toString();
-                dc.setMLProxyUrl(mlproxy_url);
-            }
-            if (CLP.named_parameters.contains("window_title")) {
-                QString window_title = CLP.named_parameters["window_title"].toString();
-                W->setWindowTitle(window_title);
-            }
-
-            QJsonObject mv2 = dc.toMV2FileObject();
-            QString debug = QJsonDocument(mv2["timeseries"].toObject()).toJson();
-            //printf("%s\n", debug.toUtf8().data());
-            mv2_fname = CacheManager::globalInstance()->makeLocalFile() + ".mv2";
-            QString mv2_text = QJsonDocument(mv2).toJson();
-            TextFile::write(mv2_fname, mv2_text);
-            CacheManager::globalInstance()->setTemporaryFileDuration(mv2_fname, 600);
+        if (CLP.named_parameters.contains("geom")) {
+            QString geom_path = CLP.named_parameters["geom"].toString();
+            ElectrodeGeometry eg = ElectrodeGeometry::loadFromGeomFile(geom_path);
+            context->setElectrodeGeometry(eg);
         }
-        if (!mv2_fname.isEmpty()) {
-            TaskProgressView TPV;
-            TPV.show();
-            //bool done_checking = false;
-            QJsonObject obj;
-            QString json = TextFile::read(mv2_fname);
-            obj = QJsonDocument::fromJson(json.toLatin1()).object();
-            context->setFromMV2FileObject(obj);
-            context->setMV2FileName(mv2_fname);
+        if (CLP.named_parameters.contains("cluster_metrics")) {
+            QString cluster_metrics_path = CLP.named_parameters["cluster_metrics"].toString();
+            context->loadClusterMetricsFromFile(cluster_metrics_path);
         }
-        {
-            if (CLP.named_parameters.contains("geom")) {
-                QString geom_path = CLP.named_parameters["geom"].toString();
-                ElectrodeGeometry eg = ElectrodeGeometry::loadFromGeomFile(geom_path);
-                context->setElectrodeGeometry(eg);
+        if (CLP.named_parameters.contains("curation")) {
+            QString curation_program_path = CLP.named_parameters["curation"].toString();
+            QString js = TextFile::read(curation_program_path);
+            if (js.isEmpty()) {
+                qWarning() << "Curation program is empty." << curation_program_path;
             }
-            if (CLP.named_parameters.contains("cluster_metrics")) {
-                QString cluster_metrics_path = CLP.named_parameters["cluster_metrics"].toString();
-                context->loadClusterMetricsFromFile(cluster_metrics_path);
-            }
-            if (CLP.named_parameters.contains("curation")) {
-                QString curation_program_path = CLP.named_parameters["curation"].toString();
-                QString js = TextFile::read(curation_program_path);
-                if (js.isEmpty()) {
-                    qWarning() << "Curation program is empty." << curation_program_path;
-                }
-                context->setOption("curation_program", js);
-            }
-
-            if (CLP.named_parameters.contains("clusters")) {
-                QStringList clusters_subset_str = CLP.named_parameters["clusters"].toString().split(",", QString::SkipEmptyParts);
-                QList<int> clusters_subset;
-                foreach (QString label, clusters_subset_str) {
-                    clusters_subset << label.toInt();
-                }
-                context->setClustersSubset(clusters_subset.toSet());
-            }
+            context->setOption("curation_program", js);
         }
 
-        set_nice_size(W);
-        W->show();
-
-        printf("Setting up main window...\n");
-        setup_main_window(W);
-        printf("Adding controls to main window...\n");
-        W->addControl(new MVOpenViewsControl(context, W), true);
-
-        a.processEvents();
-
-        printf("Opening initial views...\n");
-        if (context->firings().N2() > 1) {
-            W->setCurrentContainerName("south");
-            W->openView("open-cluster-metrics");
+        if (CLP.named_parameters.contains("clusters")) {
+            QStringList clusters_subset_str = CLP.named_parameters["clusters"].toString().split(",", QString::SkipEmptyParts);
+            QList<int> clusters_subset;
+            foreach (QString label, clusters_subset_str) {
+                clusters_subset << label.toInt();
+            }
+            context->setClustersSubset(clusters_subset.toSet());
         }
-
-        printf("Starting event loop...\n");
-        return a.exec();
     }
 
-    int ret = a.exec();
+    printf("Computing spikeview metrics...\n");
+    QString spikeview_metrics=compute_spikeview_metrics(context);
+    if (!spikeview_metrics.isEmpty())
+        context->loadClusterMetricsFromFile(spikeview_metrics);
 
-    printf("Number of files open: %ld, number of unfreed mallocs: %ld, number of unfreed megabytes: %d\n", jnumfilesopen(), jmalloccount(), (int)(jbytesallocated() * 1.0 / 1000000));
+    MVMainWindow* W = new MVMainWindow(context);
+    W->setWindowTitle(window_title);
+    set_nice_size(W);
+    W->show();
 
-    return ret;
+    printf("Setting up main window...\n");
+    setup_main_window(W);
+    printf("Adding controls to main window...\n");
+    W->addControl(new MVOpenViewsControl(context, W), true);
+
+    a.processEvents();
+
+    printf("Opening initial views...\n");
+    if (context->firings().N2() > 1) {
+        W->setCurrentContainerName("south");
+        W->openView("open-cluster-metrics");
+    }
+
+    printf("Starting event loop...\n");
+    return a.exec();
+}
+
+QString compute_spikeview_metrics(SVContext *context) {
+    QString firings=context->firings().makePath();
+    if (firings.isEmpty()) {
+        qWarning() << "No firings file found.";
+        return "";
+    }
+    MountainProcessRunner MPR;
+    MPR.setAllowGuiThread(true);
+    MPR.setProcessorName("spikeview.metrics1");
+    QVariantMap params;
+    params["firings"]=firings;
+    MPR.setInputParameters(params);
+    QString metrics_out=MPR.makeOutputFilePath("metrics_out");
+    MPR.runProcess();
+    return metrics_out;
 }
 
 QColor brighten(QColor col, int amount)
@@ -528,31 +550,8 @@ void set_nice_size(QWidget* W)
 
 void setup_main_window(MVMainWindow* W)
 {
-    /*
-    W->loadPlugin(new ClusterDetailPlugin);
     W->loadPlugin(new ClusterMetricsPlugin);
-    //W->loadPlugin(new IsolationMatrixPlugin);
-    W->loadPlugin(new ClipsViewPlugin);
-    W->loadPlugin(new ClusterContextMenuPlugin);
-    W->loadPlugin(new CurationProgramPlugin);
-    //W->registerViewFactory(new MVTemplatesView2Factory(W));
-    W->registerViewFactory(new MVTemplatesView3Factory(W));
-    W->registerViewFactory(new MVAutoCorrelogramsFactory(W));
-    W->registerViewFactory(new MVSelectedAutoCorrelogramsFactory(W));
-    W->registerViewFactory(new MVCrossCorrelogramsFactory(W));
-    W->registerViewFactory(new MVMatrixOfCrossCorrelogramsFactory(W));
-    W->registerViewFactory(new MVSelectedCrossCorrelogramsFactory(W));
-    W->registerViewFactory(new MVTimeSeriesDataFactory(W));
-    W->registerViewFactory(new MVPCAFeaturesFactory(W));
-    W->registerViewFactory(new MVChannelFeaturesFactory(W));
-    W->registerViewFactory(new MVSpikeSprayFactory(W));
-    W->registerViewFactory(new MVFiringEventsFactory(W));
-    //W->registerViewFactory(new MVAmplitudeHistogramsFactory(W));
-    W->registerViewFactory(new MVAmplitudeHistograms3Factory(W));
-    W->registerViewFactory(new MVDiscrimHistFactory(W));
-    //W->registerViewFactory(new MVDiscrimHistGuideFactory(W));
-    //W->registerViewFactory(new MVFireTrackFactory(W));
-    */
+    W->loadPlugin(new TemplatesViewPlugin);
 }
 
 /*

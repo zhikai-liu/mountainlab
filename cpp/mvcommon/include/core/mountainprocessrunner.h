@@ -21,6 +21,7 @@ public:
     void setProcessorName(const QString& pname);
     void setInputParameters(const QMap<QString, QVariant>& parameters);
     void setMLProxyUrl(const QString& url);
+    void setAllowGuiThread(bool val);
     QString makeOutputFilePath(const QString& pname);
     void setDetach(bool val);
     void runProcess();

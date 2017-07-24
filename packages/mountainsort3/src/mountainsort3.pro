@@ -39,7 +39,9 @@ SOURCES += \
     p_mountainsort3.cpp \
     globaltemplatecomputer.cpp fitstagecomputer.cpp \
     p_preprocess.cpp \
-    p_run_metrics_script.cpp
+    p_run_metrics_script.cpp \
+    p_spikeview_metrics.cpp \
+    p_spikeview_templates.cpp
 
 HEADERS += \
     mountainsort3_main.h \
@@ -54,7 +56,9 @@ HEADERS += \
     p_mountainsort3.h \
     globaltemplatecomputer.h fitstagecomputer.h \
     p_preprocess.h \
-    p_run_metrics_script.h
+    p_run_metrics_script.h \
+    p_spikeview_metrics.h \
+    p_spikeview_templates.h
 
 INCLUDEPATH += ../../../cpp/mountainsort/src/isosplit5
 VPATH += ../../../cpp/mountainsort/src/isosplit5

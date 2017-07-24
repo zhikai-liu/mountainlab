@@ -761,7 +761,6 @@ void mvtsvb_calculator::compute()
 
 void EventMarkerLayer::paint(QPainter* painter)
 {
-
     MVContext* c = qobject_cast<MVContext*>(q->mvContext());
     Q_ASSERT(c);
 

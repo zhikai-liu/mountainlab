@@ -25,12 +25,16 @@ INCLUDEPATH += msv/plugins msv/views
 VPATH += msv/plugins msv/views
 
 HEADERS += \
-    clustermetricsview.h clustermetricsplugin.h
+    clustermetricsview.h clustermetricsplugin.h \
+    mvgridview.h mvgridviewpropertiesdialog.h \
+    templatesview.h templatesviewpanel.h templatesviewplugin.h
 
 SOURCES += \
-    clustermetricsview.cpp clustermetricsplugin.cpp
+    clustermetricsview.cpp clustermetricsplugin.cpp \
+    mvgridview.cpp mvgridviewpropertiesdialog.cpp \
+    templatesview.cpp templatesviewpanel.cpp templatesviewplugin.cpp
 
-FORMS +=
+FORMS += mvgridviewpropertiesdialog.ui
 
 HEADERS += mvopenviewscontrol.h get_sort_indices.h
 SOURCES += mvopenviewscontrol.cpp get_sort_indices.cpp
