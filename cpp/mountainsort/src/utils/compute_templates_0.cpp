@@ -162,7 +162,7 @@ Mda32 compute_templates_0(const DiskReadMda32& X, const QVector<double>& times, 
         counts << 0;
     for (int i = 0; i < L; i++) {
         int k = labels[i];
-        int t0 = (int)(times[i] + 0.5);
+        bigint t0 = (int)(times[i] + 0.5);
         if (k >= 1) {
             Mda32 X0;
             X.readChunk(X0, 0, t0 - Tmid, M, T);

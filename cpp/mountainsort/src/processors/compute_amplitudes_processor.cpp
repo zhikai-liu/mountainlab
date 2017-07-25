@@ -14,7 +14,7 @@ compute_amplitudes_Processor::compute_amplitudes_Processor()
     d->q = this;
 
     this->setName("compute_amplitudes");
-    this->setVersion("0.21");
+    this->setVersion("0.22");
     this->setInputFileParameters("timeseries", "firings");
     this->setOutputFileParameters("firings_out");
 }
