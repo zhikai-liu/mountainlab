@@ -39,5 +39,6 @@ equals(GUI,"on") {
   SUBDIRS += $$ifcomponent(mountaincompare,cpp/mountaincompare/src/mountaincompare.pro)
   SUBDIRS += $$ifcomponent(mountainview-eeg,packages/mountainlab-eeg/mountainview-eeg/src/mountainview-eeg.pro)
   SUBDIRS += $$ifcomponent(sslongview,packages/sslongview/src/sslongview.pro)
+  SUBDIRS += $$ifcomponent(spikeview1,packages/spikeview1/src/spikeview1.pro)
 }
 

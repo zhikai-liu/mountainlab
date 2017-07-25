@@ -245,8 +245,8 @@ void TemplatesViewDataRenderer::setup_electrode_boxes(double W, double H)
     double H1 = H - top_section_height - bottom_section_height;
 
     QSet<int> electrodes_to_show;
-    electrodes_to_show << 0 << 1 << 2 << 3 << 4 << 5;
-    electrodes_to_show << 0;
+    for (int m=0; m<template0.N1(); m++)
+        electrodes_to_show << m;
 
     QList<QVector<double> > coords = electrode_geometry.coordinates;
     if (coords.isEmpty()) {
@@ -358,7 +358,6 @@ QPointF TemplatesViewPanelPrivate::coord2pix(int m, int t, double val)
 
 void TemplatesViewDataRenderer::run()
 {
-    qDebug() << "STARTING" << QThread::currentThreadId();
     image=QImage(window_size,QImage::Format_ARGB32);
     image.fill(QColor(0,0,0,0)); //transparent
 
@@ -400,6 +399,4 @@ void TemplatesViewDataRenderer::run()
                 painter.drawEllipse(box);
         }
     }
-
-    qDebug() << "ENDING" << QThread::currentThreadId();
 }

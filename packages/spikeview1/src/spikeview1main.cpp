@@ -32,7 +32,6 @@
 #include <clustermetricsplugin.h>
 #include "templatesviewplugin.h"
 
-void setup_main_window(MVMainWindow* W);
 QColor brighten(QColor col, int amount);
 QList<QColor> generate_colors_ahb();
 QList<QColor> generate_colors_old(const QColor& bg, const QColor& fg, int noColors);
@@ -220,10 +219,12 @@ int main(int argc, char* argv[])
     set_nice_size(W);
     W->show();
 
+    printf("Loading main window plugins...\n");
+    W->loadPlugin(new ClusterMetricsPlugin);
+    W->loadPlugin(new TemplatesViewPlugin);
+
     printf("Setting up main window...\n");
-    setup_main_window(W);
-    printf("Adding controls to main window...\n");
-    W->addControl(new MVOpenViewsControl(context, W), true);
+    W->insertControl(0,new MVOpenViewsControl(context, W), true);
 
     a.processEvents();
 
@@ -546,12 +547,6 @@ void set_nice_size(QWidget* W)
     if (geom.height() - 100 < H0)
         H0 = geom.height() - 100;
     W->resize(W0, H0);
-}
-
-void setup_main_window(MVMainWindow* W)
-{
-    W->loadPlugin(new ClusterMetricsPlugin);
-    W->loadPlugin(new TemplatesViewPlugin);
 }
 
 /*

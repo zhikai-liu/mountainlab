@@ -18,11 +18,18 @@ struct ClusterData2 {
     int k = 0;
     int channel = 0;
     Mda32 template0;
-    Mda32 stdev0;
     //int num_events = 0;
 
     QJsonObject toJsonObject();
     void fromJsonObject(const QJsonObject& X);
+};
+
+struct FiltOpts {
+    double samplerate=0;
+    double freq_min=0;
+    double freq_max=0;
+    bool apply=false;
+    QString subtract_temporal_mean;
 };
 
 class TemplatesViewCalculator {
@@ -32,6 +39,8 @@ public:
     DiskReadMda32 timeseries;
     DiskReadMda firings;
     int clip_size;
+    bigint max_events_per_template=0;
+    FiltOpts filtopts;
 
     //output
     QList<ClusterData2> cluster_data;
@@ -41,7 +50,8 @@ public:
     bool loaded_from_static_output = false;
     QJsonObject exportStaticOutput();
     void loadStaticOutput(const QJsonObject& X);
-    static void mv_compute_templates_stdevs(DiskReadMda32& templates_out, DiskReadMda32& stdevs_out, const QString& mlproxy_url, const QString& timeseries, const QString& firings, int clip_size);
+
+    static void mv_compute_templates(DiskReadMda32& templates_out, const QString& mlproxy_url, const QString& timeseries, const QString& firings, int clip_size, bigint max_events_per_template, FiltOpts filtopts);
 };
 
 class TemplatesViewPrivate {
@@ -56,7 +66,7 @@ public:
 
     double m_total_time_sec = 0;
     bool m_zoomed_out_once = false;
-    double m_vscale_factor = 4;
+    double m_vscale_factor = 12;
     double m_hscale_factor = 2;
 
     void compute_total_time();
@@ -79,7 +89,12 @@ TemplatesView::TemplatesView(MVAbstractContext* context)
 
     this->recalculateOn(c, SIGNAL(firingsChanged()), false);
     this->recalculateOn(c, SIGNAL(currentTimeseriesChanged()));
-    this->recalculateOnOptionChanged("clip_size");
+    this->recalculateOnOptionChanged("templates_clip_size");
+    this->recalculateOnOptionChanged("templates_apply_filter");
+    this->recalculateOnOptionChanged("templates_freq_min");
+    this->recalculateOnOptionChanged("templates_freq_max");
+    this->recalculateOnOptionChanged("templates_subtract_temporal_mean");
+    this->recalculateOnOptionChanged("templates_max_events_per_template");
 
     QObject::connect(c, SIGNAL(clusterMergeChanged()), this, SLOT(slot_update_highlighting()));
     QObject::connect(c, SIGNAL(currentClusterChanged()), this, SLOT(slot_update_highlighting()));
@@ -121,7 +136,15 @@ void TemplatesView::prepareCalculation()
     d->m_calculator.mlproxy_url = c->mlProxyUrl();
     d->m_calculator.timeseries = c->currentTimeseries();
     d->m_calculator.firings = c->firings();
-    d->m_calculator.clip_size = c->option("clip_size", 100).toInt();
+    d->m_calculator.clip_size = c->option("templates_clip_size", 100).toInt();
+    d->m_calculator.max_events_per_template = c->option("templates_max_events_per_template",0).toDouble();
+    d->m_calculator.filtopts.samplerate=c->sampleRate();
+
+    d->m_calculator.filtopts.freq_min=c->option("templates_freq_min",0).toDouble();
+    d->m_calculator.filtopts.freq_max=c->option("templates_freq_max",0).toDouble();
+    d->m_calculator.filtopts.apply=(c->option("templates_apply_filter")=="true");
+
+    d->m_calculator.filtopts.subtract_temporal_mean=c->option("templates_subtract_temporal_mean","false").toString();
     d->m_calculator.cluster_data.clear();
     update();
 }
@@ -257,9 +280,9 @@ void TemplatesView::slot_set_num_rows(int num_rows)
 }
 */
 
-void TemplatesViewCalculator::mv_compute_templates_stdevs(DiskReadMda32& templates_out, DiskReadMda32& stdevs_out, const QString& mlproxy_url, const QString& timeseries, const QString& firings, int clip_size)
+void TemplatesViewCalculator::mv_compute_templates(DiskReadMda32& templates_out, const QString& mlproxy_url, const QString& timeseries, const QString& firings, int clip_size, bigint max_events_per_template, FiltOpts filtopts)
 {
-    TaskProgress task(TaskProgress::Calculate, "mv_compute_templates_stdevs");
+    TaskProgress task(TaskProgress::Calculate, "spikeview.templates");
     task.log("mlproxy_url: " + mlproxy_url);
     MountainProcessRunner X;
     QString processor_name = "spikeview.templates";
@@ -269,20 +292,28 @@ void TemplatesViewCalculator::mv_compute_templates_stdevs(DiskReadMda32& templat
     params["timeseries"] = timeseries;
     params["firings"] = firings;
     params["clip_size"] = clip_size;
+    params["max_events_per_template"] = (double)max_events_per_template;
+    params["samplerate"] = filtopts.samplerate;
+    if (filtopts.apply) {
+        params["freq_min"] = filtopts.freq_min;
+        params["freq_max"] = filtopts.freq_max;
+    }
+    else {
+        params["freq_min"]=0;
+        params["freq_max"]=0;
+    }
+    params["subtract_temporal_mean"] = filtopts.subtract_temporal_mean;
     X.setInputParameters(params);
     X.setMLProxyUrl(mlproxy_url);
 
     QString templates_fname = X.makeOutputFilePath("templates_out");
-    QString stdevs_fname = X.makeOutputFilePath("stdevs_out");
 
     task.log("X.compute()");
     X.runProcess();
-    task.log("Returning DiskReadMda: " + templates_fname + " " + stdevs_fname);
+    task.log("Returning DiskReadMda: " + templates_fname);
     templates_out.setPath(templates_fname);
-    stdevs_out.setPath(stdevs_fname);
 
     //templates_out.setRemoteDataType("float32_q8");
-    //stdevs_out.setRemoteDataType("float32_q8");
 }
 
 void TemplatesViewCalculator::compute()
@@ -324,10 +355,10 @@ void TemplatesViewCalculator::compute()
     QString timeseries_path = timeseries.makePath();
     QString firings_path = firings.makePath();
 
-    task.log("mp_compute_templates_stdevs: " + mlproxy_url + " timeseries_path=" + timeseries_path + " firings_path=" + firings_path);
+    task.log("mp_compute_templates: " + mlproxy_url + " timeseries_path=" + timeseries_path + " firings_path=" + firings_path);
     task.setProgress(0.6);
-    DiskReadMda32 templates0, stdevs0;
-    mv_compute_templates_stdevs(templates0, stdevs0, mlproxy_url, timeseries_path, firings_path, T);
+    DiskReadMda32 templates0;
+    mv_compute_templates(templates0, mlproxy_url, timeseries_path, firings_path, T, max_events_per_template, filtopts);
     if (MLUtil::threadInterruptRequested()) {
         task.error("Halted **");
         return;
@@ -336,7 +367,6 @@ void TemplatesViewCalculator::compute()
     task.setLabel("Setting cluster data");
     task.setProgress(0.75);
     for (int k = 1; k <= K; k++) {
-        qDebug() << QString("k=%1/%2").arg(k).arg(K);
         if (MLUtil::threadInterruptRequested()) {
             task.error("Halted ***");
             return;
@@ -358,9 +388,6 @@ void TemplatesViewCalculator::compute()
         if (!templates0.readChunk(CD.template0, 0, 0, k - 1, M, T, 1)) {
             qWarning() << "Unable to read chunk of templates in templates view 3";
             return;
-        }
-        if (!stdevs0.readChunk(CD.stdev0, 0, 0, k - 1, M, T, 1)) {
-            qWarning() << "Unable to read chunk of stdevs in templates view 3";
         }
         if (!MLUtil::threadInterruptRequested()) {
             //if (CD.num_events > 0) {

@@ -8,6 +8,7 @@
 #include "templatesview.h"
 
 #include <QThread>
+#include <templatescontrol.h>
 
 class TemplatesViewPluginPrivate {
 public:
@@ -38,6 +39,7 @@ QString TemplatesViewPlugin::description()
 void TemplatesViewPlugin::initialize(MVMainWindow* mw)
 {
     mw->registerViewFactory(new TemplatesViewFactory(mw));
+    mw->addControl(new TemplatesControl(mw->mvContext(),mw), true);
 }
 
 TemplatesViewFactory::TemplatesViewFactory(MVMainWindow* mw, QObject* parent)

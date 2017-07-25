@@ -21,18 +21,20 @@ MOC_DIR=../build
 TARGET = spikeview1
 TEMPLATE = app
 
-INCLUDEPATH += msv/plugins msv/views
-VPATH += msv/plugins msv/views
+INCLUDEPATH += msv/plugins msv/views msv/controls
+VPATH += msv/plugins msv/views msv/controls
 
 HEADERS += \
     clustermetricsview.h clustermetricsplugin.h \
     mvgridview.h mvgridviewpropertiesdialog.h \
-    templatesview.h templatesviewpanel.h templatesviewplugin.h
+    templatesview.h templatesviewpanel.h templatesviewplugin.h templatescontrol.h \
+    crosscorview.h crosscorviewpanel.h
 
 SOURCES += \
     clustermetricsview.cpp clustermetricsplugin.cpp \
     mvgridview.cpp mvgridviewpropertiesdialog.cpp \
-    templatesview.cpp templatesviewpanel.cpp templatesviewplugin.cpp
+    templatesview.cpp templatesviewpanel.cpp templatesviewplugin.cpp templatescontrol.cpp \
+    crosscorview.cpp crosscorviewpanel.cpp
 
 FORMS += mvgridviewpropertiesdialog.ui
 
