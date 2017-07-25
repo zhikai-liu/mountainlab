@@ -3,27 +3,27 @@
 ** Author(s): Jeremy Magland
 ** Created: 8/24/2016
 *******************************************************/
-#ifndef TemplatesViewPLUGIN_H
-#define TemplatesViewPLUGIN_H
+#ifndef TemplatesPlugin_H
+#define TemplatesPlugin_H
 
 #include "mvmainwindow.h"
 
 #include <QThread>
 #include <svcontext.h>
 
-class TemplatesViewPluginPrivate;
-class TemplatesViewPlugin : public MVAbstractPlugin {
+class TemplatesPluginPrivate;
+class TemplatesPlugin : public MVAbstractPlugin {
 public:
-    friend class TemplatesViewPluginPrivate;
-    TemplatesViewPlugin();
-    virtual ~TemplatesViewPlugin();
+    friend class TemplatesPluginPrivate;
+    TemplatesPlugin();
+    virtual ~TemplatesPlugin();
 
     QString name() Q_DECL_OVERRIDE;
     QString description() Q_DECL_OVERRIDE;
     void initialize(MVMainWindow* mw) Q_DECL_OVERRIDE;
 
 private:
-    TemplatesViewPluginPrivate* d;
+    TemplatesPluginPrivate* d;
 };
 
 class TemplatesViewFactory : public MVAbstractViewFactory {
@@ -38,4 +38,4 @@ private slots:
     //void openClipsForTemplate();
 };
 
-#endif // TemplatesViewPLUGIN_H
+#endif // TemplatesPlugin_H

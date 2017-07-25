@@ -29,8 +29,9 @@
 #include <qprocessmanager.h>
 #include <mountainprocessrunner.h>
 
-#include <clustermetricsplugin.h>
-#include "templatesviewplugin.h"
+#include "clustermetricsplugin.h"
+#include "templatesplugin.h"
+#include "crosscorplugin.h"
 
 QColor brighten(QColor col, int amount);
 QList<QColor> generate_colors_ahb();
@@ -221,7 +222,8 @@ int main(int argc, char* argv[])
 
     printf("Loading main window plugins...\n");
     W->loadPlugin(new ClusterMetricsPlugin);
-    W->loadPlugin(new TemplatesViewPlugin);
+    W->loadPlugin(new TemplatesPlugin);
+    W->loadPlugin(new CrosscorPlugin);
 
     printf("Setting up main window...\n");
     W->insertControl(0,new MVOpenViewsControl(context, W), true);
@@ -232,6 +234,8 @@ int main(int argc, char* argv[])
     if (context->firings().N2() > 1) {
         W->setCurrentContainerName("south");
         W->openView("open-cluster-metrics");
+        W->setCurrentContainerName("north");
+        W->openView("open-templates-view");
     }
 
     printf("Starting event loop...\n");

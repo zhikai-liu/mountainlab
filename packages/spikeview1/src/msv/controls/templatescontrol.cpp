@@ -22,6 +22,14 @@ TemplatesControl::TemplatesControl(MVAbstractContext* context, MVMainWindow* mw)
     QGridLayout* glayout = new QGridLayout;
     int row = 0;
     {
+        QWidget* X = this->createDoubleControl("templates_clip_size");
+        X->setToolTip("Clip size (timepoints)");
+        context->onOptionChanged("templates_clip_size", this, SLOT(updateControls()));
+        glayout->addWidget(new QLabel("Clip size:"), row, 0);
+        glayout->addWidget(X, row, 1);
+        row++;
+    }
+    {
         QWidget *X = this->createCheckBoxControl("templates_apply_filter","Apply bandpass filter to templates");
         X->setToolTip("Apply bandpass filter to templates");
         context->onOptionChanged("templates_apply_filter", this, SLOT(updateControls()));
@@ -79,6 +87,7 @@ void TemplatesControl::updateContext()
     SVContext* c = qobject_cast<SVContext*>(mvContext());
     Q_ASSERT(c);
 
+    c->setOption("templates_clip_size",this->controlValue("templates_clip_size").toInt());
     c->setOption("templates_apply_filter",this->controlValue("templates_apply_filter").toBool() ? "true" : "false");
     c->setOption("templates_freq_min",this->controlValue("templates_freq_min").toDouble());
     c->setOption("templates_freq_max",this->controlValue("templates_freq_max").toDouble());
@@ -91,6 +100,7 @@ void TemplatesControl::updateControls()
     SVContext* c = qobject_cast<SVContext*>(mvContext());
     Q_ASSERT(c);
 
+    this->setControlValue("templates_clip_size",c->option("templates_clip_size",100).toInt());
     this->setControlValue("templates_apply_filter",(c->option("templates_apply_filter","false")=="true"));
     this->setControlValue("templates_freq_min",c->option("templates_freq_min",300).toDouble());
     this->setControlValue("templates_freq_max",c->option("templates_freq_max",6000).toDouble());

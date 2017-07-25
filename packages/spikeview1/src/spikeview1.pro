@@ -27,14 +27,16 @@ VPATH += msv/plugins msv/views msv/controls
 HEADERS += \
     clustermetricsview.h clustermetricsplugin.h \
     mvgridview.h mvgridviewpropertiesdialog.h \
-    templatesview.h templatesviewpanel.h templatesviewplugin.h templatescontrol.h \
-    crosscorview.h crosscorviewpanel.h
+    templatesview.h templatesviewpanel.h templatesplugin.h templatescontrol.h \
+    histogramview.h \
+    crosscorview.h crosscorplugin.h
 
 SOURCES += \
     clustermetricsview.cpp clustermetricsplugin.cpp \
     mvgridview.cpp mvgridviewpropertiesdialog.cpp \
-    templatesview.cpp templatesviewpanel.cpp templatesviewplugin.cpp templatescontrol.cpp \
-    crosscorview.cpp crosscorviewpanel.cpp
+    templatesview.cpp templatesviewpanel.cpp templatesplugin.cpp templatescontrol.cpp \
+    histogramview.cpp \
+    crosscorview.cpp crosscorplugin.cpp
 
 FORMS += mvgridviewpropertiesdialog.ui
 

@@ -4,39 +4,39 @@
 ** Created: 8/24/2016
 *******************************************************/
 
-#include "templatesviewplugin.h"
+#include "templatesplugin.h"
 #include "templatesview.h"
 
 #include <QThread>
 #include <templatescontrol.h>
 
-class TemplatesViewPluginPrivate {
+class TemplatesPluginPrivate {
 public:
-    TemplatesViewPlugin* q;
+    TemplatesPlugin* q;
 };
 
-TemplatesViewPlugin::TemplatesViewPlugin()
+TemplatesPlugin::TemplatesPlugin()
 {
-    d = new TemplatesViewPluginPrivate;
+    d = new TemplatesPluginPrivate;
     d->q = this;
 }
 
-TemplatesViewPlugin::~TemplatesViewPlugin()
+TemplatesPlugin::~TemplatesPlugin()
 {
     delete d;
 }
 
-QString TemplatesViewPlugin::name()
+QString TemplatesPlugin::name()
 {
     return "Templates";
 }
 
-QString TemplatesViewPlugin::description()
+QString TemplatesPlugin::description()
 {
     return "";
 }
 
-void TemplatesViewPlugin::initialize(MVMainWindow* mw)
+void TemplatesPlugin::initialize(MVMainWindow* mw)
 {
     mw->registerViewFactory(new TemplatesViewFactory(mw));
     mw->addControl(new TemplatesControl(mw->mvContext(),mw), true);

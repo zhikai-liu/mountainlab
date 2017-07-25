@@ -312,6 +312,7 @@ void TemplatesViewCalculator::mv_compute_templates(DiskReadMda32& templates_out,
     X.runProcess();
     task.log("Returning DiskReadMda: " + templates_fname);
     templates_out.setPath(templates_fname);
+    //qDebug() << "test"; QFile::remove("/home/magland/tmp/templates.mda"); QFile::copy(templates_fname,"/home/magland/tmp/templates.mda");
 
     //templates_out.setRemoteDataType("float32_q8");
 }
