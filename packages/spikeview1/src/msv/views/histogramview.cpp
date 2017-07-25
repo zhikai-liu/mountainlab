@@ -516,7 +516,18 @@ int HistogramViewPrivate::get_bin_index_at(QPointF pt_pix)
     if (num_bins < 2) {
         return -1;
     }
-    QPointF pt = pix2coord(pt_pix);
+    HistogramViewCoord2PixOpts ooo;
+    ooo.draw_caption=m_draw_caption;
+    ooo.H=q->height();
+    ooo.margin_bottom=m_margin_bottom;
+    ooo.margin_left=m_margin_left;
+    ooo.margin_right=m_margin_right;
+    ooo.margin_top=m_margin_top;
+    ooo.max_bin_density=m_max_bin_density;
+    ooo.num_bins=m_bin_lefts.count();
+    ooo.W=q->width();
+    ooo.xrange=m_xrange;
+    QPointF pt = pix2coord(pt_pix,ooo);
     for (int i = 0; i < num_bins; i++) {
         if ((pt.x() >= m_bin_lefts[i]) && (pt.x() <= m_bin_rights[i])) {
             //if ((0<=pt.y())&&(pt.y()<=m_bin_counts[i])) {
@@ -590,9 +601,21 @@ void HistogramViewPrivate::do_paint(QPainter& painter, int W, int H)
         painter.drawRect(R);
     }
 
+    HistogramViewCoord2PixOpts ooo;
+    ooo.draw_caption=m_draw_caption;
+    ooo.H=q->height();
+    ooo.margin_bottom=m_margin_bottom;
+    ooo.margin_left=m_margin_left;
+    ooo.margin_right=m_margin_right;
+    ooo.margin_top=m_margin_top;
+    ooo.max_bin_density=m_max_bin_density;
+    ooo.num_bins=m_bin_lefts.count();
+    ooo.W=q->width();
+    ooo.xrange=m_xrange;
+
     if (m_draw_vertical_axis_at_zero) {
-        QPointF pt0 = coord2pix(QPointF(0, 0));
-        QPointF pt1 = coord2pix(QPointF(0, m_max_bin_density));
+        QPointF pt0 = coord2pix(QPointF(0, 0),ooo);
+        QPointF pt1 = coord2pix(QPointF(0, m_max_bin_density),ooo);
         QPen pen = painter.pen();
         pen.setColor(Qt::black);
         pen.setStyle(Qt::SolidLine);
@@ -601,8 +624,8 @@ void HistogramViewPrivate::do_paint(QPainter& painter, int W, int H)
     }
 
     foreach (double val, m_vertical_lines) {
-        QPointF pt0 = coord2pix(QPointF(val, 0));
-        QPointF pt1 = coord2pix(QPointF(val, m_max_bin_density));
+        QPointF pt0 = coord2pix(QPointF(val, 0),ooo);
+        QPointF pt1 = coord2pix(QPointF(val, m_max_bin_density),ooo);
         QPen pen = painter.pen();
         pen.setColor(Qt::gray);
         pen.setStyle(Qt::DashLine);
@@ -611,7 +634,7 @@ void HistogramViewPrivate::do_paint(QPainter& painter, int W, int H)
     }
 
     foreach (double val, m_tick_marks) {
-        QPointF pt0 = coord2pix(QPointF(val, 0));
+        QPointF pt0 = coord2pix(QPointF(val, 0),ooo);
         QPointF pt1 = pt0;
         pt1.setY(pt1.y() + 5);
         QPen pen = painter.pen();
