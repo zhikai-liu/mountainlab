@@ -20,7 +20,7 @@ extract_clips_Processor::extract_clips_Processor()
     d->q = this;
 
     this->setName("extract_clips");
-    this->setVersion("0.12");
+    this->setVersion("0.13");
     this->setInputFileParameters("timeseries", "firings");
     this->setOutputFileParameters("clips");
     this->setRequiredParameters("clip_size");
