@@ -118,11 +118,13 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
     bigint M = X.N1();
     bigint N = X.N2();
 
-    bigint t_start=opts.t1;
-    bigint t_end=opts.t2;
-    if (t_start<0) t_start=0;
-    if (t_end<0) t_end=N-1;
-    N=t_end-t_start+1;
+    bigint t_start = opts.t1;
+    bigint t_end = opts.t2;
+    if (t_start < 0)
+        t_start = 0;
+    if (t_end < 0)
+        t_end = N - 1;
+    N = t_end - t_start + 1;
 
     qDebug().noquote() << QString("Starting sort: %1 channels, %2 timepoints").arg(M).arg(N);
 

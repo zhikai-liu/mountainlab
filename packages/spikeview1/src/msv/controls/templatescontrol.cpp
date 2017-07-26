@@ -22,6 +22,18 @@ TemplatesControl::TemplatesControl(MVAbstractContext* context, MVMainWindow* mw)
     QGridLayout* glayout = new QGridLayout;
     int row = 0;
     {
+        QComboBox* X = this->createChoicesControl("templates_display_mode");
+        QStringList choices;
+        choices << "All"
+                << "Single"
+                << "Neighborhood";
+        this->setChoices("templates_display_mode", choices);
+        context->onOptionChanged("templates_display_mode", this, SLOT(updateControls()));
+        glayout->addWidget(new QLabel("Templates display mode:"), row, 0);
+        glayout->addWidget(X, row, 1);
+        row++;
+    }
+    {
         QWidget* X = this->createDoubleControl("templates_clip_size");
         X->setToolTip("Clip size (timepoints)");
         context->onOptionChanged("templates_clip_size", this, SLOT(updateControls()));
@@ -30,7 +42,7 @@ TemplatesControl::TemplatesControl(MVAbstractContext* context, MVMainWindow* mw)
         row++;
     }
     {
-        QWidget *X = this->createCheckBoxControl("templates_apply_filter","Apply bandpass filter to templates");
+        QWidget* X = this->createCheckBoxControl("templates_apply_filter", "Apply bandpass filter to templates");
         X->setToolTip("Apply bandpass filter to templates");
         context->onOptionChanged("templates_apply_filter", this, SLOT(updateControls()));
         glayout->addWidget(X, row, 1);
@@ -53,7 +65,7 @@ TemplatesControl::TemplatesControl(MVAbstractContext* context, MVMainWindow* mw)
         row++;
     }
     {
-        QWidget *X = this->createCheckBoxControl("templates_subtract_temporal_mean","Subtract temporal mean from templates");
+        QWidget* X = this->createCheckBoxControl("templates_subtract_temporal_mean", "Subtract temporal mean from templates");
         X->setToolTip("Apply bandpass filter to templates");
         context->onOptionChanged("templates_subtract_temporal_mean", this, SLOT(updateControls()));
         glayout->addWidget(X, row, 1);
@@ -87,12 +99,13 @@ void TemplatesControl::updateContext()
     SVContext* c = qobject_cast<SVContext*>(mvContext());
     Q_ASSERT(c);
 
-    c->setOption("templates_clip_size",this->controlValue("templates_clip_size").toInt());
-    c->setOption("templates_apply_filter",this->controlValue("templates_apply_filter").toBool() ? "true" : "false");
-    c->setOption("templates_freq_min",this->controlValue("templates_freq_min").toDouble());
-    c->setOption("templates_freq_max",this->controlValue("templates_freq_max").toDouble());
-    c->setOption("templates_subtract_temporal_mean",this->controlValue("templates_subtract_temporal_mean").toBool() ? "true" : "false");
-    c->setOption("templates_max_events_per_template",this->controlValue("templates_max_events_per_template").toDouble());
+    c->setOption("templates_display_mode", this->controlValue("templates_display_mode").toString());
+    c->setOption("templates_clip_size", this->controlValue("templates_clip_size").toInt());
+    c->setOption("templates_apply_filter", this->controlValue("templates_apply_filter").toBool() ? "true" : "false");
+    c->setOption("templates_freq_min", this->controlValue("templates_freq_min").toDouble());
+    c->setOption("templates_freq_max", this->controlValue("templates_freq_max").toDouble());
+    c->setOption("templates_subtract_temporal_mean", this->controlValue("templates_subtract_temporal_mean").toBool() ? "true" : "false");
+    c->setOption("templates_max_events_per_template", this->controlValue("templates_max_events_per_template").toDouble());
 }
 
 void TemplatesControl::updateControls()
@@ -100,10 +113,11 @@ void TemplatesControl::updateControls()
     SVContext* c = qobject_cast<SVContext*>(mvContext());
     Q_ASSERT(c);
 
-    this->setControlValue("templates_clip_size",c->option("templates_clip_size",100).toInt());
-    this->setControlValue("templates_apply_filter",(c->option("templates_apply_filter","false")=="true"));
-    this->setControlValue("templates_freq_min",c->option("templates_freq_min",300).toDouble());
-    this->setControlValue("templates_freq_max",c->option("templates_freq_max",6000).toDouble());
-    this->setControlValue("templates_subtract_temporal_mean",(c->option("templates_subtract_temporal_mean","true")=="true"));
-    this->setControlValue("templates_max_events_per_template",c->option("templates_max_events_per_template",500).toDouble());
+    this->setControlValue("templates_display_mode", c->option("templates_display_mode", "All").toString());
+    this->setControlValue("templates_clip_size", c->option("templates_clip_size", 100).toInt());
+    this->setControlValue("templates_apply_filter", (c->option("templates_apply_filter", "false") == "true"));
+    this->setControlValue("templates_freq_min", c->option("templates_freq_min", 300).toDouble());
+    this->setControlValue("templates_freq_max", c->option("templates_freq_max", 6000).toDouble());
+    this->setControlValue("templates_subtract_temporal_mean", (c->option("templates_subtract_temporal_mean", "true") == "true"));
+    this->setControlValue("templates_max_events_per_template", c->option("templates_max_events_per_template", 500).toDouble());
 }

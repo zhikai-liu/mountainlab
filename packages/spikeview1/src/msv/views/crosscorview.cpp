@@ -29,7 +29,7 @@ class CrosscorViewCalculator {
 public:
     //input
     DiskReadMda firings;
-    QList<int> k1s,k2s;
+    QList<int> k1s, k2s;
 
     //output
     QVector<double> times;
@@ -45,7 +45,7 @@ public:
     CrosscorViewCalculator m_calculator;
 
     QList<int> m_ks;
-    QList<int> m_k1s,m_k2s;
+    QList<int> m_k1s, m_k2s;
     QList<HistogramView*> m_panels;
 
     CrosscorWorker m_worker;
@@ -70,7 +70,10 @@ CrosscorView::CrosscorView(MVAbstractContext* context)
 
     connect(this, SIGNAL(signalViewClicked(int, Qt::KeyboardModifiers)), this, SLOT(slot_panel_clicked(int, Qt::KeyboardModifiers)));
 
-    connect(&d->m_worker,SIGNAL(data_update()),this,SLOT(slot_worker_data_update()));
+    connect(&d->m_worker, SIGNAL(data_update()), this, SLOT(slot_worker_data_update()));
+
+    this->recalculateOnOptionChanged("cc_max_dt_msec");
+    this->recalculateOnOptionChanged("cc_bin_size_msec");
 
     this->recalculate();
 }
@@ -84,11 +87,11 @@ CrosscorView::~CrosscorView()
     delete d;
 }
 
-void CrosscorView::setKs(const QList<int> &k1s, const QList<int> &k2s, const QList<int> &ks)
+void CrosscorView::setKs(const QList<int>& k1s, const QList<int>& k2s, const QList<int>& ks)
 {
-    d->m_k1s=k1s;
-    d->m_k2s=k2s;
-    d->m_ks=ks;
+    d->m_k1s = k1s;
+    d->m_k2s = k2s;
+    d->m_ks = ks;
     this->recalculate();
 }
 
@@ -101,8 +104,8 @@ void CrosscorView::prepareCalculation()
     d->m_worker.wait();
 
     d->m_calculator.firings = c->firings();
-    d->m_calculator.k1s=d->m_k1s;
-    d->m_calculator.k2s=d->m_k2s;
+    d->m_calculator.k1s = d->m_k1s;
+    d->m_calculator.k2s = d->m_k2s;
 
     update();
 }
@@ -199,7 +202,7 @@ void CrosscorView::slot_panel_clicked(int index, Qt::KeyboardModifiers modifiers
     else {
         HistogramView* panel = d->m_panels.value(index);
         if (panel) {
-            int k=panel->property("k").toInt();
+            int k = panel->property("k").toInt();
             if (k > 0) {
                 c->clickCluster(k, modifiers);
             }
@@ -210,13 +213,13 @@ void CrosscorView::slot_panel_clicked(int index, Qt::KeyboardModifiers modifiers
 void CrosscorView::slot_worker_data_update()
 {
     QMutexLocker locker(&d->m_worker.mutex);
-    for (int i=0; i<d->m_panels.count(); i++) {
-        HistogramView *P=d->m_panels[i];
-        int k1=P->property("k1").toInt();
-        int k2=P->property("k2").toInt();
+    for (int i = 0; i < d->m_panels.count(); i++) {
+        HistogramView* P = d->m_panels[i];
+        int k1 = P->property("k1").toInt();
+        int k2 = P->property("k2").toInt();
         if (d->m_worker.hist_data.contains(k1)) {
             if (d->m_worker.hist_data[k1].contains(k2)) {
-                QVector<double> tmp=d->m_worker.hist_data[k1][k2];
+                QVector<double> tmp = d->m_worker.hist_data[k1][k2];
                 d->m_worker.hist_data[k1][k2].clear();
                 P->appendData(tmp);
             }
@@ -228,17 +231,17 @@ void CrosscorViewCalculator::compute()
 {
     QVector<double> times0(firings.N2());
     QVector<int> labels0(firings.N2());
-    for (bigint i=0; i<firings.N2(); i++) {
-        times0[i]=firings.value(1,i);
-        labels0[i]=firings.value(2,i);
+    for (bigint i = 0; i < firings.N2(); i++) {
+        times0[i] = firings.value(1, i);
+        labels0[i] = firings.value(2, i);
     }
-    QList<bigint> inds0=get_sort_indices_bigint(times0);
+    QList<bigint> inds0 = get_sort_indices_bigint(times0);
 
     times.resize(firings.N2());
     labels.resize(firings.N2());
-    for (bigint j=0; j<inds0.count(); j++) {
-        times[j]=times0[inds0[j]];
-        labels[j]=labels0[inds0[j]];
+    for (bigint j = 0; j < inds0.count(); j++) {
+        times[j] = times0[inds0[j]];
+        labels[j] = labels0[inds0[j]];
     }
 }
 
@@ -250,23 +253,33 @@ void CrosscorViewPrivate::update_panels()
     m_panels.clear();
     q->clearViews();
 
-    double dt_max=30*50;
-    int num_bins=100;
+    double max_dt_msec = c->option("cc_max_dt_msec", 100).toDouble();
+    double bin_size_msec = c->option("cc_bin_size_msec", 1).toDouble();
+    double dt_max = (c->sampleRate() / 1000) * max_dt_msec;
+    double bin_size = (c->sampleRate() / 1000) * bin_size_msec;
+    int num_bins = (int)(2 * dt_max / bin_size);
+    if (num_bins > 10000)
+        num_bins = 10000;
+    if (num_bins < 1)
+        num_bins = 1;
 
-    bool auto_only=true;
-    for (int i=0; i<m_k1s.count(); i++) {
-        if (m_k1s[i]!=m_k2s[i]) auto_only=false;
+    bool auto_only = true;
+    for (int i = 0; i < m_k1s.count(); i++) {
+        if (m_k1s[i] != m_k2s[i])
+            auto_only = false;
     }
 
-    for (int i=0; i<m_k1s.count(); i++) {
-        HistogramView* panel=new HistogramView;
+    for (int i = 0; i < m_k1s.count(); i++) {
+        HistogramView* panel = new HistogramView;
         QString title0;
-        if (auto_only) title0=QString("%1").arg(m_k1s.value(i));
-        else title0=QString("%1/%2").arg(m_k1s.value(i)).arg(m_k2s.value(i));
+        if (auto_only)
+            title0 = QString("%1").arg(m_k1s.value(i));
+        else
+            title0 = QString("%1/%2").arg(m_k1s.value(i)).arg(m_k2s.value(i));
         panel->setTitle(title0);
-        panel->setProperty("k1",m_k1s.value(i));
-        panel->setProperty("k2",m_k2s.value(i));
-        panel->setProperty("k",m_ks.value(i));
+        panel->setProperty("k1", m_k1s.value(i));
+        panel->setProperty("k2", m_k2s.value(i));
+        panel->setProperty("k", m_ks.value(i));
         panel->setColors(c->colors());
         //panel->setData(m_hist_data.value(i).data);
         panel->setBinInfo(-dt_max, dt_max, num_bins);
@@ -280,59 +293,60 @@ void CrosscorViewPrivate::update_panels()
 
     q->updateLayout();
 
-
     m_worker.requestInterruption();
     m_worker.wait();
     m_worker.hist_data.clear();
-    m_worker.times=m_calculator.times;
-    m_worker.labels=m_calculator.labels;
-    m_worker.k1s=m_k1s;
-    m_worker.k2s=m_k2s;
-    m_worker.dt_max=dt_max;
+    m_worker.times = m_calculator.times;
+    m_worker.labels = m_calculator.labels;
+    m_worker.k1s = m_k1s;
+    m_worker.k2s = m_k2s;
+    m_worker.dt_max = dt_max;
 
     m_worker.start();
 }
 
-
 void CrosscorWorker::run()
 {
     TaskProgress TP("Computing cross-correlograms");
-    bigint L=times.count();
+    bigint L = times.count();
 
     {
         QMutexLocker locker(&mutex);
         hist_data.clear();
-        for (int i=0; i<k1s.count(); i++) {
-            int k1=k1s[i];
-            int k2=k2s[i];
+        for (int i = 0; i < k1s.count(); i++) {
+            int k1 = k1s[i];
+            int k2 = k2s[i];
             if (!hist_data.contains(k1)) {
-                QMap<int,QVector<double>> empty;
-                hist_data[k1]=empty;
+                QMap<int, QVector<double> > empty;
+                hist_data[k1] = empty;
             }
-            hist_data[k1][k2]=QVector<double>();
+            hist_data[k1][k2] = QVector<double>();
         }
     }
 
     qDebug() << __FILE__ << __LINE__;
-    bigint last_j_left=0;
-    QTime timer; timer.start();
+    bigint last_j_left = 0;
+    QTime timer;
+    timer.start();
     for (bigint i = 0; i < L; i++) {
-        TP.setProgress(i*1.0/L);
-        if (MLUtil::threadInterruptRequested()) return;
+        TP.setProgress(i * 1.0 / L);
+        if (MLUtil::threadInterruptRequested())
+            return;
         {
             QMutexLocker locker(&mutex);
-            int k1=labels[i];
+            int k1 = labels[i];
             if (hist_data.contains(k1)) {
-                QMap<int,QVector<double>> *hist_data1=&hist_data[k1];
-                double t1=times[i];
-                bigint j=last_j_left;
-                while ((j<L)&&(times[j]<t1-dt_max)) j++;
-                last_j_left=j;
-                while ((j<L)&&(times[j]<=t1+dt_max)) {
-                    if (j!=i) {
-                        int k2=labels[j];
+                QMap<int, QVector<double> >* hist_data1 = &hist_data[k1];
+                double t1 = times[i];
+                bigint j = last_j_left;
+                while ((j < L) && (times[j] < t1 - dt_max))
+                    j++;
+                last_j_left = j;
+                while ((j < L) && (times[j] <= t1 + dt_max)) {
+                    if (j != i) {
+                        int k2 = labels[j];
                         if (hist_data1->contains(k2)) {
-                            double dt=times[j]-t1;
+                            double dt = times[j] - t1;
                             (*hist_data1)[k2] << dt;
                         }
                     }
@@ -340,7 +354,7 @@ void CrosscorWorker::run()
                 }
             }
         }
-        if (timer.elapsed()>2000) {
+        if (timer.elapsed() > 2000) {
             emit this->data_update();
             timer.restart();
         }

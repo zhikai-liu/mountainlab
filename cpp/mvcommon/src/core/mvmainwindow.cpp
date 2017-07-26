@@ -314,9 +314,9 @@ const QList<MVAbstractContextMenuHandler*>& MVMainWindow::contextMenuHandlers() 
     return d->m_menuHandlers;
 }
 
-void MVMainWindow::insertControl(int position, MVAbstractControl *control, bool start_expanded)
+void MVMainWindow::insertControl(int position, MVAbstractControl* control, bool start_expanded)
 {
-    d->m_control_panel->insertControl(position,control, start_expanded);
+    d->m_control_panel->insertControl(position, control, start_expanded);
 }
 
 void MVMainWindow::addControl(MVAbstractControl* control, bool start_expanded)

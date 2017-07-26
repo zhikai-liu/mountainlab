@@ -19,7 +19,7 @@ public:
     TemplatesViewPanel();
     virtual ~TemplatesViewPanel();
     void setTemplate(const Mda32& X);
-    void setElectrodesToShow(const QSet<int> &electrodes_to_show);
+    void setElectrodesToShow(const QSet<int>& electrodes_to_show);
     void setElectrodeGeometry(const ElectrodeGeometry& geom);
     void setVerticalScaleFactor(double factor);
     void setChannelColors(const QList<QColor>& colors);

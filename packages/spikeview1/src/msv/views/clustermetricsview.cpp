@@ -179,11 +179,11 @@ private:
 struct metric_name_comparer {
     bool operator()(const QString& a, const QString& b) const
     {
-        if ((a.startsWith("sv."))&&(!b.startsWith("sv.")))
+        if ((a.startsWith("sv.")) && (!b.startsWith("sv.")))
             return true;
-        if ((!a.startsWith("sv."))&&(b.startsWith("sv.")))
+        if ((!a.startsWith("sv.")) && (b.startsWith("sv.")))
             return false;
-        return (a<b);
+        return (a < b);
     }
 };
 

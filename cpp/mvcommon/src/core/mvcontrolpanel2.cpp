@@ -62,12 +62,12 @@ MVControlPanel2::~MVControlPanel2()
     delete d;
 }
 
-void MVControlPanel2::insertControl(int position, MVAbstractControl *mvcontrol, bool start_open)
+void MVControlPanel2::insertControl(int position, MVAbstractControl* mvcontrol, bool start_open)
 {
-    if (position<0)
+    if (position < 0)
         d->m_controls << mvcontrol;
     else
-        d->m_controls.insert(position,mvcontrol);
+        d->m_controls.insert(position, mvcontrol);
 
     QFrame* frame = new QFrame;
     QHBoxLayout* frame_layout = new QHBoxLayout;
@@ -75,10 +75,10 @@ void MVControlPanel2::insertControl(int position, MVAbstractControl *mvcontrol, 
     frame->setLayout(frame_layout);
     ContentPane* CP = new ContentPane(mvcontrol->title(), frame);
     CP->setMaximumHeight(1000);
-    if (position<0)
+    if (position < 0)
         d->m_accordion->addContentPane(CP);
     else
-        d->m_accordion->insertContentPane(position,CP);
+        d->m_accordion->insertContentPane(position, CP);
     if (start_open) {
         CP->openContentPane();
     }
@@ -88,7 +88,7 @@ void MVControlPanel2::insertControl(int position, MVAbstractControl *mvcontrol, 
 
 void MVControlPanel2::addControl(MVAbstractControl* mvcontrol, bool start_open)
 {
-    insertControl(-1,mvcontrol,start_open);
+    insertControl(-1, mvcontrol, start_open);
 }
 
 void MVControlPanel2::slot_recalc_visible()

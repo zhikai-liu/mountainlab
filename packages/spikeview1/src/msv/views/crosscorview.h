@@ -24,7 +24,7 @@ public:
     CrosscorView(MVAbstractContext* mvcontext);
     virtual ~CrosscorView();
 
-    void setKs(const QList<int> &k1s,const QList<int> &k2s,const QList<int> &ks);
+    void setKs(const QList<int>& k1s, const QList<int>& k2s, const QList<int>& ks);
 
     void prepareCalculation() Q_DECL_OVERRIDE;
     void runCalculation() Q_DECL_OVERRIDE;
@@ -55,14 +55,13 @@ public:
     //input
     QVector<double> times;
     QVector<int> labels;
-    QList<int> k1s,k2s;
-    double dt_max=30*50;
+    QList<int> k1s, k2s;
+    double dt_max = 30 * 50;
 
     //output
-    QMap<int,QMap<int,QVector<double>>> hist_data;
+    QMap<int, QMap<int, QVector<double> > > hist_data;
 signals:
     void data_update();
 };
-
 
 #endif // CrosscorView_H

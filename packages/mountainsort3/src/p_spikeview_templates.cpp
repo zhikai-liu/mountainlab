@@ -19,16 +19,15 @@ struct Bandpass_filter_runner {
     void define_kernel(bigint N, double* kernel, double samplefreq, double freq_min, double freq_max, double freq_wid);
     bigint M;
     bigint N, MN;
-    fftw_complex* data_in=0;
-    fftw_complex* data_out=0;
-    double* kernel0=0;
+    fftw_complex* data_in = 0;
+    fftw_complex* data_out = 0;
+    double* kernel0 = 0;
     fftw_plan p_fft;
     fftw_plan p_ifft;
 };
 
-QVector<double> subsample(const QVector<double> &X,bigint max_elments);
-void compute_template(Mda32 &template0,const DiskReadMda32 &X, const QVector<double> &times, P_spikeview_templates_opts opts,const Bandpass_filter_runner &BP);
-
+QVector<double> subsample(const QVector<double>& X, bigint max_elments);
+void compute_template(Mda32& template0, const DiskReadMda32& X, const QVector<double>& times, P_spikeview_templates_opts opts, const Bandpass_filter_runner& BP);
 }
 
 using namespace P_spikeview_templates;
@@ -36,67 +35,68 @@ using namespace P_spikeview_templates;
 bool p_spikeview_templates(QString timeseries, QString firings, QString templates_out, P_spikeview_templates_opts opts)
 {
     Mda FF(firings);
-    bigint L=FF.N2();
+    bigint L = FF.N2();
     QVector<double> times(L);
     QVector<int> labels(L);
 
     qDebug().noquote() << "Reading firings file...";
-    for (bigint i=0; i<L; i++) {
-        times[i]=FF.value(1,i);
-        labels[i]=FF.value(2,i);
+    for (bigint i = 0; i < L; i++) {
+        times[i] = FF.value(1, i);
+        labels[i] = FF.value(2, i);
     }
 
-    QMap<int,ClusterData> cluster_data;
-    for (bigint i=0; i<L; i++) {
-        int k=labels[i];
+    QMap<int, ClusterData> cluster_data;
+    for (bigint i = 0; i < L; i++) {
+        int k = labels[i];
         cluster_data[k].times << times[i];
     }
 
     qDebug().noquote() << "Subsampling as needed" << opts.max_events_per_template;
-    QList<int> keys=cluster_data.keys();
-    foreach (int key,keys) {
-        if ((opts.max_events_per_template>0)&&(cluster_data[key].times.count()>opts.max_events_per_template)) {
-            cluster_data[key].times=subsample(cluster_data[key].times,opts.max_events_per_template);
+    QList<int> keys = cluster_data.keys();
+    foreach (int key, keys) {
+        if ((opts.max_events_per_template > 0) && (cluster_data[key].times.count() > opts.max_events_per_template)) {
+            cluster_data[key].times = subsample(cluster_data[key].times, opts.max_events_per_template);
         }
     }
 
     DiskReadMda32 X(timeseries);
-    int M=X.N1();
-    int T=opts.clip_size;
+    int M = X.N1();
+    int T = opts.clip_size;
 #pragma omp parallel
     {
-        QTime timer; timer.start();
-        bool first=true;
+        QTime timer;
+        timer.start();
+        bool first = true;
         Bandpass_filter_runner BP; //one per parallel thread
-        #pragma omp critical
+#pragma omp critical
         {
-            if ((opts.samplerate!=0)&&((opts.freq_min!=0)||(opts.freq_max!=0))) {
-                BP.init(X.N1(),opts.clip_size+2*opts.filt_padding,opts.samplerate,opts.freq_min,opts.freq_max,opts.freq_wid);
+            if ((opts.samplerate != 0) && ((opts.freq_min != 0) || (opts.freq_max != 0))) {
+                BP.init(X.N1(), opts.clip_size + 2 * opts.filt_padding, opts.samplerate, opts.freq_min, opts.freq_max, opts.freq_wid);
             }
         }
 #pragma omp for
-        for (int ii=0; ii<keys.count(); ii++) {
-            ClusterData *CD;
+        for (int ii = 0; ii < keys.count(); ii++) {
+            ClusterData* CD;
 #pragma omp critical
             {
-                int key=keys[ii];
-                if ((timer.elapsed()>3000)||(first)) {
+                int key = keys[ii];
+                if ((timer.elapsed() > 3000) || (first)) {
                     qDebug().noquote() << QString("Computing template for cluster %1/%2").arg(key).arg(MLCompute::max(keys.toVector()));
                     timer.restart();
-                    first=false;
+                    first = false;
                 }
-                CD=&cluster_data[key];
+                CD = &cluster_data[key];
             }
-            compute_template(CD->template0,X,CD->times,opts,BP);
+            compute_template(CD->template0, X, CD->times, opts, BP);
         }
     }
 
     qDebug().noquote() << "Assembling templates";
-    int K=MLCompute::max(labels);
-    Mda32 templates(M,T,K);
-    for (int k=1; k<=K; k++) {
+    int K = MLCompute::max(labels);
+    Mda32 templates(M, T, K);
+    for (int k = 1; k <= K; k++) {
         if (cluster_data.contains(k)) {
-            templates.setChunk(cluster_data[k].template0,0,0,k-1);
+            templates.setChunk(cluster_data[k].template0, 0, 0, k - 1);
         }
     }
 
@@ -107,59 +107,63 @@ bool p_spikeview_templates(QString timeseries, QString firings, QString template
 }
 
 namespace P_spikeview_templates {
-QVector<double> subsample(const QVector<double> &X,bigint max_elements) {
-    bigint increment=X.count()/max_elements;
-    if (increment<1) increment=1;
+QVector<double> subsample(const QVector<double>& X, bigint max_elements)
+{
+    bigint increment = X.count() / max_elements;
+    if (increment < 1)
+        increment = 1;
     QVector<double> Y;
-    for (bigint j=0; (j<max_elements)&&(j*increment<X.count()); j++) {
-        Y << X[j*increment];
+    for (bigint j = 0; (j < max_elements) && (j * increment < X.count()); j++) {
+        Y << X[j * increment];
     }
     return Y;
 }
 
-void subtract_temporal_mean(Mda32 &clip) {
-    int M=clip.N1();
+void subtract_temporal_mean(Mda32& clip)
+{
+    int M = clip.N1();
 
     QVector<double> means(M);
     means.fill(0);
-    for (int t=0; t<clip.N2(); t++) {
-        for (int m=0; m<M; m++) {
-            means[m]+=clip.get(m,t);
+    for (int t = 0; t < clip.N2(); t++) {
+        for (int m = 0; m < M; m++) {
+            means[m] += clip.get(m, t);
         }
     }
-    for (int m=0; m<M; m++) {
-        means[m]/=clip.N2();
+    for (int m = 0; m < M; m++) {
+        means[m] /= clip.N2();
     }
-    for (int t=0; t<clip.N2(); t++) {
-        for (int m=0; m<M; m++) {
-            clip.set(clip.get(m,t)-means[m],m,t);
+    for (int t = 0; t < clip.N2(); t++) {
+        for (int m = 0; m < M; m++) {
+            clip.set(clip.get(m, t) - means[m], m, t);
         }
     }
 }
 
-void compute_template(Mda32 &template0,const DiskReadMda32 &X, const QVector<double> &times, P_spikeview_templates_opts opts,const Bandpass_filter_runner &BP) {
-    int M=X.N1();
-    int T=opts.clip_size;
-    Mda sum(M,T+2*opts.filt_padding);
+void compute_template(Mda32& template0, const DiskReadMda32& X, const QVector<double>& times, P_spikeview_templates_opts opts, const Bandpass_filter_runner& BP)
+{
+    int M = X.N1();
+    int T = opts.clip_size;
+    Mda sum(M, T + 2 * opts.filt_padding);
 
     int Tmid = (int)((T + 1) / 2) - 1;
     for (bigint i = 0; i < times.count(); i++) {
-        bigint t1 = times[i] - Tmid-opts.filt_padding;
+        bigint t1 = times[i] - Tmid - opts.filt_padding;
         Mda32 tmp;
-        X.readChunk(tmp, 0, t1, M, T+opts.filt_padding*2);
-        for (int t=0; t<T+2*opts.filt_padding; t++) {
-            for (int m=0; m<M; m++) {
-                double val=tmp.get(m,t);
-                sum.set(sum.get(m,t)+val,m,t);
+        X.readChunk(tmp, 0, t1, M, T + opts.filt_padding * 2);
+        for (int t = 0; t < T + 2 * opts.filt_padding; t++) {
+            for (int m = 0; m < M; m++) {
+                double val = tmp.get(m, t);
+                sum.set(sum.get(m, t) + val, m, t);
             }
         }
     }
 
     Mda32 template1;
-    template1.allocate(M,T+2*opts.filt_padding);
+    template1.allocate(M, T + 2 * opts.filt_padding);
 
-    if (times.count()>0) {
-        for (bigint j=0; j<M*(T+2*opts.filt_padding); j++) {
+    if (times.count() > 0) {
+        for (bigint j = 0; j < M * (T + 2 * opts.filt_padding); j++) {
             double sum0 = sum.get(j);
             template1.set(sum0 / times.count(), j);
         }
@@ -168,25 +172,30 @@ void compute_template(Mda32 &template0,const DiskReadMda32 &X, const QVector<dou
     if (opts.subtract_temporal_mean) {
         subtract_temporal_mean(template1);
     }
-    if ((opts.samplerate!=0)&&((opts.freq_min!=0)||(opts.freq_max!=0))) {
+    if ((opts.samplerate != 0) && ((opts.freq_min != 0) || (opts.freq_max != 0))) {
         BP.apply(template1);
     }
 
-    template0.allocate(M,T);
-    for (int t=0; t<T; t++) {
-        for (int m=0; m<M; m++) {
-            template0.set(template1.get(m,t+opts.filt_padding),m,t);
+    template0.allocate(M, T);
+    for (int t = 0; t < T; t++) {
+        for (int m = 0; m < M; m++) {
+            template0.set(template1.get(m, t + opts.filt_padding), m, t);
         }
     }
 }
 
-Bandpass_filter_runner::Bandpass_filter_runner() {
+Bandpass_filter_runner::Bandpass_filter_runner()
+{
 }
 
-Bandpass_filter_runner::~Bandpass_filter_runner() {
-    if (data_in) fftw_free(data_in);
-    if (data_out) fftw_free(data_out);
-    if (kernel0) free(kernel0);
+Bandpass_filter_runner::~Bandpass_filter_runner()
+{
+    if (data_in)
+        fftw_free(data_in);
+    if (data_out)
+        fftw_free(data_out);
+    if (kernel0)
+        free(kernel0);
     //delete p_fft;
     //delete p_ifft;
 }
@@ -271,7 +280,4 @@ void Bandpass_filter_runner::define_kernel(bigint N, double* kernel, double samp
         kernel[i] = sqrt(val); // note sqrt of filter func to apply to spectral intensity not ampl
     }
 }
-
-
-
 }

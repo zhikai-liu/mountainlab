@@ -14,12 +14,12 @@ struct BinInfo {
 };
 
 struct HistogramViewCoord2PixOpts {
-    int margin_bottom,margin_top,margin_left,margin_right;
+    int margin_bottom, margin_top, margin_left, margin_right;
     bool draw_caption;
     int num_bins;
     MVRange xrange;
     double max_bin_density;
-    int W,H;
+    int W, H;
 };
 
 class HistogramViewDataRenderer : public QThread {
@@ -73,7 +73,7 @@ public:
     HistogramViewCoord2PixOpts m_coord2pix_opts;
 
     HistogramViewDataRenderer m_data_renderer;
-    bool m_data_render_needed=false;
+    bool m_data_render_needed = false;
     QImage m_current_data_image;
 
     BinCounter m_bin_counter;
@@ -118,8 +118,8 @@ HistogramView::HistogramView(QWidget* parent)
     d = new HistogramViewPrivate;
     d->q = this;
 
-    connect(&d->m_data_renderer,SIGNAL(finished()),this,SLOT(update()));
-    connect(&d->m_bin_counter,SIGNAL(finished()),this,SLOT(slot_bin_counter_finished()));
+    connect(&d->m_data_renderer, SIGNAL(finished()), this, SLOT(update()));
+    connect(&d->m_bin_counter, SIGNAL(finished()), this, SLOT(slot_bin_counter_finished()));
 
     this->setMouseTracking(true);
     //this->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -144,7 +144,7 @@ void HistogramView::setData(const QVector<double>& values)
     update();
 }
 
-void HistogramView::appendData(const QVector<double> &values)
+void HistogramView::appendData(const QVector<double>& values)
 {
     d->m_data.append(values);
     d->m_update_bin_counts_required = true;
@@ -163,7 +163,7 @@ void HistogramView::setBinInfo(double bin_min, double bin_max, int num_bins)
     d->m_bin_info.bin_min = bin_min;
     d->m_bin_info.bin_max = bin_max;
     d->m_bin_info.num_bins = num_bins;
-    d->m_xrange=MVRange(bin_min,bin_max);
+    d->m_xrange = MVRange(bin_min, bin_max);
     d->set_bins();
 }
 
@@ -186,7 +186,7 @@ void HistogramViewPrivate::set_bins()
     if (N <= 2)
         return;
     //double spacing = (transform1(bin_max) - transform1(bin_min)) / N;
-    double spacing = (bin_max-bin_min) / N;
+    double spacing = (bin_max - bin_min) / N;
     for (int i = 0; i < N; i++) {
         //m_bin_lefts[i] = transform2(transform1(bin_min) + i * spacing);
         //m_bin_rights[i] = transform2(transform1(bin_min) + (i + 1) * spacing);
@@ -433,12 +433,12 @@ void HistogramView::slot_context_menu(const QPoint& pos)
 
 void HistogramView::slot_bin_counter_finished()
 {
-    d->m_bin_counts=d->m_bin_counter.bin_counts;
-    d->m_second_bin_counts=d->m_bin_counter.second_bin_counts;
-    d->m_bin_densities=d->m_bin_counter.bin_densities;
-    d->m_second_bin_densities=d->m_bin_counter.second_bin_densities;
-    d->m_max_bin_density=d->m_bin_counter.max_bin_density;
-    d->m_data_render_needed=true;
+    d->m_bin_counts = d->m_bin_counter.bin_counts;
+    d->m_second_bin_counts = d->m_bin_counter.second_bin_counts;
+    d->m_bin_densities = d->m_bin_counter.bin_densities;
+    d->m_second_bin_densities = d->m_bin_counter.second_bin_densities;
+    d->m_max_bin_density = d->m_bin_counter.max_bin_density;
+    d->m_data_render_needed = true;
     update();
 }
 
@@ -516,8 +516,8 @@ int HistogramViewPrivate::get_bin_index_at(QPointF pt_pix)
     if (num_bins < 2) {
         return -1;
     }
-    HistogramViewCoord2PixOpts ooo=m_coord2pix_opts;
-    QPointF pt = pix2coord(pt_pix,ooo);
+    HistogramViewCoord2PixOpts ooo = m_coord2pix_opts;
+    QPointF pt = pix2coord(pt_pix, ooo);
     for (int i = 0; i < num_bins; i++) {
         if ((pt.x() >= m_bin_lefts[i]) && (pt.x() <= m_bin_rights[i])) {
             //if ((0<=pt.y())&&(pt.y()<=m_bin_counts[i])) {
@@ -592,21 +592,21 @@ void HistogramViewPrivate::do_paint(QPainter& painter, int W, int H)
     }
 
     HistogramViewCoord2PixOpts ooo;
-    ooo.draw_caption=m_draw_caption;
-    ooo.H=q->height();
-    ooo.margin_bottom=m_margin_bottom;
-    ooo.margin_left=m_margin_left;
-    ooo.margin_right=m_margin_right;
-    ooo.margin_top=m_margin_top;
-    ooo.max_bin_density=m_max_bin_density;
-    ooo.num_bins=m_bin_lefts.count();
-    ooo.W=q->width();
-    ooo.xrange=m_xrange;
-    m_coord2pix_opts=ooo;
+    ooo.draw_caption = m_draw_caption;
+    ooo.H = q->height();
+    ooo.margin_bottom = m_margin_bottom;
+    ooo.margin_left = m_margin_left;
+    ooo.margin_right = m_margin_right;
+    ooo.margin_top = m_margin_top;
+    ooo.max_bin_density = m_max_bin_density;
+    ooo.num_bins = m_bin_lefts.count();
+    ooo.W = q->width();
+    ooo.xrange = m_xrange;
+    m_coord2pix_opts = ooo;
 
     if (m_draw_vertical_axis_at_zero) {
-        QPointF pt0 = coord2pix(QPointF(0, 0),ooo);
-        QPointF pt1 = coord2pix(QPointF(0, m_max_bin_density),ooo);
+        QPointF pt0 = coord2pix(QPointF(0, 0), ooo);
+        QPointF pt1 = coord2pix(QPointF(0, m_max_bin_density), ooo);
         QPen pen = painter.pen();
         pen.setColor(Qt::black);
         pen.setStyle(Qt::SolidLine);
@@ -615,8 +615,8 @@ void HistogramViewPrivate::do_paint(QPainter& painter, int W, int H)
     }
 
     foreach (double val, m_vertical_lines) {
-        QPointF pt0 = coord2pix(QPointF(val, 0),ooo);
-        QPointF pt1 = coord2pix(QPointF(val, m_max_bin_density),ooo);
+        QPointF pt0 = coord2pix(QPointF(val, 0), ooo);
+        QPointF pt1 = coord2pix(QPointF(val, m_max_bin_density), ooo);
         QPen pen = painter.pen();
         pen.setColor(Qt::gray);
         pen.setStyle(Qt::DashLine);
@@ -625,7 +625,7 @@ void HistogramViewPrivate::do_paint(QPainter& painter, int W, int H)
     }
 
     foreach (double val, m_tick_marks) {
-        QPointF pt0 = coord2pix(QPointF(val, 0),ooo);
+        QPointF pt0 = coord2pix(QPointF(val, 0), ooo);
         QPointF pt1 = pt0;
         pt1.setY(pt1.y() + 5);
         QPen pen = painter.pen();
@@ -661,7 +661,7 @@ void HistogramViewPrivate::do_paint(QPainter& painter, int W, int H)
         painter.drawText(R, m_caption, Qt::AlignCenter | Qt::AlignVCenter);
     }
 
-    if ((m_data_render_needed)||(m_update_bin_counts_required)||(m_data_renderer.window_size!=QSize(W,H))) {
+    if ((m_data_render_needed) || (m_update_bin_counts_required) || (m_data_renderer.window_size != QSize(W, H))) {
         if (m_data_renderer.isRunning()) {
             m_data_renderer.requestInterruption();
             m_data_renderer.wait();
@@ -669,32 +669,32 @@ void HistogramViewPrivate::do_paint(QPainter& painter, int W, int H)
         if (m_update_bin_counts_required) {
             m_bin_counter.requestInterruption();
             m_bin_counter.wait();
-            m_bin_counter.bin_lefts=m_bin_lefts;
-            m_bin_counter.bin_rights=m_bin_rights;
-            m_bin_counter.data=m_data;
-            m_bin_counter.second_data=m_second_data;
+            m_bin_counter.bin_lefts = m_bin_lefts;
+            m_bin_counter.bin_rights = m_bin_rights;
+            m_bin_counter.data = m_data;
+            m_bin_counter.second_data = m_second_data;
             m_bin_counter.start();
             m_update_bin_counts_required = false;
         }
-        m_data_renderer.coord2pix_opts=ooo;
-        m_data_renderer.window_size=QSize(W,H);
-        m_data_renderer.mm_bin_lefts=m_bin_lefts;
-        m_data_renderer.mm_bin_rights=m_bin_rights;
-        m_data_renderer.mm_bin_densities=m_bin_densities;
-        m_data_renderer.mm_second_bin_densities=m_second_bin_densities;
-        m_data_renderer.mm_fill_color=m_fill_color;
-        m_data_renderer.mm_line_color=m_line_color;
+        m_data_renderer.coord2pix_opts = ooo;
+        m_data_renderer.window_size = QSize(W, H);
+        m_data_renderer.mm_bin_lefts = m_bin_lefts;
+        m_data_renderer.mm_bin_rights = m_bin_rights;
+        m_data_renderer.mm_bin_densities = m_bin_densities;
+        m_data_renderer.mm_second_bin_densities = m_second_bin_densities;
+        m_data_renderer.mm_fill_color = m_fill_color;
+        m_data_renderer.mm_line_color = m_line_color;
         m_data_renderer.start();
-        m_data_render_needed=false;
-        painter.drawImage(0,0,m_current_data_image);
+        m_data_render_needed = false;
+        painter.drawImage(0, 0, m_current_data_image);
     }
     else {
         if (!m_data_renderer.isRunning()) {
-            painter.drawImage(0,0,m_data_renderer.image);
-            m_current_data_image=m_data_renderer.image;
+            painter.drawImage(0, 0, m_data_renderer.image);
+            m_current_data_image = m_data_renderer.image;
         }
         else {
-            painter.drawImage(0,0,m_current_data_image);
+            painter.drawImage(0, 0, m_current_data_image);
         }
     }
 }
@@ -756,8 +756,8 @@ double HistogramViewPrivate::transform2(double x)
 
 void HistogramViewDataRenderer::run()
 {
-    image=QImage(window_size,QImage::Format_ARGB32);
-    image.fill(QColor(0,0,0,0));
+    image = QImage(window_size, QImage::Format_ARGB32);
+    image.fill(QColor(0, 0, 0, 0));
     QPainter painter(&image);
     painter.setRenderHint(QPainter::Antialiasing);
 
@@ -788,14 +788,15 @@ void HistogramViewDataRenderer::run()
         }
 
         for (int i = 0; i < num_bins; i++) {
-            if (MLUtil::threadInterruptRequested()) return;
+            if (MLUtil::threadInterruptRequested())
+                return;
             QPointF pt1 = HistogramViewPrivate::coord2pix(QPointF(mm_bin_lefts[i], 0), coord2pix_opts);
             QPointF pt2 = HistogramViewPrivate::coord2pix(QPointF(mm_bin_rights[i], bin_densities[i]), coord2pix_opts);
             QRectF R = make_rect2(pt1, pt2);
             //if (i == mm_hovered_bin_index)
             //    painter.fillRect(R, lighten2(col, 25, 25, 25));
             //else
-                painter.fillRect(R, col);
+            painter.fillRect(R, col);
             painter.setPen(line_color);
             painter.drawRect(R);
         }
@@ -828,7 +829,8 @@ void BinCounter::run()
             return;
         int jj = 0;
         for (int i = 0; i < list.count(); i++) {
-            if (MLUtil::threadInterruptRequested()) return;
+            if (MLUtil::threadInterruptRequested())
+                return;
             double val = list[i];
             while ((jj + 1 < num_bins) && (bin_rights[jj] < val)) {
                 jj++;

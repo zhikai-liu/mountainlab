@@ -165,7 +165,7 @@ void MVGridView::slot_zoom_in(double factor)
     }
     d->m_preferred_width = preferred_width;
     d->on_resize();
-    QTimer::singleShot(0,this,SLOT(slot_ensure_current_visible()));
+    QTimer::singleShot(0, this, SLOT(slot_ensure_current_visible()));
 }
 
 void MVGridView::slot_signal_view_clicked(int index, Qt::KeyboardModifiers)
@@ -191,10 +191,11 @@ void MVGridView::slot_export_image()
 
 void MVGridView::slot_ensure_current_visible()
 {
-    int ind=d->m_current_view_index;
-    if ((ind<0)||(ind>=d->m_views.count())) return;
+    int ind = d->m_current_view_index;
+    if ((ind < 0) || (ind >= d->m_views.count()))
+        return;
 
-    QWidget *W=d->m_views[ind];
+    QWidget* W = d->m_views[ind];
 
     d->m_scroll_area->ensureWidgetVisible(W->parentWidget());
 }
@@ -366,7 +367,7 @@ void MVGridView::setForceSquareMatrix(bool val)
 
 void MVGridView::setPreferredAspectRatio(double val)
 {
-    d->m_preferred_aspect_ratio=val;
+    d->m_preferred_aspect_ratio = val;
 }
 
 void MVGridView::setPreferredHistogramWidth(int width)

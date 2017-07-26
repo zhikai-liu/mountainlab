@@ -37,7 +37,7 @@ QColor brighten(QColor col, int amount);
 QList<QColor> generate_colors_ahb();
 QList<QColor> generate_colors_old(const QColor& bg, const QColor& fg, int noColors);
 
-QString compute_spikeview_metrics(SVContext *context);
+QString compute_spikeview_metrics(SVContext* context);
 
 void set_nice_size(QWidget* W);
 
@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
         if (CLP.named_parameters.contains("firings")) {
             QString firings_path = CLP.named_parameters["firings"].toString();
             dc.setFirings(DiskReadMda(firings_path));
-            window_title=firings_path;
+            window_title = firings_path;
         }
         if (CLP.named_parameters.contains("raw")) {
             QString raw_path = CLP.named_parameters["raw"].toString();
@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
         }
         if (CLP.named_parameters.contains("window_title")) {
             QString window_title0 = CLP.named_parameters["window_title"].toString();
-            window_title=window_title0;
+            window_title = window_title0;
         }
 
         QJsonObject mv2 = dc.toMV2FileObject();
@@ -211,7 +211,7 @@ int main(int argc, char* argv[])
     }
 
     printf("Computing spikeview metrics...\n");
-    QString spikeview_metrics=compute_spikeview_metrics(context);
+    QString spikeview_metrics = compute_spikeview_metrics(context);
     if (!spikeview_metrics.isEmpty())
         context->loadClusterMetricsFromFile(spikeview_metrics);
 
@@ -226,7 +226,7 @@ int main(int argc, char* argv[])
     W->loadPlugin(new CrosscorPlugin);
 
     printf("Setting up main window...\n");
-    W->insertControl(0,new MVOpenViewsControl(context, W), true);
+    W->insertControl(0, new MVOpenViewsControl(context, W), true);
 
     a.processEvents();
 
@@ -242,8 +242,9 @@ int main(int argc, char* argv[])
     return a.exec();
 }
 
-QString compute_spikeview_metrics(SVContext *context) {
-    QString firings=context->firings().makePath();
+QString compute_spikeview_metrics(SVContext* context)
+{
+    QString firings = context->firings().makePath();
     if (firings.isEmpty()) {
         qWarning() << "No firings file found.";
         return "";
@@ -252,9 +253,9 @@ QString compute_spikeview_metrics(SVContext *context) {
     MPR.setAllowGuiThread(true);
     MPR.setProcessorName("spikeview.metrics1");
     QVariantMap params;
-    params["firings"]=firings;
+    params["firings"] = firings;
     MPR.setInputParameters(params);
-    QString metrics_out=MPR.makeOutputFilePath("metrics_out");
+    QString metrics_out = MPR.makeOutputFilePath("metrics_out");
     MPR.runProcess();
     return metrics_out;
 }

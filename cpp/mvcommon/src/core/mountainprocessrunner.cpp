@@ -32,7 +32,7 @@ public:
     QMap<QString, QVariant> m_parameters;
     //QString m_mscmdserver_url;
     QString m_mlproxy_url;
-    bool m_allow_gui_thread=false;
+    bool m_allow_gui_thread = false;
     bool m_detach = false;
 
     QString create_temporary_output_file_name(const QString& remote_url, const QString& processor_name, const QMap<QString, QVariant>& params, const QString& parameter_name);
@@ -78,7 +78,7 @@ void MountainProcessRunner::setMLProxyUrl(const QString& url)
 
 void MountainProcessRunner::setAllowGuiThread(bool val)
 {
-    d->m_allow_gui_thread=val;
+    d->m_allow_gui_thread = val;
 }
 
 QJsonObject variantmap_to_json_obj(QVariantMap map)

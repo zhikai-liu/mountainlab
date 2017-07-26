@@ -63,7 +63,7 @@ struct ElectrodeGeometry {
     QList<QVector<double> > coordinates;
     QJsonObject toJsonObject() const;
     bool operator==(const ElectrodeGeometry& other);
-    QList<int> getNeighborhood(int m,double adjacency_radius) const;
+    QList<int> getNeighborhood(int m, double adjacency_radius) const;
     static ElectrodeGeometry fromJsonObject(const QJsonObject& obj);
     static ElectrodeGeometry loadFromGeomFile(const QString& path);
 };

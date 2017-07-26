@@ -29,14 +29,14 @@ HEADERS += \
     mvgridview.h mvgridviewpropertiesdialog.h \
     templatesview.h templatesviewpanel.h templatesplugin.h templatescontrol.h \
     histogramview.h \
-    crosscorview.h crosscorplugin.h
+    crosscorview.h crosscorplugin.h crosscorcontrol.h
 
 SOURCES += \
     clustermetricsview.cpp clustermetricsplugin.cpp \
     mvgridview.cpp mvgridviewpropertiesdialog.cpp \
     templatesview.cpp templatesviewpanel.cpp templatesplugin.cpp templatescontrol.cpp \
     histogramview.cpp \
-    crosscorview.cpp crosscorplugin.cpp
+    crosscorview.cpp crosscorplugin.cpp crosscorcontrol.cpp
 
 FORMS += mvgridviewpropertiesdialog.ui
 

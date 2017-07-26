@@ -29,13 +29,15 @@ private:
 class AutocorViewFactory : public MVAbstractViewFactory {
     Q_OBJECT
 public:
-    AutocorViewFactory(MVMainWindow* mw, QObject* parent = 0);
+    AutocorViewFactory(MVMainWindow* mw, QObject* parent = 0, bool all_mode = false);
     QString id() const Q_DECL_OVERRIDE;
     QString name() const Q_DECL_OVERRIDE;
     QString title() const Q_DECL_OVERRIDE;
     MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
+
+private:
+    bool m_all_mode = false;
 private slots:
-    //void openClipsForTemplate();
 };
 
 class CrosscorMatrixViewFactory : public MVAbstractViewFactory {

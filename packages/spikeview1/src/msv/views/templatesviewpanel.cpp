@@ -19,14 +19,14 @@ public:
     QSize window_size;
     ElectrodeGeometry electrode_geometry;
     Mda32 template0;
-    int top_section_height=0;
-    int bottom_section_height=0;
+    int top_section_height = 0;
+    int bottom_section_height = 0;
     double vertical_scale_factor = 1;
     QList<QColor> channel_colors;
     QSet<int> electrodes_to_show;
 
     //output
-    QMap<int,QRectF> electrode_boxes;
+    QMap<int, QRectF> electrode_boxes;
     QImage image;
 
     QPointF coord2pix(int m, int t, double val);
@@ -48,10 +48,10 @@ public:
     double m_firing_rate_disk_diameter = 0;
     bool m_draw_ellipses = false;
     bool m_draw_disks = false;
-    QMap<int,QRectF> m_electrode_boxes;
+    QMap<int, QRectF> m_electrode_boxes;
     QSet<int> m_electrodes_to_show;
 
-    bool m_data_render_needed=false;
+    bool m_data_render_needed = false;
     TemplatesViewDataRenderer m_data_renderer;
 
     QPointF coord2pix(int m, int t, double val);
@@ -62,7 +62,7 @@ TemplatesViewPanel::TemplatesViewPanel()
     d = new TemplatesViewPanelPrivate;
     d->q = this;
 
-    connect(&d->m_data_renderer,SIGNAL(finished()),this,SIGNAL(repaintNeeded()));
+    connect(&d->m_data_renderer, SIGNAL(finished()), this, SIGNAL(repaintNeeded()));
 }
 
 TemplatesViewPanel::~TemplatesViewPanel()
@@ -73,38 +73,38 @@ TemplatesViewPanel::~TemplatesViewPanel()
 void TemplatesViewPanel::setTemplate(const Mda32& X)
 {
     d->m_template = X;
-    d->m_data_render_needed=true;
-    d->m_clip_size=d->m_template.N2();
+    d->m_data_render_needed = true;
+    d->m_clip_size = d->m_template.N2();
 }
 
-void TemplatesViewPanel::setElectrodesToShow(const QSet<int> &electrodes_to_show)
+void TemplatesViewPanel::setElectrodesToShow(const QSet<int>& electrodes_to_show)
 {
-    d->m_electrodes_to_show=electrodes_to_show;
+    d->m_electrodes_to_show = electrodes_to_show;
 }
 
 void TemplatesViewPanel::setElectrodeGeometry(const ElectrodeGeometry& geom)
 {
     d->m_electrode_geometry = geom;
-    d->m_data_render_needed=true;
+    d->m_data_render_needed = true;
 }
 
 void TemplatesViewPanel::setVerticalScaleFactor(double factor)
 {
     d->m_vertical_scale_factor = factor;
-    d->m_data_render_needed=true;
+    d->m_data_render_needed = true;
     emit this->repaintNeeded();
 }
 
 void TemplatesViewPanel::setChannelColors(const QList<QColor>& colors)
 {
     d->m_channel_colors = colors;
-    d->m_data_render_needed=true;
+    d->m_data_render_needed = true;
 }
 
 void TemplatesViewPanel::setColors(const QMap<QString, QColor>& colors)
 {
     d->m_colors = colors;
-    d->m_data_render_needed=true;
+    d->m_data_render_needed = true;
 }
 
 void TemplatesViewPanel::setCurrent(bool val)
@@ -201,30 +201,29 @@ void TemplatesViewPanel::paint(QPainter* painter)
         }
     }
 
-    if ((d->m_data_render_needed)||(ss!=d->m_data_renderer.window_size)) {
+    if ((d->m_data_render_needed) || (ss != d->m_data_renderer.window_size)) {
         if (d->m_data_renderer.isRunning()) {
             d->m_data_renderer.requestInterruption();
             d->m_data_renderer.wait();
         }
-        d->m_data_render_needed=false;
-        d->m_data_renderer.window_size=ss;
-        d->m_data_renderer.top_section_height=d->q->font().pixelSize();
-        d->m_data_renderer.bottom_section_height=d->m_bottom_section_height;
-        d->m_data_renderer.electrode_geometry=d->m_electrode_geometry;
-        d->m_data_renderer.template0=d->m_template;
-        d->m_data_renderer.vertical_scale_factor=d->m_vertical_scale_factor;
-        d->m_data_renderer.channel_colors=d->m_channel_colors;
-        d->m_data_renderer.electrodes_to_show=d->m_electrodes_to_show;
+        d->m_data_render_needed = false;
+        d->m_data_renderer.window_size = ss;
+        d->m_data_renderer.top_section_height = d->q->font().pixelSize();
+        d->m_data_renderer.bottom_section_height = d->m_bottom_section_height;
+        d->m_data_renderer.electrode_geometry = d->m_electrode_geometry;
+        d->m_data_renderer.template0 = d->m_template;
+        d->m_data_renderer.vertical_scale_factor = d->m_vertical_scale_factor;
+        d->m_data_renderer.channel_colors = d->m_channel_colors;
+        d->m_data_renderer.electrodes_to_show = d->m_electrodes_to_show;
         d->m_data_renderer.start();
     }
     else {
         if (!d->m_data_renderer.isRunning()) {
-            d->m_electrode_boxes=d->m_data_renderer.electrode_boxes;
-            painter->drawImage(0,0,d->m_data_renderer.image);
+            d->m_electrode_boxes = d->m_data_renderer.electrode_boxes;
+            painter->drawImage(0, 0, d->m_data_renderer.image);
         }
     }
     return;
-
 }
 
 double estimate_spacing(const QList<QVector<double> >& coords)
@@ -270,15 +269,15 @@ void TemplatesViewDataRenderer::setup_electrode_boxes(double W, double H)
 
     int D = coords[0].count();
     QVector<double> mins(D), maxs(D);
-    for (int d=0; d<D; d++) {
-        mins[d]=maxs[d]=0;
-        bool first=true;
+    for (int d = 0; d < D; d++) {
+        mins[d] = maxs[d] = 0;
+        bool first = true;
         for (int m = 0; m < coords.count(); m++) {
             if (electrodes_to_show.contains(m)) {
                 if (first) {
-                    mins[d]=coords[m][d];
-                    maxs[d]=coords[m][d];
-                    first=false;
+                    mins[d] = coords[m][d];
+                    maxs[d] = coords[m][d];
+                    first = false;
                 }
                 else {
                     mins[d] = qMin(mins[d], coords[m][d]);
@@ -329,7 +328,7 @@ void TemplatesViewDataRenderer::setup_electrode_boxes(double W, double H)
             double y0 = offset_y + (c.value(0) - mins.value(0)) * vscale_factor;
             double radx = spacing * hscale_factor / 2;
             double rady = spacing * vscale_factor / 3.5;
-            electrode_boxes[m]=QRectF(x0 - radx, y0 - rady, radx * 2, rady * 2);
+            electrode_boxes[m] = QRectF(x0 - radx, y0 - rady, radx * 2, rady * 2);
         }
     }
 }
@@ -337,7 +336,7 @@ void TemplatesViewDataRenderer::setup_electrode_boxes(double W, double H)
 QPointF TemplatesViewDataRenderer::coord2pix(int m, int t, double val)
 {
     if (!electrode_boxes.contains(m)) {
-        return QPointF(-1,-1);
+        return QPointF(-1, -1);
     }
     QRectF R = electrode_boxes.value(m);
     QPointF Rcenter = R.center();
@@ -350,7 +349,7 @@ QPointF TemplatesViewDataRenderer::coord2pix(int m, int t, double val)
 QPointF TemplatesViewPanelPrivate::coord2pix(int m, int t, double val)
 {
     if (!m_electrode_boxes.contains(m)) {
-        return QPointF(-1,-1);
+        return QPointF(-1, -1);
     }
     QRectF R = m_electrode_boxes.value(m);
     QPointF Rcenter = R.center();
@@ -362,14 +361,14 @@ QPointF TemplatesViewPanelPrivate::coord2pix(int m, int t, double val)
 
 void TemplatesViewDataRenderer::run()
 {
-    image=QImage(window_size,QImage::Format_ARGB32);
-    image.fill(QColor(0,0,0,0)); //transparent
+    image = QImage(window_size, QImage::Format_ARGB32);
+    image.fill(QColor(0, 0, 0, 0)); //transparent
 
     QPainter painter(&image);
     painter.setRenderHint(QPainter::Antialiasing);
 
     //SETUP ELECTRODE LOCATIONS
-    setup_electrode_boxes(window_size.width(),window_size.height());
+    setup_electrode_boxes(window_size.width(), window_size.height());
 
     //ELECTRODES AND WAVEFORMS
     int M = template0.N1();

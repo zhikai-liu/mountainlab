@@ -22,11 +22,18 @@ public:
     TemplatesView(MVAbstractContext* mvcontext);
     virtual ~TemplatesView();
 
+    enum DisplayMode {
+        All,
+        Single,
+        Neighborhood
+    };
+
     void prepareCalculation() Q_DECL_OVERRIDE;
     void runCalculation() Q_DECL_OVERRIDE;
     void onCalculationFinished() Q_DECL_OVERRIDE;
 
     void zoomAllTheWayOut();
+    void setDisplayMode(DisplayMode mode);
 
 protected:
     void keyPressEvent(QKeyEvent* evt) Q_DECL_OVERRIDE;

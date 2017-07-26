@@ -39,7 +39,7 @@ QString TemplatesPlugin::description()
 void TemplatesPlugin::initialize(MVMainWindow* mw)
 {
     mw->registerViewFactory(new TemplatesViewFactory(mw));
-    mw->addControl(new TemplatesControl(mw->mvContext(),mw), true);
+    mw->addControl(new TemplatesControl(mw->mvContext(), mw), true);
 }
 
 TemplatesViewFactory::TemplatesViewFactory(MVMainWindow* mw, QObject* parent)
@@ -64,7 +64,9 @@ QString TemplatesViewFactory::title() const
 
 MVAbstractView* TemplatesViewFactory::createView(MVAbstractContext* context)
 {
+    SVContext* c = qobject_cast<SVContext*>(context);
+    Q_ASSERT(c);
+
     TemplatesView* X = new TemplatesView(context);
     return X;
 }
-

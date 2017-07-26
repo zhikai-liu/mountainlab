@@ -81,12 +81,12 @@ QJsonObject get_spec()
     }
     {
         ProcessorSpec X("spikeview.templates", "0.16");
-        X.addInputs("timeseries","firings");
+        X.addInputs("timeseries", "firings");
         X.addOutputs("templates_out");
-        X.addOptionalParameter("clip_size","",100);
-        X.addOptionalParameter("max_events_per_template","",500);
-        X.addOptionalParameters("samplerate","freq_min","freq_max");
-        X.addOptionalParameter("subtract_temporal_mean","","false");
+        X.addOptionalParameter("clip_size", "", 100);
+        X.addOptionalParameter("max_events_per_template", "", 500);
+        X.addOptionalParameters("samplerate", "freq_min", "freq_max");
+        X.addOptionalParameter("subtract_temporal_mean", "", "false");
         processors.push_back(X.get_spec());
     }
 
@@ -186,15 +186,15 @@ int main(int argc, char* argv[])
         QString firings = CLP.named_parameters["firings"].toString();
         QString templates_out = CLP.named_parameters["templates_out"].toString();
         P_spikeview_templates_opts opts;
-        opts.clip_size=CLP.named_parameters["clip_size"].toInt();
-        opts.max_events_per_template=CLP.named_parameters["max_events_per_template"].toDouble();
-        opts.samplerate=CLP.named_parameters.value("samplerate",0).toDouble();
-        opts.freq_min=CLP.named_parameters.value("freq_min",0).toDouble();
-        opts.freq_max=CLP.named_parameters.value("freq_max",0).toDouble();
-        if ((opts.samplerate!=0)&&((opts.freq_min!=0)||(opts.freq_max!=0)))
-            opts.filt_padding=50;
-        opts.subtract_temporal_mean=(CLP.named_parameters.value("subtract_temporal_mean")=="true");
-        ret = p_spikeview_templates(timeseries,firings,templates_out,opts);
+        opts.clip_size = CLP.named_parameters["clip_size"].toInt();
+        opts.max_events_per_template = CLP.named_parameters["max_events_per_template"].toDouble();
+        opts.samplerate = CLP.named_parameters.value("samplerate", 0).toDouble();
+        opts.freq_min = CLP.named_parameters.value("freq_min", 0).toDouble();
+        opts.freq_max = CLP.named_parameters.value("freq_max", 0).toDouble();
+        if ((opts.samplerate != 0) && ((opts.freq_min != 0) || (opts.freq_max != 0)))
+            opts.filt_padding = 50;
+        opts.subtract_temporal_mean = (CLP.named_parameters.value("subtract_temporal_mean") == "true");
+        ret = p_spikeview_templates(timeseries, firings, templates_out, opts);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

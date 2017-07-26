@@ -298,7 +298,7 @@ void SVContext::setFromMV2FileObject(QJsonObject X)
     d->m_cluster_pair_attributes = object_to_cluster_pair_attributes(X["cluster_pair_attributes"].toObject());
     d->m_timeseries = object_to_timeseries_map_for_mv2(X["timeseries"].toObject());
     this->setCurrentTimeseriesName(X["current_timeseries_name"].toString());
-    if (this->currentTimeseries().N2()<=1)
+    if (this->currentTimeseries().N2() <= 1)
         this->setCurrentTimeseriesName("Raw Data");
     this->setFirings(DiskReadMda(X["firings"].toObject()));
     d->m_sample_rate = X["samplerate"].toDouble();
@@ -1335,14 +1335,14 @@ bool ElectrodeGeometry::operator==(const ElectrodeGeometry& other)
 QList<int> ElectrodeGeometry::getNeighborhood(int m, double adjacency_radius) const
 {
     QList<int> ret;
-    for (int m2=0; m2<coordinates.count(); m2++) {
-        double sumsqr=0;
-        for (int c=0; c<coordinates[m].count(); c++) {
-            double val=coordinates[m][c]-coordinates[m2][c];
-            sumsqr+=val*val;
+    for (int m2 = 0; m2 < coordinates.count(); m2++) {
+        double sumsqr = 0;
+        for (int c = 0; c < coordinates[m].count(); c++) {
+            double val = coordinates[m][c] - coordinates[m2][c];
+            sumsqr += val * val;
         }
-        double dist=sqrt(sumsqr);
-        if (dist<=adjacency_radius)
+        double dist = sqrt(sumsqr);
+        if (dist <= adjacency_radius)
             ret << m2;
     }
     return ret;

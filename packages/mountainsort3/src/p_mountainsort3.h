@@ -23,8 +23,8 @@ struct P_mountainsort3_opts {
 
     bool fit_stage = true;
 
-    double t1=-1;
-    double t2=-1;
+    double t1 = -1;
+    double t2 = -1;
 };
 
 bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QString temp_path, const P_mountainsort3_opts& opts);

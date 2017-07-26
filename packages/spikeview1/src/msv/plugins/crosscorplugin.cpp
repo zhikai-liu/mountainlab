@@ -10,7 +10,7 @@
 #include <QMessageBox>
 #include <QThread>
 #include <crosscorview.h>
-#include <templatescontrol.h>
+#include <crosscorcontrol.h>
 
 class CrosscorPluginPrivate {
 public:
@@ -40,29 +40,41 @@ QString CrosscorPlugin::description()
 
 void CrosscorPlugin::initialize(MVMainWindow* mw)
 {
-    mw->registerViewFactory(new AutocorViewFactory(mw));
+    mw->registerViewFactory(new AutocorViewFactory(mw, (QWidget*)0, true));
+    mw->registerViewFactory(new AutocorViewFactory(mw, (QWidget*)0, false));
     mw->registerViewFactory(new CrosscorMatrixViewFactory(mw));
+    mw->addControl(new CrosscorControl(mw->mvContext(), mw), true);
 }
 
 /////////////////////////////////////////////////////////////////////////
-AutocorViewFactory::AutocorViewFactory(MVMainWindow* mw, QObject* parent)
+AutocorViewFactory::AutocorViewFactory(MVMainWindow* mw, QObject* parent, bool all_mode)
     : MVAbstractViewFactory(mw, parent)
 {
+    m_all_mode = all_mode;
 }
 
 QString AutocorViewFactory::id() const
 {
-    return QStringLiteral("open-autocor-view");
+    if (m_all_mode)
+        return QStringLiteral("open-all-autocor-view");
+    else
+        return QStringLiteral("open-autocor-view");
 }
 
 QString AutocorViewFactory::name() const
 {
-    return tr("Autocor");
+    if (m_all_mode)
+        return tr("All autocor");
+    else
+        return tr("Autocor");
 }
 
 QString AutocorViewFactory::title() const
 {
-    return tr("Autocor");
+    if (m_all_mode)
+        return tr("All autocor");
+    else
+        return tr("Autocor");
 }
 
 MVAbstractView* AutocorViewFactory::createView(MVAbstractContext* context)
@@ -70,16 +82,17 @@ MVAbstractView* AutocorViewFactory::createView(MVAbstractContext* context)
     SVContext* c = qobject_cast<SVContext*>(context);
     Q_ASSERT(c);
 
-    QList<int> keys=c->selectedClusters();
-    if (keys.isEmpty()) keys=c->clusterAttributesKeys();
-    QList<int> k1s,k2s;
-    for (int i=0; i<keys.count(); i++) {
+    QList<int> keys = c->selectedClusters();
+    if ((keys.isEmpty()) || (m_all_mode))
+        keys = c->clusterAttributesKeys();
+    QList<int> k1s, k2s;
+    for (int i = 0; i < keys.count(); i++) {
         k1s << keys[i];
         k2s << keys[i];
     }
 
     CrosscorView* X = new CrosscorView(context);
-    X->setKs(k1s,k2s,k1s);
+    X->setKs(k1s, k2s, k1s);
 
     return X;
 }
@@ -110,25 +123,25 @@ MVAbstractView* CrosscorMatrixViewFactory::createView(MVAbstractContext* context
     SVContext* c = qobject_cast<SVContext*>(context);
     Q_ASSERT(c);
 
-    QList<int> keys=c->selectedClusters();
-    if (keys.isEmpty()) keys=c->clusterAttributesKeys();
-    QList<int> k1s,k2s;
-    for (int i=0; i<keys.count(); i++) {
-        for (int j=0; j<keys.count(); j++) {
+    QList<int> keys = c->selectedClusters();
+    if (keys.isEmpty())
+        keys = c->clusterAttributesKeys();
+    QList<int> k1s, k2s;
+    for (int i = 0; i < keys.count(); i++) {
+        for (int j = 0; j < keys.count(); j++) {
             k1s << keys[i];
             k2s << keys[j];
         }
     }
 
-    if (k1s.count()>300) {
-        QMessageBox::information(0,"Too many cross-correlograms","Please select a smaller number of cross-correlograms to display");
+    if (k1s.count() > 300) {
+        QMessageBox::information(0, "Too many cross-correlograms", "Please select a smaller number of cross-correlograms to display");
         return 0;
     }
 
     CrosscorView* X = new CrosscorView(context);
-    X->setKs(k1s,k2s,k1s);
+    X->setKs(k1s, k2s, k1s);
     X->setForceSquareMatrix(true);
 
     return X;
 }
-

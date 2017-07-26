@@ -73,7 +73,7 @@ PaintLayerWidget::PaintLayerWidget(PaintLayer* PL)
     d->q = this;
     d->m_paint_layer = PL;
 
-    connect(PL,SIGNAL(repaintNeeded()),this,SLOT(update()));
+    connect(PL, SIGNAL(repaintNeeded()), this, SLOT(update()));
 }
 
 PaintLayerWidget::~PaintLayerWidget()

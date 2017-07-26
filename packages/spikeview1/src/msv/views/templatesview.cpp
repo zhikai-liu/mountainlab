@@ -25,10 +25,10 @@ struct ClusterData2 {
 };
 
 struct FiltOpts {
-    double samplerate=0;
-    double freq_min=0;
-    double freq_max=0;
-    bool apply=false;
+    double samplerate = 0;
+    double freq_min = 0;
+    double freq_max = 0;
+    bool apply = false;
     QString subtract_temporal_mean;
 };
 
@@ -39,7 +39,7 @@ public:
     DiskReadMda32 timeseries;
     DiskReadMda firings;
     int clip_size;
-    bigint max_events_per_template=0;
+    bigint max_events_per_template = 0;
     FiltOpts filtopts;
 
     //output
@@ -69,18 +69,15 @@ public:
     double m_vscale_factor = 10;
     double m_hscale_factor = 2;
 
-    enum ElectrodesToShowMode {
-        All,Single,Neighborhood
-    };
-    ElectrodesToShowMode m_electrodes_to_show_mode=All;
-    double m_preferred_neighborhood_size=-1;
+    TemplatesView::DisplayMode m_display_mode = TemplatesView::All;
+    double m_preferred_neighborhood_size = -1;
 
     void compute_total_time();
     void update_panels();
     void update_scale_factors();
     static double get_disksize_for_firing_rate(double firing_rate);
-    QSet<int> determine_electrodes_to_show(const Mda32 &template0,const ElectrodeGeometry &geom);
-    double get_preferred_adjacency_radius(int M,int ch,const ElectrodeGeometry &geom);
+    QSet<int> determine_electrodes_to_show(const Mda32& template0, const ElectrodeGeometry& geom);
+    double get_preferred_adjacency_radius(int M, int ch, const ElectrodeGeometry& geom);
 };
 
 TemplatesView::TemplatesView(MVAbstractContext* context)
@@ -99,6 +96,7 @@ TemplatesView::TemplatesView(MVAbstractContext* context)
 
     this->recalculateOn(c, SIGNAL(firingsChanged()), false);
     this->recalculateOn(c, SIGNAL(currentTimeseriesChanged()));
+    this->recalculateOnOptionChanged("templates_display_mode");
     this->recalculateOnOptionChanged("templates_clip_size");
     this->recalculateOnOptionChanged("templates_apply_filter");
     this->recalculateOnOptionChanged("templates_freq_min");
@@ -147,15 +145,26 @@ void TemplatesView::prepareCalculation()
     d->m_calculator.timeseries = c->currentTimeseries();
     d->m_calculator.firings = c->firings();
     d->m_calculator.clip_size = c->option("templates_clip_size", 100).toInt();
-    d->m_calculator.max_events_per_template = c->option("templates_max_events_per_template",0).toDouble();
-    d->m_calculator.filtopts.samplerate=c->sampleRate();
+    d->m_calculator.max_events_per_template = c->option("templates_max_events_per_template", 0).toDouble();
+    d->m_calculator.filtopts.samplerate = c->sampleRate();
 
-    d->m_calculator.filtopts.freq_min=c->option("templates_freq_min",0).toDouble();
-    d->m_calculator.filtopts.freq_max=c->option("templates_freq_max",0).toDouble();
-    d->m_calculator.filtopts.apply=(c->option("templates_apply_filter")=="true");
+    d->m_calculator.filtopts.freq_min = c->option("templates_freq_min", 0).toDouble();
+    d->m_calculator.filtopts.freq_max = c->option("templates_freq_max", 0).toDouble();
+    d->m_calculator.filtopts.apply = (c->option("templates_apply_filter") == "true");
 
-    d->m_calculator.filtopts.subtract_temporal_mean=c->option("templates_subtract_temporal_mean","false").toString();
+    d->m_calculator.filtopts.subtract_temporal_mean = c->option("templates_subtract_temporal_mean", "false").toString();
     d->m_calculator.cluster_data.clear();
+
+    TemplatesView::DisplayMode mode = TemplatesView::All;
+    QString mode_str = c->option("templates_display_mode").toString();
+    if (mode_str == "All")
+        mode = TemplatesView::All;
+    else if (mode_str == "Single")
+        mode = TemplatesView::Single;
+    else if (mode_str == "Neighborhood")
+        mode = TemplatesView::Neighborhood;
+    this->setDisplayMode(mode);
+
     update();
 }
 
@@ -177,6 +186,11 @@ void TemplatesView::onCalculationFinished()
 void TemplatesView::zoomAllTheWayOut()
 {
     //d->m_panel_widget->zoomAllTheWayOut();
+}
+
+void TemplatesView::setDisplayMode(TemplatesView::DisplayMode mode)
+{
+    d->m_display_mode = mode;
 }
 
 void TemplatesView::keyPressEvent(QKeyEvent* evt)
@@ -309,8 +323,8 @@ void TemplatesViewCalculator::mv_compute_templates(DiskReadMda32& templates_out,
         params["freq_max"] = filtopts.freq_max;
     }
     else {
-        params["freq_min"]=0;
-        params["freq_max"]=0;
+        params["freq_min"] = 0;
+        params["freq_max"] = 0;
     }
     params["subtract_temporal_mean"] = filtopts.subtract_temporal_mean;
     X.setInputParameters(params);
@@ -402,7 +416,7 @@ void TemplatesViewCalculator::compute()
         }
         if (!MLUtil::threadInterruptRequested()) {
             //if (CD.num_events > 0) {
-            if ((CD.template0.maximum()!=0)||(CD.template0.minimum()!=0))
+            if ((CD.template0.maximum() != 0) || (CD.template0.minimum() != 0))
                 cluster_data << CD;
             //}
         }
@@ -422,71 +436,75 @@ double TemplatesViewPrivate::get_disksize_for_firing_rate(double firing_rate)
     return qMin(1.0, sqrt(firing_rate / 5));
 }
 
-int peak_channel(const Mda32 &template0) {
-    int M=template0.N1();
-    int T=template0.N2();
-    double max0=0;
-    int ret=0;
-    for (int m=0; m<M; m++) {
-        for (int t=0; t<T; t++) {
-            double val0=fabs(template0.value(m,t));
-            if (val0>max0) {
-                max0=val0;
-                ret=m;
+int peak_channel(const Mda32& template0)
+{
+    int M = template0.N1();
+    int T = template0.N2();
+    double max0 = 0;
+    int ret = 0;
+    for (int m = 0; m < M; m++) {
+        for (int t = 0; t < T; t++) {
+            double val0 = fabs(template0.value(m, t));
+            if (val0 > max0) {
+                max0 = val0;
+                ret = m;
             }
         }
     }
     return ret;
 }
 
-QSet<int> TemplatesViewPrivate::determine_electrodes_to_show(const Mda32 &template0, const ElectrodeGeometry &geom)
+QSet<int> TemplatesViewPrivate::determine_electrodes_to_show(const Mda32& template0, const ElectrodeGeometry& geom)
 {
     QSet<int> ret;
 
-    int ch=peak_channel(template0);
-    if (m_electrodes_to_show_mode==Single) {
+    int ch = peak_channel(template0);
+    if (m_display_mode == TemplatesView::Single) {
         ret << ch;
     }
-    else if (m_electrodes_to_show_mode==All) {
-        for (int m=0; m<template0.N1(); m++) {
+    else if (m_display_mode == TemplatesView::All) {
+        for (int m = 0; m < template0.N1(); m++) {
             ret << m;
         }
     }
-    else if (m_electrodes_to_show_mode==Neighborhood) {
-        double adjacency_radius=get_preferred_adjacency_radius(template0.N1(),ch,geom);
-        ret=geom.getNeighborhood(ch,adjacency_radius).toSet();
+    else if (m_display_mode == TemplatesView::Neighborhood) {
+        double adjacency_radius = get_preferred_adjacency_radius(template0.N1(), ch, geom);
+        ret = geom.getNeighborhood(ch, adjacency_radius).toSet();
     }
 
     return ret;
 }
 
-double TemplatesViewPrivate::get_preferred_adjacency_radius(int M,int ch, const ElectrodeGeometry &geom)
+double TemplatesViewPrivate::get_preferred_adjacency_radius(int M, int ch, const ElectrodeGeometry& geom)
 {
-    if (m_preferred_neighborhood_size<0) {
-        if (M<=12) m_preferred_neighborhood_size=M;
-        else m_preferred_neighborhood_size=7;
+    if (m_preferred_neighborhood_size < 0) {
+        if (M <= 12)
+            m_preferred_neighborhood_size = M;
+        else
+            m_preferred_neighborhood_size = 7;
     }
-    if (m_preferred_neighborhood_size==0) return 0;
-    double unit=100;
-    if (m_preferred_neighborhood_size>=M) {
-        double adjacency_radius=unit;
-        while (geom.getNeighborhood(ch,adjacency_radius).count()<M)
-            adjacency_radius+=unit;
+    if (m_preferred_neighborhood_size == 0)
+        return 0;
+    double unit = 100;
+    if (m_preferred_neighborhood_size >= M) {
+        double adjacency_radius = unit;
+        while (geom.getNeighborhood(ch, adjacency_radius).count() < M)
+            adjacency_radius += unit;
         return adjacency_radius;
     }
     else {
-        double adjacency_radius=unit;
-        for (int a=0; a<10; a++) {
-            while (geom.getNeighborhood(ch,adjacency_radius).count()<m_preferred_neighborhood_size) {
-                adjacency_radius+=unit;
+        double adjacency_radius = unit;
+        for (int a = 0; a < 10; a++) {
+            while (geom.getNeighborhood(ch, adjacency_radius).count() < m_preferred_neighborhood_size) {
+                adjacency_radius += unit;
             }
-            while (geom.getNeighborhood(ch,adjacency_radius).count()>m_preferred_neighborhood_size) {
-                adjacency_radius-=unit;
+            while (geom.getNeighborhood(ch, adjacency_radius).count() > m_preferred_neighborhood_size) {
+                adjacency_radius -= unit;
             }
-            if (geom.getNeighborhood(ch,adjacency_radius).count()==m_preferred_neighborhood_size) {
+            if (geom.getNeighborhood(ch, adjacency_radius).count() == m_preferred_neighborhood_size) {
                 return adjacency_radius;
             }
-            unit/=2;
+            unit /= 2;
         }
         return adjacency_radius;
     }
@@ -508,7 +526,7 @@ void TemplatesViewPrivate::update_panels()
     }
     m_max_absval = 0;
     for (int i = 0; i < m_cluster_data.count(); i++) {
-        m_max_absval = qMax(qMax(m_max_absval, qAbs(1.0*m_cluster_data[i].template0.minimum())), qAbs(1.0*m_cluster_data[i].template0.maximum()));
+        m_max_absval = qMax(qMax(m_max_absval, qAbs(1.0 * m_cluster_data[i].template0.minimum())), qAbs(1.0 * m_cluster_data[i].template0.maximum()));
     }
 
     for (int i = 0; i < m_cluster_data.count(); i++) {
@@ -517,7 +535,7 @@ void TemplatesViewPrivate::update_panels()
             TemplatesViewPanel* panel = new TemplatesViewPanel;
             panel->setElectrodeGeometry(c->electrodeGeometry());
             panel->setTemplate(CD.template0);
-            panel->setElectrodesToShow(determine_electrodes_to_show(CD.template0,c->electrodeGeometry()));
+            panel->setElectrodesToShow(determine_electrodes_to_show(CD.template0, c->electrodeGeometry()));
             panel->setChannelColors(channel_colors);
             panel->setColors(c->colors());
             panel->setTitle(QString::number(CD.k));
@@ -525,8 +543,8 @@ void TemplatesViewPrivate::update_panels()
             if (c->sampleRate()) {
                 //double total_time_sec = c->currentTimeseries().N2() / c->sampleRate();
                 //if (total_time_sec) {
-                    //double firing_rate = CD.num_events / total_time_sec;
-                    //panel->setFiringRateDiskDiameter(get_disksize_for_firing_rate(firing_rate));
+                //double firing_rate = CD.num_events / total_time_sec;
+                //panel->setFiringRateDiskDiameter(get_disksize_for_firing_rate(firing_rate));
                 //}
             }
             m_panels << panel;
@@ -553,4 +571,3 @@ void TemplatesViewPrivate::update_scale_factors()
     }
     q->updateViews();
 }
-

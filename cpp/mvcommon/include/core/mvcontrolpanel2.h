@@ -17,7 +17,7 @@ public:
     friend class MVControlPanel2Private;
     MVControlPanel2(MVAbstractContext* context, MVMainWindow* mw);
     virtual ~MVControlPanel2();
-    void insertControl(int position,MVAbstractControl* mvcontrol, bool start_open);
+    void insertControl(int position, MVAbstractControl* mvcontrol, bool start_open);
     void addControl(MVAbstractControl* mvcontrol, bool start_open);
 
 private slots:

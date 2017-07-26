@@ -54,7 +54,7 @@ public:
     const QList<MVAbstractContextMenuHandler*>& contextMenuHandlers() const;
 
     //Controls
-    void insertControl(int position,MVAbstractControl* control, bool start_expanded);
+    void insertControl(int position, MVAbstractControl* control, bool start_expanded);
     void addControl(MVAbstractControl* control, bool start_expanded);
 
     //Manage views
