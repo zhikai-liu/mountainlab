@@ -117,6 +117,13 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
     DiskReadMda32 X(timeseries);
     bigint M = X.N1();
     bigint N = X.N2();
+
+    bigint t_start=opts.t1;
+    bigint t_end=opts.t2;
+    if (t_start<0) t_start=0;
+    if (t_end<0) t_end=N-1;
+    N=t_end-t_start+1;
+
     qDebug().noquote() << QString("Starting sort: %1 channels, %2 timepoints").arg(M).arg(N);
 
     Mda Geom(geom);
@@ -146,7 +153,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
     for (bigint i = 0; i < time_chunk_infos.count(); i++) {
         TimeChunkInfo TCI = time_chunk_infos[i];
         Mda32 time_chunk;
-        X.readChunk(time_chunk, 0, TCI.t1 - TCI.t_padding, M, TCI.size + 2 * TCI.t_padding);
+        X.readChunk(time_chunk, 0, t_start + TCI.t1 - TCI.t_padding, M, TCI.size + 2 * TCI.t_padding);
         PR.addBytesRead(time_chunk.totalSize() * sizeof(float));
         for (int j = 0; j < neighborhood_batches.count(); j++) {
             QList<int> neighborhoods = neighborhood_batches[j];
@@ -186,7 +193,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
             neighborhood_sorters[m]->sort(num_threads_within_neighborhoods);
 #pragma omp critical(a1)
             {
-                bytes0 += X.N2() * sizeof(float);
+                bytes0 += N * sizeof(float);
             }
         }
         PR.addBytesProcessed(bytes0);
@@ -231,7 +238,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
         for (bigint i = 0; i < time_chunk_infos.count(); i++) {
             TimeChunkInfo TCI = time_chunk_infos[i];
             Mda32 time_chunk;
-            X.readChunk(time_chunk, 0, TCI.t1 - TCI.t_padding, M, TCI.size + 2 * TCI.t_padding);
+            X.readChunk(time_chunk, 0, t_start + TCI.t1 - TCI.t_padding, M, TCI.size + 2 * TCI.t_padding);
             PR.addBytesRead(time_chunk.totalSize() * sizeof(float));
             GTC.processTimeChunk(TCI.t1, time_chunk, TCI.t_padding, TCI.t_padding);
             PR.addBytesProcessed(time_chunk.totalSize() * sizeof(float));
@@ -265,7 +272,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
         for (bigint i = 0; i < time_chunk_infos.count(); i++) {
             TimeChunkInfo TCI = time_chunk_infos[i];
             Mda32 time_chunk;
-            X.readChunk(time_chunk, 0, TCI.t1 - TCI.t_padding, M, TCI.size + 2 * TCI.t_padding);
+            X.readChunk(time_chunk, 0, t_start + TCI.t1 - TCI.t_padding, M, TCI.size + 2 * TCI.t_padding);
             PR.addBytesRead(time_chunk.totalSize() * sizeof(float));
             GTC.processTimeChunk(TCI.t1,time_chunk, TCI.t_padding, TCI.t_padding);
             PR.addBytesProcessed(time_chunk.totalSize() * sizeof(float));
@@ -288,7 +295,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
             double bytes0 = 0;
             for (int j = 0; j < infos.count(); j++) {
                 Mda32 time_chunk;
-                X.readChunk(time_chunk, 0, infos[j].t1 - infos[j].t_padding, M, infos[j].size + 2 * infos[j].t_padding);
+                X.readChunk(time_chunk, 0, t_start + infos[j].t1 - infos[j].t_padding, M, infos[j].size + 2 * infos[j].t_padding);
                 time_chunks << time_chunk;
                 bytes0 += time_chunk.totalSize() * sizeof(float);
             }
@@ -333,7 +340,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
             double num_bytes_read = 0;
             for (int j = 0; j < infos.count(); j++) {
                 TimeChunkInfo TCI = infos[j];
-                X.readChunk(time_chunks[j], 0, TCI.t1 - TCI.t_padding, M, TCI.size + 2 * TCI.t_padding);
+                X.readChunk(time_chunks[j], 0, t_start + TCI.t1 - TCI.t_padding, M, TCI.size + 2 * TCI.t_padding);
                 num_time_chunks_read++;
                 num_bytes_read += time_chunks[j].totalSize() * 4;
             }
@@ -408,7 +415,7 @@ bool p_mountainsort3(QString timeseries, QString geom, QString firings_out, QStr
         Mda firings(3, L);
         for (bigint i = 0; i < L; i++) {
             firings.set(central_channels[i], 0, i);
-            firings.set(times[i], 1, i);
+            firings.set(t_start + times[i], 1, i);
             firings.set(labels[i], 2, i);
         }
 

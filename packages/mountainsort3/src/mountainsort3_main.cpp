@@ -63,6 +63,8 @@ QJsonObject get_spec()
         X.addOptionalParameter("detect_sign", "", 0);
         X.addOptionalParameter("merge_across_channels", "", "true");
         X.addOptionalParameter("fit_stage", "", "true");
+        X.addOptionalParameter("t1", "Start timepoint to do the sorting (default 0 means start at beginning)", 0);
+        X.addOptionalParameter("t2", "End timepoint for sorting (default -1 means go to end of timeseries)", -1);
         processors.push_back(X.get_spec());
     }
     {
@@ -163,6 +165,8 @@ int main(int argc, char* argv[])
         opts.detect_sign = CLP.named_parameters.value("detect_sign").toInt();
         opts.merge_across_channels = (CLP.named_parameters.value("merge_across_channels").toString() == "true");
         opts.fit_stage = (CLP.named_parameters.value("fit_stage").toString() == "true");
+        opts.t1 = CLP.named_parameters.value("t1").toDouble();
+        opts.t2 = CLP.named_parameters.value("t2").toDouble();
         QString temp_path = CLP.named_parameters.value("_tempdir").toString();
         ret = p_mountainsort3(timeseries, geom, firings_out, temp_path, opts);
     }

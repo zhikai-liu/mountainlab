@@ -18,7 +18,8 @@ function main(params) {
 		adjacency_radius:0, //determines neighborhood sizes and goes along with the input geom.csv -- same units as in that file. I believe zero means every channel is own neighborhood (probably bad idea, so please always specify this) -- somebody, please check on this to verify this is true
 		channels:'', //comma-separated list of channels to analyze. Empty means we analyze all of this. I think this optional feature needs to be debugged/tested.
 		compute_bursting_parents:'true', //Whether to auto-detect bursting pairs based on waveform shape and asymmetric cross-correlogram, which will be output in the metrics. I believe that cluster compute_metrics needs to be true. We should expose the threshold parameters for this. That's a todo.
-		compute_metrics:'false' //Whether to compute metrics, including isolation score and noise overlap. Maybe the default will change to true in the future.
+		compute_metrics:'false', //Whether to compute metrics, including isolation score and noise overlap. Maybe the default will change to true in the future.
+		t1:-1,t2:-1
 	});
 	setNumThreads(params.num_threads);
 	var clip_size=Math.floor(params.clip_size_msec/1000*params.samplerate);
@@ -90,6 +91,8 @@ function main(params) {
 	ppp.detect_sign=params.detect_sign;
 	ppp.merge_across_channels=params.merge_across_channels;
 	ppp.fit_stage=params.fit_stage;
+	ppp.t1=params.t1;
+	ppp.t2=params.t2;
 	var firings=Process('mountainsort.mountainsort3',
 					{
 						timeseries:pre,
