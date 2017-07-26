@@ -31,6 +31,8 @@ We will therefore be migrating into the following system. The (default) master b
 
 * [Demo of additional WIP GUI for viewing very large datasets -- spikeview](https://www.youtube.com/watch?v=z1V1di8sQOI)
 
+Thank you to Maria and Mahmood from M. Stryker lab for helping with GUI design in spikeview.
+
 ## Data formats used in MountainLab
 
 [The .mda file format](doc/mda_format.md)
