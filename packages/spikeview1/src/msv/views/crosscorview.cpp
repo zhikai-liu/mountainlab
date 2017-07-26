@@ -174,6 +174,7 @@ void CrosscorView::slot_update_highlighting()
 
 void CrosscorView::slot_panel_clicked(int index, Qt::KeyboardModifiers modifiers)
 {
+    qDebug() << __FILE__ << __LINE__;
     SVContext* c = qobject_cast<SVContext*>(mvContext());
     Q_ASSERT(c);
 
@@ -252,9 +253,17 @@ void CrosscorViewPrivate::update_panels()
     double dt_max=30*50;
     int num_bins=100;
 
+    bool auto_only=true;
+    for (int i=0; i<m_k1s.count(); i++) {
+        if (m_k1s[i]!=m_k2s[i]) auto_only=false;
+    }
+
     for (int i=0; i<m_k1s.count(); i++) {
         HistogramView* panel=new HistogramView;
-        panel->setTitle(QString("%1/%2").arg(m_k1s.value(i)).arg(m_k2s.value(i)));
+        QString title0;
+        if (auto_only) title0=QString("%1").arg(m_k1s.value(i));
+        else title0=QString("%1/%2").arg(m_k1s.value(i)).arg(m_k2s.value(i));
+        panel->setTitle(title0);
         panel->setProperty("k1",m_k1s.value(i));
         panel->setProperty("k2",m_k2s.value(i));
         panel->setProperty("k",m_ks.value(i));

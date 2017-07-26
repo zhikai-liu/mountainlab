@@ -66,13 +66,21 @@ public:
 
     double m_total_time_sec = 0;
     bool m_zoomed_out_once = false;
-    double m_vscale_factor = 12;
+    double m_vscale_factor = 10;
     double m_hscale_factor = 2;
+
+    enum ElectrodesToShowMode {
+        All,Single,Neighborhood
+    };
+    ElectrodesToShowMode m_electrodes_to_show_mode=All;
+    double m_preferred_neighborhood_size=-1;
 
     void compute_total_time();
     void update_panels();
     void update_scale_factors();
     static double get_disksize_for_firing_rate(double firing_rate);
+    QSet<int> determine_electrodes_to_show(const Mda32 &template0,const ElectrodeGeometry &geom);
+    double get_preferred_adjacency_radius(int M,int ch,const ElectrodeGeometry &geom);
 };
 
 TemplatesView::TemplatesView(MVAbstractContext* context)
@@ -80,6 +88,8 @@ TemplatesView::TemplatesView(MVAbstractContext* context)
 {
     d = new TemplatesViewPrivate;
     d->q = this;
+
+    this->setPreferredAspectRatio(0.6);
 
     ActionFactory::addToToolbar(ActionFactory::ActionType::ZoomInVertical, this, SLOT(slot_vertical_zoom_in()));
     ActionFactory::addToToolbar(ActionFactory::ActionType::ZoomOutVertical, this, SLOT(slot_vertical_zoom_out()));
@@ -412,6 +422,76 @@ double TemplatesViewPrivate::get_disksize_for_firing_rate(double firing_rate)
     return qMin(1.0, sqrt(firing_rate / 5));
 }
 
+int peak_channel(const Mda32 &template0) {
+    int M=template0.N1();
+    int T=template0.N2();
+    double max0=0;
+    int ret=0;
+    for (int m=0; m<M; m++) {
+        for (int t=0; t<T; t++) {
+            double val0=fabs(template0.value(m,t));
+            if (val0>max0) {
+                max0=val0;
+                ret=m;
+            }
+        }
+    }
+    return ret;
+}
+
+QSet<int> TemplatesViewPrivate::determine_electrodes_to_show(const Mda32 &template0, const ElectrodeGeometry &geom)
+{
+    QSet<int> ret;
+
+    int ch=peak_channel(template0);
+    if (m_electrodes_to_show_mode==Single) {
+        ret << ch;
+    }
+    else if (m_electrodes_to_show_mode==All) {
+        for (int m=0; m<template0.N1(); m++) {
+            ret << m;
+        }
+    }
+    else if (m_electrodes_to_show_mode==Neighborhood) {
+        double adjacency_radius=get_preferred_adjacency_radius(template0.N1(),ch,geom);
+        ret=geom.getNeighborhood(ch,adjacency_radius).toSet();
+    }
+
+    return ret;
+}
+
+double TemplatesViewPrivate::get_preferred_adjacency_radius(int M,int ch, const ElectrodeGeometry &geom)
+{
+    if (m_preferred_neighborhood_size<0) {
+        if (M<=12) m_preferred_neighborhood_size=M;
+        else m_preferred_neighborhood_size=7;
+    }
+    if (m_preferred_neighborhood_size==0) return 0;
+    double unit=100;
+    if (m_preferred_neighborhood_size>=M) {
+        double adjacency_radius=unit;
+        while (geom.getNeighborhood(ch,adjacency_radius).count()<M)
+            adjacency_radius+=unit;
+        return adjacency_radius;
+    }
+    else {
+        double adjacency_radius=unit;
+        for (int a=0; a<10; a++) {
+            while (geom.getNeighborhood(ch,adjacency_radius).count()<m_preferred_neighborhood_size) {
+                adjacency_radius+=unit;
+            }
+            while (geom.getNeighborhood(ch,adjacency_radius).count()>m_preferred_neighborhood_size) {
+                adjacency_radius-=unit;
+            }
+            if (geom.getNeighborhood(ch,adjacency_radius).count()==m_preferred_neighborhood_size) {
+                return adjacency_radius;
+            }
+            unit/=2;
+        }
+        return adjacency_radius;
+    }
+}
+
 void TemplatesViewPrivate::update_panels()
 {
     SVContext* c = qobject_cast<SVContext*>(q->mvContext());
@@ -437,6 +517,7 @@ void TemplatesViewPrivate::update_panels()
             TemplatesViewPanel* panel = new TemplatesViewPanel;
             panel->setElectrodeGeometry(c->electrodeGeometry());
             panel->setTemplate(CD.template0);
+            panel->setElectrodesToShow(determine_electrodes_to_show(CD.template0,c->electrodeGeometry()));
             panel->setChannelColors(channel_colors);
             panel->setColors(c->colors());
             panel->setTitle(QString::number(CD.k));

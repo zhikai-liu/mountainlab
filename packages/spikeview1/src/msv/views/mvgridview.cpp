@@ -10,6 +10,7 @@
 
 #include <QHBoxLayout>
 #include <QScrollArea>
+#include <QTimer>
 #include "actionfactory.h"
 #include <QScrollBar>
 
@@ -135,11 +136,11 @@ RenderableWidget* MVGridView::view(int j) const
 
 void MVGridView::slot_zoom_in(double factor)
 {
-    int hscroll_value = 0, vscroll_value = 0;
-    if (d->m_scroll_area->horizontalScrollBar())
-        hscroll_value = d->m_scroll_area->horizontalScrollBar()->value();
-    if (d->m_scroll_area->verticalScrollBar())
-        vscroll_value = d->m_scroll_area->verticalScrollBar()->value();
+    //int hscroll_value = 0, vscroll_value = 0;
+    //if (d->m_scroll_area->horizontalScrollBar())
+    //    hscroll_value = d->m_scroll_area->horizontalScrollBar()->value();
+    //if (d->m_scroll_area->verticalScrollBar())
+    //    vscroll_value = d->m_scroll_area->verticalScrollBar()->value();
     bool done = false;
     double preferred_width = d->m_preferred_width;
     if ((factor > 1) && (preferred_width == 0)) {
@@ -164,10 +165,7 @@ void MVGridView::slot_zoom_in(double factor)
     }
     d->m_preferred_width = preferred_width;
     d->on_resize();
-    if (d->m_scroll_area->horizontalScrollBar())
-        d->m_scroll_area->horizontalScrollBar()->setValue(hscroll_value);
-    if (d->m_scroll_area->verticalScrollBar())
-        d->m_scroll_area->verticalScrollBar()->setValue(vscroll_value);
+    QTimer::singleShot(0,this,SLOT(slot_ensure_current_visible()));
 }
 
 void MVGridView::slot_signal_view_clicked(int index, Qt::KeyboardModifiers)
@@ -189,6 +187,16 @@ void MVGridView::slot_export_image()
 {
     QImage img = this->renderImage();
     user_save_image(img);
+}
+
+void MVGridView::slot_ensure_current_visible()
+{
+    int ind=d->m_current_view_index;
+    if ((ind<0)||(ind>=d->m_views.count())) return;
+
+    QWidget *W=d->m_views[ind];
+
+    d->m_scroll_area->ensureWidgetVisible(W->parentWidget());
 }
 
 void MVGridView::slot_zoom_out(double factor)
@@ -354,6 +362,11 @@ void MVGridView::setForceSquareMatrix(bool val)
         d->m_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
     d->on_resize();
+}
+
+void MVGridView::setPreferredAspectRatio(double val)
+{
+    d->m_preferred_aspect_ratio=val;
 }
 
 void MVGridView::setPreferredHistogramWidth(int width)

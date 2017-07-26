@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
     CLParams CLP(argc, argv);
     {
         // add on a .prv if the [file] does not exist, but the [file].prv does
-        // TODO this is very sloppy and dangerous... should not be done here. Should rather be done in kron-view
+        // TODO this should prob be done in kron-view instead
         QStringList keys = CLP.named_parameters.keys();
         foreach (QString key, keys) {
             QVariant val = CLP.named_parameters[key].toString();

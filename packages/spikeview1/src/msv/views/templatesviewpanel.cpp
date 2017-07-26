@@ -23,6 +23,7 @@ public:
     int bottom_section_height=0;
     double vertical_scale_factor = 1;
     QList<QColor> channel_colors;
+    QSet<int> electrodes_to_show;
 
     //output
     QMap<int,QRectF> electrode_boxes;
@@ -48,6 +49,7 @@ public:
     bool m_draw_ellipses = false;
     bool m_draw_disks = false;
     QMap<int,QRectF> m_electrode_boxes;
+    QSet<int> m_electrodes_to_show;
 
     bool m_data_render_needed=false;
     TemplatesViewDataRenderer m_data_renderer;
@@ -73,6 +75,11 @@ void TemplatesViewPanel::setTemplate(const Mda32& X)
     d->m_template = X;
     d->m_data_render_needed=true;
     d->m_clip_size=d->m_template.N2();
+}
+
+void TemplatesViewPanel::setElectrodesToShow(const QSet<int> &electrodes_to_show)
+{
+    d->m_electrodes_to_show=electrodes_to_show;
 }
 
 void TemplatesViewPanel::setElectrodeGeometry(const ElectrodeGeometry& geom)
@@ -207,6 +214,7 @@ void TemplatesViewPanel::paint(QPainter* painter)
         d->m_data_renderer.template0=d->m_template;
         d->m_data_renderer.vertical_scale_factor=d->m_vertical_scale_factor;
         d->m_data_renderer.channel_colors=d->m_channel_colors;
+        d->m_data_renderer.electrodes_to_show=d->m_electrodes_to_show;
         d->m_data_renderer.start();
     }
     else {
@@ -243,10 +251,6 @@ void TemplatesViewDataRenderer::setup_electrode_boxes(double W, double H)
 
     double W1 = W;
     double H1 = H - top_section_height - bottom_section_height;
-
-    QSet<int> electrodes_to_show;
-    for (int m=0; m<template0.N1(); m++)
-        electrodes_to_show << m;
 
     QList<QVector<double> > coords = electrode_geometry.coordinates;
     if (coords.isEmpty()) {

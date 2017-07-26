@@ -38,4 +38,16 @@ private slots:
     //void openClipsForTemplate();
 };
 
+class CrosscorMatrixViewFactory : public MVAbstractViewFactory {
+    Q_OBJECT
+public:
+    CrosscorMatrixViewFactory(MVMainWindow* mw, QObject* parent = 0);
+    QString id() const Q_DECL_OVERRIDE;
+    QString name() const Q_DECL_OVERRIDE;
+    QString title() const Q_DECL_OVERRIDE;
+    MVAbstractView* createView(MVAbstractContext* context) Q_DECL_OVERRIDE;
+private slots:
+    //void openClipsForTemplate();
+};
+
 #endif // CrosscorPlugin_H

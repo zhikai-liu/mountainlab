@@ -1332,6 +1332,22 @@ bool ElectrodeGeometry::operator==(const ElectrodeGeometry& other)
     return true;
 }
 
+QList<int> ElectrodeGeometry::getNeighborhood(int m, double adjacency_radius) const
+{
+    QList<int> ret;
+    for (int m2=0; m2<coordinates.count(); m2++) {
+        double sumsqr=0;
+        for (int c=0; c<coordinates[m].count(); c++) {
+            double val=coordinates[m][c]-coordinates[m2][c];
+            sumsqr+=val*val;
+        }
+        double dist=sqrt(sumsqr);
+        if (dist<=adjacency_radius)
+            ret << m2;
+    }
+    return ret;
+}
+
 ElectrodeGeometry ElectrodeGeometry::fromJsonObject(const QJsonObject& obj)
 {
     ElectrodeGeometry ret;

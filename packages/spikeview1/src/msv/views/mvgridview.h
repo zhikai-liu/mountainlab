@@ -23,6 +23,7 @@ public:
     void updateLayout();
     void setHorizontalScaleWidget(QWidget* W);
     void setForceSquareMatrix(bool val);
+    void setPreferredAspectRatio(double val);
     void setPreferredHistogramWidth(int width); //use 0 for zoomed all the way out
     void updateViews();
     int currentViewIndex() const;
@@ -46,6 +47,7 @@ private slots:
     void slot_signal_view_clicked(int, Qt::KeyboardModifiers);
     void slot_grid_properties();
     void slot_export_image();
+    void slot_ensure_current_visible();
 
 private:
     MVGridViewPrivate* d;
