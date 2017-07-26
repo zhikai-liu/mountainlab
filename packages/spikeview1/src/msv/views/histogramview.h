@@ -68,6 +68,7 @@ signals:
 
 private slots:
     void slot_context_menu(const QPoint& pos);
+    void slot_bin_counter_finished();
 
 private:
     HistogramViewPrivate* d;
