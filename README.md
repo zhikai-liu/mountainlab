@@ -19,7 +19,6 @@ We will therefore be migrating into the following system. The (default) master b
 
 * [ms3](https://github.com/magland/mountainlab/tree/ms3) - development branch with the ms3 processing pipeline
 
-
 ## Installation
 
 [Installation instructions](doc/installation.md)
@@ -27,6 +26,10 @@ We will therefore be migrating into the following system. The (default) master b
 ## How to run spike sorting
 
 [The first sort](doc/the_first_sort.md)
+
+## Some demo videos
+
+* [Demo of additional WIP GUI for viewing very large datasets -- spikeview](https://www.youtube.com/watch?v=z1V1di8sQOI)
 
 ## Data formats used in MountainLab
 
