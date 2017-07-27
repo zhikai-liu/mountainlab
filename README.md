@@ -1,4 +1,4 @@
-# MountainLab/MountainSort Spike Sorting Software
+# MountainLab Spike Sorting Software
 
 Notice: We recently moved everything in the master branch into the old/ directory. You should switch to one of the working branches (for example 'git checkout ms3' or 'git checkout 2017_06'). See installation instructions. The 2017_06 branch is a snapshot of the June 30th version. The ms3 branch is under development. If you can, use ms3, or think about switching in the relatively near future.
 
