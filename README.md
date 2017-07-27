@@ -22,15 +22,15 @@ Contact the authors for information on the slack team for users and developers.
 
 [Installation instructions](old/doc/installation.md)
 
-## How to run spike sorting
-
-[The first sort](old/doc/the_first_sort.md)
-
 ## Some demo videos
 
 * [Installation demo and introduction to Mountainlab](https://www.youtube.com/watch?v=P-WqvIvmx84) -- skip to the end of the video to see the example sort and the GUI. Also describes how the software is organized and some of its philosophy.
 
 * [Demo of additional WIP GUI for viewing very large datasets -- spikeview](https://www.youtube.com/watch?v=z1V1di8sQOI)
+
+## How to run spike sorting
+
+[The first sort](old/doc/the_first_sort.md)
 
 ## Data formats used in MountainLab
 
