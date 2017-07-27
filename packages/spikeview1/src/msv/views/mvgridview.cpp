@@ -228,7 +228,6 @@ void MVGridViewPrivate::schedule_resize()
 
 void MVGridViewPrivate::on_resize()
 {
-    qDebug() << ":::::::::::::::::::::::::::: on_resize" << __FILE__ << __LINE__;
     int W = q->width();
     int scroll_bar_width = 30; //how to determine?
     m_grid_widget->setFixedWidth(W - scroll_bar_width);
@@ -276,9 +275,7 @@ void MVGridViewPrivate::on_resize()
             m_grid_widget->setFixedWidth(width);
         }
     }
-    qDebug() << ":::::::::::::::::::::::::::: on_resize" << __FILE__ << __LINE__;
     setup_grid(num_cols);
-    qDebug() << ":::::::::::::::::::::::::::: on_resize" << __FILE__ << __LINE__;
 }
 
 void MVGridViewPrivate::setup_grid(int num_cols)

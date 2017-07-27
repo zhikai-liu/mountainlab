@@ -8,6 +8,7 @@
 //#include "crosscorviewpanel.h"
 #include "histogramview.h"
 #include "get_sort_indices.h"
+#include "mvthreadmanager.h"
 
 #include <QLabel>
 #include <QMutex>
@@ -177,7 +178,6 @@ void CrosscorView::slot_update_highlighting()
 
 void CrosscorView::slot_panel_clicked(int index, Qt::KeyboardModifiers modifiers)
 {
-    qDebug() << __FILE__ << __LINE__;
     SVContext* c = qobject_cast<SVContext*>(mvContext());
     Q_ASSERT(c);
 
@@ -302,6 +302,7 @@ void CrosscorViewPrivate::update_panels()
     m_worker.k2s = m_k2s;
     m_worker.dt_max = dt_max;
 
+    //MVThreadManager::globalInstance()->addThread(&m_worker);
     m_worker.start();
 }
 
@@ -324,7 +325,6 @@ void CrosscorWorker::run()
         }
     }
 
-    qDebug() << __FILE__ << __LINE__;
     bigint last_j_left = 0;
     QTime timer;
     timer.start();

@@ -6,6 +6,7 @@
 
 #include "templatesviewpanel.h"
 #include "mlcommon.h"
+#include "mvthreadmanager.h"
 
 #include <QThread>
 
@@ -129,8 +130,6 @@ void TemplatesViewPanel::setFiringRateDiskDiameter(double val)
 
 void TemplatesViewPanel::paint(QPainter* painter)
 {
-    //qDebug() << "TemplatesViewPanel::paint" << "+++++++++++++++++++++++++++++";
-
     painter->setRenderHint(QPainter::Antialiasing);
 
     QSize ss = this->windowSize();
@@ -215,6 +214,7 @@ void TemplatesViewPanel::paint(QPainter* painter)
         d->m_data_renderer.vertical_scale_factor = d->m_vertical_scale_factor;
         d->m_data_renderer.channel_colors = d->m_channel_colors;
         d->m_data_renderer.electrodes_to_show = d->m_electrodes_to_show;
+        //MVThreadManager::globalInstance()->addThread(&d->m_data_renderer);
         d->m_data_renderer.start();
     }
     else {

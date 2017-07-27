@@ -260,6 +260,7 @@ void HistogramView::setXRange(MVRange range)
 }
 
 #include "mlcommon.h"
+#include "mvthreadmanager.h"
 void HistogramView::autoCenterXRange()
 {
     double mean_value = MLCompute::mean(d->m_data);
@@ -673,6 +674,7 @@ void HistogramViewPrivate::do_paint(QPainter& painter, int W, int H)
             m_bin_counter.bin_rights = m_bin_rights;
             m_bin_counter.data = m_data;
             m_bin_counter.second_data = m_second_data;
+            //MVThreadManager::globalInstance()->addThread(&m_bin_counter);
             m_bin_counter.start();
             m_update_bin_counts_required = false;
         }

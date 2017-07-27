@@ -25,6 +25,7 @@ INCLUDEPATH += msv/plugins msv/views msv/controls
 VPATH += msv/plugins msv/views msv/controls
 
 HEADERS += \
+    mvthreadmanager.h \
     clustermetricsview.h clustermetricsplugin.h \
     mvgridview.h mvgridviewpropertiesdialog.h \
     templatesview.h templatesviewpanel.h templatesplugin.h templatescontrol.h \
@@ -33,6 +34,7 @@ HEADERS += \
     mvexportcontrol/mvexportcontrol.h
 
 SOURCES += \
+    mvthreadmanager.cpp \
     clustermetricsview.cpp clustermetricsplugin.cpp \
     mvgridview.cpp mvgridviewpropertiesdialog.cpp \
     templatesview.cpp templatesviewpanel.cpp templatesplugin.cpp templatescontrol.cpp \
