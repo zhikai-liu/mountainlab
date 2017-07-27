@@ -14,9 +14,9 @@ Contact the authors for information on the slack team for users and developers.
 
 ## Working branches
 
-* [2017_06 branch](https://github.com/magland/mountainlab/tree/2017_06) - snapshot with only critical bug fix updates
+* [ms3](https://github.com/magland/mountainlab/tree/ms3) - development branch with the ms3 processing pipeline (preferred)
 
-* [ms3](https://github.com/magland/mountainlab/tree/ms3) - development branch with the ms3 processing pipeline
+* [2017_06 branch](https://github.com/magland/mountainlab/tree/2017_06) - snapshot with only critical bug fix updates
 
 ## Installation
 
