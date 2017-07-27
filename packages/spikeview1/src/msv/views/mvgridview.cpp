@@ -51,7 +51,9 @@ public:
     QWidget* m_horizontal_scale_widget = 0;
     int m_current_view_index = 0;
     MVGridViewProperties m_properties;
+    bool m_resize_scheduled=false;
 
+    void schedule_resize();
     void on_resize();
     void setup_grid(int num_cols);
     void get_num_rows_cols_and_height_for_preferred_width(int& num_rows, int& num_cols, int& height, double preferred_width);
@@ -164,7 +166,7 @@ void MVGridView::slot_zoom_in(double factor)
         }
     }
     d->m_preferred_width = preferred_width;
-    d->on_resize();
+    d->schedule_resize();
     QTimer::singleShot(0, this, SLOT(slot_ensure_current_visible()));
 }
 
@@ -200,6 +202,12 @@ void MVGridView::slot_ensure_current_visible()
     d->m_scroll_area->ensureWidgetVisible(W->parentWidget());
 }
 
+void MVGridView::slot_on_resize()
+{
+    d->m_resize_scheduled=false;
+    d->on_resize();
+}
+
 void MVGridView::slot_zoom_out(double factor)
 {
     slot_zoom_in(1 / factor);
@@ -208,11 +216,19 @@ void MVGridView::slot_zoom_out(double factor)
 void MVGridView::resizeEvent(QResizeEvent* evt)
 {
     MVAbstractView::resizeEvent(evt);
-    d->on_resize();
+    d->schedule_resize();
+}
+
+void MVGridViewPrivate::schedule_resize()
+{
+    if (m_resize_scheduled) return;
+    m_resize_scheduled=true;
+    QTimer::singleShot(500,q,SLOT(slot_on_resize()));
 }
 
 void MVGridViewPrivate::on_resize()
 {
+    qDebug() << ":::::::::::::::::::::::::::: on_resize" << __FILE__ << __LINE__;
     int W = q->width();
     int scroll_bar_width = 30; //how to determine?
     m_grid_widget->setFixedWidth(W - scroll_bar_width);
@@ -260,7 +276,9 @@ void MVGridViewPrivate::on_resize()
             m_grid_widget->setFixedWidth(width);
         }
     }
+    qDebug() << ":::::::::::::::::::::::::::: on_resize" << __FILE__ << __LINE__;
     setup_grid(num_cols);
+    qDebug() << ":::::::::::::::::::::::::::: on_resize" << __FILE__ << __LINE__;
 }
 
 void MVGridViewPrivate::setup_grid(int num_cols)
