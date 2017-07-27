@@ -1,4 +1,4 @@
-function [X,firings_true,waveforms]=synthesize_timeseries_001(opts)
+function [X,firings_true,waveforms]=synthesize_timeseries_002(opts)
 
 if (~isfield(opts,'M')), opts.M=4; end; % #channels
 if (~isfield(opts,'T')), opts.T=800; end; % #timepoints in synthetic waveforms

@@ -22,6 +22,7 @@
 #include "signal.h"
 #include "svcontext.h"
 #include "mvopenviewscontrol.h"
+#include "mvexportcontrol/mvexportcontrol.h"
 
 #include <objectregistry.h>
 #include <icounter.h>
@@ -125,7 +126,7 @@ int main(int argc, char* argv[])
     context->setChannelColors(channel_colors);
     context->setClusterColors(label_colors);
 
-    QString window_title;
+    QString window_title="SpikeView";
     if (mv2_fname.isEmpty()) {
         printf("Setting up context...\n");
         SVContext dc; //dummy context
@@ -227,6 +228,7 @@ int main(int argc, char* argv[])
 
     printf("Setting up main window...\n");
     W->insertControl(0, new MVOpenViewsControl(context, W), true);
+    W->addControl(new MVExportControl(context, W), true);
 
     a.processEvents();
 

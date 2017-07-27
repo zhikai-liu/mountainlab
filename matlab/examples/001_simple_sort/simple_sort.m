@@ -92,6 +92,8 @@ mountainview(struct(...
     'cluster_metrics','data/cluster_metrics_annotated.json'...
 ));
 
+end
+
 function X=generate_raw(opts)
 ooo.K=opts.num_units;
 ooo.M=opts.num_channels;
@@ -100,14 +102,20 @@ ooo.duration=opts.duration;
 ooo.show_figures=false;
 X=synthesize_timeseries_002(ooo);
 
+end
+
 function write_geometry_file(geom,fname_out)
 csvwrite(fname_out,geom');
+
+end
 
 function view_timeseries(X)
 raw_path=pathify32(X);
 ld_library_str='LD_LIBRARY_PATH=/usr/local/lib';
 cmd=sprintf('%s mountainview --raw=%s',ld_library_str,raw_path);
 system(cmd);
+
+end
 
 function mountainview(A)
 ld_library_str='LD_LIBRARY_PATH=/usr/local/lib';
@@ -119,3 +127,4 @@ end;
 cmd=sprintf('%s mountainview %s &',ld_library_str,args);
 fprintf('%s\n',cmd);
 system(cmd);
+end

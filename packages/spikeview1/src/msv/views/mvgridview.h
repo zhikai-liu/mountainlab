@@ -48,6 +48,7 @@ private slots:
     void slot_grid_properties();
     void slot_export_image();
     void slot_ensure_current_visible();
+    void slot_on_resize();
 
 private:
     MVGridViewPrivate* d;
