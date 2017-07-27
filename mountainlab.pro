@@ -7,7 +7,7 @@ TEMPLATE = subdirs
 #COMPONENTS = mdaconvert  mountainprocess mountainview prv
 
 isEmpty(COMPONENTS) {
-    COMPONENTS = mda mdaconvert mountainprocess mountainsort mountainview mountaincompare prv mountainsort3 mountainsort2
+    COMPONENTS = mda mdaconvert mountainprocess mountainsort mountainview mountaincompare prv mountainsort3 mountainsort2 spikeview1
 }
 isEmpty(GUI) {
     GUI = on

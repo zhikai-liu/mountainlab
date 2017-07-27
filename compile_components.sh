@@ -126,4 +126,3 @@ if [ -f mountainlab.user.json ]; then
 	echo "******************************************"
 fi
 
-echo "Hint: you may want to also compile the spikeview1 component: ./compile_components spikeview1"
