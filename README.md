@@ -20,11 +20,11 @@ Contact the authors for information on the slack team for users and developers.
 
 ## Installation
 
-[Installation instructions](doc/installation.md)
+[Installation instructions](old/doc/installation.md)
 
 ## How to run spike sorting
 
-[The first sort](doc/the_first_sort.md)
+[The first sort](old/doc/the_first_sort.md)
 
 ## Some demo videos
 
@@ -32,15 +32,15 @@ Contact the authors for information on the slack team for users and developers.
 
 ## Data formats used in MountainLab
 
-[The .mda file format](doc/mda_format.md)
+[The .mda file format](old/doc/mda_format.md)
 
 ## Data management
 
-[The .prv data management system](doc/prv_system.md)
+[The .prv data management system](old/doc/prv_system.md)
 
 ## Automated curation
 
-[Cluster metrics and automated curation](doc/metrics_automated_curation.md)
+[Cluster metrics and automated curation](old/doc/metrics_automated_curation.md)
 
 ## About the master branch ##
 
