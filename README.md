@@ -1,11 +1,10 @@
-# MountainLab
+# MountainLab/MountainSort Spike Sorting Software
 
-** Notice **
-Notice: I recently moved everything in the master branch into the old/ directory. You should switch to one of the working branches (for example 'git checkout ms3' or 'git checkout 2017_06'). See installation instructions. The 2017_06 branch is a snapshot of the June 30th version. The ms3 branch is under development. If you can, use ms3, or think about switching in the relatively near future.
+Notice: We recently moved everything in the master branch into the old/ directory. You should switch to one of the working branches (for example 'git checkout ms3' or 'git checkout 2017_06'). See installation instructions. The 2017_06 branch is a snapshot of the June 30th version. The ms3 branch is under development. If you can, use ms3, or think about switching in the relatively near future.
 
-## About Mountainlab
+## About
 
-MountainSort is spike sorting software developed by Jeremy Magland, Alex Barnett, and Leslie Greengard at the Center for Computational Biology, Flatiron Institute in close collaboration with Jason Chung and Loren Frank at UCSF department of Physiology. It is part of MountainLab, a general framework for data analysis and visualization.
+MountainSort (a component of MountainLab) is spike sorting software developed by Jeremy Magland, Alex Barnett, and Leslie Greengard at the Center for Computational Biology, Flatiron Institute in close collaboration with Jason Chung and Loren Frank at UCSF department of Physiology. It is part of MountainLab, a general framework for data analysis and visualization.
 
 MountainLab software is being developed by Jeremy Magland and Witold Wysota.
 
@@ -31,8 +30,6 @@ Contact the authors for information on the slack team for users and developers.
 
 * [Demo of additional WIP GUI for viewing very large datasets -- spikeview](https://www.youtube.com/watch?v=z1V1di8sQOI)
 
-Thank you to Maria and Mahmood from M. Stryker lab for helping with GUI design in spikeview.
-
 ## Data formats used in MountainLab
 
 [The .mda file format](doc/mda_format.md)
@@ -48,6 +45,10 @@ Thank you to Maria and Mahmood from M. Stryker lab for helping with GUI design i
 ## About the master branch ##
 
 The (default) master branch will ultimately not contain any code, but will rather be a table of contents to the various software versions (branches). This will allow you to stay on your preferred version until you are ready to switch to the newer stable version.
+
+## Acknowledgements
+
+Thanks to all the users on the slack team for ongoing testing and feedback.
 
 ## References
 
