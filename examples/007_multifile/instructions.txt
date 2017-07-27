@@ -1,5 +1,0 @@
-./001_generate_synthetic_data.sh
-
-kron-run ms2_001 ds1
-kron-view results ms2_001 ds1
-
