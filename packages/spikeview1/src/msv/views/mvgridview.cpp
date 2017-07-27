@@ -167,7 +167,6 @@ void MVGridView::slot_zoom_in(double factor)
     }
     d->m_preferred_width = preferred_width;
     d->schedule_resize();
-    QTimer::singleShot(0, this, SLOT(slot_ensure_current_visible()));
 }
 
 void MVGridView::slot_signal_view_clicked(int index, Qt::KeyboardModifiers)
@@ -206,6 +205,7 @@ void MVGridView::slot_on_resize()
 {
     d->m_resize_scheduled=false;
     d->on_resize();
+    QTimer::singleShot(0, this, SLOT(slot_ensure_current_visible()));
 }
 
 void MVGridView::slot_zoom_out(double factor)
