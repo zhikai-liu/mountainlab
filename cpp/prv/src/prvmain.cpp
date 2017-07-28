@@ -11,7 +11,6 @@
 #include <QSettings>
 #include <QProcess>
 #include <QUrl>
-//#include <QStandardPaths>
 #include <QHostInfo>
 #include <QCommandLineParser>
 #include <QUrlQuery>
@@ -552,9 +551,9 @@ public:
 };
 */
 
-class LocateOrDownloadCommand : public MLUtils::ApplicationCommand {
+class LocateDownloadOrUploadCommand : public MLUtils::ApplicationCommand {
 public:
-    LocateOrDownloadCommand(const QString& cmd)
+    LocateDownloadOrUploadCommand(const QString& cmd)
         : m_cmd(cmd)
     {
     }
@@ -573,7 +572,7 @@ public:
         parser.addOption(QCommandLineOption("original_path", "original_path", "[optional]"));
         parser.addOption(QCommandLineOption("size", "size", "[]"));
         parser.addOption(QCommandLineOption("search_path", "search_path", "path to search (leave empty to search default locations)"));
-        parser.addOption(QCommandLineOption("server", "server", "[url or name of prvbucket server to search]"));
+        parser.addOption(QCommandLineOption("server", "server", "[url or name of prvbucket server to search or upload]"));
         parser.addOption(QCommandLineOption("verbose", "verbose"));
     }
     int execute(const QCommandLineParser& parser)
@@ -638,15 +637,18 @@ public:
                     params.insert("search_path", parser.value("search_path"));
                 if (parser.isSet("server"))
                     params.insert("server", parser.value("server"));
-                QString fname_or_url = locate_file(obj, params, verbose);
-                if (fname_or_url.isEmpty()) {
-                    println("Unable to locate file");
-                    return -1;
+                QString fname_or_url;
+                if (m_cmd != "upload") {
+                    fname_or_url = locate_file(obj, params, verbose);
+                    if (fname_or_url.isEmpty()) {
+                        println("Unable to locate file on server");
+                        return -1;
+                    }
                 }
                 if (m_cmd == "locate") {
                     println(fname_or_url);
                 }
-                else {
+                else if (m_cmd == "download") {
                     if (is_url(fname_or_url)) {
                         QVariantMap params0 = params;
                         params0["server"] = ""; //search locally
@@ -682,6 +684,42 @@ public:
                             */
                     }
                     else {
+                    }
+                }
+                else if (m_cmd=="upload") {
+                    QString server=params.value("server").toString();
+                    if (server.isEmpty()) {
+                        qWarning() << "You must specify a server for upload";
+                        return -1;
+                    }
+
+                    QVariantMap params0=params;
+                    params0["server"]=""; //search locally
+                    QString fname=locate_file(obj,params0,false);
+                    if (fname.isEmpty()) {
+                        qWarning() << QString("Unable to find file on local machine. Original path = %1").arg(obj["original_path"].toString());
+                    }
+                    else {
+                        QString url=locate_file(obj,params,false);
+
+                        if (is_url(url)) {
+                            qDebug().noquote() << "File is already on server: "+url;
+                        }
+                        else {
+                            qDebug().noquote() << "";
+                            QString response;
+                            while (1) {
+                                response=ask_question(QString("Upload %1 to %2? ([y]/n): ").arg(fname).arg(server),"y");
+                                if ((response=="y")||(response=="n"))
+                                    break;
+                            }
+                            if (response=="y") {
+                                if (!upload_file(fname,server)) {
+                                    qWarning() << QString("Failed to upload file to %1: %2").arg(server).arg(fname);
+                                    return -1;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -796,6 +834,71 @@ private:
 
         ret = find_prvs("", obj);
         return ret;
+    }
+
+    bool upload_file(QString fname,QString server) {
+        QJsonArray prv_servers = MLUtil::configValue("prv", "servers").toArray();
+        for (int k = 0; k < prv_servers.count(); k++) {
+            QJsonObject obj = prv_servers[k].toObject();
+            if (obj["name"].toString() == server) {
+                QString upload_host=obj["upload_host"].toString();
+                QString upload_user=obj["upload_user"].toString();
+                int upload_port=obj["upload_port"].toInt();
+                QString upload_path=obj["upload_path"].toString();
+                if (upload_user.isEmpty()) {
+                    qWarning() << "Unable to determine upload user for server: "+server;
+                    return false;
+                }
+                if (upload_host.isEmpty()) {
+                    qWarning() << "Unable to determine upload host for server: "+server;
+                    return false;
+                }
+                if (upload_path.isEmpty()) {
+                    qWarning() << "Unable to determine upload path for server: "+server;
+                    return false;
+                }
+                QString args;
+                if (upload_port) {
+                    args+=QString("-e 'ssh -p %1' ").arg(upload_port);
+                }
+                QString remote_fname=QString("%1.%2").arg(MLUtil::makeRandomId(6)).arg(QFileInfo(fname).fileName());
+                QString cmd=QString("rsync -av --progress %1 %2 %3@%4:%5/%6").arg(args).arg(fname).arg(upload_user).arg(upload_host).arg(upload_path).arg(remote_fname);
+                qDebug().noquote() << "";
+                qDebug().noquote() << cmd;
+                QString response;
+                while (1) {
+                    response=ask_question("Execute this command for upload? ([y]/n]): ","y");
+                    if ((response=="y")||(response=="n"))
+                        break;
+                }
+                if (response=="y") {
+                    QString cmd2=QString("xterm -e bash -c \"echo '%1'; %1; read -p 'Press enter to continue...'\"").arg(cmd);
+                    qDebug().noquote() << "";
+                    qDebug().noquote() << cmd2;
+                    qDebug().noquote() << "\nFile is being uploaded in a new terminal where you will need to upload your password. At the end of the upload you will need to press enter to continue.";
+                    int ret=system(cmd2.toUtf8().data());
+                    if (ret!=0) {
+                        qWarning() << "Error in upload.";
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+        qWarning() << "Unable to find server in configuration file";
+        return false;
+    }
+
+    QString ask_question(QString question,QString default_answer) {
+        printf("%s",question.toUtf8().data());
+        char str[1000];
+        char* ret = fgets(str, 1000, stdin);
+        (void)ret;
+        QString str2=QString(str).trimmed();
+        if (QString(str2).isEmpty()) {
+            str2=default_answer;
+        }
+        return str2;
     }
 
     /*
@@ -1140,7 +1243,10 @@ bool contains_argv(int argc, char* argv[], QString str)
 int main(int argc, char* argv[])
 {
 
-    if (!contains_argv(argc, argv, "--verbose"))
+    QString arg1;
+    if (argc>=2) arg1=QString(argv[1]);
+
+    if ((!contains_argv(argc, argv, "--verbose"))&&(arg1!="upload"))
         qInstallMessageHandler(myMessageOutput);
 
     QCoreApplication app(argc, argv);
@@ -1151,8 +1257,9 @@ int main(int argc, char* argv[])
     //cmdParser.addCommand(new PrvCommands::Sha1SumCommand);
     cmdParser.addCommand(new PrvCommands::StatCommand);
     cmdParser.addCommand(new PrvCommands::CreateCommand);
-    cmdParser.addCommand(new PrvCommands::LocateOrDownloadCommand("locate"));
-    cmdParser.addCommand(new PrvCommands::LocateOrDownloadCommand("download"));
+    cmdParser.addCommand(new PrvCommands::LocateDownloadOrUploadCommand("locate"));
+    cmdParser.addCommand(new PrvCommands::LocateDownloadOrUploadCommand("download"));
+    cmdParser.addCommand(new PrvCommands::LocateDownloadOrUploadCommand("upload"));
     //cmdParser.addCommand(new PrvCommands::RecoverCommand);
     //cmdParser.addCommand(new PrvCommands::ListSubserversCommand);
     //cmdParser.addCommand(new PrvCommands::UploadCommand);

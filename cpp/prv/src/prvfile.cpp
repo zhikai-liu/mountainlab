@@ -471,7 +471,7 @@ QString PrvFilePrivate::find_file(bigint size, const QString& checksum, const QS
         if (opts.verbose)
             printf("Searching remotely...\n");
         QString remote_url = find_remote_file(size, checksum, fcs_optional, opts);
-        if (!remote_url.isEmpty()) {
+        if ((!remote_url.isEmpty())&&(remote_url.startsWith("http"))) {
             if (opts.verbose) {
                 printf("Found remote file: %s\n", remote_url.toUtf8().data());
             }

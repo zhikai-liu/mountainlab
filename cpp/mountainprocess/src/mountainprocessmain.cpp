@@ -191,8 +191,8 @@ int main(int argc, char* argv[])
             return -1;
         }
         else {
-            qWarning() << missing_prvs.keys();
-            QTextStream(stdout) << "One or more prvs could not be found. To resolve these using the GUI, run this command again with the --_prvgui option." << endl;
+            qWarning() << "";
+            qWarning() << "The following prv objects could not be found:" << missing_prvs.keys();
             return -1;
         }
     }
