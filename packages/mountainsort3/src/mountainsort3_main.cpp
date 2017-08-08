@@ -10,18 +10,20 @@
 #include <QJsonDocument>
 #include <QCoreApplication>
 #include "mountainsort3_main.h"
-#include "p_multineighborhood_sort.h"
+//#include "p_multineighborhood_sort.h"
 #include "p_preprocess.h"
 #include "p_mountainsort3.h"
 #include "p_run_metrics_script.h"
 #include "p_spikeview_metrics.h"
 #include "p_spikeview_templates.h"
 #include "omp.h"
+#include "p_synthesize_timeseries.h"
 
 QJsonObject get_spec()
 {
     QJsonArray processors;
 
+    /*
     {
         ProcessorSpec X("mountainsort.multineighborhood_sort", "0.15j");
         X.addInputs("timeseries", "geom");
@@ -37,6 +39,7 @@ QJsonObject get_spec()
         X.addOptionalParameter("fit_stage", "", "true");
         processors.push_back(X.get_spec());
     }
+    */
     {
         ProcessorSpec X("mountainsort.preprocess", "0.1");
         X.addInputs("timeseries");
@@ -89,6 +92,15 @@ QJsonObject get_spec()
         X.addOptionalParameter("subtract_temporal_mean", "", "false");
         processors.push_back(X.get_spec());
     }
+    {
+        ProcessorSpec X("mountainsort.synthesize_timeseries", "0.1");
+        X.addInputs("firings", "waveforms");
+        X.addOutputs("timeseries_out");
+        X.addOptionalParameter("noise_level", "", 0);
+        X.addOptionalParameter("duration", "", 0);
+        X.addOptionalParameter("waveform_upsample_factor", "", 13);
+        processors.push_back(X.get_spec());
+    }
 
     QJsonObject ret;
     ret["processors"] = processors;
@@ -120,6 +132,7 @@ int main(int argc, char* argv[])
         }
     }
 
+    /*
     if (arg1 == "mountainsort.multineighborhood_sort") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString geom = CLP.named_parameters["geom"].toString();
@@ -137,7 +150,8 @@ int main(int argc, char* argv[])
         QString temp_path = CLP.named_parameters.value("_tempdir").toString();
         ret = p_multineighborhood_sort(timeseries, geom, firings_out, temp_path, opts);
     }
-    else if (arg1 == "mountainsort.preprocess") {
+    */
+    if (arg1 == "mountainsort.preprocess") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
         P_preprocess_opts opts;
@@ -195,6 +209,16 @@ int main(int argc, char* argv[])
             opts.filt_padding = 50;
         opts.subtract_temporal_mean = (CLP.named_parameters.value("subtract_temporal_mean") == "true");
         ret = p_spikeview_templates(timeseries, firings, templates_out, opts);
+    }
+    else if (arg1 == "mountainsort.synthesize_timeseries") {
+        QString firings = CLP.named_parameters["firings"].toString();
+        QString waveforms = CLP.named_parameters["waveforms"].toString();
+        QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
+        P_synthesize_timeseries_opts opts;
+        opts.noise_level = CLP.named_parameters["noise_level"].toDouble();
+        opts.duration = CLP.named_parameters["duration"].toDouble();
+        opts.waveform_upsample_factor = CLP.named_parameters.value("waveform_upsample_factor",13).toDouble();
+        ret = p_synthesize_timeseries(firings, waveforms, timeseries_out, opts);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

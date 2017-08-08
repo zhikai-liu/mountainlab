@@ -41,7 +41,8 @@ SOURCES += \
     p_preprocess.cpp \
     p_run_metrics_script.cpp \
     p_spikeview_metrics.cpp \
-    p_spikeview_templates.cpp
+    p_spikeview_templates.cpp \
+    p_synthesize_timeseries.cpp
 
 HEADERS += \
     mountainsort3_main.h \
@@ -58,7 +59,8 @@ HEADERS += \
     p_preprocess.h \
     p_run_metrics_script.h \
     p_spikeview_metrics.h \
-    p_spikeview_templates.h
+    p_spikeview_templates.h \
+    p_synthesize_timeseries.h
 
 INCLUDEPATH += ../../../cpp/mountainsort/src/isosplit5
 VPATH += ../../../cpp/mountainsort/src/isosplit5
