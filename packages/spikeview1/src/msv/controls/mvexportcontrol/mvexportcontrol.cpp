@@ -128,4 +128,3 @@ QString get_local_path_of_firings_file_or_current_path(const DiskReadMda& X)
     }*/
     return QDir::currentPath();
 }
-

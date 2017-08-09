@@ -3,7 +3,6 @@
 
 #include <QThread>
 
-
 class MVThreadManagerPrivate;
 class MVThreadManager : public QObject {
     Q_OBJECT
@@ -17,7 +16,7 @@ public:
     MVThreadManager();
     virtual ~MVThreadManager();
 
-    void addThread(QThread *thread);
+    void addThread(QThread* thread);
 
     static MVThreadManager* globalInstance();
 
@@ -31,4 +30,3 @@ private:
 };
 
 #endif // MVTHREADMANAGER_H
-

@@ -85,6 +85,7 @@ public:
     void setFromMVFileObject(QJsonObject obj);
     QJsonObject toMVFileObject() const;
 
+    void setCreatePrvObjectsOnExport(bool val);
     void setFromMV2FileObject(QJsonObject obj) Q_DECL_OVERRIDE;
     QJsonObject toMV2FileObject() const Q_DECL_OVERRIDE;
 

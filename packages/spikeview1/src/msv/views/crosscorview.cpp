@@ -123,6 +123,7 @@ void CrosscorView::onCalculationFinished()
 
 void CrosscorView::keyPressEvent(QKeyEvent* evt)
 {
+    (void)evt;
     /*
     if (evt->key() == Qt::Key_Up) {
         slot_vertical_zoom_in();

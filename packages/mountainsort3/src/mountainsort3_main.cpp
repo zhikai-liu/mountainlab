@@ -217,7 +217,7 @@ int main(int argc, char* argv[])
         P_synthesize_timeseries_opts opts;
         opts.noise_level = CLP.named_parameters["noise_level"].toDouble();
         opts.duration = CLP.named_parameters["duration"].toDouble();
-        opts.waveform_upsample_factor = CLP.named_parameters.value("waveform_upsample_factor",13).toDouble();
+        opts.waveform_upsample_factor = CLP.named_parameters.value("waveform_upsample_factor", 13).toDouble();
         ret = p_synthesize_timeseries(firings, waveforms, timeseries_out, opts);
     }
     else {

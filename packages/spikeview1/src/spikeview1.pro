@@ -31,7 +31,8 @@ HEADERS += \
     templatesview.h templatesviewpanel.h templatesplugin.h templatescontrol.h \
     histogramview.h \
     crosscorview.h crosscorplugin.h crosscorcontrol.h \
-    mvexportcontrol/mvexportcontrol.h
+    mvexportcontrol/mvexportcontrol.h \
+    spikeviewmetricscomputer.h
 
 SOURCES += \
     mvthreadmanager.cpp \
@@ -40,7 +41,8 @@ SOURCES += \
     templatesview.cpp templatesviewpanel.cpp templatesplugin.cpp templatescontrol.cpp \
     histogramview.cpp \
     crosscorview.cpp crosscorplugin.cpp crosscorcontrol.cpp \
-    mvexportcontrol/mvexportcontrol.cpp
+    mvexportcontrol/mvexportcontrol.cpp \
+    spikeviewmetricscomputer.cpp
 
 FORMS += mvgridviewpropertiesdialog.ui
 

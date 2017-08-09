@@ -33,12 +33,13 @@
 #include "clustermetricsplugin.h"
 #include "templatesplugin.h"
 #include "crosscorplugin.h"
+#include "spikeviewmetricscomputer.h"
 
 QColor brighten(QColor col, int amount);
 QList<QColor> generate_colors_ahb();
 QList<QColor> generate_colors_old(const QColor& bg, const QColor& fg, int noColors);
 
-QString compute_spikeview_metrics(SVContext* context);
+//QString compute_spikeview_metrics(SVContext* context);
 
 void set_nice_size(QWidget* W);
 
@@ -126,46 +127,55 @@ int main(int argc, char* argv[])
     context->setChannelColors(channel_colors);
     context->setClusterColors(label_colors);
 
-    QString window_title="SpikeView";
+    QString window_title = "SpikeView";
     if (mv2_fname.isEmpty()) {
         printf("Setting up context...\n");
         SVContext dc; //dummy context
         if (CLP.named_parameters.contains("samplerate")) {
-            dc.setSampleRate(CLP.named_parameters.value("samplerate", 0).toDouble());
+            double samplerate = CLP.named_parameters.value("samplerate", 0).toDouble();
+            qDebug().noquote() << QString("Setting samplerate: %1").arg(samplerate);
+            dc.setSampleRate(samplerate);
         }
         if (CLP.named_parameters.contains("firings")) {
             QString firings_path = CLP.named_parameters["firings"].toString();
+            qDebug().noquote() << QString("Setting firings: %1").arg(firings_path);
             dc.setFirings(DiskReadMda(firings_path));
             window_title = firings_path;
         }
         if (CLP.named_parameters.contains("raw")) {
             QString raw_path = CLP.named_parameters["raw"].toString();
+            qDebug().noquote() << QString("Setting raw: %1").arg(raw_path);
+            qDebug() << __FILE__ << __LINE__;
             dc.addTimeseries("Raw Data", DiskReadMda32(raw_path));
+            qDebug() << __FILE__ << __LINE__;
             dc.setCurrentTimeseriesName("Raw Data");
+            qDebug() << __FILE__ << __LINE__;
         }
         if (CLP.named_parameters.contains("filt")) {
             QString filt_path = CLP.named_parameters["filt"].toString();
+            qDebug().noquote() << QString("Setting filt: %1").arg(filt_path);
             dc.addTimeseries("Filtered Data", DiskReadMda32(filt_path));
             if (DiskReadMda32(filt_path).N2() > 1)
                 dc.setCurrentTimeseriesName("Filtered Data");
         }
         if (CLP.named_parameters.contains("pre")) {
             QString pre_path = CLP.named_parameters["pre"].toString();
+            qDebug().noquote() << QString("Setting pre: %1").arg(pre_path);
             dc.addTimeseries("Preprocessed Data", DiskReadMda32(pre_path));
             if (DiskReadMda32(pre_path).N2() > 1)
                 dc.setCurrentTimeseriesName("Preprocessed Data");
-        }
-        if (CLP.named_parameters.contains("mlproxy_url")) {
-            QString mlproxy_url = CLP.named_parameters.value("mlproxy_url", "").toString();
-            dc.setMLProxyUrl(mlproxy_url);
         }
         if (CLP.named_parameters.contains("window_title")) {
             QString window_title0 = CLP.named_parameters["window_title"].toString();
             window_title = window_title0;
         }
 
+        qDebug() << __FILE__ << __LINE__;
+        dc.setCreatePrvObjectsOnExport(false);
         QJsonObject mv2 = dc.toMV2FileObject();
+        qDebug() << __FILE__ << __LINE__;
         QString debug = QJsonDocument(mv2["timeseries"].toObject()).toJson();
+        qDebug() << __FILE__ << __LINE__;
         //printf("%s\n", debug.toUtf8().data());
         mv2_fname = CacheManager::globalInstance()->makeLocalFile() + ".mv2";
         QString mv2_text = QJsonDocument(mv2).toJson();
@@ -185,20 +195,14 @@ int main(int argc, char* argv[])
     {
         if (CLP.named_parameters.contains("geom")) {
             QString geom_path = CLP.named_parameters["geom"].toString();
+            qDebug().noquote() << QString("Setting geom: %1").arg(geom_path);
             ElectrodeGeometry eg = ElectrodeGeometry::loadFromGeomFile(geom_path);
             context->setElectrodeGeometry(eg);
         }
         if (CLP.named_parameters.contains("cluster_metrics")) {
             QString cluster_metrics_path = CLP.named_parameters["cluster_metrics"].toString();
+            qDebug().noquote() << QString("Setting cluster metrics: %1").arg(cluster_metrics_path);
             context->loadClusterMetricsFromFile(cluster_metrics_path);
-        }
-        if (CLP.named_parameters.contains("curation")) {
-            QString curation_program_path = CLP.named_parameters["curation"].toString();
-            QString js = TextFile::read(curation_program_path);
-            if (js.isEmpty()) {
-                qWarning() << "Curation program is empty." << curation_program_path;
-            }
-            context->setOption("curation_program", js);
         }
 
         if (CLP.named_parameters.contains("clusters")) {
@@ -211,10 +215,12 @@ int main(int argc, char* argv[])
         }
     }
 
+    /*
     printf("Computing spikeview metrics...\n");
     QString spikeview_metrics = compute_spikeview_metrics(context);
     if (!spikeview_metrics.isEmpty())
         context->loadClusterMetricsFromFile(spikeview_metrics);
+        */
 
     MVMainWindow* W = new MVMainWindow(context);
     W->setWindowTitle(window_title);
@@ -240,10 +246,15 @@ int main(int argc, char* argv[])
         W->openView("open-templates-view");
     }
 
+    printf("Launching spikeview metrics computer");
+    SpikeviewMetricsComputer SVMC(context);
+    SVMC.start();
+
     printf("Starting event loop...\n");
     return a.exec();
 }
 
+/*
 QString compute_spikeview_metrics(SVContext* context)
 {
     QString firings = context->firings().makePath();
@@ -261,6 +272,7 @@ QString compute_spikeview_metrics(SVContext* context)
     MPR.runProcess();
     return metrics_out;
 }
+*/
 
 QColor brighten(QColor col, int amount)
 {

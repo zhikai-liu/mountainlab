@@ -53,6 +53,7 @@ public:
     QList<double> m_cluster_order_scores;
     QString m_cluster_order_scores_name;
     QSet<int> m_clusters_to_force_show;
+    bool m_create_prv_objects_on_export = false;
 
     void update_current_and_selected_clusters_according_to_merged();
     void set_default_options();
@@ -162,13 +163,16 @@ QJsonObject timeseries_map_to_object(const QMap<QString, TimeseriesStruct>& TT)
     return ret;
 }
 
-QJsonObject timeseries_map_to_object_for_mv2(const QMap<QString, TimeseriesStruct>& TT)
+QJsonObject timeseries_map_to_object_for_mv2(const QMap<QString, TimeseriesStruct>& TT, bool create_prv_objects)
 {
     QJsonObject ret;
     QStringList keys = TT.keys();
     foreach (QString key, keys) {
         QJsonObject obj;
-        obj["data"] = TT[key].data.toPrvObject();
+        if (create_prv_objects)
+            obj["data"] = TT[key].data.toPrvObject();
+        else
+            obj["data"] = TT[key].data.makePath();
         obj["name"] = TT[key].name;
         ret[key] = obj;
     }
@@ -196,7 +200,10 @@ QMap<QString, TimeseriesStruct> object_to_timeseries_map_for_mv2(QJsonObject X)
     foreach (QString key, keys) {
         QJsonObject obj = X[key].toObject();
         TimeseriesStruct A;
-        A.data = DiskReadMda32(obj["data"].toObject());
+        if (obj["data"].isObject())
+            A.data = DiskReadMda32(obj["data"].toObject());
+        else
+            A.data = DiskReadMda32(obj["data"].toString());
         A.name = obj["name"].toString();
         ret[key] = A;
     }
@@ -223,14 +230,22 @@ QJsonObject SVContext::toMVFileObject() const
     return X;
 }
 
+void SVContext::setCreatePrvObjectsOnExport(bool val)
+{
+    d->m_create_prv_objects_on_export = val;
+}
+
 QJsonObject SVContext::toMV2FileObject() const
 {
     QJsonObject X = d->m_original_object;
     X["cluster_attributes"] = cluster_attributes_to_object(d->m_cluster_attributes);
     X["cluster_pair_attributes"] = cluster_pair_attributes_to_object(d->m_cluster_pair_attributes);
-    X["timeseries"] = timeseries_map_to_object_for_mv2(d->m_timeseries);
+    X["timeseries"] = timeseries_map_to_object_for_mv2(d->m_timeseries, d->m_create_prv_objects_on_export);
     X["current_timeseries_name"] = d->m_current_timeseries_name;
-    X["firings"] = d->m_firings.toPrvObject();
+    if (d->m_create_prv_objects_on_export)
+        X["firings"] = d->m_firings.toPrvObject();
+    else
+        X["firings"] = d->m_firings.makePath();
     X["samplerate"] = d->m_sample_rate;
     X["options"] = QJsonObject::fromVariantMap(this->options());
     X["mlproxy_url"] = d->m_mlproxy_url;
@@ -300,7 +315,10 @@ void SVContext::setFromMV2FileObject(QJsonObject X)
     this->setCurrentTimeseriesName(X["current_timeseries_name"].toString());
     if (this->currentTimeseries().N2() <= 1)
         this->setCurrentTimeseriesName("Raw Data");
-    this->setFirings(DiskReadMda(X["firings"].toObject()));
+    if (X["firings"].isObject())
+        this->setFirings(DiskReadMda(X["firings"].toObject()));
+    else
+        this->setFirings(DiskReadMda(X["firings"].toString()));
     d->m_sample_rate = X["samplerate"].toDouble();
     if (X.contains("options")) {
         this->setOptions(X["options"].toObject().toVariantMap());
@@ -437,13 +455,17 @@ QStringList SVContext::timeseriesNames() const
 
 void SVContext::addTimeseries(QString name, DiskReadMda32 timeseries)
 {
+    qDebug() << __FILE__ << __LINE__;
     TimeseriesStruct X;
     X.data = timeseries;
     X.name = name;
     d->m_timeseries[name] = X;
+    qDebug() << __FILE__ << __LINE__;
     emit this->timeseriesNamesChanged();
+    qDebug() << __FILE__ << __LINE__;
     if (name == d->m_current_timeseries_name)
         emit this->currentTimeseriesChanged();
+    qDebug() << __FILE__ << __LINE__;
 }
 
 DiskReadMda SVContext::firings()

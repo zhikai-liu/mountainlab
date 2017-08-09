@@ -51,7 +51,7 @@ public:
     QWidget* m_horizontal_scale_widget = 0;
     int m_current_view_index = 0;
     MVGridViewProperties m_properties;
-    bool m_resize_scheduled=false;
+    bool m_resize_scheduled = false;
 
     void schedule_resize();
     void on_resize();
@@ -203,7 +203,7 @@ void MVGridView::slot_ensure_current_visible()
 
 void MVGridView::slot_on_resize()
 {
-    d->m_resize_scheduled=false;
+    d->m_resize_scheduled = false;
     d->on_resize();
     QTimer::singleShot(0, this, SLOT(slot_ensure_current_visible()));
 }
@@ -221,9 +221,10 @@ void MVGridView::resizeEvent(QResizeEvent* evt)
 
 void MVGridViewPrivate::schedule_resize()
 {
-    if (m_resize_scheduled) return;
-    m_resize_scheduled=true;
-    QTimer::singleShot(500,q,SLOT(slot_on_resize()));
+    if (m_resize_scheduled)
+        return;
+    m_resize_scheduled = true;
+    QTimer::singleShot(500, q, SLOT(slot_on_resize()));
 }
 
 void MVGridViewPrivate::on_resize()
