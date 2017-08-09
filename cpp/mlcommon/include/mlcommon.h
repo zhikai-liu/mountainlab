@@ -108,6 +108,10 @@ T MLCompute::max(const QVector<T>& X)
 
 QString locate_prv(const QJsonObject& obj);
 
+#ifdef __APPLE__
+inline int omp_get_max_threads() {return 1;}
+#endif
+
 /*
 QString resolve_prv_object(const QJsonObject& obj, bool allow_downloads, bool allow_processing);
 QString resolve_prv_file(const QString& prv_fname, bool allow_downloads, bool allow_processing);

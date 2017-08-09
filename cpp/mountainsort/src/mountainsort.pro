@@ -353,6 +353,7 @@ QMAKE_EXTRA_COMPILERS += nocxx11
 
 #FFTW
 LIBS += -fopenmp -lfftw3 -lfftw3_threads
+INCLUDEPATH += /usr/local/Cellar/fftw/3.3.4_1/include
 
 #OPENMP
 !macx {

@@ -2,7 +2,11 @@
 #include "diskreadmda.h"
 
 #include <diskwritemda.h>
+
+#ifndef __APPLE__
 #include "omp.h"
+#endif
+
 #include "fftw3.h"
 #include <QTime>
 #include <math.h>
