@@ -145,11 +145,8 @@ int main(int argc, char* argv[])
         if (CLP.named_parameters.contains("raw")) {
             QString raw_path = CLP.named_parameters["raw"].toString();
             qDebug().noquote() << QString("Setting raw: %1").arg(raw_path);
-            qDebug() << __FILE__ << __LINE__;
             dc.addTimeseries("Raw Data", DiskReadMda32(raw_path));
-            qDebug() << __FILE__ << __LINE__;
             dc.setCurrentTimeseriesName("Raw Data");
-            qDebug() << __FILE__ << __LINE__;
         }
         if (CLP.named_parameters.contains("filt")) {
             QString filt_path = CLP.named_parameters["filt"].toString();
@@ -170,12 +167,9 @@ int main(int argc, char* argv[])
             window_title = window_title0;
         }
 
-        qDebug() << __FILE__ << __LINE__;
         dc.setCreatePrvObjectsOnExport(false);
         QJsonObject mv2 = dc.toMV2FileObject();
-        qDebug() << __FILE__ << __LINE__;
         QString debug = QJsonDocument(mv2["timeseries"].toObject()).toJson();
-        qDebug() << __FILE__ << __LINE__;
         //printf("%s\n", debug.toUtf8().data());
         mv2_fname = CacheManager::globalInstance()->makeLocalFile() + ".mv2";
         QString mv2_text = QJsonDocument(mv2).toJson();

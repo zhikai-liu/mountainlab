@@ -18,6 +18,7 @@
 #include "p_spikeview_templates.h"
 #include "omp.h"
 #include "p_synthesize_timeseries.h"
+#include "p_combine_firing_segments.h"
 
 QJsonObject get_spec()
 {
@@ -99,6 +100,17 @@ QJsonObject get_spec()
         X.addOptionalParameter("noise_level", "", 0);
         X.addOptionalParameter("duration", "", 0);
         X.addOptionalParameter("waveform_upsample_factor", "", 13);
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.combine_firing_segments", "0.12");
+        X.addInputs("timeseries", "firings_list");
+        X.addOutputs("firings_out");
+        X.addOptionalParameter("clip_size", "", 60);
+        X.addOptionalParameter("template_correlation_threshold", "", 0.7);
+        X.addOptionalParameter("match_score_threshold", "", 0.2);
+        X.addOptionalParameter("offset_search_radius", "", 10);
+        X.addOptionalParameter("match_tolerance", "", 3);
         processors.push_back(X.get_spec());
     }
 
@@ -219,6 +231,23 @@ int main(int argc, char* argv[])
         opts.duration = CLP.named_parameters["duration"].toDouble();
         opts.waveform_upsample_factor = CLP.named_parameters.value("waveform_upsample_factor", 13).toDouble();
         ret = p_synthesize_timeseries(firings, waveforms, timeseries_out, opts);
+    }
+    else if (arg1 == "mountainsort.combine_firing_segments") {
+        QString timeseries = CLP.named_parameters["timeseries"].toString();
+        QStringList firings_list = MLUtil::toStringList(CLP.named_parameters["firings_list"]);
+        QString firings_out = CLP.named_parameters["firings_out"].toString();
+        P_combine_firing_segments_opts opts;
+        if (CLP.named_parameters.contains("clip_size"))
+            opts.clip_size = CLP.named_parameters["clip_size"].toInt();
+        if (CLP.named_parameters.contains("template_correlation_threshold"))
+            opts.template_correlation_threshold = CLP.named_parameters["template_correlation_threshold"].toDouble();
+        if (CLP.named_parameters.contains("match_score_threshold"))
+            opts.match_score_threshold = CLP.named_parameters["match_score_threshold"].toDouble();
+        if (CLP.named_parameters.contains("offset_search_radius"))
+            opts.offset_search_radius = CLP.named_parameters["offset_search_radius"].toDouble();
+        if (CLP.named_parameters.contains("match_tolerance"))
+            opts.match_tolerance = CLP.named_parameters["match_tolerance"].toDouble();
+        ret = p_combine_firing_segments(timeseries, firings_list, firings_out, opts);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

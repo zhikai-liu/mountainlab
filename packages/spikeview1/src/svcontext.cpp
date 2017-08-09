@@ -455,17 +455,13 @@ QStringList SVContext::timeseriesNames() const
 
 void SVContext::addTimeseries(QString name, DiskReadMda32 timeseries)
 {
-    qDebug() << __FILE__ << __LINE__;
     TimeseriesStruct X;
     X.data = timeseries;
     X.name = name;
     d->m_timeseries[name] = X;
-    qDebug() << __FILE__ << __LINE__;
     emit this->timeseriesNamesChanged();
-    qDebug() << __FILE__ << __LINE__;
     if (name == d->m_current_timeseries_name)
         emit this->currentTimeseriesChanged();
-    qDebug() << __FILE__ << __LINE__;
 }
 
 DiskReadMda SVContext::firings()
