@@ -44,9 +44,9 @@ Contact the authors for information on the slack team for users and developers.
 
 [Cluster metrics and automated curation](old/doc/metrics_automated_curation.md)
 
-## About the master branch ##
+## Other documentation
 
-The (default) master branch will ultimately not contain any code, but will rather be a table of contents to the various software versions (branches). This will allow you to stay on your preferred version until you are ready to switch to the newer stable version.
+[A guide to using MountainSort with snippets, rather than continuous data acquisition](https://github.com/mari-sosa/Mountainsort_for_snippets/blob/master/mountainsort_for_snippets.md)
 
 ## Acknowledgements
 
