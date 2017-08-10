@@ -2,6 +2,7 @@ QT += core
 QT -= gui
 QT += network
 CONFIG -= app_bundle #Please apple, don't make a bundle today :)
+QMAKE_CXX = clang-omp++
 
 CONFIG += c++11
 
