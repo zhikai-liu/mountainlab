@@ -4,6 +4,11 @@
 #include <QtDebug>
 #include <functional>
 
+// For mac compilation
+#ifndef _NSIG
+#define _NSIG NSIG
+#endif
+
 static SignalHandler* slot_handler_instance = nullptr;
 
 struct Handler {
@@ -167,8 +172,8 @@ SignalHandler::Signal SignalHandler::flagForSignal(int signum)
         return SigContinue;
     case SIGSTOP:
         return SigStop;
-    case SIGPWR:
-        return SigPowerFailure;
+    //case SIGPWR: //apparently not supported in mac
+    //    return SigPowerFailure;
     }
     return SigNone;
 }

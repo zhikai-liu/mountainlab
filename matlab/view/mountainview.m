@@ -69,8 +69,10 @@ if isfield(view_params,'locations')
     cmd=[cmd,sprintf('--locations=%s ',view_params.locations)];
 end;
 
+ld_library_str='LD_LIBRARY_PATH=/usr/local/lib';
+
 fprintf('%s\n',cmd);
-system(sprintf('%s &',cmd));
+system(sprintf('%s %s &',ld_library_str,cmd));
 
 end
 
