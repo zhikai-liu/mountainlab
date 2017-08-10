@@ -43,7 +43,8 @@ SOURCES += \
     p_spikeview_metrics.cpp \
     p_spikeview_templates.cpp \
     p_synthesize_timeseries.cpp \
-    p_combine_firing_segments.cpp
+    p_combine_firing_segments.cpp \
+    p_extract_firings.cpp
 
 HEADERS += \
     mountainsort3_main.h \
@@ -62,7 +63,8 @@ HEADERS += \
     p_spikeview_metrics.h \
     p_spikeview_templates.h \
     p_synthesize_timeseries.h \
-    p_combine_firing_segments.h
+    p_combine_firing_segments.h \
+    p_extract_firings.h
 
 INCLUDEPATH += ../../../cpp/mountainsort/src/isosplit5
 VPATH += ../../../cpp/mountainsort/src/isosplit5

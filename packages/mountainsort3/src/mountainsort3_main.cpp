@@ -19,6 +19,7 @@
 #include "omp.h"
 #include "p_synthesize_timeseries.h"
 #include "p_combine_firing_segments.h"
+#include "p_extract_firings.h"
 
 QJsonObject get_spec()
 {
@@ -111,6 +112,14 @@ QJsonObject get_spec()
         X.addOptionalParameter("match_score_threshold", "", 0.2);
         X.addOptionalParameter("offset_search_radius", "", 10);
         X.addOptionalParameter("match_tolerance", "", 3);
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.extract_firings", "0.1");
+        X.addInputs("firings");
+        X.addOptionalInputs("metrics");
+        X.addOutputs("firings_out");
+        X.addOptionalParameter("exclusion_tags", "", "");
         processors.push_back(X.get_spec());
     }
 
@@ -248,6 +257,14 @@ int main(int argc, char* argv[])
         if (CLP.named_parameters.contains("match_tolerance"))
             opts.match_tolerance = CLP.named_parameters["match_tolerance"].toDouble();
         ret = p_combine_firing_segments(timeseries, firings_list, firings_out, opts);
+    }
+    else if (arg1 == "mountainsort.extract_firings") {
+        QString firings = CLP.named_parameters["firings"].toString();
+        QString metrics = CLP.named_parameters["metrics"].toString();
+        QString firings_out = CLP.named_parameters["firings_out"].toString();
+        P_extract_firings_opts opts;
+        opts.exclusion_tags=MLUtil::toStringList(CLP.named_parameters["exclusion_tags"]);
+        ret = p_extract_firings(firings,metrics,firings_out,opts);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;
