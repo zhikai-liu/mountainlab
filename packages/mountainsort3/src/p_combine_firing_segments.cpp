@@ -176,6 +176,7 @@ bool p_combine_firing_segments(QString timeseries_path, QStringList firings_list
         }
         */
 
+        int num_matches=0;
         while (true) {
             int best_k1=0,best_k2=0;
             double best_score=0;
@@ -196,7 +197,8 @@ bool p_combine_firing_segments(QString timeseries_path, QStringList firings_list
                 for (int k2=1; k2<=S->K; k2++) {
                     match_scores.setValue(0,best_k1-1,k2-1);
                 }
-                qDebug().noquote() << "Matching" << best_k1 << best_k2 << best_score;
+                qDebug().noquote() << QString("Matching %1 to %2 in segment %3 (score=%4)").arg(best_k1).arg(best_k2).arg(ii).arg(best_score);
+                num_matches++;
                 S->label_map_with_previous[best_k2]=best_k1;
                 Mda32 template1,template2;
                 templates1.getChunk(template1,0,0,best_k1-1,M,T,1);
@@ -208,6 +210,7 @@ bool p_combine_firing_segments(QString timeseries_path, QStringList firings_list
             }
             else break;
         }
+        qDebug().noquote() << QString("Matched %1 of %2 clusters in segment %3").arg(num_matches).arg(S->K).arg(ii);
     }
 
     //define label map global
@@ -240,28 +243,34 @@ bool p_combine_firing_segments(QString timeseries_path, QStringList firings_list
         }
     }
 
+
     //define new labels
     qDebug().noquote() << "Defining new labels";
-    QVector<double> new_times;
-    QVector<int> new_labels;
-    QVector<int> segment_numbers;
-    QVector<bigint> event_indices;
+    bigint L=0;
+    for (int ii = 0; ii < segments.count(); ii++) {
+        L+=segments[ii].times.count();
+    }
+    qDebug().noquote() << QString("Total number of events: %1").arg(L);
+    Mda new_times(L,1);
+    Mda new_labels(L,1);
+    Mda segment_numbers(L,1);
+    Mda event_indices(L,1);
+    bigint jjjj=0;
     for (int ii = 0; ii < segments.count(); ii++) {
         SegmentInfo* S = &segments[ii];
         for (bigint jj = 0; jj < S->labels.count(); jj++) {
             int k0 = S->labels[jj];
             int k1 = S->label_map_global.value(k0, 0);
             double offset0=S->time_offset_map_global.value(k0,0);
-            if (k1) {
-                new_times << S->times[jj]+offset0;
-                new_labels << k1;
-                segment_numbers << ii;
-                event_indices << jj;
-            }
+            new_times.set(S->times[jj]+offset0,jjjj);
+            new_labels.set(k1,jjjj);
+            segment_numbers.set(ii,jjjj);
+            event_indices.set(jj,jjjj);
+            jjjj++;
         }
     }
 
-    DiskReadMda32 X(timeseries_path);
+    //DiskReadMda32 X(timeseries_path);
     //Mda32 new_templates = compute_templates_in_parallel(X, new_times, new_labels, opts.clip_size);
 
     qDebug().noquote() << "Creating new firings file";
@@ -274,16 +283,15 @@ bool p_combine_firing_segments(QString timeseries_path, QStringList firings_list
     for (int ii = 0; ii < segments.count(); ii++) {
         all_firings << DiskReadMda(segments[ii].firings);
     }
-    bigint L = new_labels.count();
     Mda FF(R, L);
     for (bigint jj = 0; jj < L; jj++) {
-        int ss = segment_numbers[jj];
-        bigint aa = event_indices[jj];
+        int ss = segment_numbers.get(jj);
+        bigint aa = event_indices.get(jj);
         for (int r = 0; r < R; r++) {
             FF.setValue(all_firings[ss].value(r, aa), r, jj);
         }
-        FF.setValue(new_times[jj], 1, jj);
-        FF.setValue(new_labels[jj], 2, jj);
+        FF.setValue(new_times.get(jj), 1, jj);
+        FF.setValue(new_labels.get(jj), 2, jj);
     }
 
     qDebug().noquote() << "Writing firings file";
