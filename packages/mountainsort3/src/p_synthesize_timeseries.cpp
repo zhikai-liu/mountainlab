@@ -74,7 +74,7 @@ bool p_synthesize_timeseries(QString firings_in, QString waveforms_in, QString t
         while (1) {
             if (ii >= times.count())
                 break;
-            bigint t0 = times[ii];
+            double t0 = times[ii];
             if (t0 >= t + N0 + T)
                 break;
             int k = labels[ii];

@@ -46,6 +46,11 @@ SOURCES += \
     p_combine_firing_segments.cpp \
     p_extract_firings.cpp
 
+INCLUDEPATH += ../../mountainsort2/src
+VPATH += ../../mountainsort2/src
+HEADERS += kdtree.h
+SOURCES += kdtree.cpp
+
 HEADERS += \
     mountainsort3_main.h \
     p_multineighborhood_sort.h \

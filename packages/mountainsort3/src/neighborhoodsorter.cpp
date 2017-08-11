@@ -26,7 +26,7 @@ public:
     bigint size_of_accumulated_clips_buffer();
     void clear_accumulated_clips_buffer();
 
-    static void dimension_reduce_clips(Mda32& ret, const Mda32& clips, bigint num_features_per_channel, bigint max_samples);
+    void dimension_reduce_clips(Mda32& ret, const Mda32& clips, bigint num_features_per_channel, bigint max_samples);
     static Mda32 compute_templates_from_clips(const Mda32& clips, const QVector<int>& labels, int num_threads);
     static QVector<double> get_subarray(const QVector<double>& X, const QVector<bigint>& inds);
     static QVector<int> get_subarray(const QVector<int>& X, const QVector<bigint>& inds);

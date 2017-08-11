@@ -171,7 +171,7 @@ QJsonObject get_spec()
         X.addInputs("firings_list");
         X.addOutputs("firings_out");
         //X.addRequiredParameters();
-        X.addOptionalParameters("increment_labels", "", "true");
+        X.addOptionalParameter("increment_labels", "", "true");
         processors.push_back(X.get_spec());
     }
     {
