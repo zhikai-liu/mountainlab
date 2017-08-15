@@ -13,6 +13,7 @@
 
 #include <QMutex>
 #include <QThread>
+#include <mlvector.h>
 #include <mvabstractviewfactory.h>
 #include <paintlayer.h>
 
@@ -53,8 +54,8 @@ public:
     QMutex mutex;
 
     //input
-    QVector<double> times;
-    QVector<int> labels;
+    MLVector times;
+    MLVector labels;
     QList<int> k1s, k2s;
     double dt_max = 30 * 50;
 

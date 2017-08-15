@@ -21,9 +21,10 @@
 #include <svcontext.h>
 #include <taskprogress.h>
 #include "actionfactory.h"
+#include "mlvector.h"
 
 struct CrosscorHistData {
-    QVector<double> data;
+    MLVector data;
 };
 
 class CrosscorViewCalculator {
@@ -33,8 +34,8 @@ public:
     QList<int> k1s, k2s;
 
     //output
-    QVector<double> times;
-    QVector<int> labels;
+    MLVector times;
+    MLVector labels;
 
     virtual void compute();
 };
@@ -228,19 +229,39 @@ void CrosscorView::slot_worker_data_update()
     }
 }
 
+MLVector get_sort_indices_bigint(const MLVector& X)
+{
+    std::vector<bigint> result(X.count());
+    for (bigint i = 0; i < X.count(); ++i)
+        result[i]=i;
+    std::stable_sort(result.begin(), result.end(),
+        [&X](bigint i1, bigint i2) { return X[i1] < X[i2]; });
+    MLVector ret(X.count());
+    for (bigint i=0; i<X.count(); i++)
+        ret[i]=result[i];
+    return ret;
+}
+
 void CrosscorViewCalculator::compute()
 {
-    QVector<double> times0(firings.N2());
-    QVector<int> labels0(firings.N2());
+    TaskProgress task;
+    task.setLabel("Reading firings file");
+    MLVector times0(firings.N2());
+    MLVector labels0(firings.N2());
     for (bigint i = 0; i < firings.N2(); i++) {
+        if (i%1000==0) task.setProgress(i*1.0/firings.N2());
         times0[i] = firings.value(1, i);
         labels0[i] = firings.value(2, i);
     }
-    QList<bigint> inds0 = get_sort_indices_bigint(times0);
+
+    task.setLabel("Sorting timestamps");
+    task.setProgress(0);
+    MLVector inds0 = get_sort_indices_bigint(times0);
 
     times.resize(firings.N2());
     labels.resize(firings.N2());
     for (bigint j = 0; j < inds0.count(); j++) {
+        if (j%1000==0) task.setProgress(j*1.0/inds0.count());
         times[j] = times0[inds0[j]];
         labels[j] = labels0[inds0[j]];
     }

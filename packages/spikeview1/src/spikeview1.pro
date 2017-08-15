@@ -32,7 +32,8 @@ HEADERS += \
     histogramview.h \
     crosscorview.h crosscorplugin.h crosscorcontrol.h \
     mvexportcontrol/mvexportcontrol.h \
-    spikeviewmetricscomputer.h
+    spikeviewmetricscomputer.h \
+    mlvector.h
 
 SOURCES += \
     mvthreadmanager.cpp \
@@ -42,7 +43,8 @@ SOURCES += \
     histogramview.cpp \
     crosscorview.cpp crosscorplugin.cpp crosscorcontrol.cpp \
     mvexportcontrol/mvexportcontrol.cpp \
-    spikeviewmetricscomputer.cpp
+    spikeviewmetricscomputer.cpp \
+    mlvector.cpp
 
 FORMS += mvgridviewpropertiesdialog.ui
 

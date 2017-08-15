@@ -312,7 +312,7 @@ int find_matching_cluster(QVector<bigint>& event_inds_to_delete_out, SegmentInfo
         }
     }
     if (best_match_score >= opts.match_score_threshold) {
-        qDebug() << "found a match!" << best_match_k1 << k2;
+        //qDebug() << "found a match!" << best_match_k1 << k2;
         event_inds_to_delete_out = matching_indices.value(best_match_k1);
         return best_match_k1;
     }
