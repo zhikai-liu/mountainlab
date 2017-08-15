@@ -240,9 +240,9 @@ int main(int argc, char* argv[])
         //W->openView("open-templates-view");
     }
 
-    //printf("Launching spikeview metrics computer");
-    //SpikeviewMetricsComputer SVMC(context);
-    //SVMC.start();
+    printf("Launching spikeview metrics computer");
+    SpikeviewMetricsComputer SVMC(context);
+    SVMC.start();
 
     printf("Starting event loop...\n");
     return a.exec();
