@@ -160,22 +160,16 @@ void MVExportControl::slot_export_subset_to_mountainview()
     SVContext* c = qobject_cast<SVContext*>(mvContext());
     Q_ASSERT(c);
 
-    qDebug() << __FILE__ << __LINE__;
     ExportToMountainviewDlg dlg;
     {
-        qDebug() << __FILE__ << __LINE__;
         ExportToMountainviewProperties properties;
         properties.start_time_sec = 0;
         properties.duration_sec = c->currentTimeseries().N2() / c->sampleRate();
         dlg.setProperties(properties);
-        qDebug() << __FILE__ << __LINE__;
     }
     if (dlg.exec() == QDialog::Accepted) {
-        qDebug() << __FILE__ << __LINE__;
         ExportToMountainviewProperties properties = dlg.properties();
-        qDebug() << __FILE__ << __LINE__;
         QString subfirings = make_subfirings(c->firings().makePath(), properties, c->sampleRate());
-        qDebug() << __FILE__ << __LINE__;
         QStringList args;
         args << QString("--samplerate=%1").arg(c->sampleRate());
         args << QString("--firings=%1").arg(subfirings);
@@ -193,10 +187,8 @@ void MVExportControl::slot_export_subset_to_mountainview()
         QProcess::startDetached(exe, args);
         //QString cmd=QString("%1 %2").arg(exe).arg(args.join(" "));
 
-        //qDebug() << cmd;
         //int ret = system(cmd.toUtf8().data());
         //(void)ret;
-        qDebug() << __FILE__ << __LINE__;
     }
 }
 

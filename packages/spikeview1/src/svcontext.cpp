@@ -50,7 +50,7 @@ public:
     QSet<int> m_clusters_subset;
     bool m_view_merged;
     QSet<int> m_visible_channels;
-    QList<double> m_cluster_order_scores;
+    MLVector<double> m_cluster_order_scores;
     QString m_cluster_order_scores_name;
     QSet<int> m_clusters_to_force_show;
     bool m_create_prv_objects_on_export = false;
@@ -61,8 +61,10 @@ public:
 
 QJsonArray intlist_to_json_array(const QList<int>& X);
 QJsonArray doublelist_to_json_array(const QList<double>& X);
+QJsonArray doublevec_to_json_array(const MLVector<double>& X);
 QList<int> json_array_to_intlist(const QJsonArray& X);
 QList<double> json_array_to_doublelist(const QJsonArray& X);
+MLVector<double> json_array_to_doublevec(const QJsonArray& X);
 QJsonArray strlist_to_json_array(const QList<QString>& X);
 QList<QString> json_array_to_strlist(const QJsonArray& X);
 
@@ -254,7 +256,7 @@ QJsonObject SVContext::toMV2FileObject() const
     X["clusters_subset"] = intlist_to_json_array(d->m_clusters_subset.toList());
     X["view_merged"] = d->m_view_merged;
     X["visible_channels"] = intlist_to_json_array(d->m_visible_channels.toList());
-    X["cluster_order_scores"] = doublelist_to_json_array(d->m_cluster_order_scores);
+    X["cluster_order_scores"] = doublevec_to_json_array(d->m_cluster_order_scores);
     X["cluster_order_scores_name"] = d->m_cluster_order_scores_name;
     return X;
 }
@@ -335,7 +337,7 @@ void SVContext::setFromMV2FileObject(QJsonObject X)
         this->setVisibleChannels(json_array_to_intlist(X["visible_clusters"].toArray()));
     }
     d->m_view_merged = X["view_merged"].toBool();
-    d->m_cluster_order_scores = json_array_to_doublelist(X["cluster_order_scores"].toArray());
+    d->m_cluster_order_scores = json_array_to_doublevec(X["cluster_order_scores"].toArray());
     d->m_cluster_order_scores_name = X["cluster_order_scores_name"].toString();
 
     emit this->currentTimeseriesChanged();
@@ -626,15 +628,15 @@ void SVContext::setClusterTags(int num, const QSet<QString>& tags)
     setClusterAttributes(num, obj);
 }
 
-QList<int> SVContext::clusterOrder(int max_K) const
+MLVector<bigint> SVContext::clusterOrder(int max_K) const
 {
-    QList<int> ret;
+    MLVector<bigint> ret;
     if (d->m_cluster_order_scores.isEmpty()) {
         for (int k = 1; k <= max_K; k++) {
             ret << k;
         }
     }
-    QList<int> inds = get_sort_indices(d->m_cluster_order_scores.toVector());
+    MLVector<bigint> inds = get_sort_indices(d->m_cluster_order_scores);
 
     for (int i = 0; i < inds.count(); i++) {
         ret << inds[i] + 1;
@@ -647,12 +649,12 @@ QString SVContext::clusterOrderScoresName() const
     return d->m_cluster_order_scores_name;
 }
 
-QList<double> SVContext::clusterOrderScores() const
+MLVector<double> SVContext::clusterOrderScores() const
 {
     return d->m_cluster_order_scores;
 }
 
-void SVContext::setClusterOrderScores(QString scores_name, const QList<double>& scores)
+void SVContext::setClusterOrderScores(QString scores_name, const MLVector<double>& scores)
 {
     if ((scores_name == d->m_cluster_order_scores_name) && (scores == d->m_cluster_order_scores))
         return;
@@ -1205,6 +1207,15 @@ QJsonArray doublelist_to_json_array(const QList<double>& X)
     return ret;
 }
 
+QJsonArray doublevec_to_json_array(const MLVector<double>& X)
+{
+    QJsonArray ret;
+    foreach (double x, X) {
+        ret.push_back(x);
+    }
+    return ret;
+}
+
 QList<int> json_array_to_intlist(const QJsonArray& X)
 {
     QList<int> ret;
@@ -1217,6 +1228,15 @@ QList<int> json_array_to_intlist(const QJsonArray& X)
 QList<double> json_array_to_doublelist(const QJsonArray& X)
 {
     QList<double> ret;
+    for (int i = 0; i < X.count(); i++) {
+        ret << X[i].toDouble();
+    }
+    return ret;
+}
+
+MLVector<double> json_array_to_doublevec(const QJsonArray& X)
+{
+    MLVector<double> ret;
     for (int i = 0; i < X.count(); i++) {
         ret << X[i].toDouble();
     }
@@ -1371,7 +1391,7 @@ ElectrodeGeometry ElectrodeGeometry::fromJsonObject(const QJsonObject& obj)
     ElectrodeGeometry ret;
     QJsonArray C = obj["coordinates"].toArray();
     for (int i = 0; i < C.count(); i++) {
-        QVector<double> tmp;
+        MLVector<double> tmp;
         QJsonArray X = C[i].toArray();
         for (int j = 0; j < X.count(); j++) {
             tmp << X[j].toDouble();
@@ -1390,7 +1410,7 @@ ElectrodeGeometry ElectrodeGeometry::loadFromGeomFile(const QString& path)
         return ret;
     }
     for (int i = 0; i < geom.N2(); i++) {
-        QVector<double> tmp;
+        MLVector<double> tmp;
         for (int j = 0; j < geom.N1(); j++) {
             tmp << geom.value(j, i);
         }
@@ -1427,4 +1447,32 @@ void SVContextPrivate::set_default_options()
     q->setOption("cc_max_est_data_size", "1e4");
     q->setOption("amp_thresh_display", 3);
     q->setOption("discrim_hist_method", "centroid");
+}
+
+double sum(const MLVector<double>& X)
+{
+    return std::accumulate(X.begin(), X.end(), 0.0);
+}
+
+double mean(const MLVector<double>& X)
+{
+    if (X.isEmpty())
+        return 0;
+    double s = sum(X);
+    return s / X.count();
+}
+
+double min(const MLVector<double>& X)
+{
+    return *std::min_element(X.begin(), X.end());
+}
+
+double max(const MLVector<double>& X)
+{
+    return *std::max_element(X.begin(), X.end());
+}
+
+double max(const MLVector<int>& X)
+{
+    return *std::max_element(X.begin(), X.end());
 }

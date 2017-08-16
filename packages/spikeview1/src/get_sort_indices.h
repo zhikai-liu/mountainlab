@@ -8,10 +8,13 @@
 
 #include <QList>
 #include "mlcommon.h"
+#include "mlvector.h"
 
-QList<int> get_sort_indices(const QList<int>& X);
-QVector<int> get_sort_indices(const QVector<int>& X);
-QList<int> get_sort_indices(const QVector<double>& X);
-QList<bigint> get_sort_indices_bigint(const QVector<double>& X);
+MLVector<bigint> get_sort_indices(const MLVector<double>& X);
+
+//QList<int> get_sort_indices(const QList<int>& X);
+//QVector<int> get_sort_indices(const QVector<int>& X);
+//QList<int> get_sort_indices(const QVector<double>& X);
+//QList<bigint> get_sort_indices_bigint(const QVector<double>& X);
 
 #endif // GET_SORT_INDICES_H

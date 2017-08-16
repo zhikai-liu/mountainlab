@@ -102,7 +102,6 @@ bool p_combine_firing_segments(QString timeseries_path, QStringList firings_list
             timer.start();
             int num_features = 10;
             QVector<bigint> neighbor_inds = find_nearest_neighbors(clips1_aligned_reshaped, clips_k2_reshaped, num_features);
-            //qDebug() << "Elapsed for finding nearest neighbors: " << k2 << clips1_aligned.N3() << clips_k2.N3() << timer.elapsed();
             for (bigint a = 0; a < neighbor_inds.count(); a++) {
                 int k1 = labels1[neighbor_inds[a]];
                 if (k1 > 0) {
@@ -130,10 +129,8 @@ bool p_combine_firing_segments(QString timeseries_path, QStringList firings_list
         Mda32 FF1,FF2;
         FF12.getChunk(FF1,0,0,num_features,clips1.N3());
         FF12.getChunk(FF2,0,clips1.N3(),num_features,clips2.N3());
-        qDebug() << "find nearest neighbors begin";
         QVector<bigint> neighbors12=find_nearest_neighbors(FF1,FF2);
         QVector<bigint> neighbors21=find_nearest_neighbors(FF2,FF1);
-        qDebug() << "find nearest neighbors end";
         QVector<bigint> counts1(Sprev->K);
         QVector<bigint> counts2(S->K);
         counts1.fill(0);

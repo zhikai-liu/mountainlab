@@ -8,6 +8,7 @@
 #define SVContext_H
 
 #include "clustermerge.h"
+#include "mlvector.h"
 
 #include <QJsonObject>
 #include <QMap>
@@ -60,7 +61,7 @@ private:
 uint qHash(const ClusterPair& pair);
 
 struct ElectrodeGeometry {
-    QList<QVector<double> > coordinates;
+    QList<MLVector<double> > coordinates;
     QJsonObject toJsonObject() const;
     bool operator==(const ElectrodeGeometry& other);
     QList<int> getNeighborhood(int m, double adjacency_radius) const;
@@ -68,6 +69,7 @@ struct ElectrodeGeometry {
     static ElectrodeGeometry loadFromGeomFile(const QString& path);
 };
 
+#include "mlvector.h"
 #include "mvabstractcontext.h"
 #include "mvmisc.h"
 
@@ -106,10 +108,10 @@ public:
     void setClusterTags(int num, const QSet<QString>& tags); //part of attributes
 
     /////////////////////////////////////////////////
-    QList<int> clusterOrder(int max_K = 0) const; //max_K is used in case the cluster order is empty, in which case it will return 1,2,...,max_K
+    MLVector<bigint> clusterOrder(int max_K = 0) const; //max_K is used in case the cluster order is empty, in which case it will return 1,2,...,max_K
     QString clusterOrderScoresName() const;
-    QList<double> clusterOrderScores() const;
-    void setClusterOrderScores(QString scores_name, const QList<double>& scores);
+    MLVector<double> clusterOrderScores() const;
+    void setClusterOrderScores(QString scores_name, const MLVector<double>& scores);
 
     /////////////////////////////////////////////////
     QJsonObject clusterPairAttributes(const ClusterPair& pair) const;
@@ -225,5 +227,11 @@ private slots:
 private:
     SVContextPrivate* d;
 };
+
+double sum(const MLVector<double>& X);
+double mean(const MLVector<double>& X);
+double min(const MLVector<double>& X);
+double max(const MLVector<double>& X);
+double max(const MLVector<int>& X);
 
 #endif // SVContext_H

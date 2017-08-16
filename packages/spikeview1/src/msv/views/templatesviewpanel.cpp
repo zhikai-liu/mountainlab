@@ -226,11 +226,11 @@ void TemplatesViewPanel::paint(QPainter* painter)
     return;
 }
 
-double estimate_spacing(const QList<QVector<double> >& coords)
+double estimate_spacing(const QList<MLVector<double> >& coords)
 {
-    QVector<double> vals;
+    MLVector<double> vals;
     for (int m = 0; m < coords.length(); m++) {
-        QVector<double> dists;
+        MLVector<double> dists;
         for (int i = 0; i < coords.length(); i++) {
             if (i != m) {
                 double dx = coords[i].value(0) - coords[m].value(0);
@@ -239,9 +239,9 @@ double estimate_spacing(const QList<QVector<double> >& coords)
                 dists << dist;
             }
         }
-        vals << MLCompute::min(dists);
+        vals << min(dists);
     }
-    return MLCompute::mean(vals);
+    return mean(vals);
 }
 
 void TemplatesViewDataRenderer::setup_electrode_boxes(double W, double H)
@@ -251,7 +251,7 @@ void TemplatesViewDataRenderer::setup_electrode_boxes(double W, double H)
     double W1 = W;
     double H1 = H - top_section_height - bottom_section_height;
 
-    QList<QVector<double> > coords = electrode_geometry.coordinates;
+    QList<MLVector<double> > coords = electrode_geometry.coordinates;
     if (coords.isEmpty()) {
         int M = template0.N1();
         int num_rows = qMax(1, (int)sqrt(M));
@@ -259,7 +259,7 @@ void TemplatesViewDataRenderer::setup_electrode_boxes(double W, double H)
         for (int m = 0; m < M; m++) {
             if (MLUtil::threadInterruptRequested())
                 return;
-            QVector<double> tmp;
+            MLVector<double> tmp;
             tmp << (m % num_cols) + 0.5 * ((m / num_cols) % 2) << m / num_cols;
             coords << tmp;
         }
@@ -268,7 +268,7 @@ void TemplatesViewDataRenderer::setup_electrode_boxes(double W, double H)
         return;
 
     int D = coords[0].count();
-    QVector<double> mins(D), maxs(D);
+    MLVector<double> mins(D), maxs(D);
     for (int d = 0; d < D; d++) {
         mins[d] = maxs[d] = 0;
         bool first = true;
@@ -321,7 +321,7 @@ void TemplatesViewDataRenderer::setup_electrode_boxes(double W, double H)
         if (electrodes_to_show.contains(m)) {
             if (MLUtil::threadInterruptRequested())
                 return;
-            QVector<double> c = coords[m];
+            MLVector<double> c = coords[m];
             //double x0 = offset_x + (c.value(0) - mins.value(0)) * hscale_factor;
             //double y0 = offset_y + (c.value(1) - mins.value(1)) * vscale_factor;
             double x0 = offset_x + (c.value(1) - mins.value(1)) * hscale_factor;

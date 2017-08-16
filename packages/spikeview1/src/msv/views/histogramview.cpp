@@ -6,6 +6,8 @@
 #include "mvutils.h"
 #include "mlcommon.h"
 #include <QMenu>
+#include "mlvector.h"
+#include "svcontext.h" //temporary dependency
 
 struct BinInfo {
     double bin_min = -1;
@@ -29,10 +31,10 @@ public:
     //input
     HistogramViewCoord2PixOpts coord2pix_opts;
     QSize window_size;
-    QVector<double> mm_bin_lefts;
-    QVector<double> mm_bin_rights;
-    QVector<double> mm_bin_densities;
-    QVector<double> mm_second_bin_densities;
+    MLVector<double> mm_bin_lefts;
+    MLVector<double> mm_bin_rights;
+    MLVector<double> mm_bin_densities;
+    MLVector<double> mm_second_bin_densities;
     QColor mm_fill_color;
     QColor mm_line_color;
 
@@ -45,30 +47,30 @@ public:
     void run();
 
     //input
-    QVector<double> data;
-    QVector<double> second_data;
-    QVector<double> bin_lefts;
-    QVector<double> bin_rights;
+    MLVector<double> data;
+    MLVector<double> second_data;
+    MLVector<double> bin_lefts;
+    MLVector<double> bin_rights;
 
     //output
-    QVector<int> bin_counts;
-    QVector<double> bin_densities;
-    QVector<int> second_bin_counts;
-    QVector<double> second_bin_densities;
+    MLVector<int> bin_counts;
+    MLVector<double> bin_densities;
+    MLVector<int> second_bin_counts;
+    MLVector<double> second_bin_densities;
     double max_bin_density;
 };
 
 class HistogramViewPrivate {
 public:
     HistogramView* q;
-    QVector<double> m_data;
-    QVector<double> m_bin_lefts;
-    QVector<double> m_bin_rights;
-    QVector<int> m_bin_counts;
-    QVector<double> m_bin_densities;
-    QVector<double> m_second_data;
-    QVector<int> m_second_bin_counts;
-    QVector<double> m_second_bin_densities;
+    MLVector<double> m_data;
+    MLVector<double> m_bin_lefts;
+    MLVector<double> m_bin_rights;
+    MLVector<int> m_bin_counts;
+    MLVector<double> m_bin_densities;
+    MLVector<double> m_second_data;
+    MLVector<int> m_second_bin_counts;
+    MLVector<double> m_second_bin_densities;
 
     HistogramViewCoord2PixOpts m_coord2pix_opts;
 
@@ -137,21 +139,21 @@ HistogramView::~HistogramView()
     delete d;
 }
 
-void HistogramView::setData(const QVector<double>& values)
+void HistogramView::setData(const MLVector<double>& values)
 {
     d->m_data = values;
     d->m_update_bin_counts_required = true;
     update();
 }
 
-void HistogramView::appendData(const QVector<double>& values)
+void HistogramView::appendData(const MLVector<double>& values)
 {
     d->m_data.append(values);
     d->m_update_bin_counts_required = true;
     update();
 }
 
-void HistogramView::setSecondData(const QVector<double>& values)
+void HistogramView::setSecondData(const MLVector<double>& values)
 {
     d->m_second_data = values;
     d->m_update_bin_counts_required = true;
@@ -175,13 +177,13 @@ void HistogramViewPrivate::set_bins()
 
     int N = num_bins;
 
-    m_bin_lefts = QVector<double>(N);
-    m_bin_rights = QVector<double>(N);
-    m_bin_counts = QVector<int>(N);
-    m_bin_densities = QVector<double>(N);
+    m_bin_lefts = MLVector<double>(N);
+    m_bin_rights = MLVector<double>(N);
+    m_bin_counts = MLVector<int>(N);
+    m_bin_densities = MLVector<double>(N);
 
-    m_second_bin_counts = QVector<int>(N);
-    m_second_bin_densities = QVector<double>(N);
+    m_second_bin_counts = MLVector<int>(N);
+    m_second_bin_densities = MLVector<double>(N);
 
     if (N <= 2)
         return;
@@ -263,7 +265,7 @@ void HistogramView::setXRange(MVRange range)
 #include "mvthreadmanager.h"
 void HistogramView::autoCenterXRange()
 {
-    double mean_value = MLCompute::mean(d->m_data);
+    double mean_value = mean(d->m_data);
     MVRange xrange = this->xRange();
     double center1 = (xrange.min + xrange.max) / 2;
     xrange = xrange + (mean_value - center1);
@@ -543,9 +545,9 @@ QColor modify_color_for_second_histogram2(QColor col)
     return ret;
 }
 
-QVector<double> sum(const QVector<double>& V1, const QVector<double>& V2)
+MLVector<double> sum(const MLVector<double>& V1, const MLVector<double>& V2)
 {
-    QVector<double> ret;
+    MLVector<double> ret;
     ret.resize(qMax(V1.size(), V2.size()));
     for (int i = 0; i < ret.count(); i++) {
         ret[i] = V1.value(i) + V2.value(i);
@@ -771,7 +773,7 @@ void HistogramViewDataRenderer::run()
     //int H=window_size.height();
 
     for (int pass = 0; pass <= 2; pass++) {
-        QVector<double> bin_densities;
+        MLVector<double> bin_densities;
         QColor col, line_color;
         if (pass == 0) {
             bin_densities = sum(mm_bin_densities, mm_second_bin_densities);
@@ -819,7 +821,7 @@ void BinCounter::run()
         second_bin_densities[i] = 0;
     }
     for (int pass = 1; pass <= 2; pass++) {
-        QVector<double> list;
+        MLVector<double> list;
         if (pass == 1) {
             list = data;
         }
@@ -854,5 +856,5 @@ void BinCounter::run()
         bin_densities[i] = bin_counts[i] / len;
         second_bin_densities[i] = second_bin_counts[i] / len;
     }
-    max_bin_density = qMax(MLCompute::max(bin_densities), MLCompute::max(second_bin_densities));
+    max_bin_density = qMax(max(bin_densities), max(second_bin_densities));
 }

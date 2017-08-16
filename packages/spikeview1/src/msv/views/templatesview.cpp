@@ -357,7 +357,7 @@ void TemplatesViewCalculator::compute()
     int L = firings.N2();
     int T = clip_size;
 
-    QVector<int> labels;
+    MLVector<int> labels;
 
     task.log("Setting up labels");
     task.setProgress(0.2);
@@ -374,7 +374,7 @@ void TemplatesViewCalculator::compute()
 
     task.setLabel("Computing templates");
     task.setProgress(0.4);
-    int K = MLCompute::max(labels);
+    int K = max(labels);
 
     QString timeseries_path = timeseries.makePath();
     QString firings_path = firings.makePath();

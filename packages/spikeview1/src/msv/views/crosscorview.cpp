@@ -221,7 +221,7 @@ void CrosscorView::slot_worker_data_update()
         int k2 = P->property("k2").toInt();
         if (d->m_worker.hist_data.contains(k1)) {
             if (d->m_worker.hist_data[k1].contains(k2)) {
-                QVector<double> tmp = d->m_worker.hist_data[k1][k2];
+                MLVector<double> tmp = d->m_worker.hist_data[k1][k2];
                 d->m_worker.hist_data[k1][k2].clear();
                 P->appendData(tmp);
             }
@@ -342,10 +342,10 @@ void CrosscorWorker::run()
             int k1 = k1s[i];
             int k2 = k2s[i];
             if (!hist_data.contains(k1)) {
-                QMap<int, QVector<double> > empty;
+                QMap<int, MLVector<double> > empty;
                 hist_data[k1] = empty;
             }
-            hist_data[k1][k2] = QVector<double>();
+            hist_data[k1][k2] = MLVector<double>();
         }
     }
 
@@ -360,7 +360,7 @@ void CrosscorWorker::run()
             QMutexLocker locker(&mutex);
             int k1 = labels[i];
             if (hist_data.contains(k1)) {
-                QMap<int, QVector<double> >* hist_data1 = &hist_data[k1];
+                QMap<int, MLVector<double> >* hist_data1 = &hist_data[k1];
                 double t1 = times[i];
                 bigint j = last_j_left;
                 while ((j < L) && (times[j] < t1 - dt_max))

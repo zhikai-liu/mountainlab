@@ -9,6 +9,7 @@
 #include "renderablewidget.h"
 
 #include <QWidget>
+#include <mlvector.h>
 #include <mvmisc.h>
 
 /** \class HistogramView
@@ -28,9 +29,9 @@ public:
     explicit HistogramView(QWidget* parent = 0);
     virtual ~HistogramView();
 
-    void setData(const QVector<double>& values); // The data to view
-    void appendData(const QVector<double>& values); // The data to view
-    void setSecondData(const QVector<double>& values);
+    void setData(const MLVector<double>& values); // The data to view
+    void appendData(const MLVector<double>& values); // The data to view
+    void setSecondData(const MLVector<double>& values);
     void setBinInfo(double bin_min, double bin_max, int num_bins); //Set evenly spaced bins
     void setFillColor(const QColor& col); // The color for filling the histogram bars
     void setLineColor(const QColor& col); // The edge color for the bars

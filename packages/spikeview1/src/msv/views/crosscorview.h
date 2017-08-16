@@ -60,7 +60,7 @@ public:
     double dt_max = 30 * 50;
 
     //output
-    QMap<int, QMap<int, QVector<double> > > hist_data;
+    QMap<int, QMap<int, MLVector<double> > > hist_data;
 signals:
     void data_update();
 };
