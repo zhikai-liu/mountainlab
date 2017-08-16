@@ -54,8 +54,8 @@ public:
     QMutex mutex;
 
     //input
-    MLVector times;
-    MLVector labels;
+    MLVector<double> times;
+    MLVector<int> labels;
     QList<int> k1s, k2s;
     double dt_max = 30 * 50;
 

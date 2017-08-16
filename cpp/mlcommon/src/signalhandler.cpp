@@ -172,8 +172,8 @@ SignalHandler::Signal SignalHandler::flagForSignal(int signum)
         return SigContinue;
     case SIGSTOP:
         return SigStop;
-    //case SIGPWR: //apparently not supported in mac
-    //    return SigPowerFailure;
+        //case SIGPWR: //apparently not supported in mac
+        //    return SigPowerFailure;
     }
     return SigNone;
 }

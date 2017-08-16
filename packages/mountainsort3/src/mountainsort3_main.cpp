@@ -257,8 +257,8 @@ int main(int argc, char* argv[])
         QString metrics = CLP.named_parameters["metrics"].toString();
         QString firings_out = CLP.named_parameters["firings_out"].toString();
         P_extract_firings_opts opts;
-        opts.exclusion_tags=MLUtil::toStringList(CLP.named_parameters["exclusion_tags"]);
-        ret = p_extract_firings(firings,metrics,firings_out,opts);
+        opts.exclusion_tags = MLUtil::toStringList(CLP.named_parameters["exclusion_tags"]);
+        ret = p_extract_firings(firings, metrics, firings_out, opts);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

@@ -27,18 +27,17 @@ struct SegmentInfo {
 };
 
 void compute_segment_info(SegmentInfo& info, QString timeseries_path, QString firings_path, P_combine_firing_segments_opts opts);
-void get_ending_times_labels(QVector<double> &times_out,QVector<int> &labels_out,const QVector<double> &times,const QVector<int> &labels,P_combine_firing_segments_opts opts,bool use_beginning=false);
-void get_beginning_times_labels(QVector<double> &times_out,QVector<int> &labels_out,const QVector<double> &times,const QVector<int> &labels,P_combine_firing_segments_opts opts);
+void get_ending_times_labels(QVector<double>& times_out, QVector<int>& labels_out, const QVector<double>& times, const QVector<int>& labels, P_combine_firing_segments_opts opts, bool use_beginning = false);
+void get_beginning_times_labels(QVector<double>& times_out, QVector<int>& labels_out, const QVector<double>& times, const QVector<int>& labels, P_combine_firing_segments_opts opts);
 Mda32 extract_clips(const DiskReadMda32& X, const QVector<double>& times, int clip_size);
-Mda32 compute_clips_features(const Mda32 &clips,int num_features);
-QVector<bigint> find_nearest_neighbors(Mda32 &FF1,Mda32 &FF2,int num_features);
-Mda32 compute_templates_from_clips_and_labels(const Mda32 &clips,const QVector<int> &labels,int K);
-Mda32 align_clips(const Mda32 &clips1,const QVector<int> &labels1,const Mda32 &templates1,const Mda32 &template_k2,int offset_search_radius);
+Mda32 compute_clips_features(const Mda32& clips, int num_features);
+QVector<bigint> find_nearest_neighbors(Mda32& FF1, Mda32& FF2, int num_features);
+Mda32 compute_templates_from_clips_and_labels(const Mda32& clips, const QVector<int>& labels, int K);
+Mda32 align_clips(const Mda32& clips1, const QVector<int>& labels1, const Mda32& templates1, const Mda32& template_k2, int offset_search_radius);
 void compute_sliding_correlation_between_templates(double& best_corr_out, int& best_offset2_out, const Mda32& template1, const Mda32& template2, int offset_search_radius);
 
-void write_mda(const QVector<int> &X,QString fname); //for debug
-void write_mda(const QVector<bigint> &X,QString fname); //for debug
-
+void write_mda(const QVector<int>& X, QString fname); //for debug
+void write_mda(const QVector<bigint>& X, QString fname); //for debug
 }
 
 using namespace P_combine_firing_segments;
@@ -68,54 +67,57 @@ bool p_combine_firing_segments(QString timeseries_path, QStringList firings_list
             S = &segments[ii];
         }
         DiskReadMda32 X(timeseries_path);
-        QVector<double> times1,times2;
-        QVector<int> labels1,labels2;
-        get_ending_times_labels(times1,labels1,Sprev->times,Sprev->labels,opts);
-        get_beginning_times_labels(times2,labels2,S->times,S->labels,opts);
-        Mda32 clips1=extract_clips(X,times1,opts.clip_size);
-        Mda32 clips2=extract_clips(X,times2,opts.clip_size);
-        int M=clips1.N1();
-        int T=clips1.N2();
-        Mda32 templates1=compute_templates_from_clips_and_labels(clips1,labels1,Sprev->K);
-        Mda32 templates2=compute_templates_from_clips_and_labels(clips2,labels2,S->K);
-        Mda neighbor_counts(Sprev->K,S->K);
-        Mda counts(S->K,1);
-        for (int k2=1; k2<=S->K; k2++) {
+        QVector<double> times1, times2;
+        QVector<int> labels1, labels2;
+        get_ending_times_labels(times1, labels1, Sprev->times, Sprev->labels, opts);
+        get_beginning_times_labels(times2, labels2, S->times, S->labels, opts);
+        Mda32 clips1 = extract_clips(X, times1, opts.clip_size);
+        Mda32 clips2 = extract_clips(X, times2, opts.clip_size);
+        int M = clips1.N1();
+        int T = clips1.N2();
+        Mda32 templates1 = compute_templates_from_clips_and_labels(clips1, labels1, Sprev->K);
+        Mda32 templates2 = compute_templates_from_clips_and_labels(clips2, labels2, S->K);
+        Mda neighbor_counts(Sprev->K, S->K);
+        Mda counts(S->K, 1);
+        for (int k2 = 1; k2 <= S->K; k2++) {
             QVector<bigint> inds_k2;
-            for (bigint a=0; a<labels2.count(); a++) {
-                if (labels2[a]==k2) inds_k2 << a;
+            for (bigint a = 0; a < labels2.count(); a++) {
+                if (labels2[a] == k2)
+                    inds_k2 << a;
             }
             Mda32 template_k2;
-            templates2.getChunk(template_k2,0,0,k2-1,M,T,1);
-            Mda32 clips1_aligned=align_clips(clips1,labels1,templates1,template_k2,opts.offset_search_radius);
-            Mda32 clips_k2(M,T,inds_k2.count());
-            for (bigint a=0; a<inds_k2.count(); a++) {
+            templates2.getChunk(template_k2, 0, 0, k2 - 1, M, T, 1);
+            Mda32 clips1_aligned = align_clips(clips1, labels1, templates1, template_k2, opts.offset_search_radius);
+            Mda32 clips_k2(M, T, inds_k2.count());
+            for (bigint a = 0; a < inds_k2.count(); a++) {
                 Mda32 tmp;
-                clips2.getChunk(tmp,0,0,inds_k2[a],M,T,1);
-                clips_k2.setChunk(tmp,0,0,a);
+                clips2.getChunk(tmp, 0, 0, inds_k2[a], M, T, 1);
+                clips_k2.setChunk(tmp, 0, 0, a);
             }
-            Mda32 clips1_aligned_reshaped(M*T,clips1_aligned.N3());
-            memcpy(clips1_aligned_reshaped.dataPtr(),clips1_aligned.dataPtr(),sizeof(float)*clips1_aligned.totalSize());
-            Mda32 clips_k2_reshaped(M*T,clips_k2.N3());
-            memcpy(clips_k2_reshaped.dataPtr(),clips_k2.dataPtr(),sizeof(float)*clips_k2.totalSize());
-            QTime timer; timer.start();
-            int num_features=10;
-            QVector<bigint> neighbor_inds=find_nearest_neighbors(clips1_aligned_reshaped,clips_k2_reshaped,num_features);
+            Mda32 clips1_aligned_reshaped(M * T, clips1_aligned.N3());
+            memcpy(clips1_aligned_reshaped.dataPtr(), clips1_aligned.dataPtr(), sizeof(float) * clips1_aligned.totalSize());
+            Mda32 clips_k2_reshaped(M * T, clips_k2.N3());
+            memcpy(clips_k2_reshaped.dataPtr(), clips_k2.dataPtr(), sizeof(float) * clips_k2.totalSize());
+            QTime timer;
+            timer.start();
+            int num_features = 10;
+            QVector<bigint> neighbor_inds = find_nearest_neighbors(clips1_aligned_reshaped, clips_k2_reshaped, num_features);
             //qDebug() << "Elapsed for finding nearest neighbors: " << k2 << clips1_aligned.N3() << clips_k2.N3() << timer.elapsed();
-            for (bigint a=0; a<neighbor_inds.count(); a++) {
-                int k1=labels1[neighbor_inds[a]];
-                if (k1>0) {
-                    neighbor_counts.set(neighbor_counts.get(k1-1,k2-1)+1,k1-1,k2-1);
+            for (bigint a = 0; a < neighbor_inds.count(); a++) {
+                int k1 = labels1[neighbor_inds[a]];
+                if (k1 > 0) {
+                    neighbor_counts.set(neighbor_counts.get(k1 - 1, k2 - 1) + 1, k1 - 1, k2 - 1);
                 }
             }
-            counts.set(inds_k2.count(),k2-1);
+            counts.set(inds_k2.count(), k2 - 1);
         }
-        Mda match_scores(Sprev->K,S->K);
-        for (int k2=1; k2<=S->K; k2++) {
-            for (int k1=1; k1<=Sprev->K; k1++) {
-                double numer=neighbor_counts.get(k1-1,k2-1);
-                double denom=counts.get(k2-1);
-                if (denom) match_scores.set(numer/denom,k1-1,k2-1);
+        Mda match_scores(Sprev->K, S->K);
+        for (int k2 = 1; k2 <= S->K; k2++) {
+            for (int k1 = 1; k1 <= Sprev->K; k1++) {
+                double numer = neighbor_counts.get(k1 - 1, k2 - 1);
+                double denom = counts.get(k2 - 1);
+                if (denom)
+                    match_scores.set(numer / denom, k1 - 1, k2 - 1);
             }
         }
 
@@ -176,39 +178,40 @@ bool p_combine_firing_segments(QString timeseries_path, QStringList firings_list
         }
         */
 
-        int num_matches=0;
+        int num_matches = 0;
         while (true) {
-            int best_k1=0,best_k2=0;
-            double best_score=0;
-            for (int k2=1; k2<=S->K; k2++) {
-                for (int k1=1; k1<=Sprev->K; k1++) {
-                    double score0=match_scores.value(k1-1,k2-1);
-                    if (score0>best_score) {
-                        best_score=score0;
-                        best_k1=k1;
-                        best_k2=k2;
+            int best_k1 = 0, best_k2 = 0;
+            double best_score = 0;
+            for (int k2 = 1; k2 <= S->K; k2++) {
+                for (int k1 = 1; k1 <= Sprev->K; k1++) {
+                    double score0 = match_scores.value(k1 - 1, k2 - 1);
+                    if (score0 > best_score) {
+                        best_score = score0;
+                        best_k1 = k1;
+                        best_k2 = k2;
                     }
                 }
             }
-            if (best_score>opts.match_score_threshold) {
-                for (int k1=1; k1<=Sprev->K; k1++) {
-                    match_scores.setValue(0,k1-1,best_k2-1);
+            if (best_score > opts.match_score_threshold) {
+                for (int k1 = 1; k1 <= Sprev->K; k1++) {
+                    match_scores.setValue(0, k1 - 1, best_k2 - 1);
                 }
-                for (int k2=1; k2<=S->K; k2++) {
-                    match_scores.setValue(0,best_k1-1,k2-1);
+                for (int k2 = 1; k2 <= S->K; k2++) {
+                    match_scores.setValue(0, best_k1 - 1, k2 - 1);
                 }
                 qDebug().noquote() << QString("Matching %1 to %2 in segment %3 (score=%4)").arg(best_k1).arg(best_k2).arg(ii).arg(best_score);
                 num_matches++;
-                S->label_map_with_previous[best_k2]=best_k1;
-                Mda32 template1,template2;
-                templates1.getChunk(template1,0,0,best_k1-1,M,T,1);
-                templates2.getChunk(template2,0,0,best_k2-1,M,T,1);
+                S->label_map_with_previous[best_k2] = best_k1;
+                Mda32 template1, template2;
+                templates1.getChunk(template1, 0, 0, best_k1 - 1, M, T, 1);
+                templates2.getChunk(template2, 0, 0, best_k2 - 1, M, T, 1);
                 double corr;
                 int offset2;
-                compute_sliding_correlation_between_templates(corr,offset2,template1,template2,opts.offset_search_radius);
-                S->time_offset_map_with_previous[best_k2]=offset2;
+                compute_sliding_correlation_between_templates(corr, offset2, template1, template2, opts.offset_search_radius);
+                S->time_offset_map_with_previous[best_k2] = offset2;
             }
-            else break;
+            else
+                break;
         }
         qDebug().noquote() << QString("Matched %1 of %2 clusters in segment %3").arg(num_matches).arg(S->K).arg(ii);
     }
@@ -232,7 +235,7 @@ bool p_combine_firing_segments(QString timeseries_path, QStringList firings_list
             double offset0 = S->time_offset_map_with_previous.value(k2, 0);
             if (kmatch) {
                 kmatch = Sprev->label_map_global.value(kmatch, 0);
-                offset0 = offset0 + Sprev->time_offset_map_global.value(kmatch,0);
+                offset0 = offset0 + Sprev->time_offset_map_global.value(kmatch, 0);
             }
             if (!kmatch) {
                 kmatch = kk;
@@ -243,29 +246,28 @@ bool p_combine_firing_segments(QString timeseries_path, QStringList firings_list
         }
     }
 
-
     //define new labels
     qDebug().noquote() << "Defining new labels";
-    bigint L=0;
+    bigint L = 0;
     for (int ii = 0; ii < segments.count(); ii++) {
-        L+=segments[ii].times.count();
+        L += segments[ii].times.count();
     }
     qDebug().noquote() << QString("Total number of events: %1").arg(L);
-    Mda new_times(L,1);
-    Mda new_labels(L,1);
-    Mda segment_numbers(L,1);
-    Mda event_indices(L,1);
-    bigint jjjj=0;
+    Mda new_times(L, 1);
+    Mda new_labels(L, 1);
+    Mda segment_numbers(L, 1);
+    Mda event_indices(L, 1);
+    bigint jjjj = 0;
     for (int ii = 0; ii < segments.count(); ii++) {
         SegmentInfo* S = &segments[ii];
         for (bigint jj = 0; jj < S->labels.count(); jj++) {
             int k0 = S->labels[jj];
             int k1 = S->label_map_global.value(k0, 0);
-            double offset0=S->time_offset_map_global.value(k0,0);
-            new_times.set(S->times[jj]+offset0,jjjj);
-            new_labels.set(k1,jjjj);
-            segment_numbers.set(ii,jjjj);
-            event_indices.set(jj,jjjj);
+            double offset0 = S->time_offset_map_global.value(k0, 0);
+            new_times.set(S->times[jj] + offset0, jjjj);
+            new_labels.set(k1, jjjj);
+            segment_numbers.set(ii, jjjj);
+            event_indices.set(jj, jjjj);
             jjjj++;
         }
     }
@@ -562,71 +564,78 @@ Mda32 compute_mean_clip(const Mda32& clips)
     return ret;
 }
 
-
-double compute_template_similarity_score(const DiskReadMda32 &X,SegmentInfo* Sprev,SegmentInfo *S,int k1,int k2,P_combine_firing_segments_opts opts) {
-    QVector<double> times1,times2;
-    for (bigint i=0; i<Sprev->times.count(); i++) {
-        if (Sprev->labels[i]==k1) times1 << Sprev->times[i];
+double compute_template_similarity_score(const DiskReadMda32& X, SegmentInfo* Sprev, SegmentInfo* S, int k1, int k2, P_combine_firing_segments_opts opts)
+{
+    QVector<double> times1, times2;
+    for (bigint i = 0; i < Sprev->times.count(); i++) {
+        if (Sprev->labels[i] == k1)
+            times1 << Sprev->times[i];
     }
-    for (bigint i=0; i<S->times.count(); i++) {
-        if (S->labels[i]==k2) times2 << S->times[i];
+    for (bigint i = 0; i < S->times.count(); i++) {
+        if (S->labels[i] == k2)
+            times2 << S->times[i];
     }
     qSort(times1);
     qSort(times2);
-    bigint num_events=opts.num_comparison_events;
-    if (times1.count()<num_events) num_events=times1.count();
-    if (times2.count()<num_events) num_events=times2.count();
-    times1=times1.mid(times1.count()-num_events);
-    times2=times2.mid(0,num_events);
-    Mda32 clips1=extract_clips(X,times1,opts.clip_size);
-    Mda32 clips2=extract_clips(X,times2,opts.clip_size);
-    Mda32 template1=compute_mean_clip(clips1);
-    Mda32 template2=compute_mean_clip(clips2);
+    bigint num_events = opts.num_comparison_events;
+    if (times1.count() < num_events)
+        num_events = times1.count();
+    if (times2.count() < num_events)
+        num_events = times2.count();
+    times1 = times1.mid(times1.count() - num_events);
+    times2 = times2.mid(0, num_events);
+    Mda32 clips1 = extract_clips(X, times1, opts.clip_size);
+    Mda32 clips2 = extract_clips(X, times2, opts.clip_size);
+    Mda32 template1 = compute_mean_clip(clips1);
+    Mda32 template2 = compute_mean_clip(clips2);
     double corr;
     int offset2;
-    compute_sliding_correlation_between_templates(corr,offset2,template1,template2,opts.offset_search_radius);
+    compute_sliding_correlation_between_templates(corr, offset2, template1, template2, opts.offset_search_radius);
     return corr;
 }
 
-void get_ending_times_labels(QVector<double> &times_out,QVector<int> &labels_out,const QVector<double> &times,const QVector<int> &labels,P_combine_firing_segments_opts opts,bool use_beginning) {
+void get_ending_times_labels(QVector<double>& times_out, QVector<int>& labels_out, const QVector<double>& times, const QVector<int>& labels, P_combine_firing_segments_opts opts, bool use_beginning)
+{
     QVector<double> times_ret;
     QVector<int> labels_ret;
-    int K=MLCompute::max(labels);
-    for (int k=1; k<=K; k++) {
+    int K = MLCompute::max(labels);
+    for (int k = 1; k <= K; k++) {
         QVector<double> times_k;
-        for (bigint i=0; i<times.count(); i++) {
-            if (labels[i]==k) {
+        for (bigint i = 0; i < times.count(); i++) {
+            if (labels[i] == k) {
                 times_k << times[i];
             }
         }
         qSort(times_k);
-        if (times_k.count()>opts.num_comparison_events) {
+        if (times_k.count() > opts.num_comparison_events) {
             if (use_beginning)
-                times_k=times_k.mid(0,opts.num_comparison_events);
+                times_k = times_k.mid(0, opts.num_comparison_events);
             else
-                times_k=times_k.mid(times_k.count()-opts.num_comparison_events);
+                times_k = times_k.mid(times_k.count() - opts.num_comparison_events);
         }
-        for (bigint aa=0; aa<times_k.count(); aa++) {
+        for (bigint aa = 0; aa < times_k.count(); aa++) {
             times_ret << times_k[aa];
             labels_ret << k;
         }
     }
-    QList<bigint> sort_inds=get_sort_indices_bigint(times_ret);
+    QList<bigint> sort_inds = get_sort_indices_bigint(times_ret);
     times_out.clear();
     labels_out.clear();
-    for (bigint aa=0; aa<sort_inds.count(); aa++) {
+    for (bigint aa = 0; aa < sort_inds.count(); aa++) {
         times_out << times_ret[sort_inds[aa]];
         labels_out << labels_ret[sort_inds[aa]];
     }
 }
-void get_beginning_times_labels(QVector<double> &times_out,QVector<int> &labels_out,const QVector<double> &times,const QVector<int> &labels,P_combine_firing_segments_opts opts) {
-    get_ending_times_labels(times_out,labels_out,times,labels,opts,true);
+void get_beginning_times_labels(QVector<double>& times_out, QVector<int>& labels_out, const QVector<double>& times, const QVector<int>& labels, P_combine_firing_segments_opts opts)
+{
+    get_ending_times_labels(times_out, labels_out, times, labels, opts, true);
 }
 
-Mda32 compute_clips_features(const Mda32 &clips,int num_features) {
-    int M=clips.N1();
-    int T=clips.N2();
-    bigint L0=clips.N3();
+Mda32 compute_clips_features(const Mda32& clips, int num_features)
+{
+    int M = clips.N1();
+    int T = clips.N2();
+    bigint L0 = clips.N3();
     Mda32 FF;
     {
         // do this inside a code block so memory gets released
@@ -642,57 +651,61 @@ Mda32 compute_clips_features(const Mda32 &clips,int num_features) {
         }
 
         Mda32 CC, sigma;
-        bigint max_samples=10000;
+        bigint max_samples = 10000;
         pca_subsampled(CC, FF, sigma, clips_reshaped, num_features, false, max_samples); //should we subtract the mean?
     }
     return FF;
 }
 
-QVector<bigint> find_nearest_neighbors(Mda32 &FF1_in,Mda32 &FF2_in,int num_features) {
-    Mda32 FF1,FF2;
+QVector<bigint> find_nearest_neighbors(Mda32& FF1_in, Mda32& FF2_in, int num_features)
+{
+    Mda32 FF1, FF2;
     if (num_features) {
-        Mda32 FFF(FF1_in.N1(),FF1_in.N2()+FF2_in.N2());
-        FFF.setChunk(FF1_in,0,0);
-        FFF.setChunk(FF2_in,0,FF1_in.N2());
+        Mda32 FFF(FF1_in.N1(), FF1_in.N2() + FF2_in.N2());
+        FFF.setChunk(FF1_in, 0, 0);
+        FFF.setChunk(FF2_in, 0, FF1_in.N2());
         Mda32 CC, sigma, features;
-        bigint max_samples=10000;
+        bigint max_samples = 10000;
         pca_subsampled(CC, features, sigma, FFF, num_features, false, max_samples);
-        features.getChunk(FF1,0,0,FF1_in.N1(),FF1_in.N2());
-        features.getChunk(FF2,0,FF1_in.N2(),FF1_in.N1(),FF2_in.N2());
+        features.getChunk(FF1, 0, 0, FF1_in.N1(), FF1_in.N2());
+        features.getChunk(FF2, 0, FF1_in.N2(), FF1_in.N1(), FF2_in.N2());
     }
     else {
-        FF1=FF1_in;
-        FF2=FF2_in;
+        FF1 = FF1_in;
+        FF2 = FF2_in;
     }
     KdTree tree;
     tree.create(FF1);
     QVector<bigint> ret;
-    for (bigint i=0; i<FF2.N2(); i++) {
+    for (bigint i = 0; i < FF2.N2(); i++) {
         QVector<float> V;
-        for (int a=0; a<FF1.N1(); a++)
-            V << FF2.get(a,i);
-        QList<int> inds=tree.findApproxKNearestNeighbors(FF1,V,1,100);
+        for (int a = 0; a < FF1.N1(); a++)
+            V << FF2.get(a, i);
+        QList<int> inds = tree.findApproxKNearestNeighbors(FF1, V, 1, 100);
         ret << inds[0];
     }
     return ret;
 }
 
-void write_mda(const QVector<int> &X,QString fname) {
-    Mda A(X.count(),1);
-    for (bigint i=0; i<X.count(); i++) {
-        A.set(X[i],i);
+void write_mda(const QVector<int>& X, QString fname)
+{
+    Mda A(X.count(), 1);
+    for (bigint i = 0; i < X.count(); i++) {
+        A.set(X[i], i);
     }
     A.write64(fname);
 }
-void write_mda(const QVector<bigint> &X,QString fname) {
-    Mda A(X.count(),1);
-    for (bigint i=0; i<X.count(); i++) {
-        A.set(X[i],i);
+void write_mda(const QVector<bigint>& X, QString fname)
+{
+    Mda A(X.count(), 1);
+    for (bigint i = 0; i < X.count(); i++) {
+        A.set(X[i], i);
     }
     A.write64(fname);
 }
 
-Mda32 compute_templates_from_clips_and_labels(const Mda32 &clips,const QVector<int> &labels,int K) {
+Mda32 compute_templates_from_clips_and_labels(const Mda32& clips, const QVector<int>& labels, int K)
+{
     int M = clips.N1();
     int T = clips.N2();
     int L = labels.count();
@@ -702,22 +715,22 @@ Mda32 compute_templates_from_clips_and_labels(const Mda32 &clips,const QVector<i
     counts.fill(0);
     for (int i = 0; i < L; i++) {
         int k = labels[i];
-        if ((k>=1)&&(k<=K)) {
+        if ((k >= 1) && (k <= K)) {
             Mda32 X0;
-            clips.getChunk(X0,0,0,i,M,T,1);
+            clips.getChunk(X0, 0, 0, i, M, T, 1);
             dtype32* Xptr = X0.dataPtr();
             dtype32* Tptr = templates.dataPtr(0, 0, k - 1);
             for (int i = 0; i < M * T; i++) {
                 Tptr[i] += Xptr[i];
             }
-            counts[k-1]++;
+            counts[k - 1]++;
         }
     }
     for (int k = 1; k <= K; k++) {
         for (int t = 0; t < T; t++) {
             for (int m = 0; m < M; m++) {
-                if (counts[k-1]) {
-                    templates.set(templates.get(m, t, k-1) / counts[k-1], m, t, k-1);
+                if (counts[k - 1]) {
+                    templates.set(templates.get(m, t, k - 1) / counts[k - 1], m, t, k - 1);
                 }
             }
         }
@@ -725,52 +738,57 @@ Mda32 compute_templates_from_clips_and_labels(const Mda32 &clips,const QVector<i
     return templates;
 }
 
-QVector<int> find_optimal_alignment_shifts(const Mda32 &templates,const Mda32 &template_ref,int offset_search_radius) {
-    int M=templates.N1();
-    int T=templates.N2();
+QVector<int> find_optimal_alignment_shifts(const Mda32& templates, const Mda32& template_ref, int offset_search_radius)
+{
+    int M = templates.N1();
+    int T = templates.N2();
     QVector<int> ret(templates.N3());
     ret.fill(0);
-    for (int i=0; i<templates.N3(); i++) {
+    for (int i = 0; i < templates.N3(); i++) {
         Mda32 template1;
-        templates.getChunk(template1,0,0,i,M,T,1);
+        templates.getChunk(template1, 0, 0, i, M, T, 1);
         double corr;
         int offset2;
-        compute_sliding_correlation_between_templates(corr,offset2,template1,template_ref,offset_search_radius);
-        ret[i]=-offset2;
+        compute_sliding_correlation_between_templates(corr, offset2, template1, template_ref, offset_search_radius);
+        ret[i] = -offset2;
     }
     return ret;
 }
 
-Mda32 shift_clip(const Mda32 &clip,int shift) {
-    if (!clip.N2()) return clip;
-    Mda32 ret(clip.N1(),clip.N2());
-    for (int t=0; t<clip.N2(); t++) {
-        int t2=t-shift;
-        while (t2<0) t2+=clip.N2();
-        while (t2>=clip.N2()) t2-=clip.N2();
-        for (int m=0; m<clip.N1(); m++) {
-            ret.set(clip.get(m,t2),m,t);
+Mda32 shift_clip(const Mda32& clip, int shift)
+{
+    if (!clip.N2())
+        return clip;
+    Mda32 ret(clip.N1(), clip.N2());
+    for (int t = 0; t < clip.N2(); t++) {
+        int t2 = t - shift;
+        while (t2 < 0)
+            t2 += clip.N2();
+        while (t2 >= clip.N2())
+            t2 -= clip.N2();
+        for (int m = 0; m < clip.N1(); m++) {
+            ret.set(clip.get(m, t2), m, t);
         }
     }
     return ret;
 }
 
-Mda32 align_clips(const Mda32 &clips1,const QVector<int> &labels1,const Mda32 &templates1,const Mda32 &template_k2,int offset_search_radius) {
-    QVector<int> offsets1=find_optimal_alignment_shifts(templates1,template_k2,offset_search_radius);
-    int M=clips1.N1();
-    int T=clips1.N2();
-    Mda32 clips1_aligned(M,T,clips1.N3());
-    for (bigint i=0; i<clips1.N3(); i++) {
+Mda32 align_clips(const Mda32& clips1, const QVector<int>& labels1, const Mda32& templates1, const Mda32& template_k2, int offset_search_radius)
+{
+    QVector<int> offsets1 = find_optimal_alignment_shifts(templates1, template_k2, offset_search_radius);
+    int M = clips1.N1();
+    int T = clips1.N2();
+    Mda32 clips1_aligned(M, T, clips1.N3());
+    for (bigint i = 0; i < clips1.N3(); i++) {
         Mda32 clip;
-        clips1.getChunk(clip,0,0,i,M,T,1);
-        int k=labels1[i];
-        if ((1<=k)&&(k<=offsets1.count())) {
-            int offset=offsets1[k-1];
-            clip=shift_clip(clip,offset);
+        clips1.getChunk(clip, 0, 0, i, M, T, 1);
+        int k = labels1[i];
+        if ((1 <= k) && (k <= offsets1.count())) {
+            int offset = offsets1[k - 1];
+            clip = shift_clip(clip, offset);
         }
-        clips1_aligned.setChunk(clip,0,0,i);
+        clips1_aligned.setChunk(clip, 0, 0, i);
     }
     return clips1_aligned;
 }
-
 }

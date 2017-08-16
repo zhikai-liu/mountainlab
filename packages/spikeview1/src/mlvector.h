@@ -1,27 +1,16 @@
 #ifndef MLVECTOR_H
 #define MLVECTOR_H
 
-#include "mlcommon.h"
-
-class MLVectorPrivate;
-class MLVector {
+template <typename T>
+class MLVector : public std::vector<T> {
 public:
-    friend class MLVectorPrivate;
-    MLVector(bigint N=0);
-    MLVector(const MLVector &other);
-    virtual ~MLVector();
-    void operator=(const MLVector &other);
-    void resize(bigint N);
-    bigint count() const;
-    double &operator[](bigint index);
-    const double &operator[](bigint index) const;
-    double value(bigint index);
-    void clear();
-    QVector<double> toQVector() const;
-private:
-    MLVectorPrivate *d;
-
+    using std::vector<T>::vector;
+    //MLVector(const std::vector<T> &v) = delete;
+    //MLVector& operator=(const std::vector<T> &) = delete;
+    void operator<<(T val) { this->push_back(val); }
+    qintptr count() const { return (qintptr)std::vector<T>::size(); } // breaks for large values
+    T operator[](qintptr i) const { return std::vector<T>::operator[]((std::size_t)i); }
+    T& operator[](qintptr i) { return std::vector<T>::operator[]((std::size_t)i); }
 };
 
 #endif // MLVECTOR_H
-

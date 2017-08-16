@@ -33,7 +33,8 @@ HEADERS += \
     crosscorview.h crosscorplugin.h crosscorcontrol.h \
     mvexportcontrol/mvexportcontrol.h \
     spikeviewmetricscomputer.h \
-    mlvector.h
+    mlvector.h \
+    mvexportcontrol/exporttomountainviewdlg.h
 
 SOURCES += \
     mvthreadmanager.cpp \
@@ -44,9 +45,11 @@ SOURCES += \
     crosscorview.cpp crosscorplugin.cpp crosscorcontrol.cpp \
     mvexportcontrol/mvexportcontrol.cpp \
     spikeviewmetricscomputer.cpp \
-    mlvector.cpp
+    mlvector.cpp \
+    mvexportcontrol/exporttomountainviewdlg.cpp
 
-FORMS += mvgridviewpropertiesdialog.ui
+FORMS += mvgridviewpropertiesdialog.ui \
+    mvexportcontrol/exporttomountainviewdlg.ui
 
 HEADERS += mvopenviewscontrol.h get_sort_indices.h
 SOURCES += mvopenviewscontrol.cpp get_sort_indices.cpp

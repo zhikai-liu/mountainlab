@@ -9,22 +9,22 @@ bool p_extract_firings(QString firings, QString metrics, QString firings_out, P_
 {
     QSet<int> labels_to_exclude;
     QJsonParseError err;
-    QJsonObject obj=QJsonDocument::fromJson(TextFile::read(metrics).toUtf8(),&err).object();
+    QJsonObject obj = QJsonDocument::fromJson(TextFile::read(metrics).toUtf8(), &err).object();
     if (err.error != QJsonParseError::NoError) {
         qWarning() << "Error parsing json file: " + metrics + " : " + err.errorString();
         return false;
     }
 
-    QJsonArray clusters=obj["clusters"].toArray();
-    for (int i=0; i<clusters.count(); i++) {
-        QJsonObject cluster=clusters[i].toObject();
-        int k=cluster["label"].toInt();
-        QJsonArray tags=cluster["tags"].toArray();
+    QJsonArray clusters = obj["clusters"].toArray();
+    for (int i = 0; i < clusters.count(); i++) {
+        QJsonObject cluster = clusters[i].toObject();
+        int k = cluster["label"].toInt();
+        QJsonArray tags = cluster["tags"].toArray();
         QSet<QString> tags_set;
-        for (int j=0; j<tags.count(); j++) {
+        for (int j = 0; j < tags.count(); j++) {
             tags_set.insert(tags[j].toString());
         }
-        foreach (QString str,opts.exclusion_tags) {
+        foreach (QString str, opts.exclusion_tags) {
             if (tags_set.contains(str)) {
                 labels_to_exclude.insert(k);
             }
@@ -35,21 +35,21 @@ bool p_extract_firings(QString firings, QString metrics, QString firings_out, P_
     QVector<bigint> inds_to_use;
 
     DiskReadMda FF(firings);
-    bigint L=FF.N2();
-    for (bigint i=0; i<L; i++) {
-        int k=FF.value(2,i);
+    bigint L = FF.N2();
+    for (bigint i = 0; i < L; i++) {
+        int k = FF.value(2, i);
         if (!labels_to_exclude.contains(k))
             inds_to_use << i;
     }
 
-    bigint L2=inds_to_use.count();
+    bigint L2 = inds_to_use.count();
 
-    qDebug().noquote() << QString("Using %1 of %2 events (%3%)").arg(L2).arg(L).arg(L2*100.0/L);
+    qDebug().noquote() << QString("Using %1 of %2 events (%3%)").arg(L2).arg(L).arg(L2 * 100.0 / L);
 
-    Mda FF2(FF.N1(),L2);
-    for (bigint j=0; j<L2; j++) {
-        for (int r=0; r<FF.N1(); r++) {
-            FF2.set(FF.value(r,inds_to_use[j]),r,j);
+    Mda FF2(FF.N1(), L2);
+    for (bigint j = 0; j < L2; j++) {
+        for (int r = 0; r < FF.N1(); r++) {
+            FF2.set(FF.value(r, inds_to_use[j]), r, j);
         }
     }
 
