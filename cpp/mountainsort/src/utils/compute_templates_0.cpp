@@ -191,7 +191,7 @@ void compute_templates_stdevs(Mda& templates, Mda& stdevs, DiskReadMda& X, const
 {
     int M = X.N1();
     int T = clip_size;
-    int L = times.count();
+    bigint L = times.count();
 
     int K = MLCompute::max<int>(labels);
 
@@ -204,7 +204,7 @@ void compute_templates_stdevs(Mda& templates, Mda& stdevs, DiskReadMda& X, const
         counts << 0;
     for (int i = 0; i < L; i++) {
         int k = labels[i];
-        int t0 = (int)(times[i] + 0.5);
+        bigint t0 = (int)(times[i] + 0.5);
         if (k >= 1) {
             Mda X0;
             X.readChunk(X0, 0, t0 - Tmid, M, T);
