@@ -1,5 +1,0 @@
-git clone https://github.com/magland/file-uploader.git
-cd file_uploader
-npm install express formidable
-nodejs file-uploader.js
-
