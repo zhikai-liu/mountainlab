@@ -22,11 +22,13 @@ INCLUDEPATH += utils core mda unit_tests 3rdparty
 HEADERS += \
     mpdaemon.h \
     mpdaemoninterface.h \
-    localserver.h
+    localserver.h \
+    handle_request.h
 SOURCES += \
     mpdaemon.cpp \
     mpdaemoninterface.cpp \
-    localserver.cpp
+    localserver.cpp \
+    handle_request.cpp
 
 HEADERS += \
     processmanager.h \

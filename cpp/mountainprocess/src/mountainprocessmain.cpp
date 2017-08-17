@@ -65,6 +65,7 @@ If anything crashes along the way, every involved QProcess is killed.
 #include <qprocessmanager.h>
 #include <unistd.h>
 #include "signal.h"
+#include "handle_request.h"
 
 #ifndef Q_OS_LINUX
 #include <sys/types.h>
@@ -214,6 +215,7 @@ int main(int argc, char* argv[])
 
     QString arg1 = CLP.unnamed_parameters.value(0);
     QString arg2 = CLP.unnamed_parameters.value(1);
+    QString arg3 = CLP.unnamed_parameters.value(2);
 
     QString log_path = MLUtil::mlLogPath() + "/mountainprocess";
     QString tmp_path = MLUtil::tempPath();
@@ -798,6 +800,41 @@ int main(int argc, char* argv[])
             return -1;
         printf("Daemon has been restarted.\n");
         return 0;
+    }
+    else if (arg1 == "handle-request") {
+        QString request_fname=arg2;
+        QString response_fname=arg3;
+        if (request_fname.isEmpty()) {
+            print_usage();
+            return -1;
+        }
+        QString request_json=TextFile::read(request_fname);
+        if (request_json.isEmpty()) {
+            qWarning() << "Request file is empty or does not exist.";
+            return -1;
+        }
+        QJsonParseError parse_error;
+        QJsonObject request=QJsonDocument::fromJson(request_json.toUtf8(),&parse_error).object();
+        if (parse_error.error != QJsonParseError::NoError) {
+            qWarning() << "Error parsing request json";
+            return -1;
+        }
+        if (!initialize_process_manager()) { // load the processor plugins etc
+            return -1;
+        }
+        QJsonObject response=handle_request(request);
+        QString response_json=QJsonDocument(response).toJson();
+        if (response_fname.isEmpty()) {
+            printf("%s\n",response_json.toUtf8().data());
+            return 0;
+        }
+        else {
+            if (!TextFile::write(response_fname,response_json)) {
+                qWarning() << "Error writing response to file";
+                return -1;
+            }
+            return 0;
+        }
     }
     /*
     else if (arg1 == "-internal-daemon-start") { //This is called internaly to start the daemon (which is the central program running in the background)
