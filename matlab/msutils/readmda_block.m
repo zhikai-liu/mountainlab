@@ -1,7 +1,7 @@
 function A=readmda_block(fname,index0,size0)
 %READMDA - read a subarray from an .mda file. 
 %
-% Syntax: A=readmda_block(fname)
+% Syntax: A=readmda_block(fname,index0,size0)
 %
 % Inputs:
 %    fname - path to the .mda file

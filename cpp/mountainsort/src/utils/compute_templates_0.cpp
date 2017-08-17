@@ -199,12 +199,12 @@ void compute_templates_stdevs(Mda& templates, Mda& stdevs, DiskReadMda& X, const
 
     Mda sums(M, T, K);
     Mda sumsqrs(M, T, K);
-    QList<int> counts;
+    QList<bigint> counts;
     for (int k = 0; k < K; k++)
         counts << 0;
-    for (int i = 0; i < L; i++) {
+    for (bigint i = 0; i < L; i++) {
         int k = labels[i];
-        bigint t0 = (int)(times[i] + 0.5);
+        bigint t0 = (bigint)(times[i] + 0.5);
         if (k >= 1) {
             Mda X0;
             X.readChunk(X0, 0, t0 - Tmid, M, T);
