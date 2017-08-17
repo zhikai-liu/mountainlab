@@ -18,6 +18,7 @@ private:
 
     //input
     QString m_firings;
+    double m_samplerate;
 
     //output
     QString m_metrics_out;

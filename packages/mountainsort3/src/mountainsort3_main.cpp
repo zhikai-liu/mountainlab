@@ -79,9 +79,10 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     {
-        ProcessorSpec X("spikeview.metrics1", "0.1");
+        ProcessorSpec X("spikeview.metrics1", "0.13");
         X.addInputs("firings");
         X.addOutputs("metrics_out");
+        X.addRequiredParameter("samplerate");
         processors.push_back(X.get_spec());
     }
     {
@@ -212,7 +213,9 @@ int main(int argc, char* argv[])
     else if (arg1 == "spikeview.metrics1") {
         QString firings = CLP.named_parameters["firings"].toString();
         QString metrics_out = CLP.named_parameters["metrics_out"].toString();
-        ret = p_spikeview_metrics1(firings, metrics_out);
+        P_spikeview_metrics1_opts opts;
+        opts.samplerate = CLP.named_parameters["samplerate"].toDouble();
+        ret = p_spikeview_metrics1(firings, metrics_out, opts);
     }
     else if (arg1 == "spikeview.templates") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();

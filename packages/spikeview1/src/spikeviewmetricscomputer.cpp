@@ -7,6 +7,7 @@ SpikeviewMetricsComputer::SpikeviewMetricsComputer(SVContext* context)
 {
     m_context = context;
     m_firings = context->firings().makePath();
+    m_samplerate = context->sampleRate();
     QObject::connect(this, SIGNAL(finished()), this, SLOT(slot_finished()));
 }
 
@@ -29,6 +30,7 @@ void SpikeviewMetricsComputer::run()
     MPR.setProcessorName("spikeview.metrics1");
     QVariantMap params;
     params["firings"] = firings;
+    params["samplerate"] = m_samplerate;
     MPR.setInputParameters(params);
     QString metrics_out = MPR.makeOutputFilePath("metrics_out");
     MPR.runProcess();
