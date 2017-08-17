@@ -617,6 +617,8 @@ public:
         }
 
         QString dst_fname = args.value(1);
+        if (parser.isSet("checksum"))
+            dst_fname = args.value(0);
         if ((!dst_fname.isEmpty()) && (!QFileInfo(dst_fname).isDir())) {
             if (objects.count() > 1) {
                 println("Destination path must be an existing directory.");
@@ -653,7 +655,8 @@ public:
                         QVariantMap params0 = params;
                         params0["server"] = ""; //search locally
                         QString fname_local = locate_file(obj, params0, false);
-                        if (!fname_local.isEmpty()) {
+                        println(args.value(0) + "::::::::::::::::" + args.value(1));
+                        if ((!fname_local.isEmpty()) && (dst_fname.isEmpty())) {
                             println("File already on local machine (" + key + "): " + fname_local);
                         }
                         else {
@@ -662,8 +665,10 @@ public:
                             if (!dst_fname.isEmpty()) {
                                 if (QFileInfo(dst_fname).isDir())
                                     tmp += "-P " + dst_fname;
-                                else
+                                else {
                                     tmp += "-c -O " + dst_fname; //-c = clobber
+                                    QFile::remove(dst_fname);
+                                }
                             }
                             QString cmd = QString("wget %1 %2").arg(fname_or_url).arg(tmp);
                             println(QString("Running: %1").arg(cmd));

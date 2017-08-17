@@ -3,6 +3,6 @@
 
 #include <QJsonObject>
 
-QJsonObject handle_request(const QJsonObject &request, QString prvbucket_path);
+QJsonObject handle_request(const QJsonObject& request, QString prvbucket_path);
 
 #endif // PROCESS_REQUEST_H
