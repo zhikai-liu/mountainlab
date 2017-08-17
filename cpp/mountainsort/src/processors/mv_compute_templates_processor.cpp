@@ -14,7 +14,7 @@ mv_compute_templates_Processor::mv_compute_templates_Processor()
     d->q = this;
 
     this->setName("mv_compute_templates");
-    this->setVersion("0.12");
+    this->setVersion("0.13");
     this->setInputFileParameters("timeseries", "firings");
     this->setOutputFileParameters("templates", "stdevs");
     this->setRequiredParameters("clip_size");
