@@ -2,23 +2,27 @@ function simple_sort
 
 % You must first compile mountainlab and run matlab/mountainlab_setup.m
 
+raw_dirname='MAGLAND_SIM001';
+
+if ~exist(raw_dirname,'dir'), mkdir(raw_dirname); end;
 if ~exist('data','dir'), mkdir('data'); end;
 samplerate=30000;
 
-% Simulate a random dataset and save to data/raw.mda
-if ~exist('data/raw.mda','file')||~exist('data/geom.csv','file')
+% Simulate a random dataset and save to raw directory
+if ~exist([raw_dirname,'/raw.mda'],'file')||~exist([raw_dirname,'/geom.csv'],'file')
     ogen.samplerate=samplerate; % Hz
     ogen.duration=600; % seconds
     ogen.num_channels=4; % Number of channels
     ogen.num_units=20; % Number of simulated neurons
-    X=generate_raw(ogen);
+    [X,firings_true]=generate_raw(ogen);
 
     % Write to file
-     writemda16i(X,'data/raw.mda');
+     writemda16i(X,[raw_dirname,'/raw.mda']);
+     writemda64(firings_true,[raw_dirname,'/firings_true.mda']);
 
     % Write lineary geometry file
     geom=1:ogen.num_channels;
-    write_geometry_file(geom,'data/geom.csv');
+    write_geometry_file(geom,[raw_dirname,'/geom.csv']);
 end;
 
 % View the simulated raw dataset
@@ -26,7 +30,7 @@ end;
 
 % Bandpass filter
 mp_run_process('mountainsort.bandpass_filter',...
-    struct('timeseries','data/raw.mda'),...
+    struct('timeseries',[raw_dirname,'/raw.mda']),...
     struct('timeseries_out','data/filt.mda'),...
     struct('freq_min',300, 'freq_max',6000, 'samplerate',samplerate));
     
@@ -40,7 +44,7 @@ mp_run_process('mountainsort.whiten',...
 sort_opts.adjacency_radius=100;
 sort_opts.t1=-1; sort_opts.t2=-1;
 mp_run_process('mountainsort.mountainsort3',...
-    struct('timeseries','data/pre.mda', 'geom','data/geom.csv'),...
+    struct('timeseries','data/pre.mda', 'geom',[raw_dirname,'/geom.csv']),...
     struct('firings_out','data/firings.mda'),...
     sort_opts);
 
@@ -84,7 +88,7 @@ figure; ms_view_templates(readmda('data/templates_filt.mda'));
 
 % Launch the viewer
 mountainview(struct(...
-    'raw','data/raw.mda',... 
+    'raw',[raw_dirname,'/raw.mda'],... 
     'filt','data/filt.mda',...
     'pre','data/pre.mda',...
     'firings','data/firings.mda',...
@@ -94,13 +98,13 @@ mountainview(struct(...
 
 end
 
-function X=generate_raw(opts)
+function [X,firings_true]=generate_raw(opts)
 ooo.K=opts.num_units;
 ooo.M=opts.num_channels;
 ooo.samplerate=opts.samplerate;
 ooo.duration=opts.duration;
 ooo.show_figures=false;
-X=synthesize_timeseries_002(ooo);
+[X,firings_true]=synthesize_timeseries_002(ooo);
 
 end
 
