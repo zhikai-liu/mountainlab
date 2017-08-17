@@ -7,10 +7,11 @@
 #include <QCoreApplication>
 #include <QFile>
 #include <QCryptographicHash>
+#include <QDir>
 
-QJsonObject handle_request_run_process(QString processor_name,const QJsonObject &inputs,const QJsonObject &outputs,const QJsonObject &parameters);
+QJsonObject handle_request_run_process(QString processor_name,const QJsonObject &inputs,const QJsonObject &outputs,const QJsonObject &parameters, QString prvbucket_path);
 
-QJsonObject handle_request(const QJsonObject &request)
+QJsonObject handle_request(const QJsonObject &request, QString prvbucket_path)
 {
     QString action=request["action"].toString();
 
@@ -24,14 +25,13 @@ QJsonObject handle_request(const QJsonObject &request)
             return response;
         }
 
-        response=handle_request_run_process(processor_name,request["inputs"].toObject(),request["outputs"].toObject(),request["parameters"].toObject());
+        response=handle_request_run_process(processor_name,request["inputs"].toObject(),request["outputs"].toObject(),request["parameters"].toObject(), prvbucket_path);
         return response;
     }
     else {
         response["error"]="Unknown action: "+action;
         return response;
     }
-
 }
 
 bool create_prv(QString fname_in,QString prv_fname_out) {
@@ -52,7 +52,7 @@ QString compute_unique_object_code(QJsonObject obj)
 }
 
 
-QJsonObject handle_request_run_process(QString processor_name,const QJsonObject &inputs,const QJsonObject &outputs,const QJsonObject &parameters) {
+QJsonObject handle_request_run_process(QString processor_name,const QJsonObject &inputs,const QJsonObject &outputs,const QJsonObject &parameters, QString prvbucket_path) {
     QJsonObject response;
     response["success"]=false; //assume the worst
 
@@ -130,8 +130,15 @@ QJsonObject handle_request_run_process(QString processor_name,const QJsonObject 
     foreach (QString key,okeys) {
         if (PP.outputs.contains(key)) {
             if (outputs[key].toBool()) {
-                // TODO: make this file name depend on inputs so we don't need to recompute
-                QString fname=CacheManager::globalInstance()->makeExpiringFile("output_%1_%2",60*60).arg(key).arg(code);
+                QString fname;
+                if (!prvbucket_path.isEmpty()) {
+                    QDir(prvbucket_path).mkdir("_mountainprocess");
+                    fname=QString("%1/_mountainprocess/output_%2_%3").arg(prvbucket_path).arg(key).arg(code);
+                }
+                else {
+                    fname=CacheManager::globalInstance()->makeExpiringFile("output_%1_%2",60*60).arg(key).arg(code);
+                }
+                CacheManager::globalInstance()->setTemporaryFileDuration(fname,60*60);
                 args << QString("--%1=%2").arg(key).arg(fname);
                 output_files[key]=fname;
             }

@@ -10,13 +10,14 @@ var http=require('http');
 var fs=require('fs');
 
 CLP=new CLParams(process.argv);
-console.log(CLP.namedParameters);
 // The listen port comes from the command-line option
 var listen_port=CLP.namedParameters['listen_port']||0;
 var listen_hostname=CLP.namedParameters['listen_hostname']||'';
 var server_url=CLP.namedParameters['server_url']||'';
-var prv_exe=__dirname+'/../../bin/prv'
-var url_path='/prvbucket';
+var prv_exe=__dirname+'/../../../bin/prv';
+var mp_exe=__dirname+'/../../../bin/mountainprocess';
+var prvbucket_url_path='/prvbucket';
+var mountainprocess_url_path='/mountainprocess';
 
 // The first argument is the data directory -- the base path from which files will be served
 var data_directory=CLP.unnamedParameters[0]||'';
@@ -38,8 +39,6 @@ var SERVER=http.createServer(function (REQ, RESP) {
 	var host=url_parts.host;
 	var path=url_parts.pathname;
 	var query=url_parts.query;
-	console.log(JSON.stringify(url_parts));
-	console.log('host='+host);
 	
 	//by default, the action will be 'download'
 	var action=query.a||'download';	
@@ -62,82 +61,105 @@ var SERVER=http.createServer(function (REQ, RESP) {
 	else if (REQ.method=='GET') {
 		console.log ('GET: '+REQ.url);
 
-		if (url_path) {
-			// Next, if there is a url path, we check to see if that path matches
-			if (path.indexOf(url_path)!==0) {
-				send_json_response({success:false,error:'Unexpected path: '+path});
-				return;
-			}
-			path=path.slice(url_path.length); // now let's take everything after that path
-		}
-
-		if (action=="download") {
-			if (!safe_to_serve_file(path)) {
-				console.log ('Not safe to serve file: '+path);
-				send_json_response({success:false,error:"Unable to serve file."});		
-				return;
-			}
-			var fname=absolute_data_directory()+"/"+path;
-			console.log ('Download: '+fname);
-			if (!require('fs').existsSync(fname)) {
-				console.log ('Files does not exist: '+fname);
-				send_json_response({success:false,error:"File does not exist: "+path});		
-				return;	
-			}
-			var opts={};
-			if (query.bytes) {
-				//request a subset of bytes
-				var vals=query.bytes.split('-');
-				if (vals.length!=2) {
-					send_json_response({success:false,error:"Error in bytes parameter: "+query.bytes});		
-					return;			
-				}
-				opts.start_byte=Number(vals[0]);
-				opts.end_byte=Number(vals[1]);
-			}
-			else {
-				//otherwise get the entire file
-				opts.start_byte=0;
-				opts.end_byte=get_file_size(fname)-1;
-			}
-			//serve the file
-			serve_file(REQ,fname,RESP,opts);
-		}
-		else if (action=="stat") {
-			var fname=absolute_data_directory()+"/"+path;
-			if (!require('fs').existsSync(fname)) {
-				send_json_response({success:false,error:"File does not exist: "+path});		
-				return;	
-			}
-			run_process_and_read_stdout(prv_exe,['stat',fname],function(txt) {
-				try {
-					var obj=JSON.parse(txt);
-					send_json_response(obj);
-				}
-				catch(err) {
-					send_json_response({success:false,error:'Problem parsing json response from prv stat: '+txt});
-				}
-			});
-		}
-		else if (action=="locate") {
-			if ((!query.checksum)||(!query.size)||(!('fcs' in query))) {
-				send_json_response({success:false,error:"Invalid query."});	
-				return;
-			}
-			run_process_and_read_stdout(prv_exe,['locate','--search_path='+absolute_data_directory(),'--checksum='+query.checksum,'--size='+query.size,'--fcs='+(query.fcs||'')],function(txt) {
-				txt=txt.trim();
-				if (!starts_with(txt,absolute_data_directory()+'/')) {
-					send_as_text_or_link('<not found>');
+		if (path.indexOf(prvbucket_url_path)==0) {
+			path=path.slice(prvbucket_url_path.length); // now let's take everything after that path
+			if (action=="download") {
+				if (!safe_to_serve_file(path)) {
+					console.log ('Not safe to serve file: '+path);
+					send_json_response({success:false,error:"Unable to serve file."});		
 					return;
 				}
-				if (txt) txt=txt.slice(absolute_data_directory().length+1);
-				if (server_url) txt=server_url+url_path+'/'+txt;
-				send_as_text_or_link(txt);
-			});	
+				var fname=absolute_data_directory()+"/"+path;
+				console.log ('Download: '+fname);
+				if (!require('fs').existsSync(fname)) {
+					console.log ('Files does not exist: '+fname);
+					send_json_response({success:false,error:"File does not exist: "+path});		
+					return;	
+				}
+				var opts={};
+				if (query.bytes) {
+					//request a subset of bytes
+					var vals=query.bytes.split('-');
+					if (vals.length!=2) {
+						send_json_response({success:false,error:"Error in bytes parameter: "+query.bytes});		
+						return;			
+					}
+					opts.start_byte=Number(vals[0]);
+					opts.end_byte=Number(vals[1]);
+				}
+				else {
+					//otherwise get the entire file
+					opts.start_byte=0;
+					opts.end_byte=get_file_size(fname)-1;
+				}
+				//serve the file
+				serve_file(REQ,fname,RESP,opts);
+			}
+			else if (action=="stat") {
+				var fname=absolute_data_directory()+"/"+path;
+				if (!require('fs').existsSync(fname)) {
+					send_json_response({success:false,error:"File does not exist: "+path});		
+					return;	
+				}
+				run_process_and_read_stdout(prv_exe,['stat',fname],function(txt) {
+					try {
+						var obj=JSON.parse(txt);
+						send_json_response(obj);
+					}
+					catch(err) {
+						send_json_response({success:false,error:'Problem parsing json response from prv stat: '+txt});
+					}
+				});
+			}
+			else if (action=="locate") {
+				if ((!query.checksum)||(!query.size)||(!('fcs' in query))) {
+					send_json_response({success:false,error:"Invalid query."});	
+					return;
+				}
+				run_process_and_read_stdout(prv_exe,['locate','--search_path='+absolute_data_directory(),'--checksum='+query.checksum,'--size='+query.size,'--fcs='+(query.fcs||'')],function(txt) {
+					txt=txt.trim();
+					if (!starts_with(txt,absolute_data_directory()+'/')) {
+						send_as_text_or_link('<not found>');
+						return;
+					}
+					if (txt) txt=txt.slice(absolute_data_directory().length+1);
+					if (server_url) txt=server_url+prvbucket_url_path+'/'+txt;
+					send_as_text_or_link(txt);
+				});	
+			}
+			else {
+				send_json_response({success:false,error:"Unrecognized action: "+action});
+			}
+		}
+		else if (path.indexOf(mountainprocess_url_path)==0) {
+			path=path.slice(mountainprocess_url_path.length); // now let's take everything after that path
+			if (action=="mountainprocess") {
+				var request_fname=make_tmp_json_file();
+				var response_fname=make_tmp_json_file();
+				if (!write_text_file(request_fname,query.mpreq)) {
+					send_json_response({success:false,error:'Problem writing mpreq to file'});
+					return;
+				}
+				run_process_and_read_stdout(mp_exe,['handle-request','--prvbucket_path='+data_directory,request_fname,response_fname],function(txt) {
+					//remove_file(request_fname);
+					if (!fs.existsSync(response_fname)) {
+						send_json_response({success:false,error:'Response file does not exist: '+response_fname});
+						return;
+					}
+					var json_response=read_json_file(response_fname);
+					remove_file(response_fname);
+					send_json_response({success:true,response:json_response});
+				});
+			}
+			else {
+				send_json_response({success:false,error:"Unrecognized action: "+action});
+			}
 		}
 		else {
-			send_json_response({success:false,error:"Unrecognized action: "+action});
+			send_json_response({success:false,error:'Unexpected path: '+path});
+			return;
 		}
+		
 	}
 	else if(REQ.method=='POST') {
 		send_text_response("Unsuported request method: POST");
@@ -206,6 +228,38 @@ function run_process_and_read_stdout(exe,args,callback) {
 	P.on('close',function(code) {
 		callback(txt);
 	});
+}
+
+function write_text_file(fname,txt) {
+	try {
+		fs.writeFileSync(fname,txt);
+		return true;
+	}
+	catch(err) {
+		return false;
+	}
+}
+
+function read_text_file(fname) {
+	try {
+		return fs.readFileSync(fname,'utf8');
+	}
+	catch(err) {
+		return '';
+	}
+}
+
+function read_json_file(fname) {
+	try {
+		return JSON.parse(read_text_file(fname));
+	}
+	catch(err) {
+		return '';
+	}	
+}
+
+function make_tmp_json_file() {
+	return data_directory+'/tmp.'+make_random_id(10)+'.json';
 }
 
 function serve_file(REQ,filename,response,opts) {

@@ -61,6 +61,9 @@ If anything crashes along the way, every involved QProcess is killed.
 #include "cachemanager.h"
 #include "mlcommon.h"
 #include "scriptcontroller2.h"
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QTimer>
 #include <objectregistry.h>
 #include <qprocessmanager.h>
 #include <unistd.h>
@@ -95,6 +98,8 @@ bool initialize_process_manager();
 void remove_system_parameters(QVariantMap& params);
 bool queue_pript(PriptType prtype, const CLParams& CLP, QString working_path);
 QString get_daemon_state_summary(const QJsonObject& state);
+
+QString http_get_text_curl_1(const QString& url);
 
 #define EXIT_ON_CRITICAL_ERROR
 void mountainprocessMessageOutput(QtMsgType type, const QMessageLogContext& context, const QString& msg);
@@ -178,6 +183,7 @@ int main(int argc, char* argv[])
     // The --_prvgui option can be used to launch the gui
 
     // Find .prv files that are missing, and handle that situation accordingly.
+    /*
     QJsonObject missing_prvs;
     if (!get_missing_prvs(CLP.named_parameters, missing_prvs, working_path)) {
         if (missing_prvs.keys().isEmpty())
@@ -197,6 +203,7 @@ int main(int argc, char* argv[])
             return -1;
         }
     }
+    */
 
     // Make sure the MP_DAEMON_ID environment variable is set
     // This will be used in all calls to queue-process (and queue-script)
@@ -808,21 +815,30 @@ int main(int argc, char* argv[])
             print_usage();
             return -1;
         }
+        QJsonObject response;
+        response["success"]=false; //assume the worst
+
+        QString prvbucket_path=CLP.named_parameters["prvbucket_path"].toString();
+
         QString request_json=TextFile::read(request_fname);
         if (request_json.isEmpty()) {
-            qWarning() << "Request file is empty or does not exist.";
-            return -1;
+            response["error"]="Request file is empty or does not exist.";
         }
-        QJsonParseError parse_error;
-        QJsonObject request=QJsonDocument::fromJson(request_json.toUtf8(),&parse_error).object();
-        if (parse_error.error != QJsonParseError::NoError) {
-            qWarning() << "Error parsing request json";
-            return -1;
+        else {
+            QJsonParseError parse_error;
+            QJsonObject request=QJsonDocument::fromJson(request_json.toUtf8(),&parse_error).object();
+            if (parse_error.error != QJsonParseError::NoError) {
+                response["error"]="Error parsing request json.";
+            }
+            else {
+                if (!initialize_process_manager()) { // load the processor plugins etc
+                    response["error"]="Failed to initialize process manager.";
+                }
+                else {
+                    response=handle_request(request,prvbucket_path);
+                }
+            }
         }
-        if (!initialize_process_manager()) { // load the processor plugins etc
-            return -1;
-        }
-        QJsonObject response=handle_request(request);
         QString response_json=QJsonDocument(response).toJson();
         if (response_fname.isEmpty()) {
             printf("%s\n",response_json.toUtf8().data());
@@ -835,6 +851,138 @@ int main(int argc, char* argv[])
             }
             return 0;
         }
+    }
+    else if (arg1 == "run-process-remotely") {
+        //clean up expired files
+        CacheManager::globalInstance()->removeExpiredFiles();
+
+        QString processor_name = arg2; //name of the processor is the second user-supplied arg
+        if (processor_name.isEmpty()) {
+            qWarning() << "Processor name is empty";
+            return -1;
+        }
+        QString server=CLP.named_parameters["_server"].toString();
+        if (server.isEmpty()) {
+            qWarning() << "Server is empty";
+            return -1;
+        }
+
+        QVariantMap process_parameters = CLP.named_parameters;
+        remove_system_parameters(process_parameters); //remove parameters starting with "_"
+
+        if (!initialize_process_manager()) { // load the processor plugins etc
+            return -1;
+        }
+
+        MLProcessor PP=PM->processor(processor_name);
+        if (PP.name!=processor_name) {
+            qWarning() << "Unable to find processor: "+processor_name;
+            return -1;
+        }
+
+        QJsonObject request;
+        request["action"]="run_process";
+        request["processor_name"]=processor_name;
+
+        QJsonObject inputs;
+        foreach (QString key,PP.inputs.keys()) {
+            if (process_parameters.contains(key)) {
+                QString fname0=process_parameters[key].toString();
+                if (!fname0.endsWith(".prv")) {
+                    qWarning() << "Inputs must all be .prv files when using remote processing";
+                    return -1;
+                }
+                QString json0=TextFile::read(fname0);
+                QJsonParseError parse_error;
+                inputs[key]=QJsonDocument::fromJson(json0.toUtf8(),&parse_error).object();
+                if (parse_error.error!=QJsonParseError::NoError) {
+                    qWarning() << "Error parsing .prv file: "+fname0;
+                    return -1;
+                }
+            }
+            else {
+                if (!PP.inputs[key].optional) {
+                    qWarning() << "Missing required input: "+key;
+                    return -1;
+                }
+            }
+        }
+        request["inputs"]=inputs;
+
+        QJsonObject outputs;
+        foreach (QString key,PP.outputs.keys()) {
+            if (process_parameters.contains(key)) {
+                QString fname0=process_parameters[key].toString();
+                if (!fname0.endsWith(".prv")) {
+                    qWarning() << "Outputs must all be .prv files when using remote processing";
+                    return -1;
+                }
+                outputs[key]=true;
+            }
+            else {
+                if (!PP.outputs[key].optional) {
+                    qWarning() << "Missing required output: "+key;
+                    return -1;
+                }
+            }
+        }
+        request["outputs"]=outputs;
+
+        QJsonObject params;
+        foreach (QString key,PP.parameters.keys()) {
+            if (process_parameters.contains(key)) {
+                params[key]=process_parameters[key].toString();
+            }
+            else {
+                if (!PP.parameters[key].optional) {
+                    qWarning() << "Missing required parameter: "+key;
+                    return -1;
+                }
+            }
+        }
+        request["parameters"]=params;
+
+        QString request_json=QJsonDocument(request).toJson();
+        /*QString request_fname=CacheManager::globalInstance()->makeExpiringFile(QString("mpreq_%1.json").arg(MLUtil::makeRandomId(8)),60*60);
+        if (!TextFile::write(request_fname,request_json)) {
+            qWarning() << "Error writing temporary file: "+request_fname;
+            return -1;
+        }*/
+
+        QString url="http://localhost:8080/mountainprocess/?a=mountainprocess&mpreq="+request_json;
+        QString txt0=http_get_text_curl_1(url);
+
+        QJsonObject response;
+        {
+            QJsonParseError parse_error;
+            response=QJsonDocument::fromJson(txt0.toUtf8(),&parse_error).object();
+            if (parse_error.error!=QJsonParseError::NoError) {
+                qWarning() << "Error parsing response";
+                return -1;
+            }
+        }
+        if (!response["success"].toBool()) {
+            qWarning() << "Error in response: "+response["error"].toString();
+            return -1;
+        }
+        QJsonObject response2=response["response"].toObject();
+        if (!response2["success"].toBool()) {
+            qWarning() << "Error in response2: "+response2["error"].toString();
+            return -1;
+        }
+        QJsonObject outputs0=response2["outputs"].toObject();
+        foreach (QString key,PP.outputs.keys()) {
+            if (process_parameters.contains(key)) {
+                QString fname0=process_parameters[key].toString();
+                QString json0=QJsonDocument(outputs0[key].toObject()).toJson();
+                if (!TextFile::write(fname0,json0)) {
+                    qWarning() << "Unable to write to output file: "+fname0;
+                    return -1;
+                }
+            }
+        }
+
+        return 0; //returns exit code 0 if okay
     }
     /*
     else if (arg1 == "-internal-daemon-start") { //This is called internaly to start the daemon (which is the central program running in the background)
@@ -1535,4 +1683,25 @@ QJsonObject get_daemon_state(QString daemon_id)
         return QJsonObject();
     }
     return state;
+}
+
+QString http_get_text_curl_1(const QString& url)
+{
+    QNetworkAccessManager manager;
+    QNetworkReply* reply = manager.get(QNetworkRequest(QUrl(url)));
+    QEventLoop loop;
+    QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    QTimer timeoutTimer;
+    timeoutTimer.setInterval(20000); // 20s of inactivity causes us to break the connection
+    QObject::connect(&timeoutTimer, SIGNAL(timeout()), reply, SLOT(abort()));
+    QObject::connect(reply, SIGNAL(downloadProgress(qint64, qint64)), &timeoutTimer, SLOT(start()));
+    timeoutTimer.start();
+    loop.exec();
+    if (reply->error() != QNetworkReply::NoError) {
+        reply->deleteLater();
+        return QString();
+    }
+    QTextStream stream(reply);
+    reply->deleteLater();
+    return stream.readAll();
 }
