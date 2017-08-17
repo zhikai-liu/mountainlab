@@ -361,7 +361,7 @@ QList<int> fit_stage_kernel(Mda& X, Mda& templates, QVector<double>& times, QVec
                 IntList chmask = channel_mask[labels_to_try[i] - 1];
                 something_changed = true;
                 num_added++;
-                int tt = (int)(times_to_try[i] - Tmid + 0.5);
+                bigint tt = (bigint)(times_to_try[i] - Tmid + 0.5);
                 subtract_scaled_template(M, T, X.dataPtr(0, tt), templates.dataPtr(0, 0, labels_to_try[i] - 1), chmask);
                 for (int aa = tt - T / 2 - 1; aa <= tt + T + T / 2 + 1; aa++) {
                     if ((aa >= 0) && (aa < X.N2())) {
@@ -458,7 +458,7 @@ QList<int> fit_stage_kernel_old(Mda& X, Mda& templates, QVector<double>& times, 
             if (to_use[i] == 1) {
                 something_changed = true;
                 num_added++;
-                int tt = (int)(times_to_try[i] - Tmid + 0.5);
+                bigint tt = (bigint)(times_to_try[i] - Tmid + 0.5);
                 subtract_scaled_template(M * T, X.dataPtr(0, tt), templates.dataPtr(0, 0, labels_to_try[i] - 1));
                 all_to_use[inds_to_try[i]] = 1;
             }
