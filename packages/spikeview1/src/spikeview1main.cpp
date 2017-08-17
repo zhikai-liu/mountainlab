@@ -234,8 +234,8 @@ int main(int argc, char* argv[])
 
     printf("Opening initial views...\n");
     if (context->firings().N2() > 1) {
-        //W->setCurrentContainerName("south");
-        //W->openView("open-cluster-metrics");
+        W->setCurrentContainerName("south");
+        W->openView("open-cluster-metrics");
         //W->setCurrentContainerName("north");
         //W->openView("open-templates-view");
     }

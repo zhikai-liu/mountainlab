@@ -41,6 +41,7 @@ public:
     int clip_size;
     bigint max_events_per_template = 0;
     FiltOpts filtopts;
+    QList<int> ks;
 
     //output
     QList<ClusterData2> cluster_data;
@@ -71,6 +72,7 @@ public:
 
     TemplatesView::DisplayMode m_display_mode = TemplatesView::All;
     double m_preferred_neighborhood_size = -1;
+    QList<int> m_ks;
 
     void compute_total_time();
     void update_panels();
@@ -155,6 +157,8 @@ void TemplatesView::prepareCalculation()
     d->m_calculator.filtopts.subtract_temporal_mean = c->option("templates_subtract_temporal_mean", "false").toString();
     d->m_calculator.cluster_data.clear();
 
+    d->m_calculator.ks = d->m_ks;
+
     TemplatesView::DisplayMode mode = TemplatesView::All;
     QString mode_str = c->option("templates_display_mode").toString();
     if (mode_str == "All")
@@ -191,6 +195,11 @@ void TemplatesView::zoomAllTheWayOut()
 void TemplatesView::setDisplayMode(TemplatesView::DisplayMode mode)
 {
     d->m_display_mode = mode;
+}
+
+void TemplatesView::setKs(const QList<int>& ks)
+{
+    d->m_ks = ks;
 }
 
 void TemplatesView::keyPressEvent(QKeyEvent* evt)
@@ -374,7 +383,7 @@ void TemplatesViewCalculator::compute()
 
     task.setLabel("Computing templates");
     task.setProgress(0.4);
-    int K = max(labels);
+    //int K = max(labels);
 
     QString timeseries_path = timeseries.makePath();
     QString firings_path = firings.makePath();
@@ -390,7 +399,8 @@ void TemplatesViewCalculator::compute()
 
     task.setLabel("Setting cluster data");
     task.setProgress(0.75);
-    for (int k = 1; k <= K; k++) {
+    for (int iik = 0; iik < ks.count(); iik++) {
+        int k = ks[iik];
         if (MLUtil::threadInterruptRequested()) {
             task.error("Halted ***");
             return;

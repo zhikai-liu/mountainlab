@@ -34,6 +34,7 @@ public:
 
     void zoomAllTheWayOut();
     void setDisplayMode(DisplayMode mode);
+    void setKs(const QList<int>& ks);
 
 protected:
     void keyPressEvent(QKeyEvent* evt) Q_DECL_OVERRIDE;
