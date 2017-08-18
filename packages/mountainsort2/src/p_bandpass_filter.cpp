@@ -99,6 +99,8 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
         return QFile::copy(timeseries, timeseries_out);
     }
 
+    if (!opts.subsample_factor) opts.subsample_factor=1;
+
     bool do_write = true;
     //if (opts.testcode.split(",").contains("nowrite"))
     //    do_write = false;
