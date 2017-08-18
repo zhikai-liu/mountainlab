@@ -25,7 +25,7 @@
 #include "p_link_segments.h"
 #include "p_cluster_metrics.h"
 #include "p_split_firings.h"
-#include "p_concat_timeseries.h"
+//#include "p_concat_timeseries.h"
 #include "p_concat_firings.h"
 #include "p_compute_templates.h"
 #include "p_load_test.h"
@@ -70,6 +70,7 @@ QJsonObject get_spec()
         X.addRequiredParameters("t1", "t2");
         processors.push_back(X.get_spec());
     }
+#ifndef NO_FFTW3
     {
         ProcessorSpec X("mountainsort.bandpass_filter", "0.18");
         X.addInputs("timeseries");
@@ -80,6 +81,7 @@ QJsonObject get_spec()
         X.addOptionalParameter("testcode", "", "");
         processors.push_back(X.get_spec());
     }
+#endif
     {
         ProcessorSpec X("mountainsort.whiten", "0.1");
         X.addInputs("timeseries");
@@ -231,13 +233,13 @@ QJsonObject get_spec()
         //X.addRequiredParameters();
         processors.push_back(X.get_spec());
     }
-    {
+    /*{
         ProcessorSpec X("mountainsort.concat_timeseries", "0.11");
         X.addInputs("timeseries_list");
         X.addOutputs("timeseries_out");
         //X.addRequiredParameters();
         processors.push_back(X.get_spec());
-    }
+    }*/
     {
         ProcessorSpec X("mountainsort.concat_firings", "0.13");
         X.addInputs("firings_list");
@@ -361,6 +363,7 @@ int main(int argc, char* argv[])
         bigint t2 = CLP.named_parameters["t2"].toDouble(); //to double to handle scientific notation
         ret = p_extract_segment_firings(firings, firings_out, t1, t2);
     }
+#ifndef NO_FFTW3
     else if (arg1 == "mountainsort.bandpass_filter") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
@@ -373,6 +376,7 @@ int main(int argc, char* argv[])
         opts.testcode = CLP.named_parameters.value("testcode", "").toString();
         ret = p_bandpass_filter(timeseries, timeseries_out, opts);
     }
+#endif
     else if (arg1 == "mountainsort.whiten") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
@@ -531,11 +535,11 @@ int main(int argc, char* argv[])
         QSet<int> clusters = MLUtil::stringListToIntList(clusters_str).toSet();
         ret = p_extract_firings(firings, clusters, firings_out);
     }
-    else if (arg1 == "mountainsort.concat_timeseries") {
+    /*else if (arg1 == "mountainsort.concat_timeseries") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
         ret = p_concat_timeseries(timeseries_list, timeseries_out);
-    }
+    }*/
     else if (arg1 == "mountainsort.concat_firings") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);
         QStringList firings_list = MLUtil::toStringList(CLP.named_parameters["firings_list"]);

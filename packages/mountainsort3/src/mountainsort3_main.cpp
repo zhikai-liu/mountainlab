@@ -11,7 +11,7 @@
 #include <QCoreApplication>
 #include "mountainsort3_main.h"
 //#include "p_multineighborhood_sort.h"
-#include "p_preprocess.h"
+//#include "p_preprocess.h"
 #include "p_mountainsort3.h"
 #include "p_run_metrics_script.h"
 #include "p_spikeview_metrics.h"
@@ -20,6 +20,7 @@
 #include "p_synthesize_timeseries.h"
 #include "p_combine_firing_segments.h"
 #include "p_extract_firings.h"
+#include "p_concat_timeseries.h"
 
 QJsonObject get_spec()
 {
@@ -42,6 +43,7 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
     */
+    /*
     {
         ProcessorSpec X("mountainsort.preprocess", "0.1");
         X.addInputs("timeseries");
@@ -55,6 +57,7 @@ QJsonObject get_spec()
         X.addOptionalParameter("whiten", "", "true");
         processors.push_back(X.get_spec());
     }
+    */
     {
         ProcessorSpec X("mountainsort.mountainsort3", "0.14");
         X.addInputs("timeseries", "geom");
@@ -85,6 +88,7 @@ QJsonObject get_spec()
         X.addRequiredParameter("samplerate");
         processors.push_back(X.get_spec());
     }
+#ifndef NO_FFTW3
     {
         ProcessorSpec X("spikeview.templates", "0.16");
         X.addInputs("timeseries", "firings");
@@ -95,6 +99,7 @@ QJsonObject get_spec()
         X.addOptionalParameter("subtract_temporal_mean", "", "false");
         processors.push_back(X.get_spec());
     }
+#endif
     {
         ProcessorSpec X("mountainsort.synthesize_timeseries", "0.12");
         X.addInputs("firings", "waveforms");
@@ -119,6 +124,12 @@ QJsonObject get_spec()
         X.addOptionalInputs("metrics");
         X.addOutputs("firings_out");
         X.addOptionalParameter("exclusion_tags", "", "");
+        processors.push_back(X.get_spec());
+    }
+    {
+        ProcessorSpec X("mountainsort.concat_timeseries", "0.11");
+        X.addInputs("timeseries_list");
+        X.addOutputs("timeseries_out");
         processors.push_back(X.get_spec());
     }
 
@@ -171,6 +182,7 @@ int main(int argc, char* argv[])
         ret = p_multineighborhood_sort(timeseries, geom, firings_out, temp_path, opts);
     }
     */
+    /*
     if (arg1 == "mountainsort.preprocess") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
@@ -185,6 +197,7 @@ int main(int argc, char* argv[])
         QString temp_path = CLP.named_parameters.value("_tempdir").toString();
         ret = p_preprocess(timeseries, timeseries_out, temp_path, opts);
     }
+    */
     else if (arg1 == "mountainsort.mountainsort3") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString geom = CLP.named_parameters["geom"].toString();
@@ -217,6 +230,7 @@ int main(int argc, char* argv[])
         opts.samplerate = CLP.named_parameters["samplerate"].toDouble();
         ret = p_spikeview_metrics1(firings, metrics_out, opts);
     }
+#ifndef NO_FFTW3
     else if (arg1 == "spikeview.templates") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString firings = CLP.named_parameters["firings"].toString();
@@ -232,6 +246,7 @@ int main(int argc, char* argv[])
         opts.subtract_temporal_mean = (CLP.named_parameters.value("subtract_temporal_mean") == "true");
         ret = p_spikeview_templates(timeseries, firings, templates_out, opts);
     }
+#endif
     else if (arg1 == "mountainsort.synthesize_timeseries") {
         QString firings = CLP.named_parameters["firings"].toString();
         QString waveforms = CLP.named_parameters["waveforms"].toString();
@@ -262,6 +277,11 @@ int main(int argc, char* argv[])
         P_extract_firings_opts opts;
         opts.exclusion_tags = MLUtil::toStringList(CLP.named_parameters["exclusion_tags"]);
         ret = p_extract_firings(firings, metrics, firings_out, opts);
+    }
+    else if (arg1 == "mountainsort.concat_timeseries") {
+        QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries_list"]);
+        QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
+        ret = p_concat_timeseries(timeseries_list, timeseries_out);
     }
     else {
         qWarning() << "Unexpected processor name: " + arg1;

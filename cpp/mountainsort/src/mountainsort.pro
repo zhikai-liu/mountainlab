@@ -54,8 +54,6 @@ HEADERS += \
     processors/compute_amplitudes.h \
     processors/compute_amplitudes_processor.h \
     processors/mv_compute_templates.h \
-    processors/bandpass_filter_processor.h \
-    processors/bandpass_filter0.h \
     processors/whiten_processor.h \
     processors/whiten.h
 
@@ -182,8 +180,6 @@ SOURCES += \
     processors/compute_amplitudes.cpp \
     processors/compute_amplitudes_processor.cpp \
     processors/mv_compute_templates.cpp \
-    processors/bandpass_filter_processor.cpp \
-    processors/bandpass_filter0.cpp \
     processors/whiten_processor.cpp \
     processors/whiten.cpp
 
@@ -352,7 +348,14 @@ QMAKE_EXTRA_COMPILERS += nocxx11
 #   LIBS += -llapack -llapacke
 
 #FFTW
-LIBS += -fopenmp -lfftw3 -lfftw3_threads
+contains(CONFIG,"no_fftw3") {
+    DEFINES += NO_FFTW3
+    message(WARNING: Not using FFTW3)
+} else {
+    LIBS += -fopenmp -lfftw3 -lfftw3_threads
+    HEADERS += processors/bandpass_filter0.h processors/bandpass_filter_processor.h
+    SOURCES += processors/bandpass_filter0.cpp processors/bandpass_filter_processor.cpp
+}
 
 #OPENMP
 !macx {

@@ -14,7 +14,15 @@ TARGET = mountainsort2.mp
 TEMPLATE = app
 
 #FFTW
-LIBS += -fopenmp -lfftw3 -lfftw3_threads
+contains(CONFIG,"no_fftw3") {
+    DEFINES += NO_FFTW3
+    message(Warning: Not using FFTW3)
+}
+else {
+    LIBS += -fopenmp -lfftw3 -lfftw3_threads
+    SOURCES += p_bandpass_filter.cpp
+    HEADERS += p_bandpass_filter.h
+}
 
 #OPENMP
 !macx {
@@ -33,14 +41,12 @@ SOURCES += \
     p_create_firings.cpp \
     p_combine_firings.cpp \
     p_fit_stage.cpp \
-    p_bandpass_filter.cpp \
     p_whiten.cpp \
     p_extract_segment_timeseries.cpp \
     p_apply_timestamp_offset.cpp \
     p_link_segments.cpp \
     p_cluster_metrics.cpp \
     p_split_firings.cpp \
-    p_concat_timeseries.cpp \
     p_concat_firings.cpp \
     p_compute_templates.cpp \
     p_load_test.cpp \
@@ -62,14 +68,12 @@ HEADERS += \
     p_create_firings.h \
     p_combine_firings.h \
     p_fit_stage.h \
-    p_bandpass_filter.h \
     p_whiten.h \
     p_extract_segment_timeseries.h \
     p_apply_timestamp_offset.h \
     p_link_segments.h \
     p_cluster_metrics.h \
     p_split_firings.h \
-    p_concat_timeseries.h \
     p_concat_firings.h \
     p_compute_templates.h \
     p_load_test.h \

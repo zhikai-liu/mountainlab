@@ -6,7 +6,7 @@
 #include "fftw3.h"
 #include <QTime>
 #include <math.h>
-#include "msprefs.h"
+//#include "msprefs.h"
 #include <QTime>
 
 #ifdef USE_SSE2

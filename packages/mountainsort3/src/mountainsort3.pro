@@ -15,7 +15,16 @@ TARGET = mountainsort3.mp
 TEMPLATE = app
 
 #FFTW
-LIBS += -fopenmp -lfftw3 -lfftw3_threads
+USE_FFTW3=$$(USE_FFTW3)
+contains(CONFIG,"no_fftw3") {
+    DEFINES += NO_FFTW3
+    message(Warning: Not using FFTW3)
+}
+else {
+    LIBS += -fopenmp -lfftw3 -lfftw3_threads
+    SOURCES += p_spikeview_templates.cpp
+    HEADERS += p_spikeview_templates.h
+}
 
 #OPENMP
 !macx {
@@ -26,7 +35,7 @@ LIBS += -fopenmp -lfftw3 -lfftw3_threads
 
 SOURCES += \
     mountainsort3_main.cpp \
-    p_multineighborhood_sort.cpp \
+    #p_multineighborhood_sort.cpp \
     neighborhoodsorter.cpp \
     detect_events.cpp \
     dimension_reduce_clips.h \
@@ -38,22 +47,23 @@ SOURCES += \
     reorder_labels.cpp \
     p_mountainsort3.cpp \
     globaltemplatecomputer.cpp fitstagecomputer.cpp \
-    p_preprocess.cpp \
+    #p_preprocess.cpp \
     p_run_metrics_script.cpp \
     p_spikeview_metrics.cpp \
-    p_spikeview_templates.cpp \
     p_synthesize_timeseries.cpp \
     p_combine_firing_segments.cpp \
-    p_extract_firings.cpp
+    p_extract_firings.cpp \
+    p_concat_timeseries.cpp
 
 INCLUDEPATH += ../../mountainsort2/src
 VPATH += ../../mountainsort2/src
-HEADERS += kdtree.h
+HEADERS += kdtree.h \
+    p_concat_timeseries.h
 SOURCES += kdtree.cpp
 
 HEADERS += \
     mountainsort3_main.h \
-    p_multineighborhood_sort.h \
+    #p_multineighborhood_sort.h \
     neighborhoodsorter.h \
     detect_events.h \
     sort_clips.h \
@@ -63,10 +73,9 @@ HEADERS += \
     reorder_labels.h \
     p_mountainsort3.h \
     globaltemplatecomputer.h fitstagecomputer.h \
-    p_preprocess.h \
+    #p_preprocess.h \
     p_run_metrics_script.h \
     p_spikeview_metrics.h \
-    p_spikeview_templates.h \
     p_synthesize_timeseries.h \
     p_combine_firing_segments.h \
     p_extract_firings.h
