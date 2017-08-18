@@ -100,8 +100,8 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
     }
 
     bool do_write = true;
-    if (opts.testcode.split(",").contains("nowrite"))
-        do_write = false;
+    //if (opts.testcode.split(",").contains("nowrite"))
+    //    do_write = false;
 
     DiskReadMda32 X;
     if (QFileInfo(timeseries).isDir())
@@ -154,13 +154,14 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
                     ret = false;
                 }
             }
-            if (!opts.testcode.split(",").contains("nokernel")) {
+            //if (!opts.testcode.split(",").contains("nokernel")) {
                 QTime kernel_timer;
                 kernel_timer.start();
                 KR.apply(chunk);
                 //chunk = P_bandpass_filter::bandpass_filter_kernel(chunk, opts.samplerate, opts.freq_min, opts.freq_max, opts.freq_wid);
                 //qDebug().noquote() << "Kernel timer elapsed: " << kernel_timer.elapsed() << " for chunk at " << timepoint << " of " << N;
-            }
+            //}
+
             Mda32 chunk2;
             {
                 chunk.getChunk(chunk2, 0, overlap_size, M, chunk_size);

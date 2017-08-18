@@ -10,7 +10,6 @@ struct Bandpass_filter_opts {
     double freq_wid = 0;
     double quantization_unit = 0;
     int subsample_factor = 1;
-    QString testcode;
 };
 
 bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filter_opts opts);

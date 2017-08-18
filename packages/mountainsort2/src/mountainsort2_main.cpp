@@ -78,7 +78,7 @@ QJsonObject get_spec()
         X.addRequiredParameters("samplerate", "freq_min", "freq_max");
         X.addOptionalParameter("freq_wid", "", 1000);
         X.addOptionalParameter("quantization_unit", "", 0);
-        X.addOptionalParameter("testcode", "", "");
+        X.addOptionalParameter("subsample_factor", "", 1);
         processors.push_back(X.get_spec());
     }
 #endif
@@ -373,7 +373,7 @@ int main(int argc, char* argv[])
         opts.freq_max = CLP.named_parameters["freq_max"].toDouble();
         opts.freq_wid = CLP.named_parameters.value("freq_wid", 1000).toDouble();
         opts.quantization_unit = CLP.named_parameters.value("quantization_unit").toDouble();
-        opts.testcode = CLP.named_parameters.value("testcode", "").toString();
+        opts.subsample_factor = CLP.named_parameters.value("subsample_factor", 1).toInt();
         ret = p_bandpass_filter(timeseries, timeseries_out, opts);
     }
 #endif
