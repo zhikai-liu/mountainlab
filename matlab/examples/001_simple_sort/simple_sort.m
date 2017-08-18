@@ -2,6 +2,8 @@ function simple_sort
 
 % You must first compile mountainlab and run matlab/mountainlab_setup.m
 
+rng(1);
+
 raw_dirname='MAGLAND_SIM001';
 
 if ~exist(raw_dirname,'dir'), mkdir(raw_dirname); end;
@@ -14,11 +16,12 @@ if ~exist([raw_dirname,'/raw.mda'],'file')||~exist([raw_dirname,'/geom.csv'],'fi
     ogen.duration=600; % seconds
     ogen.num_channels=4; % Number of channels
     ogen.num_units=20; % Number of simulated neurons
-    [X,firings_true]=generate_raw(ogen);
+    [X,firings_true,waveforms_true]=generate_raw(ogen);
 
     % Write to file
      writemda16i(X,[raw_dirname,'/raw.mda']);
      writemda64(firings_true,[raw_dirname,'/firings_true.mda']);
+     writemda32(waveforms_true,[raw_dirname,'/waveforms_true.mda']);
 
     % Write lineary geometry file
     geom=1:ogen.num_channels;
@@ -98,13 +101,13 @@ mountainview(struct(...
 
 end
 
-function [X,firings_true]=generate_raw(opts)
+function [X,firings_true,waveforms_true]=generate_raw(opts)
 ooo.K=opts.num_units;
 ooo.M=opts.num_channels;
 ooo.samplerate=opts.samplerate;
 ooo.duration=opts.duration;
 ooo.show_figures=false;
-[X,firings_true]=synthesize_timeseries_002(ooo);
+[X,firings_true,waveforms_true]=synthesize_timeseries_002(ooo);
 
 end
 
