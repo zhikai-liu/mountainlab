@@ -97,7 +97,7 @@ bool ProcessManager::loadProcessors(const QString& path, bool recursive)
     QStringList fnames = QDir(path).entryList(QStringList("*.mp"), QDir::Files, QDir::Name);
     foreach (QString fname, fnames) {
         if (!this->loadProcessorFile(path + "/" + fname)) {
-            return false;
+            //return false;
         }
     }
     if (recursive) {
@@ -136,7 +136,7 @@ bool ProcessManager::loadProcessorFile(const QString& path)
                     QJsonObject obj = QJsonDocument::fromJson(json.toLatin1(), &error).object();
                     if (error.error != QJsonParseError::NoError) {
                         qWarning() << "Executable processor file did not return output for spec: " + path;
-                        //return false;
+                        return false;
                     }
                     else {
                         //we are okay -- apparently the text file .mp got marked as executable by the user, so let's proceed
@@ -162,7 +162,7 @@ bool ProcessManager::loadProcessorFile(const QString& path)
     QJsonParseError error;
     QJsonObject obj = QJsonDocument::fromJson(json.toLatin1(), &error).object();
     if (error.error != QJsonParseError::NoError) {
-        qWarning() << "Json parse error: " << error.errorString();
+        qWarning() << "Json parse error when loading processor plugin: " << error.errorString();
         return false;
     }
     if (!obj["processors"].isArray()) {
