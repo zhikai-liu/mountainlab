@@ -88,6 +88,7 @@ QJsonObject get_spec()
         X.addRequiredParameter("samplerate");
         processors.push_back(X.get_spec());
     }
+#ifndef NO_FFTW3
     {
         ProcessorSpec X("spikeview.templates", "0.16");
         X.addInputs("timeseries", "firings");
@@ -98,6 +99,7 @@ QJsonObject get_spec()
         X.addOptionalParameter("subtract_temporal_mean", "", "false");
         processors.push_back(X.get_spec());
     }
+#endif
     {
         ProcessorSpec X("mountainsort.synthesize_timeseries", "0.12");
         X.addInputs("firings", "waveforms");
@@ -228,6 +230,7 @@ int main(int argc, char* argv[])
         opts.samplerate = CLP.named_parameters["samplerate"].toDouble();
         ret = p_spikeview_metrics1(firings, metrics_out, opts);
     }
+#ifndef NO_FFTW3
     else if (arg1 == "spikeview.templates") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString firings = CLP.named_parameters["firings"].toString();
@@ -243,6 +246,7 @@ int main(int argc, char* argv[])
         opts.subtract_temporal_mean = (CLP.named_parameters.value("subtract_temporal_mean") == "true");
         ret = p_spikeview_templates(timeseries, firings, templates_out, opts);
     }
+#endif
     else if (arg1 == "mountainsort.synthesize_timeseries") {
         QString firings = CLP.named_parameters["firings"].toString();
         QString waveforms = CLP.named_parameters["waveforms"].toString();

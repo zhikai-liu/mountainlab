@@ -14,7 +14,15 @@ TARGET = mountainsort2.mp
 TEMPLATE = app
 
 #FFTW
-LIBS += -fopenmp -lfftw3 -lfftw3_threads
+USE_FFTW3=$$(USE_FFTW3)
+!equals(USE_FFTW3,"FALSE") {
+    LIBS += -fopenmp -lfftw3 -lfftw3_threads
+    SOURCES += p_bandpass_filter.cpp
+    HEADERS += p_bandpass_filter.h
+} else {
+    DEFINES += NO_FFTW3
+    message(Not using FFTW because USE_FFTW3 environment has been set to FALSE)
+}
 
 #OPENMP
 !macx {
@@ -33,7 +41,6 @@ SOURCES += \
     p_create_firings.cpp \
     p_combine_firings.cpp \
     p_fit_stage.cpp \
-    p_bandpass_filter.cpp \
     p_whiten.cpp \
     p_extract_segment_timeseries.cpp \
     p_apply_timestamp_offset.cpp \
@@ -61,7 +68,6 @@ HEADERS += \
     p_create_firings.h \
     p_combine_firings.h \
     p_fit_stage.h \
-    p_bandpass_filter.h \
     p_whiten.h \
     p_extract_segment_timeseries.h \
     p_apply_timestamp_offset.h \

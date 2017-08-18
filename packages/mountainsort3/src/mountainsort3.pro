@@ -15,7 +15,15 @@ TARGET = mountainsort3.mp
 TEMPLATE = app
 
 #FFTW
-LIBS += -fopenmp -lfftw3 -lfftw3_threads
+USE_FFTW3=$$(USE_FFTW3)
+!equals(USE_FFTW3,"FALSE") {
+    LIBS += -fopenmp -lfftw3 -lfftw3_threads
+    SOURCES += p_spikeview_templates.cpp
+    HEADERS += p_spikeview_templates.h
+} else {
+    DEFINES += NO_FFTW3
+    message(Not using FFTW because USE_FFTW3 environment has been set to FALSE)
+}
 
 #OPENMP
 !macx {
@@ -41,7 +49,6 @@ SOURCES += \
     #p_preprocess.cpp \
     p_run_metrics_script.cpp \
     p_spikeview_metrics.cpp \
-    p_spikeview_templates.cpp \
     p_synthesize_timeseries.cpp \
     p_combine_firing_segments.cpp \
     p_extract_firings.cpp \
@@ -68,7 +75,6 @@ HEADERS += \
     #p_preprocess.h \
     p_run_metrics_script.h \
     p_spikeview_metrics.h \
-    p_spikeview_templates.h \
     p_synthesize_timeseries.h \
     p_combine_firing_segments.h \
     p_extract_firings.h

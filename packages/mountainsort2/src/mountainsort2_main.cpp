@@ -70,6 +70,7 @@ QJsonObject get_spec()
         X.addRequiredParameters("t1", "t2");
         processors.push_back(X.get_spec());
     }
+#ifndef NO_FFTW3
     {
         ProcessorSpec X("mountainsort.bandpass_filter", "0.18");
         X.addInputs("timeseries");
@@ -80,6 +81,7 @@ QJsonObject get_spec()
         X.addOptionalParameter("testcode", "", "");
         processors.push_back(X.get_spec());
     }
+#endif
     {
         ProcessorSpec X("mountainsort.whiten", "0.1");
         X.addInputs("timeseries");
@@ -361,6 +363,7 @@ int main(int argc, char* argv[])
         bigint t2 = CLP.named_parameters["t2"].toDouble(); //to double to handle scientific notation
         ret = p_extract_segment_firings(firings, firings_out, t1, t2);
     }
+#ifndef NO_FFTW3
     else if (arg1 == "mountainsort.bandpass_filter") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
@@ -373,6 +376,7 @@ int main(int argc, char* argv[])
         opts.testcode = CLP.named_parameters.value("testcode", "").toString();
         ret = p_bandpass_filter(timeseries, timeseries_out, opts);
     }
+#endif
     else if (arg1 == "mountainsort.whiten") {
         QString timeseries = CLP.named_parameters["timeseries"].toString();
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();

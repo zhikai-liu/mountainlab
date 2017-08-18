@@ -30,6 +30,7 @@ struct Kernel_runner {
         M = M_in;
         N = N_in;
         MN = M * N;
+
         /*
         p_fft=new fftw_plan; //this nonsense is necessary because we cannot instantiate fftw plans in multiple threads simultaneously
         p_ifft=new fftw_plan;

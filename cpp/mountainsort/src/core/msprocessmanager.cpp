@@ -98,7 +98,9 @@ MSProcessManager::~MSProcessManager()
 void MSProcessManager::loadDefaultProcessors()
 {
     loadProcessor(new example_Processor);
+#ifndef NO_FFTW3
     loadProcessor(new bandpass_filter_Processor);
+#endif
     loadProcessor(new whiten_Processor);
     //loadProcessor(new normalize_channels_Processor);
     //loadProcessor(new detect_Processor);
