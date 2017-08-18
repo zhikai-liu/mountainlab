@@ -99,7 +99,7 @@ void remove_system_parameters(QVariantMap& params);
 bool queue_pript(PriptType prtype, const CLParams& CLP, QString working_path);
 QString get_daemon_state_summary(const QJsonObject& state);
 
-QString http_get_text_curl_1(const QString& url);
+QString http_get_text_curl_1(const QString& url,bigint timeout_msec=20000);
 bool download_prv(const QJsonObject& prv, QString fname, QString server);
 
 #define EXIT_ON_CRITICAL_ERROR
@@ -962,13 +962,14 @@ int main(int argc, char* argv[])
         }
 
         QString url = server_url + "/mountainprocess/?a=mountainprocess&mpreq=" + request_json;
-        QString txt0 = http_get_text_curl_1(url);
+        QString txt0 = http_get_text_curl_1(url,1000*60*60);
 
         QJsonObject response;
         {
             QJsonParseError parse_error;
             response = QJsonDocument::fromJson(txt0.toUtf8(), &parse_error).object();
             if (parse_error.error != QJsonParseError::NoError) {
+                qDebug().noquote() << txt0;
                 qWarning() << "Error parsing response";
                 return -1;
             }
@@ -1706,14 +1707,14 @@ QJsonObject get_daemon_state(QString daemon_id)
     return state;
 }
 
-QString http_get_text_curl_1(const QString& url)
+QString http_get_text_curl_1(const QString& url,bigint timeout_ms)
 {
     QNetworkAccessManager manager;
     QNetworkReply* reply = manager.get(QNetworkRequest(QUrl(url)));
     QEventLoop loop;
     QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
     QTimer timeoutTimer;
-    timeoutTimer.setInterval(20000); // 20s of inactivity causes us to break the connection
+    timeoutTimer.setInterval(timeout_ms); // 20s of inactivity causes us to break the connection
     QObject::connect(&timeoutTimer, SIGNAL(timeout()), reply, SLOT(abort()));
     QObject::connect(reply, SIGNAL(downloadProgress(qint64, qint64)), &timeoutTimer, SLOT(start()));
     timeoutTimer.start();
