@@ -40,7 +40,6 @@ SOURCES += \
     p_link_segments.cpp \
     p_cluster_metrics.cpp \
     p_split_firings.cpp \
-    p_concat_timeseries.cpp \
     p_concat_firings.cpp \
     p_compute_templates.cpp \
     p_load_test.cpp \
@@ -69,7 +68,6 @@ HEADERS += \
     p_link_segments.h \
     p_cluster_metrics.h \
     p_split_firings.h \
-    p_concat_timeseries.h \
     p_concat_firings.h \
     p_compute_templates.h \
     p_load_test.h \
