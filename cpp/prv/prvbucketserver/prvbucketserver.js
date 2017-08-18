@@ -1,214 +1,157 @@
-console.log ('Running prvbucketserver...');
-
-function print_usage() {
-	console.log ('Usage: prvbucketserver [data_directory] --listen_port=[port] --server_url=[http://localhost:8000] [--listen_hostname=[host]]');
-}
+var exports = module.exports = {};
 
 //// requires
 var	url=require('url');
-var http=require('http');
 var fs=require('fs');
 
-CLP=new CLParams(process.argv);
-// The listen port comes from the command-line option
-var listen_port=CLP.namedParameters['listen_port']||0;
-var listen_hostname=CLP.namedParameters['listen_hostname']||'';
-var server_url=CLP.namedParameters['server_url']||'';
-var prv_exe=__dirname+'/../../../bin/prv';
-var mp_exe=__dirname+'/../../../bin/mountainprocess';
-var prvbucket_url_path='/prvbucket';
-var mountainprocess_url_path='/mountainprocess';
-
-// The first argument is the data directory -- the base path from which files will be served
-var data_directory=CLP.unnamedParameters[0]||'';
-if ((!data_directory)||(!listen_port)||(!('server_url' in CLP.namedParameters))) {
-	print_usage();
-	process.exit(-1);
-}
-
-// Exit this program when the user presses ctrl+C
-process.on('SIGINT', function() {
-    process.exit();
-});
-
-// Create the web server!
-var SERVER=http.createServer(function (REQ, RESP) {
-
-	//parse the url of the request
-	var url_parts = url.parse(REQ.url,true);
-	var host=url_parts.host;
-	var path=url_parts.pathname;
-	var query=url_parts.query;
-	
-	//by default, the action will be 'download'
-	var action=query.a||'download';	
-	var info=query.info||'{}';
-
-	if (REQ.method == 'OPTIONS') {
-		var headers = {};
+exports.RequestHandler=function(hopts) {
+	this.handle_request=function(REQ,RESP) {
+		//parse the url of the request
+		var url_parts = url.parse(REQ.url,true);
+		var host=url_parts.host;
+		var path=url_parts.pathname;
+		var query=url_parts.query;
 		
-		//allow cross-domain requests
-		/// TODO refine this
-		
-		headers["Access-Control-Allow-Origin"] = "*";
-		headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
-		headers["Access-Control-Allow-Credentials"] = false;
-		headers["Access-Control-Max-Age"] = '86400'; // 24 hours
-		headers["Access-Control-Allow-Headers"] = "X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept";
-		RESP.writeHead(200, headers);
-		RESP.end();
-	}
-	else if (REQ.method=='GET') {
-		console.log ('GET: '+REQ.url);
+		//by default, the action will be 'download'
+		var action=query.a||'download';	
 
-		if (path.indexOf(prvbucket_url_path)==0) {
-			path=path.slice(prvbucket_url_path.length); // now let's take everything after that path
-			if (action=="download") {
-				if (!safe_to_serve_file(path)) {
-					console.log ('Not safe to serve file: '+path);
-					send_json_response({success:false,error:"Unable to serve file."});		
-					return;
-				}
-				var fname=absolute_data_directory()+"/"+path;
-				console.log ('Download: '+fname);
-				if (!require('fs').existsSync(fname)) {
-					console.log ('Files does not exist: '+fname);
-					send_json_response({success:false,error:"File does not exist: "+path});		
-					return;	
-				}
-				var opts={};
-				if (query.bytes) {
-					//request a subset of bytes
-					var vals=query.bytes.split('-');
-					if (vals.length!=2) {
-						send_json_response({success:false,error:"Error in bytes parameter: "+query.bytes});		
-						return;			
+		if (REQ.method == 'OPTIONS') {
+			var headers = {};
+			
+			//allow cross-domain requests
+			/// TODO refine this
+			
+			headers["Access-Control-Allow-Origin"] = "*";
+			headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
+			headers["Access-Control-Allow-Credentials"] = false;
+			headers["Access-Control-Max-Age"] = '86400'; // 24 hours
+			headers["Access-Control-Allow-Headers"] = "X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept";
+			RESP.writeHead(200, headers);
+			RESP.end();
+		}
+		else if (REQ.method=='GET') {
+			console.log ('GET: '+REQ.url);
+
+			console.log(JSON.stringify(opts));
+			if (path.indexOf(hopts.prvbucket_url_path)===0) {
+				path=path.slice(hopts.prvbucket_url_path.length); // now let's take everything after that path
+				if (action=="download") {
+					if (!safe_to_serve_file(path)) {
+						console.log ('Not safe to serve file: '+path);
+						send_json_response({success:false,error:"Unable to serve file."});		
+						return;
 					}
-					opts.start_byte=Number(vals[0]);
-					opts.end_byte=Number(vals[1]);
+					var fname=absolute_data_directory(hopts.data_directory)+"/"+path;
+					console.log ('Download: '+fname);
+					if (!require('fs').existsSync(fname)) {
+						console.log ('Files does not exist: '+fname);
+						send_json_response({success:false,error:"File does not exist: "+path});		
+						return;	
+					}
+					var opts={};
+					if (query.bytes) {
+						//request a subset of bytes
+						var vals=query.bytes.split('-');
+						if (vals.length!=2) {
+							send_json_response({success:false,error:"Error in bytes parameter: "+query.bytes});		
+							return;			
+						}
+						opts.start_byte=Number(vals[0]);
+						opts.end_byte=Number(vals[1]);
+					}
+					else {
+						//otherwise get the entire file
+						opts.start_byte=0;
+						opts.end_byte=get_file_size(fname)-1;
+					}
+					//serve the file
+					serve_file(REQ,fname,RESP,opts);
+				}
+				else if (action=="stat") {
+					var fname=absolute_data_directory(hopts.data_directory)+"/"+path;
+					if (!require('fs').existsSync(fname)) {
+						send_json_response({success:false,error:"File does not exist: "+path});		
+						return;	
+					}
+					run_process_and_read_stdout(hopts.prv_exe,['stat',fname],function(txt) {
+						try {
+							var obj=JSON.parse(txt);
+							send_json_response(obj);
+						}
+						catch(err) {
+							send_json_response({success:false,error:'Problem parsing json response from prv stat: '+txt});
+						}
+					});
+				}
+				else if (action=="locate") {
+					if ((!query.checksum)||(!query.size)||(!('fcs' in query))) {
+						send_json_response({success:false,error:"Invalid query."});	
+						return;
+					}
+					run_process_and_read_stdout(hopts.prv_exe,['locate','--search_path='+absolute_data_directory(hopts.data_directory),'--checksum='+query.checksum,'--size='+query.size,'--fcs='+(query.fcs||'')],function(txt) {
+						txt=txt.trim();
+						if (!starts_with(txt,absolute_data_directory(hopts.data_directory)+'/')) {
+							send_as_text_or_link('<not found>');
+							return;
+						}
+						if (txt) txt=txt.slice(absolute_data_directory(hopts.data_directory).length+1);
+						if (hopts.server_url) txt=hopts.server_url+hopts.prvbucket_url_path+'/'+txt;
+						send_as_text_or_link(txt);
+					});	
 				}
 				else {
-					//otherwise get the entire file
-					opts.start_byte=0;
-					opts.end_byte=get_file_size(fname)-1;
+					send_json_response({success:false,error:"Unrecognized action: "+action});
 				}
-				//serve the file
-				serve_file(REQ,fname,RESP,opts);
-			}
-			else if (action=="stat") {
-				var fname=absolute_data_directory()+"/"+path;
-				if (!require('fs').existsSync(fname)) {
-					send_json_response({success:false,error:"File does not exist: "+path});		
-					return;	
-				}
-				run_process_and_read_stdout(prv_exe,['stat',fname],function(txt) {
-					try {
-						var obj=JSON.parse(txt);
-						send_json_response(obj);
-					}
-					catch(err) {
-						send_json_response({success:false,error:'Problem parsing json response from prv stat: '+txt});
-					}
-				});
-			}
-			else if (action=="locate") {
-				if ((!query.checksum)||(!query.size)||(!('fcs' in query))) {
-					send_json_response({success:false,error:"Invalid query."});	
-					return;
-				}
-				run_process_and_read_stdout(prv_exe,['locate','--search_path='+absolute_data_directory(),'--checksum='+query.checksum,'--size='+query.size,'--fcs='+(query.fcs||'')],function(txt) {
-					txt=txt.trim();
-					if (!starts_with(txt,absolute_data_directory()+'/')) {
-						send_as_text_or_link('<not found>');
-						return;
-					}
-					if (txt) txt=txt.slice(absolute_data_directory().length+1);
-					if (server_url) txt=server_url+prvbucket_url_path+'/'+txt;
-					send_as_text_or_link(txt);
-				});	
 			}
 			else {
-				send_json_response({success:false,error:"Unrecognized action: "+action});
+				send_json_response({success:false,error:'Unexpected path: '+path});
+				return;
 			}
+			
 		}
-		else if (path.indexOf(mountainprocess_url_path)==0) {
-			path=path.slice(mountainprocess_url_path.length); // now let's take everything after that path
-			if (action=="mountainprocess") {
-				var request_fname=make_tmp_json_file();
-				var response_fname=make_tmp_json_file();
-				if (!write_text_file(request_fname,query.mpreq)) {
-					send_json_response({success:false,error:'Problem writing mpreq to file'});
-					return;
-				}
-				run_process_and_read_stdout(mp_exe,['handle-request','--prvbucket_path='+data_directory,request_fname,response_fname],function(txt) {
-					//remove_file(request_fname);
-					if (!fs.existsSync(response_fname)) {
-						send_json_response({success:false,error:'Response file does not exist: '+response_fname});
-						return;
-					}
-					var json_response=read_json_file(response_fname);
-					remove_file(response_fname);
-					send_json_response({success:true,response:json_response});
-				});
-			}
-			else {
-				send_json_response({success:false,error:"Unrecognized action: "+action});
-			}
+		else if(REQ.method=='POST') {
+			send_text_response("Unsuported request method: POST");
 		}
 		else {
-			send_json_response({success:false,error:'Unexpected path: '+path});
-			return;
+			send_text_response("Unsuported request method.");
+		}
+
+		function absolute_data_directory(data_directory) {
+			var ret=data_directory;
+			if (ret.indexOf('/')===0) return ret;
+			return __dirname+'/../'+ret;
 		}
 		
-	}
-	else if(REQ.method=='POST') {
-		send_text_response("Unsuported request method: POST");
-	}
-	else {
-		send_text_response("Unsuported request method.");
-	}
-
-	function absolute_data_directory() {
-		var ret=data_directory;
-		if (ret.indexOf('/')===0) return ret;
-		return __dirname+'/../'+ret;
-	}
-	
-	function send_json_response(obj) {
-		console.log ('RESPONSE: '+JSON.stringify(obj));
-		RESP.writeHead(200, {"Access-Control-Allow-Origin":"*", "Content-Type":"application/json"});
-		RESP.end(JSON.stringify(obj));
-	}
-	function send_text_response(text) {
-		console.log ('RESPONSE: '+text);
-		RESP.writeHead(200, {"Access-Control-Allow-Origin":"*", "Content-Type":"text/plain"});
-		RESP.end(text);
-	}
-	function send_html_response(text) {
-		console.log ('RESPONSE: '+text);
-		RESP.writeHead(200, {"Access-Control-Allow-Origin":"*", "Content-Type":"text/html"});
-		RESP.end(text);
-	}
-	function send_as_text_or_link(text) {
-		if ((query.return_link=='true')&&(looks_like_it_could_be_a_url(text))) {
-			if (text) {
-				send_html_response('<html><body><a href="'+text+'">'+text+'</a></body></html>');
+		function send_json_response(obj) {
+			console.log ('RESPONSE: '+JSON.stringify(obj));
+			RESP.writeHead(200, {"Access-Control-Allow-Origin":"*", "Content-Type":"application/json"});
+			RESP.end(JSON.stringify(obj));
+		}
+		function send_text_response(text) {
+			console.log ('RESPONSE: '+text);
+			RESP.writeHead(200, {"Access-Control-Allow-Origin":"*", "Content-Type":"text/plain"});
+			RESP.end(text);
+		}
+		function send_html_response(text) {
+			console.log ('RESPONSE: '+text);
+			RESP.writeHead(200, {"Access-Control-Allow-Origin":"*", "Content-Type":"text/html"});
+			RESP.end(text);
+		}
+		function send_as_text_or_link(text) {
+			if ((query.return_link=='true')&&(looks_like_it_could_be_a_url(text))) {
+				if (text) {
+					send_html_response('<html><body><a href="'+text+'">'+text+'</a></body></html>');
+				}
+				else {
+					send_html_response('<html><body>Not found.</html>');	
+				}
 			}
 			else {
-				send_html_response('<html><body>Not found.</html>');	
+				send_text_response(text);
 			}
 		}
-		else {
-			send_text_response(text);
-		}
-	}
-});
-if (listen_hostname)
-	SERVER.listen(listen_port,listen_hostname);
-else
-	SERVER.listen(listen_port);
-SERVER.timeout=1000*60*60*24; //give it 24 hours!
-console.log ('Listening on port: '+listen_port+', host: '+listen_hostname);
+	};
+}
 
 function run_process_and_read_stdout(exe,args,callback) {
 	console.log ('RUNNING:'+exe+' '+args.join(' '));
@@ -256,10 +199,6 @@ function read_json_file(fname) {
 	catch(err) {
 		return '';
 	}	
-}
-
-function make_tmp_json_file() {
-	return data_directory+'/tmp.'+make_random_id(10)+'.json';
 }
 
 function serve_file(REQ,filename,response,opts) {
@@ -385,12 +324,6 @@ function get_file_size(fname) {
 	}
 }
 
-function compute_file_checksum(fname,callback) {
-	run_process_and_read_stdout(prv_exe,['sha1sum',fname],function(txt) {
-		callback(txt.trim());
-	});
-}
-
 function starts_with(str,substr) {
 	return (str.slice(0,substr.length)==substr);
 }
@@ -401,31 +334,3 @@ function safe_to_serve_file(path) {
 		return false;
 	return true;
 }
-
-function CLParams(argv) {
-	this.unnamedParameters=[];
-	this.namedParameters={};
-
-	var args=argv.slice(2);
-	for (var i=0; i<args.length; i++) {
-		var arg0=args[i];
-		if (arg0.indexOf('--')===0) {
-			arg0=arg0.slice(2);
-			var ind=arg0.indexOf('=');
-			if (ind>=0) {
-				this.namedParameters[arg0.slice(0,ind)]=arg0.slice(ind+1);
-			}
-			else {
-				this.namedParameters[arg0]=args[i+1]||'';
-				i++;
-			}
-		}
-		else if (arg0.indexOf('-')===0) {
-			arg0=arg0.slice(1);
-			this.namedParameters[arg0]='';
-		}
-		else {
-			this.unnamedParameters.push(arg0);
-		}
-	}
-};

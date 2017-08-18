@@ -1346,11 +1346,15 @@ void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, 
         qCritical() << "No QProcessManager object found in object registry. Aborting.";
         abort();
     }
-    qprocess->setProgram("/bin/bash");
-    qprocess->setArguments(QStringList(bash_script_fname));
-    QSharedPointer<QProcess> pp = manager->start(qprocess);
+    //    qprocess->setProgram("/bin/bash");
+    //    qprocess->setArguments(QStringList(bash_script_fname));
 
-    CacheManager::globalInstance()->setTemporaryFileExpirePid(bash_script_fname, pp->processId());
+    //    QSharedPointer<QProcess> pp = manager->start(qprocess);
+    //    qprocess->start();
+    //CacheManager::globalInstance()->setTemporaryFileExpirePid(bash_script_fname, pp->processId());
+
+    qprocess->start("/bin/bash", QStringList(bash_script_fname));
+    CacheManager::globalInstance()->setTemporaryFileExpirePid(bash_script_fname, qprocess->processId());
 
     //qprocess->start("/bin/bash", QStringList(bash_script_fname));
 }

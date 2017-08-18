@@ -8,6 +8,7 @@
 #include <QFile>
 #include <QCryptographicHash>
 #include <QDir>
+#include "mpdaemon.h"
 
 QJsonObject handle_request_run_process(QString processor_name, const QJsonObject& inputs, const QJsonObject& outputs, const QJsonObject& parameters, QString prvbucket_path);
 
@@ -153,13 +154,22 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
 
     QString exe = qApp->applicationDirPath() + "/mountainprocess";
 
-    QProcess pp;
     qDebug().noquote() << "Running: " + exe + " " + args.join(" ");
+
+    QProcess pp;
+    pp.setProcessChannelMode(QProcess::MergedChannels);
+
+    MPDaemon::start_bash_command_and_kill_when_pid_is_gone(&pp, exe + " " + args.join(" "), QCoreApplication::applicationPid());
+
+    pp.waitForFinished();
+
+    /*
     int ret = pp.execute(exe, args);
     if (ret != 0) {
         response["error"] = "Error running processor.";
         return response;
     }
+    */
 
     QJsonObject outputs0;
     foreach (QString key, okeys) {
