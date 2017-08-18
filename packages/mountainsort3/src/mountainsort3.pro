@@ -16,13 +16,14 @@ TEMPLATE = app
 
 #FFTW
 USE_FFTW3=$$(USE_FFTW3)
-!equals(USE_FFTW3,"FALSE") {
+contains(CONFIG,"no_fftw3") {
+    DEFINES += NO_FFTW3
+    message(Warning: Not using FFTW3)
+}
+else {
     LIBS += -fopenmp -lfftw3 -lfftw3_threads
     SOURCES += p_spikeview_templates.cpp
     HEADERS += p_spikeview_templates.h
-} else {
-    DEFINES += NO_FFTW3
-    message(Not using FFTW because USE_FFTW3 environment has been set to FALSE)
 }
 
 #OPENMP

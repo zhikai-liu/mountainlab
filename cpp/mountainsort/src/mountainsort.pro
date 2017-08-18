@@ -348,14 +348,13 @@ QMAKE_EXTRA_COMPILERS += nocxx11
 #   LIBS += -llapack -llapacke
 
 #FFTW
-USE_FFTW3=$$(USE_FFTW3)
-!equals(USE_FFTW3,"FALSE") {
+contains(CONFIG,"no_fftw3") {
+    DEFINES += NO_FFTW3
+    message(WARNING: Not using FFTW3)
+} else {
     LIBS += -fopenmp -lfftw3 -lfftw3_threads
     HEADERS += processors/bandpass_filter0.h processors/bandpass_filter_processor.h
     SOURCES += processors/bandpass_filter0.cpp processors/bandpass_filter_processor.cpp
-} else {
-    DEFINES += NO_FFTW3
-    message(Not using FFTW because USE_FFTW3 environment has been set to FALSE)
 }
 
 #OPENMP
