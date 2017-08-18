@@ -32,6 +32,10 @@ Contact the authors for information on the slack team for users and developers.
 
 [The first sort](old/doc/the_first_sort.md)
 
+## Tests
+
+[Repo of unit (and not so unit) tests](https://github.com/magland/mountainlab_tests)
+
 ## Data formats used in MountainLab
 
 [The .mda file format](old/doc/mda_format.md)
