@@ -9,6 +9,7 @@ struct Bandpass_filter_opts {
     double freq_max = 0;
     double freq_wid = 0;
     double quantization_unit = 0;
+    int subsample_factor = 1;
     QString testcode;
 };
 

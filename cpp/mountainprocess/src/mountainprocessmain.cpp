@@ -99,7 +99,7 @@ void remove_system_parameters(QVariantMap& params);
 bool queue_pript(PriptType prtype, const CLParams& CLP, QString working_path);
 QString get_daemon_state_summary(const QJsonObject& state);
 
-QString http_get_text_curl_1(const QString& url,bigint timeout_msec=20000);
+QString http_get_text_curl_1(const QString& url, bigint timeout_msec = 20000);
 bool download_prv(const QJsonObject& prv, QString fname, QString server);
 
 #define EXIT_ON_CRITICAL_ERROR
@@ -962,7 +962,7 @@ int main(int argc, char* argv[])
         }
 
         QString url = server_url + "/mountainprocess/?a=mountainprocess&mpreq=" + request_json;
-        QString txt0 = http_get_text_curl_1(url,1000*60*60);
+        QString txt0 = http_get_text_curl_1(url, 1000 * 60 * 60);
 
         QJsonObject response;
         {
@@ -1707,7 +1707,7 @@ QJsonObject get_daemon_state(QString daemon_id)
     return state;
 }
 
-QString http_get_text_curl_1(const QString& url,bigint timeout_ms)
+QString http_get_text_curl_1(const QString& url, bigint timeout_ms)
 {
     QNetworkAccessManager manager;
     QNetworkReply* reply = manager.get(QNetworkRequest(QUrl(url)));

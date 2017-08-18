@@ -247,7 +247,7 @@ void DiskReadMda32::setConcatPaths(int concat_dimension, const QStringList& path
     foreach (QString path0, paths) {
         if (QFileInfo(path0).isDir()) {
             QStringList fnames = d->find_all_mda_files_in_directory(path0, true);
-            foreach (QString fname,fnames)
+            foreach (QString fname, fnames)
                 d->m_concat_list << DiskReadMda32(fname);
         }
         else {
