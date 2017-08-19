@@ -90,6 +90,7 @@ struct Kernel_runner {
     fftw_plan p_ifft;
 };
 Mda32 bandpass_filter_kernel(Mda32& X, double samplerate, double freq_min, double freq_max, double freq_wid);
+Mda32 subsample(const Mda32& timeseries, int subsample_factor);
 }
 
 bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filter_opts opts)
@@ -98,9 +99,11 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
         return QFile::copy(timeseries, timeseries_out);
     }
 
+    if (!opts.subsample_factor) opts.subsample_factor=1;
+
     bool do_write = true;
-    if (opts.testcode.split(",").contains("nowrite"))
-        do_write = false;
+    //if (opts.testcode.split(",").contains("nowrite"))
+    //    do_write = false;
 
     DiskReadMda32 X;
     if (QFileInfo(timeseries).isDir())
@@ -109,13 +112,14 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
         X.setPath(timeseries);
 
     const bigint M = X.N1();
-    const bigint N = X.N2();
+    const bigint Naa = X.N2();
+    bigint N2 = Naa / opts.subsample_factor;
 
     bigint dtype = MDAIO_TYPE_FLOAT32;
     if (opts.quantization_unit) {
         dtype = MDAIO_TYPE_INT16;
     }
-    DiskWriteMda Y(dtype, timeseries_out, M, N);
+    DiskWriteMda Ybb(dtype, timeseries_out, M, N2);
 
     QTime timer_status;
     timer_status.start();
@@ -143,7 +147,7 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
         }
         bigint num_timepoints_handled = 0;
 #pragma omp for
-        for (bigint timepoint = 0; timepoint < N; timepoint += chunk_size) {
+        for (bigint timepoint = 0; timepoint < Naa; timepoint += chunk_size) {
             Mda32 chunk;
 #pragma omp critical(lock1)
             {
@@ -152,13 +156,14 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
                     ret = false;
                 }
             }
-            if (!opts.testcode.split(",").contains("nokernel")) {
+            //if (!opts.testcode.split(",").contains("nokernel")) {
                 QTime kernel_timer;
                 kernel_timer.start();
                 KR.apply(chunk);
                 //chunk = P_bandpass_filter::bandpass_filter_kernel(chunk, opts.samplerate, opts.freq_min, opts.freq_max, opts.freq_wid);
                 //qDebug().noquote() << "Kernel timer elapsed: " << kernel_timer.elapsed() << " for chunk at " << timepoint << " of " << N;
-            }
+            //}
+
             Mda32 chunk2;
             {
                 chunk.getChunk(chunk2, 0, overlap_size, M, chunk_size);
@@ -167,20 +172,23 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
             {
                 {
                     if (do_write) {
+                        if (opts.subsample_factor > 1) {
+                            chunk2 = P_bandpass_filter::subsample(chunk2, opts.subsample_factor);
+                        }
                         if (opts.quantization_unit) {
                             P_bandpass_filter::multiply_by_factor(chunk2.totalSize(), chunk2.dataPtr(), 1.0 / opts.quantization_unit);
                         }
-                        if (!Y.writeChunk(chunk2, 0, timepoint)) {
+                        if (!Ybb.writeChunk(chunk2, 0, timepoint / opts.subsample_factor)) {
                             qWarning() << "Error writing chunk";
                             ret = false;
                         }
                     }
                 }
-                num_timepoints_handled += qMin((bigint)chunk_size, N - timepoint);
-                if ((timer_status.elapsed() > 5000) || (num_timepoints_handled == N) || (timepoint == 0)) {
+                num_timepoints_handled += qMin((bigint)chunk_size, Naa - timepoint);
+                if ((timer_status.elapsed() > 5000) || (num_timepoints_handled == Naa) || (timepoint == 0)) {
                     printf("%ld/%ld (%d%%) -- using %d threads.\n",
-                        num_timepoints_handled, N,
-                        (int)(num_timepoints_handled * 1.0 / N * 100),
+                        num_timepoints_handled, Naa,
+                        (int)(num_timepoints_handled * 1.0 / Naa * 100),
                         omp_get_num_threads());
                     timer_status.restart();
                 }
@@ -437,6 +445,19 @@ Mda32 bandpass_filter_kernel(Mda32& X, double samplerate, double freq_min, doubl
     double rate = X.totalSize() / sec;
     printf("bandpass filter rate: %g numbers/sec\n", rate);
 
+    return Y;
+}
+
+Mda32 subsample(const Mda32& timeseries, int subsample_factor)
+{
+    int M = timeseries.N1();
+    bigint N = timeseries.N2();
+    Mda32 Y(M, N / subsample_factor);
+    for (bigint n2 = 0; n2 < N / subsample_factor; n2++) {
+        for (int m = 0; m < M; m++) {
+            Y.set(timeseries.get(m, n2 * subsample_factor), m, n2);
+        }
+    }
     return Y;
 }
 }

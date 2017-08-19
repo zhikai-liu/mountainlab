@@ -6,6 +6,24 @@ TEMPLATE = subdirs
 
 #COMPONENTS = mdaconvert  mountainprocess mountainview prv
 
+defineTest(echo) {
+  msg = $$ARGS
+  system("echo '$$msg'")
+  return (true)
+}
+
+!CONFIG("no_fftw3"):!packagesExist(fftw3) {
+  echo("FFTW3 does not seem to be installed on your system. Please install it.")
+  echo("On systems like Ubuntu you can run sudo apt install libfftw-dev.")
+  echo("Alternatively, you can disable fftw3 (which will disable somefunctionality),")
+  echo("you can make a .qmake.cache file in this directory with the following line:")
+  echo("CONFIG += no_fftw3.")
+  echo("You can also use .qmake.cache to provide other qmake settings that may allow you")
+  echo("to find fftw in a different location.")
+  echo("")
+  error("Aborting")
+}
+
 isEmpty(COMPONENTS) {
     COMPONENTS = mda mdaconvert mountainprocess mountainsort mountainview mountaincompare prv mountainsort3 mountainsort2 spikeview1
 }
