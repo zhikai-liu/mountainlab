@@ -10,6 +10,7 @@
 #include "cachemanager.h"
 #include "mlcommon.h"
 #include <QJsonArray>
+#include <QMutexLocker>
 #include <icounter.h>
 #include <objectregistry.h>
 
@@ -20,6 +21,7 @@
 
 class DiskReadMda32Private {
 public:
+    DiskReadMda32Private() : lock(QMutex::Recursive) {}
     DiskReadMda32* q;
     FILE* m_file;
     bool m_file_open_failed;
@@ -38,6 +40,8 @@ public:
     QString m_path;
     QJsonObject m_prv_object;
 
+    mutable QMutex lock;
+
     IIntCounter* allocatedCounter = nullptr;
     IIntCounter* freedCounter = nullptr;
     IIntCounter* bytesReadCounter = nullptr;
@@ -49,6 +53,7 @@ public:
     void copy_from(const DiskReadMda32& other);
     bigint total_size();
     static QStringList find_all_mda_files_in_directory(QString dir_path, bool recursive);
+
 };
 
 DiskReadMda32::DiskReadMda32(const QString& path)
@@ -165,6 +170,7 @@ DiskReadMda32::DiskReadMda32(int concat_dimension, const QStringList& array_path
 
 DiskReadMda32::~DiskReadMda32()
 {
+    QMutexLocker locker(&d->lock);
     if (d->m_file) {
         fclose(d->m_file);
     }
@@ -173,11 +179,14 @@ DiskReadMda32::~DiskReadMda32()
 
 void DiskReadMda32::operator=(const DiskReadMda32& other)
 {
+    QMutexLocker locker(&d->lock);
+    QMutexLocker locker2(&other.d->lock); // might deadlock if two objects try to assign each other to self
     d->copy_from(other);
 }
 
 void DiskReadMda32::setPath(const QString& file_path)
 {
+    QMutexLocker locker(&d->lock);
     if (d->m_file) {
         fclose(d->m_file);
         d->m_file = 0;
@@ -232,11 +241,13 @@ void DiskReadMda32::setPath(const QString& file_path)
 
 void DiskReadMda32::setPrvObject(const QJsonObject& prv_object)
 {
+    QMutexLocker locker(&d->lock);
     d->m_prv_object = prv_object;
 }
 
 void DiskReadMda32::setConcatPaths(int concat_dimension, const QStringList& paths)
 {
+    QMutexLocker locker(&d->lock);
     if (concat_dimension != 2) {
         qWarning() << "For now, the concat_dimension must be 2";
         return;
@@ -258,6 +269,7 @@ void DiskReadMda32::setConcatPaths(int concat_dimension, const QStringList& path
 
 void DiskReadMda32::setConcatDirectory(int concat_dimension, const QString& dir_path)
 {
+    QMutexLocker locker(&d->lock);
     QStringList fnames = d->find_all_mda_files_in_directory(dir_path, true);
     this->setConcatPaths(concat_dimension, fnames);
     d->m_path = dir_path;
@@ -285,6 +297,7 @@ QString compute_mda_checksum(Mda32& X)
 
 QString DiskReadMda32::makePath() const
 {
+    QMutexLocker locker(&d->lock);
     if (!d->m_path.isEmpty())
         return d->m_path;
     if (d->m_use_memory_mda) {
@@ -326,6 +339,7 @@ QString DiskReadMda32::makePath() const
 
 QJsonObject DiskReadMda32::toPrvObject() const
 {
+    QMutexLocker locker(&d->lock);
     if (d->m_prv_object.isEmpty()) {
         if (d->m_use_concat) {
             QJsonArray concat_list;
@@ -350,6 +364,7 @@ QJsonObject DiskReadMda32::toPrvObject() const
 
 bigint DiskReadMda32::N1() const
 {
+    QMutexLocker locker(&d->lock);
     if (d->m_use_memory_mda) {
         return d->m_memory_mda.N1();
     }
@@ -361,6 +376,7 @@ bigint DiskReadMda32::N1() const
 
 bigint DiskReadMda32::N2() const
 {
+    QMutexLocker locker(&d->lock);
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N2();
     if (!d->read_header_if_needed())
@@ -370,6 +386,7 @@ bigint DiskReadMda32::N2() const
 
 bigint DiskReadMda32::N3() const
 {
+    QMutexLocker locker(&d->lock);
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N3();
     if (!d->read_header_if_needed())
@@ -379,6 +396,7 @@ bigint DiskReadMda32::N3() const
 
 bigint DiskReadMda32::N4() const
 {
+    QMutexLocker locker(&d->lock);
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N4();
     if (!d->read_header_if_needed())
@@ -388,6 +406,7 @@ bigint DiskReadMda32::N4() const
 
 bigint DiskReadMda32::N5() const
 {
+    QMutexLocker locker(&d->lock);
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N5();
     if (!d->read_header_if_needed())
@@ -397,6 +416,7 @@ bigint DiskReadMda32::N5() const
 
 bigint DiskReadMda32::N6() const
 {
+    QMutexLocker locker(&d->lock);
     if (d->m_use_memory_mda)
         return d->m_memory_mda.N6();
     if (!d->read_header_if_needed())
@@ -406,6 +426,7 @@ bigint DiskReadMda32::N6() const
 
 bigint DiskReadMda32::N(int dim) const
 {
+    QMutexLocker locker(&d->lock);
     d->read_header_if_needed();
     if (dim == 0)
         return 0; //should be 1-based
@@ -427,18 +448,21 @@ bigint DiskReadMda32::N(int dim) const
 
 bigint DiskReadMda32::totalSize() const
 {
+    QMutexLocker locker(&d->lock);
     d->read_header_if_needed();
     return d->total_size();
 }
 
 MDAIO_HEADER DiskReadMda32::mdaioHeader() const
 {
+    QMutexLocker locker(&d->lock);
     d->read_header_if_needed();
     return d->m_header;
 }
 
 bool DiskReadMda32::reshape(bigint N1b, bigint N2b, bigint N3b, bigint N4b, bigint N5b, bigint N6b)
 {
+    QMutexLocker locker(&d->lock);
     bigint size_b = N1b * N2b * N3b * N4b * N5b * N6b;
     if (size_b != this->totalSize()) {
         qWarning() << "Cannot reshape because sizes do not match" << this->totalSize() << N1b << N2b << N3b << N4b << N5b << N6b;
@@ -467,6 +491,7 @@ bool DiskReadMda32::reshape(bigint N1b, bigint N2b, bigint N3b, bigint N4b, bigi
 
 DiskReadMda32 DiskReadMda32::reshaped(bigint N1b, bigint N2b, bigint N3b, bigint N4b, bigint N5b, bigint N6b)
 {
+    QMutexLocker locker(&d->lock);
     bigint size_b = N1b * N2b * N3b * N4b * N5b * N6b;
     if (size_b != this->totalSize()) {
         qWarning() << "Cannot reshape because sizes do not match" << this->totalSize() << N1b << N2b << N3b << N4b << N5b << N6b;
@@ -554,6 +579,7 @@ bool read_chunk_from_concat_list(Mda32& chunk, const QList<DiskReadMda32>& list,
 
 bool DiskReadMda32::readChunk(Mda32& X, bigint i, bigint size) const
 {
+    QMutexLocker locker(&d->lock);
     if (d->m_use_memory_mda) {
         d->m_memory_mda.getChunk(X, i, size);
         return true;
@@ -582,6 +608,7 @@ bool DiskReadMda32::readChunk(Mda32& X, bigint i, bigint size) const
 
 bool DiskReadMda32::readChunk(Mda32& X, bigint i1, bigint i2, bigint size1, bigint size2) const
 {
+    QMutexLocker locker(&d->lock);
     if (size2 == 0) {
         return readChunk(X, i1, size1);
     }
@@ -628,6 +655,7 @@ bool DiskReadMda32::readChunk(Mda32& X, bigint i1, bigint i2, bigint size1, bigi
 
 bool DiskReadMda32::readChunk(Mda32& X, bigint i1, bigint i2, bigint i3, bigint size1, bigint size2, bigint size3) const
 {
+    QMutexLocker locker(&d->lock);
     if (size3 == 0) {
         if (size2 == 0) {
             return readChunk(X, i1, size1);
@@ -673,6 +701,7 @@ bool DiskReadMda32::readChunk(Mda32& X, bigint i1, bigint i2, bigint i3, bigint 
 
 dtype32 DiskReadMda32::value(bigint i) const
 {
+    QMutexLocker locker(&d->lock);
     if (d->m_use_memory_mda)
         return d->m_memory_mda.value(i);
     if ((i < 0) || (i >= d->total_size()))
@@ -693,6 +722,7 @@ dtype32 DiskReadMda32::value(bigint i) const
 
 dtype32 DiskReadMda32::value(bigint i1, bigint i2) const
 {
+    QMutexLocker locker(&d->lock);
     if (d->m_use_memory_mda)
         return d->m_memory_mda.value(i1, i2);
     if ((i1 < 0) || (i1 >= N1()))
@@ -704,6 +734,7 @@ dtype32 DiskReadMda32::value(bigint i1, bigint i2) const
 
 dtype32 DiskReadMda32::value(bigint i1, bigint i2, bigint i3) const
 {
+    QMutexLocker locker(&d->lock);
     if (d->m_use_memory_mda)
         return d->m_memory_mda.value(i1, i2, i3);
     if ((i1 < 0) || (i1 >= N1()))
