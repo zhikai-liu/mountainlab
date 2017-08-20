@@ -1,12 +1,8 @@
-QT += core
-QT -= gui
-QT += network
-CONFIG -= app_bundle #Please apple, don't make a bundle today :)
+QT = core network
 
 CONFIG += c++11
 
-include(../../mlcommon/mlcommon.pri)
-include(../../mlcommon/mda.pri)
+CONFIG += openmp mlcommon fftw3
 
 DESTDIR = ../bin
 OBJECTS_DIR = ../build
@@ -332,13 +328,14 @@ SOURCES += utils/get_principal_components.cpp
 
 #some sources need to be compiled without -std=c++11 flag.
 #It would be nice to use something like CXXFLAGS_NOCXX11=$(CXXFLAGS), but doesn't seem to work
-CXXFLAGS_NOCXX11 = -c -fopenmp -O2 -Wall -W -D_REENTRANT -fPIC -DUSE_LAPACK -DQT_NO_DEBUG -DQT_CORE_LIB
-nocxx11.name = nocxx11
-nocxx11.input = SOURCES_NOCXX11
-nocxx11.variable_out = OBJECTS
-nocxx11.output = ${QMAKE_VAR_OBJECTS_DIR}${QMAKE_FILE_IN_BASE}$${first(QMAKE_EXT_OBJ)}
-nocxx11.commands = $${QMAKE_CXX} $${CXXFLAGS_NOCXX11}  $(INCPATH) ${QMAKE_FILE_IN} -o ${QMAKE_FILE_OUT} # Note the -O0
-QMAKE_EXTRA_COMPILERS += nocxx11
+
+#CXXFLAGS_NOCXX11 = -c -fopenmp -O2 -Wall -W -D_REENTRANT -fPIC -DUSE_LAPACK -DQT_NO_DEBUG -DQT_CORE_LIB
+#nocxx11.name = nocxx11
+#nocxx11.input = SOURCES_NOCXX11
+#nocxx11.variable_out = OBJECTS
+#nocxx11.output = ${QMAKE_VAR_OBJECTS_DIR}${QMAKE_FILE_IN_BASE}$${first(QMAKE_EXT_OBJ)}
+#nocxx11.commands = $${QMAKE_CXX} $${CXXFLAGS_NOCXX11}  $(INCPATH) ${QMAKE_FILE_IN} -o ${QMAKE_FILE_OUT} # Note the -O0
+#QMAKE_EXTRA_COMPILERS += nocxx11
 
 #LAPACK
 #On Ubuntu: sudo apt-get install liblapacke-dev
@@ -349,19 +346,12 @@ QMAKE_EXTRA_COMPILERS += nocxx11
 
 #FFTW
 contains(CONFIG,"no_fftw3") {
-    DEFINES += NO_FFTW3
     message(WARNING: Not using FFTW3)
 } else {
-    LIBS += -fopenmp -lfftw3 -lfftw3_threads
     HEADERS += processors/bandpass_filter0.h processors/bandpass_filter_processor.h
     SOURCES += processors/bandpass_filter0.cpp processors/bandpass_filter_processor.cpp
 }
 
-#OPENMP
-!macx {
-  QMAKE_LFLAGS += -fopenmp
-  QMAKE_CXXFLAGS += -fopenmp
-}
 #-std=c++11   # AHB removed since not in GNU gcc 4.6.3
 
 #tests

@@ -4,12 +4,7 @@ CONFIG += c++11
 QMAKE_CXXFLAGS += -Wno-reorder #qaccordion
 
 #TODO: Do we need openmp?
-CONFIG += mlcommon mvcommon openmp
-
-include(../../../cpp/mvcommon/mvcommon.pri)
-include(../../../cpp/mlcommon/mlcommon.pri)
-include(../../../cpp/mlcommon/mda.pri)
-include(../../../cpp/mlcommon/taskprogress.pri)
+CONFIG += mlcommon mvcommon openmp taskprogress
 
 QT += widgets
 QT += concurrent

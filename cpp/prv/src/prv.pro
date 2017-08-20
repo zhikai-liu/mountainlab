@@ -1,7 +1,4 @@
-QT += core
-QT -= gui
-QT += network
-CONFIG -= app_bundle #Please apple, don't make a bundle
+QT = core network
 CONFIG += c++11
 
 DESTDIR = ../bin
@@ -13,6 +10,5 @@ TEMPLATE = app
 SOURCES += prvmain.cpp \
     prvfile.cpp
 
-include(../../mlcommon/mlcommon.pri)
-include(../../mlcommon/mlnetwork.pri)
-include(../../mlcommon/taskprogress.pri)
+CONFIG += mlcommon taskprogress mlnetwork
+

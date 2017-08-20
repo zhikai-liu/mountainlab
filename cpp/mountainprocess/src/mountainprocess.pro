@@ -1,13 +1,8 @@
-QT += core
-QT -= gui
-CONFIG -= app_bundle #Please apple, don't make a bundle today :)
-
-QT += qml
+QT = core qml
 
 CONFIG += c++11
 
-include(../../mlcommon/mlcommon.pri)
-include(../../mlcommon/mda.pri)
+CONFIG += mlcommon
 
 DESTDIR = ../bin
 OBJECTS_DIR = ../build

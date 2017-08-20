@@ -3,7 +3,6 @@ QT = core network
 DEFINES += USE_REMOTE_READ_MDA
 
 CONFIG += c++11
-CONFIG -= app_bundle
 CONFIG += staticlib
 
 DESTDIR = ../lib
