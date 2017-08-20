@@ -1,6 +1,8 @@
 #ifndef MLVECTOR_H
 #define MLVECTOR_H
 
+#include <vector>
+
 template <typename T>
 class MLVector : public std::vector<T> {
 public:
