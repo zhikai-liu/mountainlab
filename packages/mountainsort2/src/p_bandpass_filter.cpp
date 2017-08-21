@@ -99,7 +99,8 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
         return QFile::copy(timeseries, timeseries_out);
     }
 
-    if (!opts.subsample_factor) opts.subsample_factor=1;
+    if (!opts.subsample_factor)
+        opts.subsample_factor = 1;
 
     bool do_write = true;
     //if (opts.testcode.split(",").contains("nowrite"))
@@ -157,11 +158,11 @@ bool p_bandpass_filter(QString timeseries, QString timeseries_out, Bandpass_filt
                 }
             }
             //if (!opts.testcode.split(",").contains("nokernel")) {
-                QTime kernel_timer;
-                kernel_timer.start();
-                KR.apply(chunk);
-                //chunk = P_bandpass_filter::bandpass_filter_kernel(chunk, opts.samplerate, opts.freq_min, opts.freq_max, opts.freq_wid);
-                //qDebug().noquote() << "Kernel timer elapsed: " << kernel_timer.elapsed() << " for chunk at " << timepoint << " of " << N;
+            QTime kernel_timer;
+            kernel_timer.start();
+            KR.apply(chunk);
+            //chunk = P_bandpass_filter::bandpass_filter_kernel(chunk, opts.samplerate, opts.freq_min, opts.freq_max, opts.freq_wid);
+            //qDebug().noquote() << "Kernel timer elapsed: " << kernel_timer.elapsed() << " for chunk at " << timepoint << " of " << N;
             //}
 
             Mda32 chunk2;

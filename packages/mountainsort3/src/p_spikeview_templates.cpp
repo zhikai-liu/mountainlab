@@ -68,7 +68,7 @@ bool p_spikeview_templates(QString timeseries, QString firings, QString template
         timer.start();
         bool first = true;
         Bandpass_filter_runner BP; //one per parallel thread
-#pragma omp critical
+#pragma omp critical(cc1)
         {
             if ((opts.samplerate != 0) && ((opts.freq_min != 0) || (opts.freq_max != 0))) {
                 BP.init(X.N1(), opts.clip_size + 2 * opts.filt_padding, opts.samplerate, opts.freq_min, opts.freq_max, opts.freq_wid);
@@ -77,7 +77,7 @@ bool p_spikeview_templates(QString timeseries, QString firings, QString template
 #pragma omp for
         for (int ii = 0; ii < keys.count(); ii++) {
             ClusterData* CD;
-#pragma omp critical
+#pragma omp critical(cc2)
             {
                 int key = keys[ii];
                 if ((timer.elapsed() > 3000) || (first)) {
@@ -87,7 +87,9 @@ bool p_spikeview_templates(QString timeseries, QString firings, QString template
                 }
                 CD = &cluster_data[key];
             }
-            compute_template(CD->template0, X, CD->times, opts, BP);
+            /// Witold -- this is a bad pitfall. I needed to use a new instance of DiskReadMda32 here because accessing the same instance across multiple threads was causing WRONG results --very bad -- please help make DiskReadMda32 thread safe
+            DiskReadMda32 X0(timeseries);
+            compute_template(CD->template0, X0, CD->times, opts, BP);
         }
     }
 
@@ -100,7 +102,6 @@ bool p_spikeview_templates(QString timeseries, QString firings, QString template
         }
     }
 
-    qDebug().noquote() << "Writing output";
     templates.write32(templates_out);
 
     return true;
