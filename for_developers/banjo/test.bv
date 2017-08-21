@@ -1,0 +1,10 @@
+{
+    "views":[
+        {
+            "view_type":"templates",
+            "templates_url":"http://river.simonsfoundation.org:60001/prvbucket/templates0.mda",
+            "container":"south",
+            "label":"Templates"
+        }
+    ]
+}
