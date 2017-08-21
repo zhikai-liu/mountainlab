@@ -1,0 +1,9 @@
+{
+	"banjoview_url":"http://river.simonsfoundation.org:60002/apps/banjoview/banjoview.html",
+	"use_config_url":false,
+	"url4text":{
+		"host":"datalaboratory.org",
+		"port":10005,
+		"path":"/api/text/"
+	}
+}

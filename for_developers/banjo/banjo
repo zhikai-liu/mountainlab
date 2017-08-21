@@ -5,7 +5,7 @@ var fs=require('fs');
 CLP=new CLParams(process.argv);
 var arg1=CLP.unnamedParameters[0]||'';
 
-var banjoview_url='http://localhost:8040/apps/banjoview/banjoview.html';
+var banjo_config=load_banjo_config();
 
 if (ends_with(arg1,'.bv')) {
 	var config=read_json_file(arg1);
@@ -29,6 +29,11 @@ else {
 	process.exit(-1);
 }
 
+function load_banjo_config() {
+	var obj1=read_json_file(__dirname+'/settings/banjo.default.json');
+	return obj1;
+}
+
 function read_json_file(fname) {
 	var txt=read_text_file(fname);
 	if (!txt) {
@@ -45,9 +50,67 @@ function read_json_file(fname) {
 
 function open_banjoview(config) {
 	var txt=JSON.stringify(config);
-	var str=base64encode(txt);
-	var url0=banjoview_url+'?config='+str;
-	return open_in_browser(url0);
+	if (banjo_config.use_config_url) {
+		url4text(txt,function(url0) {
+			var url1;
+			if (url0) {
+				var url0_encoded=base64encode(url0);
+				url1=banjo_config.banjoview_url+'?config_url='+url0_encoded;		
+				return open_in_browser(url1);
+			}
+			else {
+				//try it the other way if url4text fails (sloppy)
+				banjo_config.use_config_url=false;
+				open_banjoview(config);
+			}
+		});
+	}
+	else {
+		var txt_encoded=base64encode(txt);
+		var url1=banjo_config.banjoview_url+'?config='+txt_encoded;		
+		return open_in_browser(url1);
+	}
+}
+
+function url4text(txt,callback) {
+	http_post_json(banjo_config.url4text.host,banjo_config.url4text.port,banjo_config.url4text.path,{text:txt},cb);
+	function cb(response) {
+		console.log(response);
+		response=response||'{}';
+		response=JSON.parse(response);
+		var url0=response.raw||0;
+		console.log(url0);
+		callback(url0);
+	}
+}
+
+function http_post_json(host,port,path,data,callback) {
+	var post_data=JSON.stringify(data);
+
+	// An object of options to indicate where to post to
+	var post_options = {
+		host: host,
+		port: port,
+		path: path,
+		method: 'POST',
+		headers: {
+		  'Content-Type': 'application/json',
+		  'Content-Length': Buffer.byteLength(post_data)
+		}
+	};
+
+	// Set up the request
+	var post_req = require('http').request(post_options, function(res) {
+		res.setEncoding('utf8');
+		res.on('data', function (body) {
+			console.log(':::::::::::::::::::::: '+body);
+		  callback(body);
+		});
+	});
+
+	// post the data
+	post_req.write(post_data);
+	post_req.end();
 }
 
 function show_usage_view_templates() {
@@ -92,8 +155,9 @@ function open_in_browser(url) {
 		require('opn')(url);
 	}
 	else {
-		console.log('The opn module was not found. Try typing "npm install opn". Using firefox for now.');
-		var browser_exe='firefox';
+		//var browser_exe='firefox';
+		var browser_exe='google-chrome';
+		console.log('The opn module was not found. Try typing "npm install opn". Using '+browser_exe+' for now.');
 		require('child_process').exec(browser_exe+' '+url);
 	}
 	return true;
