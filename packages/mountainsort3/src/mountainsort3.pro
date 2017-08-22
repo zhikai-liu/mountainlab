@@ -53,12 +53,14 @@ SOURCES += \
     p_synthesize_timeseries.cpp \
     p_combine_firing_segments.cpp \
     p_extract_firings.cpp \
-    p_concat_timeseries.cpp
+    p_concat_timeseries.cpp \
+    p_banjoview_cross_correlograms.cpp
 
 INCLUDEPATH += ../../mountainsort2/src
 VPATH += ../../mountainsort2/src
 HEADERS += kdtree.h \
-    p_concat_timeseries.h
+    p_concat_timeseries.h \
+    p_banjoview_cross_correlograms.h
 SOURCES += kdtree.cpp
 
 HEADERS += \
@@ -87,5 +89,5 @@ SOURCES += isosplit5.cpp isocut5.cpp jisotonic5.cpp
 
 INCLUDEPATH += ../../../cpp/mountainsort/src/utils
 VPATH += ../../../cpp/mountainsort/src/utils
-HEADERS += pca.h get_sort_indices.h compute_templates_0.h
-SOURCES += pca.cpp get_sort_indices.cpp compute_templates_0.cpp
+HEADERS += pca.h compute_templates_0.h
+SOURCES += pca.cpp compute_templates_0.cpp

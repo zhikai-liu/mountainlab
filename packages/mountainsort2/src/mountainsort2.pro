@@ -92,5 +92,5 @@ SOURCES += isosplit5.cpp isocut5.cpp jisotonic5.cpp
 
 INCLUDEPATH += ../../../cpp/mountainsort/src/utils
 VPATH += ../../../cpp/mountainsort/src/utils
-HEADERS += pca.h get_sort_indices.h compute_templates_0.h
-SOURCES += pca.cpp get_sort_indices.cpp compute_templates_0.cpp
+HEADERS += pca.h compute_templates_0.h
+SOURCES += pca.cpp compute_templates_0.cpp

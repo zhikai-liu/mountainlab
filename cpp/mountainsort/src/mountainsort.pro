@@ -309,14 +309,14 @@ SOURCES += \ #see below
 SOURCES += utils/eigenvalue_decomposition.cpp #see below
 #}
 
-HEADERS += utils/get_sort_indices.h \
+HEADERS += \
     utils/matrix_mda.h \
     utils/msmisc.h \
     utils/get_pca_features.h \
     utils/compute_templates_0.h \
     utils/eigenvalue_decomposition.h
 
-SOURCES += utils/get_sort_indices.cpp \
+SOURCES += \
     utils/matrix_mda.cpp \
     utils/get_pca_features.cpp \
     utils/compute_templates_0.cpp \

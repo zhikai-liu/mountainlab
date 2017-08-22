@@ -21,6 +21,7 @@
 #include "p_combine_firing_segments.h"
 #include "p_extract_firings.h"
 #include "p_concat_timeseries.h"
+#include "p_banjoview_cross_correlograms.h"
 
 QJsonObject get_spec()
 {
@@ -100,6 +101,15 @@ QJsonObject get_spec()
         processors.push_back(X.get_spec());
     }
 #endif
+    {
+        ProcessorSpec X("banjoview.cross_correlograms", "0.1");
+        X.addInputs("firings");
+        X.addOutputs("histograms_out");
+        X.addRequiredParameters("samplerate", "max_dt_msec", "bin_size_msec");
+        X.addOptionalParameter("mode", "autocorrelograms or matrix_of_cross_correlograms", "autocorrelograms");
+        X.addOptionalParameter("clusters", "", "");
+        processors.push_back(X.get_spec());
+    }
     {
         ProcessorSpec X("mountainsort.synthesize_timeseries", "0.12");
         X.addInputs("firings", "waveforms");
@@ -247,6 +257,24 @@ int main(int argc, char* argv[])
         ret = p_spikeview_templates(timeseries, firings, templates_out, opts);
     }
 #endif
+    else if (arg1 == "banjoview.cross_correlograms") {
+        QString firings = CLP.named_parameters["firings"].toString();
+        QString histograms_out = CLP.named_parameters["histograms_out"].toString();
+        P_banjoview_cross_correlograms_opts opts;
+        opts.samplerate = CLP.named_parameters["samplerate"].toDouble();
+        opts.max_dt_msec = CLP.named_parameters["max_dt_msec"].toDouble();
+        opts.bin_size_msec = CLP.named_parameters["bin_size_msec"].toDouble();
+        QString mode = CLP.named_parameters.value("mode", "autocorrelograms").toString();
+        if (mode == "autocorrelograms")
+            opts.mode = Autocorrelograms;
+        else if (mode == "matrix_of_cross_correlograms")
+            opts.mode = Matrix_of_cross_correlograms;
+        else {
+            qWarning() << "Unexpected mode: " + mode;
+            return -1;
+        }
+        ret = p_banjoview_cross_correlograms(firings, histograms_out, opts);
+    }
     else if (arg1 == "mountainsort.synthesize_timeseries") {
         QString firings = CLP.named_parameters["firings"].toString();
         QString waveforms = CLP.named_parameters["waveforms"].toString();

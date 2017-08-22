@@ -7,6 +7,8 @@
 #ifndef MLCOMMON_H
 #define MLCOMMON_H
 
+#include "mlvector.h"
+
 #include <QTextCodec>
 #include <QDebug>
 #include <QJsonValue>
@@ -89,6 +91,11 @@ double stdev(bigint N, const float* X);
 double dotProduct(bigint N, const float* X1, const float* X2);
 double correlation(bigint N, const float* X1, const float* X2);
 double norm(bigint N, const float* X);
+
+double min(const MLVector<double>& X);
+double max(const MLVector<double>& X);
+int min(const MLVector<int>& X);
+int max(const MLVector<int>& X);
 }
 
 class CLParams {

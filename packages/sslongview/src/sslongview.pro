@@ -57,8 +57,8 @@ SOURCES += mvfiringeventview2.cpp mvclusterlegend.cpp firingeventplugin.cpp
 
 INCLUDEPATH += ../../../mountainsort/src/utils
 VPATH += ../../../mountainsort/src/utils
-HEADERS += get_sort_indices.h msmisc.h
-SOURCES += get_sort_indices.cpp msmisc.cpp
+HEADERS += msmisc.h
+SOURCES += msmisc.cpp
 
 INCLUDEPATH += ../../../prv-gui/src
 VPATH += ../../../prv-gui/src

@@ -44,3 +44,14 @@ QList<bigint> get_sort_indices_bigint(const QVector<double>& X)
         [&X](bigint i1, bigint i2) { return X[i1] < X[i2]; });
     return result;
 }
+
+MLVector<bigint> get_sort_indices(const MLVector<double>& X)
+{
+    MLVector<bigint> result;
+    result.reserve(X.size());
+    for (bigint i = 0; i < X.count(); ++i)
+        result << i;
+    std::stable_sort(result.begin(), result.end(),
+        [&X](bigint i1, bigint i2) { return X[i1] < X[i2]; });
+    return result;
+}
