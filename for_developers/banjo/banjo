@@ -1,0 +1,272 @@
+#!/usr/bin/env nodejs
+
+var fs=require('fs');
+
+CLP=new CLParams(process.argv);
+var arg1=CLP.unnamedParameters[0]||'';
+
+var banjo_config=load_banjo_config();
+
+if (ends_with(arg1,'.bv')) {
+	var config=read_json_file(arg1);
+	if (!config) {
+		process.exit(-1);
+	}
+	if (!open_banjoview(config)) {
+		process.exit(-1);
+	}
+}
+if (arg1=='view_templates') {
+	view_templates(CLP,function(tmp) {
+		if (!tmp.success) {
+			console.error('Error viewing templates.');
+			process.exit(-1);	
+		}
+	});
+}
+else {
+	console.error('Unrecognized command: '+arg1);
+	process.exit(-1);
+}
+
+function load_banjo_config() {
+	var obj1=read_json_file(__dirname+'/settings/banjo.default.json');
+	return obj1;
+}
+
+function read_json_file(fname) {
+	var txt=read_text_file(fname);
+	if (!txt) {
+		console.error('File does not exist or is empty: '+fname);
+		return 0;
+	}
+	var obj=parse_json(txt);
+	if (!obj) {
+		console.error('Error parsing json file: '+fname);
+		return 0;
+	}
+	return obj;
+}
+
+function open_banjoview(config) {
+	var txt=JSON.stringify(config);
+	if (banjo_config.use_config_url) {
+		url4text(txt,function(url0) {
+			var url1;
+			if (url0) {
+				var url0_encoded=base64encode(url0);
+				url1=banjo_config.banjoview_url+'?config_url='+url0_encoded;		
+				return open_in_browser(url1);
+			}
+			else {
+				//try it the other way if url4text fails (sloppy)
+				banjo_config.use_config_url=false;
+				open_banjoview(config);
+			}
+		});
+	}
+	else {
+		var txt_encoded=base64encode(txt);
+		var url1=banjo_config.banjoview_url+'?config='+txt_encoded;		
+		return open_in_browser(url1);
+	}
+}
+
+function url4text(txt,callback) {
+	http_post_json(banjo_config.url4text.host,banjo_config.url4text.port,banjo_config.url4text.path,{text:txt},cb);
+	function cb(response) {
+		console.log(response);
+		response=response||'{}';
+		response=JSON.parse(response);
+		var url0=response.raw||0;
+		console.log(url0);
+		callback(url0);
+	}
+}
+
+function http_post_json(host,port,path,data,callback) {
+	var post_data=JSON.stringify(data);
+
+	// An object of options to indicate where to post to
+	var post_options = {
+		host: host,
+		port: port,
+		path: path,
+		method: 'POST',
+		headers: {
+		  'Content-Type': 'application/json',
+		  'Content-Length': Buffer.byteLength(post_data)
+		}
+	};
+
+	// Set up the request
+	var post_req = require('http').request(post_options, function(res) {
+		res.setEncoding('utf8');
+		res.on('data', function (body) {
+			console.log(':::::::::::::::::::::: '+body);
+		  callback(body);
+		});
+	});
+
+	// post the data
+	post_req.write(post_data);
+	post_req.end();
+}
+
+function show_usage_view_templates() {
+	console.log('banjo view_templates [templates.mda.prv]');
+}
+
+function view_templates(CLP,callback) {
+	var server=CLP.namedParameters.server||'';
+	if (!server) {
+		console.error('Server is empty. Use --server=[name].');
+		callback({success:false});
+		return;
+	}
+	var templates_fname=CLP.unnamedParameters[1]||'';
+	if (!templates_fname) {
+		show_usage_view_templates();
+		callback({success:false});
+		return;
+	}
+	get_url_for_file(templates_fname,server,function(url0) {
+		if (!url0) {
+			console.error('Unable to get url for file.');
+			callback({success:false});
+			return;
+		}
+		var view0={
+			view_type:'templates',
+			templates_url:url0,
+			container:'north',
+			label:'Templates'
+		};
+		var config={views:[view0]};
+		if (open_banjoview(config)) {
+			callback({success:true});
+		}
+	});
+	
+}
+
+function open_in_browser(url) {
+	if (module_is_available('opn2')) {
+		require('opn')(url);
+	}
+	else {
+		//var browser_exe='firefox';
+		var browser_exe='google-chrome';
+		console.log('The opn module was not found. Try typing "npm install opn". Using '+browser_exe+' for now.');
+		require('child_process').exec(browser_exe+' '+url);
+	}
+	return true;
+}
+
+function get_url_for_file(fname,server,callback) {
+	var exe='prv';
+	var args=['locate',fname,'--server='+server];
+	run_process_and_read_stdout(exe,args,function(txt) {
+		console.log(txt);
+		if (starts_with(txt,'http'))
+			callback(txt);
+		else {
+			console.log('Unable to find file url: '+txt);
+			callback('');
+		}
+	});
+}
+
+function run_process_and_read_stdout(exe,args,callback) {
+	console.log ('RUNNING: '+exe+' '+args.join(' '));
+	var P;
+	try {
+		P=require('child_process').spawn(exe,args);
+	}
+	catch(err) {
+		console.log (err);
+		console.log ("Problem launching: "+exe+" "+args.join(" "));
+		return "";
+	}
+	var txt='';
+	P.stderr.on('data',function(chunk) {
+		console.log('stderr: '+chunk);
+	});
+	P.stdout.on('data',function(chunk) {
+		txt+=chunk;
+	});
+	P.on('close',function(code) {
+		callback(txt);
+	});
+}
+
+function module_is_available(module_name) {
+	try {
+		require.resolve(module_name);
+		return true;
+	}
+	catch(err) {
+		return false;
+	}
+}
+
+
+function base64encode(str) {
+	return (new Buffer(str)).toString('base64');
+}
+
+function starts_with(str,str2) {
+	return (str.slice(0,str2.length)==str2);
+}
+
+function ends_with(str,str2) {
+	if (str2.length>str.length) return false;
+	return (str.slice(str.length-str2.length)==str2);
+}
+
+function read_text_file(fname) {
+	try {
+		return fs.readFileSync(fname,'utf8');
+	}
+	catch(err) {
+		return '';
+	}
+}
+
+function parse_json(txt) {
+	try {
+		var obj=JSON.parse(txt);
+		return obj;
+	}
+	catch(err) {
+		return 0;
+	}
+}
+
+function CLParams(argv) {
+	this.unnamedParameters=[];
+	this.namedParameters={};
+
+	var args=argv.slice(2);
+	for (var i=0; i<args.length; i++) {
+		var arg0=args[i];
+		if (arg0.indexOf('--')===0) {
+			arg0=arg0.slice(2);
+			var ind=arg0.indexOf('=');
+			if (ind>=0) {
+				this.namedParameters[arg0.slice(0,ind)]=arg0.slice(ind+1);
+			}
+			else {
+				this.namedParameters[arg0]=args[i+1]||'';
+				i++;
+			}
+		}
+		else if (arg0.indexOf('-')===0) {
+			arg0=arg0.slice(1);
+			this.namedParameters[arg0]='';
+		}
+		else {
+			this.unnamedParameters.push(arg0);
+		}
+	}
+}
