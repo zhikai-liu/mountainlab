@@ -26,7 +26,9 @@ HEADERS += mlcommon.h sumit.h \
     ../include/icounter.h \
     ../include/qprocessmanager.h \
     ../include/signalhandler.h \
-    ../include/mllog.h
+    ../include/mllog.h \
+    ../include/mlvector.h \
+    ../include/get_sort_indices.h
 
 SOURCES += \
     mlcommon.cpp sumit.cpp \
@@ -38,7 +40,9 @@ SOURCES += \
     icounter.cpp \
     qprocessmanager.cpp \
     signalhandler.cpp \
-    mllog.cpp
+    mllog.cpp \
+    mlvector.cpp \
+    get_sort_indices.cpp
 
 INCLUDEPATH += ../include/mda
 VPATH += ../include/mda
@@ -72,6 +76,5 @@ SOURCES += componentmanager.cpp
 
 
 DISTFILES += \
-    ../mlcommon.pri ../mda.pri \
     ../taskprogress.pri \
     ../mlnetwork.pri

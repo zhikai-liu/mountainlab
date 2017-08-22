@@ -73,8 +73,8 @@ SOURCES += extract_clips.cpp
 INCLUDEPATH += ../../mountainsort/src/utils
 DEPENDPATH += ../../mountainsort/src/utils
 VPATH += ../../mountainsort/src/utils
-HEADERS += get_sort_indices.h msmisc.h
-SOURCES += get_sort_indices.cpp msmisc.cpp
+HEADERS += msmisc.h
+SOURCES += msmisc.cpp
 HEADERS += affinetransformation.h
 SOURCES += affinetransformation.cpp
 

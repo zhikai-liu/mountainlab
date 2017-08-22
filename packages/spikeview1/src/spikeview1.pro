@@ -1,11 +1,10 @@
-QT += core gui network
-
-QT += qml
+QT += core gui network qml
 
 CONFIG += c++11
 QMAKE_CXXFLAGS += -Wno-reorder #qaccordion
 
-CONFIG -= app_bundle #Please apple, don't make a bundle today
+#TODO: Do we need openmp?
+CONFIG += mlcommon mvcommon openmp
 
 include(../../../cpp/mvcommon/mvcommon.pri)
 include(../../../cpp/mlcommon/mlcommon.pri)
@@ -33,7 +32,6 @@ HEADERS += \
     crosscorview.h crosscorplugin.h crosscorcontrol.h \
     mvexportcontrol/mvexportcontrol.h \
     spikeviewmetricscomputer.h \
-    mlvector.h \
     mvexportcontrol/exporttomountainviewdlg.h
 
 SOURCES += \
@@ -45,24 +43,17 @@ SOURCES += \
     crosscorview.cpp crosscorplugin.cpp crosscorcontrol.cpp \
     mvexportcontrol/mvexportcontrol.cpp \
     spikeviewmetricscomputer.cpp \
-    mlvector.cpp \
     mvexportcontrol/exporttomountainviewdlg.cpp
 
 FORMS += mvgridviewpropertiesdialog.ui \
     mvexportcontrol/exporttomountainviewdlg.ui
 
-HEADERS += mvopenviewscontrol.h get_sort_indices.h
-SOURCES += mvopenviewscontrol.cpp get_sort_indices.cpp
+HEADERS += mvopenviewscontrol.h
+SOURCES += mvopenviewscontrol.cpp
 
 SOURCES += spikeview1main.cpp
 
 HEADERS += svcontext.h
 SOURCES += svcontext.cpp
 
-#TODO: Do we need openmp?
-#OPENMP
-!macx {
-  QMAKE_LFLAGS += -fopenmp
-  QMAKE_CXXFLAGS += -fopenmp
-}
 #-std=c++11   # AHB removed since not in GNU gcc 4.6.3

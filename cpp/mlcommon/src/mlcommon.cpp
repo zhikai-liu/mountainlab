@@ -368,6 +368,26 @@ double MLCompute::max(const QVector<double>& X)
     return *std::max_element(X.constBegin(), X.constEnd());
 }
 
+double MLCompute::min(const MLVector<double>& X)
+{
+    return *std::min_element(X.begin(), X.end());
+}
+
+double MLCompute::max(const MLVector<double>& X)
+{
+    return *std::max_element(X.begin(), X.end());
+}
+
+int MLCompute::min(const MLVector<int>& X)
+{
+    return *std::min_element(X.begin(), X.end());
+}
+
+int MLCompute::max(const MLVector<int>& X)
+{
+    return *std::max_element(X.begin(), X.end());
+}
+
 double MLCompute::sum(const QVector<double>& X)
 {
     return std::accumulate(X.constBegin(), X.constEnd(), 0.0);
