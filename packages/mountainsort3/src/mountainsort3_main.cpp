@@ -104,7 +104,7 @@ QJsonObject get_spec()
     {
         ProcessorSpec X("banjoview.cross_correlograms", "0.1");
         X.addInputs("firings");
-        X.addOutputs("histograms_out");
+        X.addOutputs("correlograms_out");
         X.addRequiredParameters("samplerate", "max_dt_msec", "bin_size_msec");
         X.addOptionalParameter("mode", "autocorrelograms or matrix_of_cross_correlograms", "autocorrelograms");
         X.addOptionalParameter("clusters", "", "");
@@ -259,7 +259,7 @@ int main(int argc, char* argv[])
 #endif
     else if (arg1 == "banjoview.cross_correlograms") {
         QString firings = CLP.named_parameters["firings"].toString();
-        QString histograms_out = CLP.named_parameters["histograms_out"].toString();
+        QString correlograms_out = CLP.named_parameters["correlograms_out"].toString();
         P_banjoview_cross_correlograms_opts opts;
         opts.samplerate = CLP.named_parameters["samplerate"].toDouble();
         opts.max_dt_msec = CLP.named_parameters["max_dt_msec"].toDouble();
@@ -273,7 +273,7 @@ int main(int argc, char* argv[])
             qWarning() << "Unexpected mode: " + mode;
             return -1;
         }
-        ret = p_banjoview_cross_correlograms(firings, histograms_out, opts);
+        ret = p_banjoview_cross_correlograms(firings, correlograms_out, opts);
     }
     else if (arg1 == "mountainsort.synthesize_timeseries") {
         QString firings = CLP.named_parameters["firings"].toString();

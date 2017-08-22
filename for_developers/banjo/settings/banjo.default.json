@@ -1,5 +1,5 @@
 {
-	"banjoview_url":"http://river.simonsfoundation.org:60002/apps/banjoview/banjoview.html",
+	"banjoview_url":"http://banjoview.herokuapp.com",
 	"use_config_url":false,
 	"url4text":{
 		"host":"datalaboratory.org",

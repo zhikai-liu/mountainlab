@@ -24,6 +24,14 @@ if (arg1=='view_templates') {
 		}
 	});
 }
+else if (arg1=='view_correlograms') {
+	view_correlograms(CLP,function(tmp) {
+		if (!tmp.success) {
+			console.error('Error viewing correlograms.');
+			process.exit(-1);	
+		}
+	});
+}
 else {
 	console.error('Unrecognized command: '+arg1);
 	process.exit(-1);
@@ -146,8 +154,39 @@ function view_templates(CLP,callback) {
 		if (open_banjoview(config)) {
 			callback({success:true});
 		}
-	});
-	
+	});	
+}
+
+function view_correlograms(CLP,callback) {
+	var server=CLP.namedParameters.server||'';
+	if (!server) {
+		console.error('Server is empty. Use --server=[name].');
+		callback({success:false});
+		return;
+	}
+	var correlograms_fname=CLP.unnamedParameters[1]||'';
+	if (!correlograms_fname) {
+		show_usage_view_correlograms();
+		callback({success:false});
+		return;
+	}
+	get_url_for_file(correlograms_fname,server,function(url0) {
+		if (!url0) {
+			console.error('Unable to get url for file.');
+			callback({success:false});
+			return;
+		}
+		var view0={
+			view_type:'correlograms',
+			correlograms_url:url0,
+			container:'north',
+			label:'Correlograms'
+		};
+		var config={views:[view0]};
+		if (open_banjoview(config)) {
+			callback({success:true});
+		}
+	});	
 }
 
 function open_in_browser(url) {

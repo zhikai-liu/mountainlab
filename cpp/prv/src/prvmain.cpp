@@ -574,6 +574,9 @@ public:
         parser.addOption(QCommandLineOption("search_path", "search_path", "path to search (leave empty to search default locations)"));
         parser.addOption(QCommandLineOption("server", "server", "[url or name of prvbucket server to search or upload]"));
         parser.addOption(QCommandLineOption("verbose", "verbose"));
+//        if (m_cmd == "locate")|| {
+            parser.addOption(QCommandLineOption("traverse","traverse"));
+//        }
     }
     int execute(const QCommandLineParser& parser)
     {
@@ -581,6 +584,11 @@ public:
         args.removeFirst(); // remove command name
 
         bool verbose = parser.isSet("verbose");
+        QVariantMap params;
+        if (parser.isSet("search_path"))
+            params.insert("search_path", parser.value("search_path"));
+        if (parser.isSet("server"))
+            params.insert("server", parser.value("server"));
 
         QMap<QString, QJsonObject> objects;
         if (parser.isSet("checksum")) {
@@ -608,10 +616,27 @@ public:
                 objects[""] = obj;
             }
             else {
-                objects = find_prv_objects_in_json_file(src_path);
-                if (objects.isEmpty()) {
-                    println("No prv objects found in file.");
-                    return -1;
+                if (parser.isSet("traverse")) {
+                    objects = find_prv_objects_in_json_file(src_path);
+                    if (objects.isEmpty()) {
+                        println("No prv objects found in file.");
+                        return -1;
+                    }
+                }
+                else {
+                    if (m_cmd=="locate") {
+                        QJsonObject obj;
+                        obj=MLUtil::createPrvObject(src_path);
+                        objects[""] = obj;
+                    }
+                    else if (m_cmd=="upload") {
+                        if (!interactive_upload_file_to_server(src_path,params))
+                            return -1;
+                    }
+                    else {
+                        println("This is not a .prv file.");
+                        return -1;
+                    }
                 }
             }
         }
@@ -634,11 +659,7 @@ public:
             }
             QJsonObject obj = objects[key];
             if (obj.contains("original_checksum")) {
-                QVariantMap params;
-                if (parser.isSet("search_path"))
-                    params.insert("search_path", parser.value("search_path"));
-                if (parser.isSet("server"))
-                    params.insert("server", parser.value("server"));
+
                 QString fname_or_url;
                 if (m_cmd != "upload") {
                     fname_or_url = locate_file(obj, params, verbose);
@@ -705,26 +726,8 @@ public:
                         qWarning() << QString("Unable to find file on local machine. Original path = %1").arg(obj["original_path"].toString());
                     }
                     else {
-                        QString url = locate_file(obj, params, false);
-
-                        if (is_url(url)) {
-                            qDebug().noquote() << "File is already on server: " + url;
-                        }
-                        else {
-                            qDebug().noquote() << "";
-                            QString response;
-                            while (1) {
-                                response = ask_question(QString("Upload %1 to %2? ([y]/n): ").arg(fname).arg(server), "y");
-                                if ((response == "y") || (response == "n"))
-                                    break;
-                            }
-                            if (response == "y") {
-                                if (!upload_file(fname, server)) {
-                                    qWarning() << QString("Failed to upload file to %1: %2").arg(server).arg(fname);
-                                    return -1;
-                                }
-                            }
-                        }
+                        if (!interactive_upload_file_to_server(fname,params))
+                            return -1;
                     }
                 }
             }
@@ -839,6 +842,39 @@ private:
 
         ret = find_prvs("", obj);
         return ret;
+    }
+
+    bool interactive_upload_file_to_server(QString fname, QVariantMap params) {
+
+        QString server=params["server"].toString();
+        if (server.isEmpty()) {
+            qWarning() << "Server is empty. Use --server=[name]";
+            return false;
+        }
+
+        QJsonObject obj=MLUtil::createPrvObject(fname);
+
+        QString url = locate_file(obj, params, false);
+
+        if (is_url(url)) {
+            qDebug().noquote() << "File is already on server: " + url;
+        }
+        else {
+            qDebug().noquote() << "";
+            QString response;
+            while (1) {
+                response = ask_question(QString("Upload %1 to %2? ([y]/n): ").arg(fname).arg(server), "y");
+                if ((response == "y") || (response == "n"))
+                    break;
+            }
+            if (response == "y") {
+                if (!upload_file(fname, server)) {
+                    qWarning() << QString("Failed to upload file to %1: %2").arg(server).arg(fname);
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     bool upload_file(QString fname, QString server)

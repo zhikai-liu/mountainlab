@@ -17,6 +17,6 @@ struct P_banjoview_cross_correlograms_opts {
     double samplerate = 30000;
 };
 
-bool p_banjoview_cross_correlograms(QString firings, QString histograms_out, P_banjoview_cross_correlograms_opts opts);
+bool p_banjoview_cross_correlograms(QString firings, QString correlograms_out, P_banjoview_cross_correlograms_opts opts);
 
 #endif // P_BANJOVIEW_CROSS_CORRELOGRAMS_H

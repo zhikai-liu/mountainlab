@@ -6,7 +6,7 @@
 #include <mlvector.h>
 #include "get_sort_indices.h"
 
-bool p_banjoview_cross_correlograms(QString firings_path, QString histograms_out, P_banjoview_cross_correlograms_opts opts)
+bool p_banjoview_cross_correlograms(QString firings_path, QString correlograms_out, P_banjoview_cross_correlograms_opts opts)
 {
 
     DiskReadMda firings(firings_path);
@@ -80,36 +80,39 @@ bool p_banjoview_cross_correlograms(QString firings_path, QString histograms_out
             jjj++;
         jjj_last = jjj;
         while ((jjj < times.count()) && (t1 + tmin <= times[jjj]) && (times[jjj] < t1 + tmax)) {
-            double t2 = times[jjj];
-            int k2 = labels[jjj];
-            bigint num = (k1 - 1) + K * (k2 - 1);
-            if (histogram_counts.contains(num)) {
-                double dt = t2 - t1;
-                int bin_index = (dt - tmin) / bin_size;
-                histogram_counts[num][bin_index]++;
+            if (jjj!=ii) {
+                double t2 = times[jjj];
+                int k2 = labels[jjj];
+                bigint num = (k1 - 1) + K * (k2 - 1);
+                if (histogram_counts.contains(num)) {
+                    double dt = t2 - t1;
+                    int bin_index = (dt - tmin) / bin_size;
+                    histogram_counts[num][bin_index]++;
+                }
             }
             jjj++;
         }
     }
 
-    QJsonArray histograms;
+    QJsonArray correlograms;
     for (int ii = 0; ii < k1s.count(); ii++) {
-        QJsonObject histogram;
-        histogram["k1"] = k1s[ii];
-        histogram["k2"] = k2s[ii];
-        histogram["tmin_msec"] = tmin * 1000 / opts.samplerate;
-        histogram["bin_size_msec"] = bin_size * 1000 / opts.samplerate;
+        QJsonObject correlogram;
+        correlogram["k1"] = k1s[ii];
+        correlogram["k2"] = k2s[ii];
+        correlogram["dt_min_msec"] = tmin * 1000 / opts.samplerate;
+        correlogram["bin_size_msec"] = bin_size * 1000 / opts.samplerate;
         int num = (k1s[ii] - 1) + K * (k2s[ii] - 1);
         QJsonArray counts0;
         for (int a = 0; a < num_bins; a++) {
             counts0 << histogram_counts[num][a];
         }
-        histogram["counts"] = counts0;
-        histograms.push_back(histogram);
+        correlogram["counts"] = counts0;
+        correlograms.push_back(correlogram);
     }
 
     QJsonObject output;
-    output["histograms"] = histograms;
+    output["correlograms"] = correlograms;
     QString json_output = QJsonDocument(output).toJson(QJsonDocument::Compact);
-    return TextFile::write(histograms_out, json_output);
+
+    return TextFile::write(correlograms_out, json_output);
 }
