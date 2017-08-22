@@ -16,23 +16,7 @@ if (ends_with(arg1,'.bv')) {
 		process.exit(-1);
 	}
 }
-if (arg1=='view_templates') {
-	view_templates(CLP,function(tmp) {
-		if (!tmp.success) {
-			console.error('Error viewing templates.');
-			process.exit(-1);	
-		}
-	});
-}
-else if (arg1=='view_correlograms') {
-	view_correlograms(CLP,function(tmp) {
-		if (!tmp.success) {
-			console.error('Error viewing correlograms.');
-			process.exit(-1);	
-		}
-	});
-}
-else if (arg1=='view') {
+if (arg1=='view') {
 	view(CLP,function(tmp) {
 		if (!tmp.success) {
 			console.error('Error viewing.');
@@ -144,72 +128,8 @@ function http_post_json(host,port,path,data,callback) {
 	post_req.end();
 }
 
-function show_usage_view_templates() {
-	console.log('banjo view_templates [templates.mda.prv]');
-}
-
-function view_templates(CLP,callback) {
-	var server=CLP.namedParameters.server||'';
-	if (!server) {
-		console.error('Server is empty. Use --server=[name].');
-		callback({success:false});
-		return;
-	}
-	var templates_fname=CLP.unnamedParameters[1]||'';
-	if (!templates_fname) {
-		show_usage_view_templates();
-		callback({success:false});
-		return;
-	}
-	get_url_for_file(templates_fname,server,function(url0) {
-		if (!url0) {
-			console.error('Unable to get url for file.');
-			callback({success:false});
-			return;
-		}
-		var view0={
-			view_type:'templates',
-			templates_url:url0,
-			container:'north',
-			label:'Templates'
-		};
-		var config={views:[view0]};
-		if (open_banjoview(config)) {
-			callback({success:true});
-		}
-	});	
-}
-
-function view_correlograms(CLP,callback) {
-	var server=CLP.namedParameters.server||'';
-	if (!server) {
-		console.error('Server is empty. Use --server=[name].');
-		callback({success:false});
-		return;
-	}
-	var correlograms_fname=CLP.unnamedParameters[1]||'';
-	if (!correlograms_fname) {
-		show_usage_view_correlograms();
-		callback({success:false});
-		return;
-	}
-	get_url_for_file(correlograms_fname,server,function(url0) {
-		if (!url0) {
-			console.error('Unable to get url for file.');
-			callback({success:false});
-			return;
-		}
-		var view0={
-			view_type:'correlograms',
-			correlograms_url:url0,
-			container:'north',
-			label:'Correlograms'
-		};
-		var config={views:[view0]};
-		if (open_banjoview(config)) {
-			callback({success:true});
-		}
-	});	
+function show_usage_view() {
+	console.log('banjo view --templates=[templates.mda or templates.mda.prv] --correlograms=[correlograms.json] --firing_events=firings_with_amps.mda');
 }
 
 function view(CLP,callback) {
@@ -221,11 +141,13 @@ function view(CLP,callback) {
 	}
 	var templates_fname=CLP.namedParameters.templates||'';
 	var correlograms_fname=CLP.namedParameters.correlograms||'';
+	var firing_events_fname=CLP.namedParameters.firing_events||'';
 	
 	var views=[];
 
 	var AA=[];
 	if (templates_fname) {
+		console.log(templates_fname);
 		AA.push(function(cb) {
 			get_url_for_file(templates_fname,server,function(url0) {
 				if (!url0) {
@@ -245,6 +167,7 @@ function view(CLP,callback) {
 		});
 	}
 	if (correlograms_fname) {
+		console.log(correlograms_fname);
 		AA.push(function(cb) {
 			get_url_for_file(correlograms_fname,server,function(url0) {
 				if (!url0) {
@@ -263,6 +186,26 @@ function view(CLP,callback) {
 			});
 		});
 	}
+	if (firing_events_fname) {
+		console.log(firing_events_fname);
+		AA.push(function(cb) {
+			get_url_for_file(firing_events_fname,server,function(url0) {
+				if (!url0) {
+					console.error('Unable to get url for file.');
+					callback({success:false});
+					return;
+				}
+				var view0={
+					view_type:'firing_events',
+					firing_events_url:url0,
+					container:'south',
+					label:'Firing events'
+				};
+				views.push(view0);
+				cb();
+			});
+		});
+	}
 
 	foreach(AA,{},function(i,a,cb) {
 		a(cb);
@@ -272,37 +215,6 @@ function view(CLP,callback) {
 			callback({success:true});
 		}
 	});	
-}
-
-function foreach(array,opts,step_function,end_function) {
-	var num_parallel=opts.num_parallel||1;
-	var num_running=0;
-	var num_finished=0;
-	var already_called_end=false;
-	var ii=0;
-	next_step();
-	function next_step() {
-		if (num_finished>=array.length) {
-			setTimeout(function() { //important to do it this way so we don't accumulate a call stack
-				if (!already_called_end) { 
-					already_called_end=true;
-					end_function();
-				}
-			},0);
-			return;
-		}
-		while ((ii<array.length)&&(num_running<num_parallel)) {
-			num_running++;
-			ii++;
-			step_function(ii-1,array[ii-1],function() {
-				num_running--;
-				num_finished++;
-				setTimeout(function() { //important to do it this way so we don't accumulate a call stack
-					next_step();
-				},0);
-			});
-		}
-	}
 }
 
 function find_default_browser_exe() {
@@ -433,6 +345,37 @@ function CLParams(argv) {
 		}
 		else {
 			this.unnamedParameters.push(arg0);
+		}
+	}
+}
+
+function foreach(array,opts,step_function,end_function) {
+	var num_parallel=opts.num_parallel||1;
+	var num_running=0;
+	var num_finished=0;
+	var already_called_end=false;
+	var ii=0;
+	next_step();
+	function next_step() {
+		if (num_finished>=array.length) {
+			setTimeout(function() { //important to do it this way so we don't accumulate a call stack
+				if (!already_called_end) { 
+					already_called_end=true;
+					end_function();
+				}
+			},0);
+			return;
+		}
+		while ((ii<array.length)&&(num_running<num_parallel)) {
+			num_running++;
+			ii++;
+			step_function(ii-1,array[ii-1],function() {
+				num_running--;
+				num_finished++;
+				setTimeout(function() { //important to do it this way so we don't accumulate a call stack
+					next_step();
+				},0);
+			});
 		}
 	}
 }

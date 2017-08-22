@@ -862,6 +862,9 @@ int main(int argc, char* argv[])
             qWarning() << "Processor name is empty";
             return -1;
         }
+
+        qDebug().noquote() << "Running processor remotely: "+processor_name;
+
         QString server = CLP.named_parameters["_server"].toString();
         if (server.isEmpty()) {
             qWarning() << "Server is empty";
@@ -889,17 +892,24 @@ int main(int argc, char* argv[])
         foreach (QString key, PP.inputs.keys()) {
             if (process_parameters.contains(key)) {
                 QString fname0 = process_parameters[key].toString();
-                if (!fname0.endsWith(".prv")) {
-                    qWarning() << "Inputs must all be .prv files when using remote processing";
-                    return -1;
+                QJsonObject obj0;
+                if (fname0.endsWith(".prv")) {
+                    QString json0 = TextFile::read(fname0);
+                    QJsonParseError parse_error;
+                    obj0 = QJsonDocument::fromJson(json0.toUtf8(), &parse_error).object();
+                    if (parse_error.error != QJsonParseError::NoError) {
+                        qWarning() << "Error parsing .prv file: " + fname0;
+                        return -1;
+                    }
                 }
-                QString json0 = TextFile::read(fname0);
-                QJsonParseError parse_error;
-                inputs[key] = QJsonDocument::fromJson(json0.toUtf8(), &parse_error).object();
-                if (parse_error.error != QJsonParseError::NoError) {
-                    qWarning() << "Error parsing .prv file: " + fname0;
-                    return -1;
+                else {
+                    qDebug().noquote() << "Creating prv object for: "+fname0;
+                    obj0=MLUtil::createPrvObject(fname0);
+                    //qWarning() << "Inputs must all be .prv files when using remote processing";
+                    //return -1;
                 }
+                inputs[key]=obj0;
+
             }
             else {
                 if (!PP.inputs[key].optional) {
