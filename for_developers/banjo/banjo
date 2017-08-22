@@ -223,6 +223,7 @@ function find_default_browser_exe() {
 
 function open_in_browser(url) {
 	var browser_exe=banjo_config.browser_exe||find_default_browser_exe();
+	console.log('Opening link in browser: '+url);
 	console.log('Trying browser_exe='+browser_exe);
 	require('child_process').exec(browser_exe+' '+url);
 	/*
