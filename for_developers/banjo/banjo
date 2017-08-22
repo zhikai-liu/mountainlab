@@ -32,6 +32,14 @@ else if (arg1=='view_correlograms') {
 		}
 	});
 }
+else if (arg1=='view') {
+	view(CLP,function(tmp) {
+		if (!tmp.success) {
+			console.error('Error viewing.');
+			process.exit(-1);	
+		}
+	});
+}
 else {
 	console.error('Unrecognized command: '+arg1);
 	process.exit(-1);
@@ -57,27 +65,39 @@ function read_json_file(fname) {
 }
 
 function open_banjoview(config) {
-	var txt=JSON.stringify(config);
+	var config_txt=JSON.stringify(config);
 	if (banjo_config.use_config_url) {
-		url4text(txt,function(url0) {
-			var url1;
-			if (url0) {
-				var url0_encoded=base64encode(url0);
-				url1=banjo_config.banjoview_url+'?config_url='+url0_encoded;		
-				return open_in_browser(url1);
-			}
-			else {
-				//try it the other way if url4text fails (sloppy)
-				banjo_config.use_config_url=false;
-				open_banjoview(config);
+		open_banjoview_with_config_url(config_txt,function(success) {
+			if (!success) {
+				console.log('Unable to to open with config url. Trying other way...');
+				open_banjoview_with_config(config_txt);
 			}
 		});
 	}
 	else {
-		var txt_encoded=base64encode(txt);
-		var url1=banjo_config.banjoview_url+'?config='+txt_encoded;		
-		return open_in_browser(url1);
+		open_banjoview_with_config(config_txt);
 	}
+}
+
+function open_banjoview_with_config_url(config_txt,callback) {
+	url4text(config_txt,function(url0) {
+		var url1;
+		if (url0) {
+			var url0_encoded=base64encode(url0);
+			url1=banjo_config.banjoview_url+'?config_url='+url0_encoded;		
+			var success=open_in_browser(url1);
+			callback(success);
+		}
+		else {
+			callback(false);				
+		}
+	});
+}
+
+function open_banjoview_with_config(config_txt) {
+	var txt_encoded=base64encode(config_txt);
+	var url1=banjo_config.banjoview_url+'?config='+txt_encoded;		
+	return open_in_browser(url1);
 }
 
 function url4text(txt,callback) {
@@ -112,8 +132,11 @@ function http_post_json(host,port,path,data,callback) {
 		res.setEncoding('utf8');
 		res.on('data', function (body) {
 			console.log(':::::::::::::::::::::: '+body);
-		  callback(body);
+			callback(body);
 		});
+	});
+	post_req.on('error',function() {
+		callback('');
 	});
 
 	// post the data
@@ -189,16 +212,120 @@ function view_correlograms(CLP,callback) {
 	});	
 }
 
+function view(CLP,callback) {
+	var server=CLP.namedParameters.server||'';
+	if (!server) {
+		console.error('Server is empty. Use --server=[name].');
+		callback({success:false});
+		return;
+	}
+	var templates_fname=CLP.namedParameters.templates||'';
+	var correlograms_fname=CLP.namedParameters.correlograms||'';
+	
+	var views=[];
+
+	var AA=[];
+	if (templates_fname) {
+		AA.push(function(cb) {
+			get_url_for_file(templates_fname,server,function(url0) {
+				if (!url0) {
+					console.error('Unable to get url for file.');
+					cb({success:false});
+					return;
+				}
+				var view0={
+					view_type:'templates',
+					templates_url:url0,
+					container:'north',
+					label:'Templates'
+				};
+				views.push(view0);
+				cb({success:true});
+			});
+		});
+	}
+	if (correlograms_fname) {
+		AA.push(function(cb) {
+			get_url_for_file(correlograms_fname,server,function(url0) {
+				if (!url0) {
+					console.error('Unable to get url for file.');
+					callback({success:false});
+					return;
+				}
+				var view0={
+					view_type:'correlograms',
+					correlograms_url:url0,
+					container:'south',
+					label:'Correlograms'
+				};
+				views.push(view0);
+				cb();
+			});
+		});
+	}
+
+	foreach(AA,{},function(i,a,cb) {
+		a(cb);
+	},function(result) {
+		var config={views:views};
+		if (open_banjoview(config)) {
+			callback({success:true});
+		}
+	});	
+}
+
+function foreach(array,opts,step_function,end_function) {
+	var num_parallel=opts.num_parallel||1;
+	var num_running=0;
+	var num_finished=0;
+	var already_called_end=false;
+	var ii=0;
+	next_step();
+	function next_step() {
+		if (num_finished>=array.length) {
+			setTimeout(function() { //important to do it this way so we don't accumulate a call stack
+				if (!already_called_end) { 
+					already_called_end=true;
+					end_function();
+				}
+			},0);
+			return;
+		}
+		while ((ii<array.length)&&(num_running<num_parallel)) {
+			num_running++;
+			ii++;
+			step_function(ii-1,array[ii-1],function() {
+				num_running--;
+				num_finished++;
+				setTimeout(function() { //important to do it this way so we don't accumulate a call stack
+					next_step();
+				},0);
+			});
+		}
+	}
+}
+
+function find_default_browser_exe() {
+	return 'firefox';
+}
+
 function open_in_browser(url) {
-	if (module_is_available('opn2')) {
-		require('opn')(url);
-	}
+	var browser_exe=banjo_config.browser_exe||find_default_browser_exe();
+	console.log('Trying browser_exe='+browser_exe);
+	require('child_process').exec(browser_exe+' '+url);
+	/*
 	else {
-		//var browser_exe='firefox';
-		var browser_exe='google-chrome';
-		console.log('The opn module was not found. Try typing "npm install opn". Using '+browser_exe+' for now.');
-		require('child_process').exec(browser_exe+' '+url);
+		if (module_is_available('opn2')) {
+			require('opn')(url);
+		}
+		else {
+			//var browser_exe='firefox';
+			var browser_exe='google-chrome';
+			console.log('The opn module was not found. Try typing "npm install opn". Using '+browser_exe+' for now.');
+			require('child_process').exec(browser_exe+' '+url);
+		}
 	}
+	*/
 	return true;
 }
 
