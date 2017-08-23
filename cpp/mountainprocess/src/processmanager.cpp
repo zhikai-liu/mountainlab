@@ -124,7 +124,7 @@ bool ProcessManager::loadProcessorFile(const QString& path)
         else {
             QProcess pp;
             pp.start(path, QStringList("spec"));
-            if (!pp.waitForFinished()) {
+            if (!pp.waitForFinished(-1)) {
                 qCWarning(MPM) << "Problem with executable processor file, waiting for finish: " + path;
                 return false;
             }
@@ -597,7 +597,7 @@ QString execute_and_read_stdout(QString cmd)
     QProcess P;
     P.start(cmd);
     P.waitForStarted();
-    P.waitForFinished();
+    P.waitForFinished(-1);
     return P.readAllStandardOutput();
 }
 

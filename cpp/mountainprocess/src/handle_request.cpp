@@ -69,9 +69,7 @@ QString compute_unique_object_code(QJsonObject obj)
 
 bool wait_for_file_to_exist(QString fname,int timeout_ms) {
     QTime timer; timer.start();
-    while ((!QFile::exists(fname))&&(timer.elapsed()<=timeout_ms)) {
-	usleep(10000);
-    }
+    while ((!QFile::exists(fname))&&(timer.elapsed()<=timeout_ms));
     return QFile::exists(fname);
 }
 
@@ -184,7 +182,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
 
     MPDaemon::start_bash_command_and_kill_when_pid_is_gone(&pp, exe + " " + args.join(" "), QCoreApplication::applicationPid());
 
-    pp.waitForFinished();
+    pp.waitForFinished(-1);
 
     qCDebug(HR).noquote() << QString("Elapsed time for running processor (%1): %2 sec").arg(processor_name).arg(timer.elapsed()*1.0/1000);
 
@@ -200,9 +198,8 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     foreach (QString key, okeys) {
         if (outputs[key].toBool()) {
             QString fname = output_files[key];
-	    QTime timer0; timer0.start();
-            if (!wait_for_file_to_exist(fname,15000)) {
-                response["error"] = "Output file does not exist: " + fname+QString(" after waiting %1 msec").arg(timer0.elapsed());
+            if (!wait_for_file_to_exist(fname,100)) {
+                response["error"] = "Output file does not exist: " + fname;
                 return response;
             }
             QString tmp_prv = fname + ".prv";
