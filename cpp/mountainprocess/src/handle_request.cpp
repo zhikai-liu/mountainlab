@@ -9,6 +9,7 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include "mpdaemon.h"
+#include <unistd.h>
 
 QJsonObject handle_request_run_process(QString processor_name, const QJsonObject& inputs, const QJsonObject& outputs, const QJsonObject& parameters, QString prvbucket_path);
 
@@ -162,6 +163,10 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     MPDaemon::start_bash_command_and_kill_when_pid_is_gone(&pp, exe + " " + args.join(" "), QCoreApplication::applicationPid());
 
     pp.waitForFinished();
+
+    /// Witold, could you weigh in on the following?
+    // Yikes, this might be needed to make sure the files are done writing to the system. I added this because the output files were not found on some occassions.
+    usleep(1e9);
 
     /*
     int ret = pp.execute(exe, args);
