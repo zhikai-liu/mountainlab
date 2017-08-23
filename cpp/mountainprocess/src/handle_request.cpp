@@ -68,7 +68,7 @@ QString compute_unique_object_code(QJsonObject obj)
 }
 
 bool wait_for_file_to_exist(QString fname,int timeout_ms) {
-    QTime timer; timer.elapsed();
+    QTime timer; timer.start();
     while ((!QFile::exists(fname))&&(timer.elapsed()<=timeout_ms));
     return QFile::exists(fname);
 }
@@ -173,7 +173,9 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
 
     QString exe = qApp->applicationDirPath() + "/mountainprocess";
 
-    qDebug().noquote() << "Running: " + exe + " " + args.join(" ");
+    qCDebug(HR).noquote() << "Running: " + exe + " " + args.join(" ");
+
+    QTime timer; timer.start();
 
     QProcess pp;
     pp.setProcessChannelMode(QProcess::MergedChannels);
@@ -181,6 +183,8 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     MPDaemon::start_bash_command_and_kill_when_pid_is_gone(&pp, exe + " " + args.join(" "), QCoreApplication::applicationPid());
 
     pp.waitForFinished();
+
+    qCDebug(HR).noquote() << QString("Elapsed time for running processor (%1): %2 sec").arg(processor_name).arg(timer.elapsed()*1.0/1000);
 
     /*
     int ret = pp.execute(exe, args);
