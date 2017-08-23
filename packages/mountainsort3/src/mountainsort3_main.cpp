@@ -102,7 +102,7 @@ QJsonObject get_spec()
     }
 #endif
     {
-        ProcessorSpec X("banjoview.cross_correlograms", "0.1");
+        ProcessorSpec X("banjoview.cross_correlograms", "0.11");
         X.addInputs("firings");
         X.addOutputs("correlograms_out");
         X.addRequiredParameters("samplerate", "max_dt_msec", "bin_size_msec");
