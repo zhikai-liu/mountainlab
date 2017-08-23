@@ -102,7 +102,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
             QJsonObject prv_object = inputs[key].toObject();
             QString path0 = locate_prv(prv_object);
             if (path0.isEmpty()) {
-                response["error"] = QString("Unable to locate prv for key=%1) (original_path=%2)").arg(key).arg(prv_object["original_path"].toString());
+                response["error"] = QString("Unable to locate prv for key=%1. (original_path=%2,checksum=%3)").arg(key).arg(prv_object["original_path"].toString()).arg(prv_object["original_checksum"].toString());
                 return response;
             }
             args << QString("--%1=%2").arg(key).arg(path0);
