@@ -30,8 +30,14 @@ bool p_banjoview_cross_correlograms(QString firings_path, QString correlograms_o
 
     int K = MLCompute::max(labels);
     if (opts.clusters.isEmpty()) {
-        for (int k = 1; k <= K; k++)
-            opts.clusters << k;
+        QSet<int> labels_present;
+        for (bigint aa=0; aa<labels.count(); aa++) {
+            labels_present.insert(labels[aa]);
+        }
+        for (int k = 1; k <= K; k++) {
+            if (labels_present.contains(k))
+                opts.clusters << k;
+        }
     }
 
     QVector<int> k1s, k2s;
