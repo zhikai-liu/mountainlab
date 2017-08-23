@@ -69,6 +69,7 @@ If anything crashes along the way, every involved QProcess is killed.
 #include <unistd.h>
 #include "signal.h"
 #include "handle_request.h"
+#include "mllogmaster.h"
 
 #ifndef Q_OS_LINUX
 #include <sys/types.h>
@@ -102,8 +103,7 @@ QString get_daemon_state_summary(const QJsonObject& state);
 QString http_get_text_curl_1(const QString& url, bigint timeout_msec = 20000);
 bool download_prv(const QJsonObject& prv, QString fname, QString server);
 
-#define EXIT_ON_CRITICAL_ERROR
-void mountainprocessMessageOutput(QtMsgType type, const QMessageLogContext& context, const QString& msg);
+Q_LOGGING_CATEGORY(MP, "mp.main")
 
 struct run_script_opts {
     run_script_opts()
@@ -158,14 +158,17 @@ int main(int argc, char* argv[])
 
     ObjectRegistry registry;
 
-    //The process manager
-    QProcessManager* processManager = new QProcessManager;
-    registry.addAutoReleasedObject(processManager);
+    //The qprocess manager (very different from the ProcessManager!)
+    QProcessManager* qprocessManager = new QProcessManager;
+    registry.addAutoReleasedObject(qprocessManager);
     signal(SIGINT, sig_handler);
     signal(SIGKILL, sig_handler);
     signal(SIGTERM, sig_handler);
 
-    bool detach_mode = CLP.named_parameters.contains("_detach");
+    //bool detach_mode = CLP.named_parameters.contains("_detach");
+
+    MLLogMaster LM;
+    LM.install();
 
     // If _working_path is specified then we change the current directory
     QString working_path = CLP.named_parameters.value("_working_path").toString();
@@ -173,38 +176,9 @@ int main(int argc, char* argv[])
         working_path = QDir::currentPath();
     if (!working_path.isEmpty()) {
         if (!QDir::setCurrent(working_path)) {
-            qWarning() << "Unable to set working path to: " << working_path;
+            qCWarning(MP) << "Unable to set working path to: " << working_path;
         }
     }
-
-    //log_begin(argc,argv);
-
-    // Do not allow downloads or *processing* to resolve prv files
-    // since this is now handled in a separate gui -- as it very much should!!!
-    // The --_prvgui option can be used to launch the gui
-
-    // Find .prv files that are missing, and handle that situation accordingly.
-    /*
-    QJsonObject missing_prvs;
-    if (!get_missing_prvs(CLP.named_parameters, missing_prvs, working_path)) {
-        if (missing_prvs.keys().isEmpty())
-            return -1;
-        if (CLP.named_parameters.contains("_prvgui")) {
-            QString tmp_fname = CacheManager::globalInstance()->makeLocalFile() + ".prvs";
-            QString json = QJsonDocument(missing_prvs).toJson();
-            TextFile::write(tmp_fname, json);
-            CacheManager::globalInstance()->setTemporaryFileDuration(tmp_fname, 600);
-            QString cmd = QString("prv-gui %1").arg(tmp_fname);
-            QProcess::startDetached(cmd);
-            return -1;
-        }
-        else {
-            qWarning() << "";
-            qWarning() << "The following prv objects could not be found:" << missing_prvs.keys();
-            return -1;
-        }
-    }
-    */
 
     // Make sure the MP_DAEMON_ID environment variable is set
     // This will be used in all calls to queue-process (and queue-script)
@@ -236,19 +210,16 @@ int main(int argc, char* argv[])
         iff = CLP.named_parameters["_iff"].toString();
 
     if (!iff.isEmpty()) {
-        if (!detach_mode) {
-            qDebug().noquote() << "### Setting intermediate file folder: " + iff;
-        }
         CacheManager::globalInstance()->setIntermediateFileFolder(iff);
     }
-
-    qInstallMessageHandler(mountainprocessMessageOutput);
 
     /// TODO don't need to always load the process manager?
 
     ProcessManager* PM = ProcessManager::globalInstance();
 
     setbuf(stdout, NULL);
+
+    qCInfo(MP) << arg1 << CLP.unnamed_parameters.mid(1);
 
     if (arg1 == "list-processors") { //Provide a human-readable list of the available processors
         if (!initialize_process_manager()) { //load the processor plugins etc
@@ -385,12 +356,12 @@ int main(int argc, char* argv[])
             QFile::remove(output_fname); //important -- added 9/9/16
             QString obj_json = QJsonDocument(obj).toJson();
             if (!TextFile::write(output_fname, obj_json)) {
-                qCritical() << "Unable to write results to: " + output_fname;
+                qCCritical(MP) << "Unable to write results to: " + output_fname;
                 return -1;
             }
         }
         if (!error_message.isEmpty()) {
-            qCritical() << "Error in mountainprocessmain" << error_message;
+            qCCritical(MP) << "Error in mountainprocessmain" << error_message;
         }
         printf("\n");
 
@@ -452,14 +423,14 @@ int main(int argc, char* argv[])
                     script_fnames << str;
                 }
                 else {
-                    qCritical() << "Unable to find script file: " + str;
+                    qCCritical(MP) << "Unable to find script file: " + str;
                     //log_end();
                     return -1;
                 }
             }
             if ((str.endsWith(".par")) || (str.endsWith(".json"))) { // note that we can have multiple parameter files! the later ones override the earlier ones.
                 if (!load_parameter_file(params, str)) {
-                    qWarning() << "Unable to load parameter file: " + str;
+                    qCWarning(MP) << "Unable to load parameter file: " + str;
                     //log_end();
                     return -1;
                 }
@@ -493,7 +464,7 @@ int main(int argc, char* argv[])
             QFile::remove(output_fname); //important -- added 9/9/16
             QString obj_json = QJsonDocument(obj).toJson();
             if (!TextFile::write(output_fname, obj_json)) {
-                qCritical() << "Unable to write results to: " + output_fname;
+                qCCritical(MP) << "Unable to write results to: " + output_fname;
                 return -1;
             }
         }
@@ -847,7 +818,7 @@ int main(int argc, char* argv[])
         }
         else {
             if (!TextFile::write(response_fname, response_json)) {
-                qWarning() << "Error writing response to file";
+                qCWarning(MP) << "Error writing response to file";
                 return -1;
             }
             return 0;
@@ -859,15 +830,15 @@ int main(int argc, char* argv[])
 
         QString processor_name = arg2; //name of the processor is the second user-supplied arg
         if (processor_name.isEmpty()) {
-            qWarning() << "Processor name is empty";
+            qCWarning(MP) << "Processor name is empty";
             return -1;
         }
 
-        qDebug().noquote() << "Running processor remotely: "+processor_name;
+        qDebug().noquote() << "Running processor remotely: " + processor_name;
 
         QString server = CLP.named_parameters["_server"].toString();
         if (server.isEmpty()) {
-            qWarning() << "Server is empty";
+            qCWarning(MP) << "Server is empty";
             return -1;
         }
 
@@ -880,7 +851,7 @@ int main(int argc, char* argv[])
 
         MLProcessor PP = PM->processor(processor_name);
         if (PP.name != processor_name) {
-            qWarning() << "Unable to find processor: " + processor_name;
+            qCWarning(MP) << "Unable to find processor: " + processor_name;
             return -1;
         }
 
@@ -898,24 +869,23 @@ int main(int argc, char* argv[])
                     QJsonParseError parse_error;
                     obj0 = QJsonDocument::fromJson(json0.toUtf8(), &parse_error).object();
                     if (parse_error.error != QJsonParseError::NoError) {
-                        qWarning() << "Error parsing .prv file: " + fname0;
+                        qCWarning(MP) << "Error parsing .prv file: " + fname0;
                         return -1;
                     }
                 }
                 else {
                     if (!fname0.isEmpty()) {
-                        qDebug().noquote() << "Creating prv object for: "+fname0;
-                        obj0=MLUtil::createPrvObject(fname0);
-                        //qWarning() << "Inputs must all be .prv files when using remote processing";
+                        qDebug().noquote() << "Creating prv object for: " + fname0;
+                        obj0 = MLUtil::createPrvObject(fname0);
+                        //qCWarning(MP) << "Inputs must all be .prv files when using remote processing";
                         //return -1;
                     }
                 }
-                inputs[key]=obj0;
-
+                inputs[key] = obj0;
             }
             else {
                 if (!PP.inputs[key].optional) {
-                    qWarning() << "Missing required input: " + key;
+                    qCWarning(MP) << "Missing required input: " + key;
                     return -1;
                 }
             }
@@ -928,7 +898,7 @@ int main(int argc, char* argv[])
                 /*
                 QString fname0=process_parameters[key].toString();
                 if (!fname0.endsWith(".prv")) {
-                    qWarning() << "Outputs must all be .prv files when using remote processing";
+                    qCWarning(MP) << "Outputs must all be .prv files when using remote processing";
                     return -1;
                 }
                 */
@@ -936,7 +906,7 @@ int main(int argc, char* argv[])
             }
             else {
                 if (!PP.outputs[key].optional) {
-                    qWarning() << "Missing required output: " + key;
+                    qCWarning(MP) << "Missing required output: " + key;
                     return -1;
                 }
             }
@@ -950,7 +920,7 @@ int main(int argc, char* argv[])
             }
             else {
                 if (!PP.parameters[key].optional) {
-                    qWarning() << "Missing required parameter: " + key;
+                    qCWarning(MP) << "Missing required parameter: " + key;
                     return -1;
                 }
             }
@@ -960,7 +930,7 @@ int main(int argc, char* argv[])
         QString request_json = QJsonDocument(request).toJson();
         /*QString request_fname=CacheManager::globalInstance()->makeExpiringFile(QString("mpreq_%1.json").arg(MLUtil::makeRandomId(8)),60*60);
         if (!TextFile::write(request_fname,request_json)) {
-            qWarning() << "Error writing temporary file: "+request_fname;
+            qCWarning(MP) << "Error writing temporary file: "+request_fname;
             return -1;
         }*/
 
@@ -974,7 +944,7 @@ int main(int argc, char* argv[])
         }
 
         if (server_url.isEmpty()) {
-            qWarning() << "Unable to find server_url associated with server="+server;
+            qCWarning(MP) << "Unable to find server_url associated with server=" + server;
             return -1;
         }
 
@@ -987,17 +957,17 @@ int main(int argc, char* argv[])
             response = QJsonDocument::fromJson(txt0.toUtf8(), &parse_error).object();
             if (parse_error.error != QJsonParseError::NoError) {
                 qDebug().noquote() << txt0;
-                qWarning() << "Error parsing response from "+url;
+                qCWarning(MP) << "Error parsing response from " + url;
                 return -1;
             }
         }
         if (!response["success"].toBool()) {
-            qWarning() << "Error in response: " + response["error"].toString();
+            qCWarning(MP) << "Error in response: " + response["error"].toString();
             return -1;
         }
         QJsonObject response2 = response["response"].toObject();
         if (!response2["success"].toBool()) {
-            qWarning() << "Error in response2: " + response2["error"].toString();
+            qCWarning(MP) << "Error in response2: " + response2["error"].toString();
             return -1;
         }
         QJsonObject outputs0 = response2["outputs"].toObject();
@@ -1007,14 +977,14 @@ int main(int argc, char* argv[])
                 if (fname0.endsWith(".prv")) {
                     QString json0 = QJsonDocument(outputs0[key].toObject()).toJson();
                     if (!TextFile::write(fname0, json0)) {
-                        qWarning() << "Unable to write to output file: " + fname0;
+                        qCWarning(MP) << "Unable to write to output file: " + fname0;
                         return -1;
                     }
                 }
                 else {
                     QFile::remove(fname0);
                     if (!download_prv(outputs0[key].toObject(), fname0, server)) {
-                        qWarning() << "Problem downloading output: " + key;
+                        qCWarning(MP) << "Problem downloading output: " + key;
                         return -1;
                     }
                 }
@@ -1156,7 +1126,7 @@ bool initialize_process_manager()
     // Load the processor paths
     QStringList processor_paths = MLUtil::configResolvedPathList("mountainprocess", "processor_paths");
     if (processor_paths.isEmpty()) {
-        qCritical() << "No processor paths found.";
+        qCCritical(MP) << "No processor paths found.";
         return false;
     }
     ProcessManager* PM = ProcessManager::globalInstance();
@@ -1212,14 +1182,14 @@ bool load_parameter_file(QVariantMap& params, const QString& fname)
 {
     QString json = TextFile::read(fname);
     if (json.isEmpty()) {
-        qCritical() << "Non-existent or empty parameter file: " + fname;
+        qCCritical(MP) << "Non-existent or empty parameter file: " + fname;
         return false;
     }
     json = remove_comments(json);
     QJsonParseError error;
     QJsonObject obj = QJsonDocument::fromJson(json.toUtf8(), &error).object();
     if (error.error != QJsonParseError::NoError) {
-        qCritical() << "Error parsing json file: " + fname + " : " + error.errorString();
+        qCCritical(MP) << "Error parsing json file: " + fname + " : " + error.errorString();
         return false;
     }
     QStringList keys = obj.keys();
@@ -1262,7 +1232,7 @@ bool run_script(const QStringList& script_fnames, const QVariantMap& params, con
         if (result.isError()) {
             display_error(result);
             error_message = "Error running script";
-            qCritical() << "Error running script.";
+            qCCritical(MP) << "Error running script.";
             return false;
         }
     }
@@ -1350,7 +1320,7 @@ bool queue_pript(PriptType prtype, const CLParams& CLP, QString working_path)
             }
             if ((str.endsWith(".par")) || (str.endsWith(".json"))) { // note that we can have multiple parameter files! the later ones override the earlier ones.
                 if (!load_parameter_file(params, str)) {
-                    qWarning() << "Error loading parameter file" << str;
+                    qCWarning(MP) << "Error loading parameter file" << str;
                     return false;
                 }
             }
@@ -1365,7 +1335,7 @@ bool queue_pript(PriptType prtype, const CLParams& CLP, QString working_path)
         PP.processor_name = CLP.unnamed_parameters.value(1); //arg2 -- the name of the processor
         ProcessManager* PM = ProcessManager::globalInstance();
         if (!PM->processorNames().contains(PP.processor_name)) {
-            qWarning() << QString("Unable to find processor %1. (%2 processors loaded)").arg(PP.processor_name).arg(PM->processorNames().count());
+            qCWarning(MP) << QString("Unable to find processor %1. (%2 processors loaded)").arg(PP.processor_name).arg(PM->processorNames().count());
             return false;
         }
         PP.processor_spec = PM->processor(PP.processor_name).spec; //this will be checked later for consistency (make sure processor has not changed)
@@ -1432,14 +1402,14 @@ bool queue_pript(PriptType prtype, const CLParams& CLP, QString working_path)
     if (prtype == ScriptType) {
         // It is a script
         if (!client.queueScript(PP)) { //queue the script
-            qWarning() << "Error queueing script";
+            qCWarning(MP) << "Error queueing script";
             return false;
         }
     }
     else {
         // It is a process
         if (!client.queueProcess(PP)) { //queue the process
-            qWarning() << "Error queueing process";
+            qCWarning(MP) << "Error queueing process";
             return false;
         }
     }
@@ -1465,34 +1435,6 @@ bool queue_pript(PriptType prtype, const CLParams& CLP, QString working_path)
         }
     }
     return true;
-}
-
-void mountainprocessMessageOutput(QtMsgType type, const QMessageLogContext& context, const QString& msg)
-{
-    (void)context;
-    QByteArray localMsg = msg.toLocal8Bit();
-    switch (type) {
-    case QtDebugMsg:
-        //fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-        fprintf(stderr, "Debug: %s\n", localMsg.constData());
-        break;
-    case QtInfoMsg:
-        fprintf(stderr, "%s\n", localMsg.constData());
-        break;
-    case QtWarningMsg:
-        fprintf(stderr, "Warning: %s\n", localMsg.constData());
-        break;
-    case QtCriticalMsg:
-        //write to error log here
-        fprintf(stderr, "Critical: %s\n", localMsg.constData());
-#ifdef EXIT_ON_CRITICAL_ERROR
-        exit(-1);
-#endif
-        break;
-    case QtFatalMsg:
-        fprintf(stderr, "Fatal: %s\n", localMsg.constData());
-        exit(-1);
-    }
 }
 
 QJsonArray monitor_stats_to_json_array(const QList<MonitorStats>& stats)
@@ -1627,14 +1569,14 @@ QJsonObject read_prv_file(QString path)
 {
     QString txt = TextFile::read(path);
     if (txt.isEmpty()) {
-        qWarning() << "Working directory: " + QDir::currentPath();
-        qWarning() << QString("Unable to read .prv file: ") + "[" + path + "]";
+        qCWarning(MP) << "Working directory: " + QDir::currentPath();
+        qCWarning(MP) << QString("Unable to read .prv file: ") + "[" + path + "]";
         return QJsonObject();
     }
     QJsonParseError err;
     QJsonObject obj = QJsonDocument::fromJson(txt.toUtf8(), &err).object();
     if (err.error != QJsonParseError::NoError) {
-        qWarning() << "Error parsing .prv file: " + path;
+        qCWarning(MP) << "Error parsing .prv file: " + path;
         return QJsonObject();
     }
     return obj;
@@ -1658,7 +1600,7 @@ void get_missing_prvs(QString key, QVariant clparam, QJsonObject& missing_prvs, 
             QJsonObject obj = read_prv_file(val);
             QString path0 = locate_prv(obj);
             if (path0.isEmpty()) {
-                qWarning() << QString("prv is missing: %1 (parameter: %2, working_path:%3)").arg(MLUtil::resolvePath(working_path, val)).arg(key).arg(working_path);
+                qCWarning(MP) << QString("prv is missing: %1 (parameter: %2, working_path:%3)").arg(MLUtil::resolvePath(working_path, val)).arg(key).arg(working_path);
                 missing_prvs[key] = obj;
             }
         }
@@ -1718,7 +1660,7 @@ QJsonObject get_daemon_state(QString daemon_id)
     MPDaemonClient client;
     QJsonObject state = client.state();
     if (state.isEmpty()) {
-        qWarning() << "Can't connect to daemon";
+        qCWarning(MP) << "Can't connect to daemon";
         return QJsonObject();
     }
     return state;

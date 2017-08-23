@@ -206,7 +206,8 @@ void mkdir_if_doesnt_exist(const QString& path)
 
 QString MLUtil::mlLogPath()
 {
-    QString ret = mountainlabBasePath() + "/log";
+    //QString ret = mountainlabBasePath() + "/log";
+    QString ret = MLUtil::tempPath() + "/log";
     mkdir_if_doesnt_exist(ret);
     return ret;
 }

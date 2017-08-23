@@ -14,6 +14,10 @@
 #include "mlcommon.h"
 #include <signal.h>
 
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(CM, "cache_manager");
+
 #define DEFAULT_LOCAL_BASE_PATH MLUtil::tempPath()
 
 class CacheManagerPrivate {
@@ -43,7 +47,7 @@ void CacheManager::setLocalBasePath(const QString& path)
         QString parent = QFileInfo(path).path();
         QString name = QFileInfo(path).fileName();
         if (!QDir(parent).mkdir(name)) {
-            qWarning() << "Unable to create local base path" << path;
+            qCWarning(CM) << "Unable to create local base path" << path;
         }
     }
     if (!QDir(path + "/tmp_short_term").exists()) {
@@ -63,6 +67,7 @@ void CacheManager::setIntermediateFileFolder(const QString& folder)
     d->m_intermediate_file_folder = folder;
 }
 
+/*
 QString CacheManager::makeRemoteFile(const QString& mlproxy_url, const QString& file_name_in, CacheManager::Duration duration)
 {
     if (mlproxy_url.isEmpty()) {
@@ -78,11 +83,12 @@ QString CacheManager::makeRemoteFile(const QString& mlproxy_url, const QString& 
     else if (duration == LongTerm)
         str = "tmp_long_term";
     else {
-        qWarning() << "Unexpected problem" << __FUNCTION__ << __FILE__ << __LINE__;
+        qCWarning(CM) << "Unexpected problem" << __FUNCTION__ << __FILE__ << __LINE__;
         return "";
     }
     return QString("%1/mdaserver/%2/%3").arg(mlproxy_url).arg(str).arg(file_name);
 }
+*/
 
 QString CacheManager::makeLocalFile(const QString& file_name_in, CacheManager::Duration duration)
 {
@@ -96,7 +102,7 @@ QString CacheManager::makeLocalFile(const QString& file_name_in, CacheManager::D
     else if (duration == LongTerm)
         str = "tmp_long_term";
     else {
-        qWarning() << "Unexpected problem" << __FUNCTION__ << __FILE__ << __LINE__;
+        qCWarning(CM) << "Unexpected problem" << __FUNCTION__ << __FILE__ << __LINE__;
         return "";
     }
     QString ret = QString("%1/%2/%3").arg(localTempPath()).arg(str).arg(file_name);
@@ -130,7 +136,7 @@ QString CacheManager::makeIntermediateFile(const QString& file_name_in)
 QString CacheManager::localTempPath()
 {
     if (d->m_local_base_path.isEmpty()) {
-        //qWarning() << "Local base path has not been set. Using default: " + QString(DEFAULT_LOCAL_BASE_PATH);
+        //qCWarning(CM) << "Local base path has not been set. Using default: " + QString(DEFAULT_LOCAL_BASE_PATH);
         this->setLocalBasePath(DEFAULT_LOCAL_BASE_PATH);
     }
     return d->m_local_base_path;
@@ -287,7 +293,7 @@ void CacheManager::removeExpiredFiles()
                 if (!creation_timestamp_str.isEmpty()) {
                     //there was a creation timestamp. let's see if it matches.
                     if (QFileInfo(path0).created().toString("yyyy-MM-dd hh:mm:ss") != creation_timestamp_str) {
-                        qWarning() << "Temporary file creation timestamp does not match that in the expiration record. Removing expiration record.";
+                        qCWarning(CM) << "Temporary file creation timestamp does not match that in the expiration record. Removing expiration record.";
                         QFile::remove(fname);
                         ok = false;
                     }
@@ -300,7 +306,7 @@ void CacheManager::removeExpiredFiles()
                             QFile::remove(fname);
                         }
                         else {
-                            qWarning() << "Unable to remove expired temporary file: " + path0;
+                            qCWarning(CM) << "Unable to remove expired temporary file: " + path0;
                         }
                     }
                 }
@@ -311,7 +317,7 @@ void CacheManager::removeExpiredFiles()
                             QFile::remove(fname);
                         }
                         else {
-                            qWarning() << "Unable to remove expired temporary file: " + path0;
+                            qCWarning(CM) << "Unable to remove expired temporary file: " + path0;
                         }
                     }
                 }
@@ -341,7 +347,7 @@ void CacheManager::cleanUp()
 {
     double max_gb = MLUtil::configValue("general", "max_cache_size_gb").toDouble();
     if (!max_gb) {
-        qWarning() << "max_gb is zero. You probably need to adjust the mountainlab configuration files.";
+        qCWarning(CM) << "max_gb is zero. You probably need to adjust the mountainlab configuration files.";
         return;
     }
     if (!d->m_local_base_path.endsWith("/mountainlab")) {
@@ -363,7 +369,7 @@ void CacheManager::cleanUp()
                 break;
             }
             if (!QFile::remove(records[i].path)) {
-                qWarning() << "Unable to remove file while cleaning up cache: " + records[i].path;
+                qCWarning(CM) << "Unable to remove file while cleaning up cache: " + records[i].path;
                 return;
             }
             amount_removed += records[i].size_gb;
@@ -371,7 +377,7 @@ void CacheManager::cleanUp()
         }
     }
     if (num_files_removed) {
-        qWarning() << QString("CacheManager removed %1 GB and %2 files").arg(amount_removed).arg(num_files_removed);
+        qCInfo(CM) << QString("CacheManager removed %1 GB and %2 files").arg(amount_removed).arg(num_files_removed);
     }
 }
 

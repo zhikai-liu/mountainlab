@@ -75,7 +75,7 @@ bool DiskWriteMda::open(int data_type, const QString& path, bigint N1, bigint N2
     }
 
     bigint NN = N1 * N2 * N3 * N4 * N5 * N6;
-    bigint buf_size = 1e6;
+    //bigint buf_size = 1e6;
 
     //write the header
     mda_write_header(&d->m_header, d->m_file);

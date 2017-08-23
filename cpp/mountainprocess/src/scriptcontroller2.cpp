@@ -22,6 +22,10 @@
 #include "mpdaemon.h"
 #include "mlcommon.h"
 
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(MPS, "mp.script_controller");
+
 struct PipelineNode2 {
     // A node in the processing pipeline -- representing a single process
     PipelineNode2()
@@ -180,7 +184,7 @@ QString ScriptController2::addProcess(QString processor_name, QString inputs_jso
     // Find the processor in the process manager
     MLProcessor PP = ProcessManager::globalInstance()->processor(processor_name);
     if (PP.name != processor_name) { //rather use PP.isNull()
-        qWarning() << "Unable to find processor **: " + processor_name;
+        qCWarning(MPS) << "Unable to find processor **: " + processor_name;
         return "{}";
     }
     QMap<QString, MLParameter> PP_outputs = PP.outputs; // The spec of the output parameters
@@ -213,7 +217,7 @@ QString ScriptController2::addProcess(QString processor_name, QString inputs_jso
         QStringList node_output_keys = node.outputs.keys();
         foreach (QString key, node_output_keys) {
             if (!output_keys.contains(key)) {
-                qWarning() << "Processor " + processor_name + " does not contain output: " + key;
+                qCWarning(MPS) << "Processor " + processor_name + " does not contain output: " + key;
                 return "{}";
             }
         }
@@ -270,7 +274,7 @@ bool ScriptController2::runPipeline()
         QStringList output_paths = node->output_paths();
         foreach (QString path, output_paths) {
             if (path.isEmpty()) {
-                qWarning() << "Output path is empty" << node->processor_name << node->input_paths() << node->output_paths();
+                qCWarning(MPS) << "Output path is empty" << node->processor_name << node->input_paths() << node->output_paths();
                 return false;
             }
         }
@@ -283,8 +287,8 @@ bool ScriptController2::runPipeline()
         QStringList output_paths = node->output_paths();
         foreach (QString output_path, output_paths) {
             if (input_paths_set.contains(output_path)) {
-                qWarning() << node->processor_name << output_path;
-                qWarning() << "An input path is the same as an output path. This can happen sometimes when using .prv files (checksum lookups) in the case where a process creates an output file that matches an input file.";
+                qCWarning(MPS) << node->processor_name << output_path;
+                qCWarning(MPS) << "An input path is the same as an output path. This can happen sometimes when using .prv files (checksum lookups) in the case where a process creates an output file that matches an input file.";
                 return false;
             }
         }
@@ -337,7 +341,7 @@ bool ScriptController2::runPipeline()
     for (int i = 0; i < d->m_pipeline_nodes.count(); i++) {
         PipelineNode2* node = &d->m_pipeline_nodes[i];
         if (!node->completed) {
-            qWarning() << "Not every process in the pipeline was run. For example: " + node->processor_name + ". This could be due to a cyclic dependency.";
+            qCWarning(MPS) << "Not every process in the pipeline was run. For example: " + node->processor_name + ". This could be due to a cyclic dependency.";
             return false;
         }
     }
@@ -360,7 +364,7 @@ QJsonObject make_prv_object_2(QString path)
             return QJsonDocument::fromJson(json.toUtf8()).object();
         }
         else {
-            qWarning() << "Unable to find file (in make_prv_object_2):" << path;
+            qCWarning(MPS) << "Unable to find file (in make_prv_object_2):" << path;
             return QJsonObject();
         }
     }
@@ -421,7 +425,7 @@ QString ScriptController2::createPrvObject(const QString& path)
     QSet<int> node_indices_already_used; //to avoid infinite cycles, which can happen, for example, when an input file is the same as an output file
     obj["processes"] = get_prv_processes_2(d->m_pipeline_nodes, node_indices_for_outputs, path, node_indices_already_used, &ok);
     if (!ok) {
-        qWarning() << "Error in get_prv_processes";
+        qCWarning(MPS) << "Error in get_prv_processes";
         return "";
     }
     */
@@ -481,7 +485,7 @@ QProcess* ScriptController2Private::queue_process(QString processor_name, const 
     qDebug().noquote() << exe + " " + args.join(" ");
     MPDaemon::start_bash_command_and_kill_when_pid_is_gone(P1, exe, args, QCoreApplication::applicationPid());
     if (!P1->waitForStarted()) {
-        qWarning() << "Error waiting for process to start: " + processor_name;
+        qCWarning(MPS) << "Error waiting for process to start: " + processor_name;
         delete P1;
         return 0;
     }
@@ -543,12 +547,12 @@ QVariant resolve_prv_files(QVariant f)
             QJsonParseError err;
             QJsonObject obj = QJsonDocument::fromJson(txt.toUtf8(), &err).object();
             if (err.error != QJsonParseError::NoError) {
-                qWarning() << "Error parsing .prv file: " + fname;
+                qCWarning(MPS) << "Error parsing .prv file: " + fname;
                 return "";
             }
             QString path0 = locate_prv(obj);
             if (path0.isEmpty()) {
-                qWarning() << "Unable to locate prv file originally at: " + obj["original_path"].toString();
+                qCWarning(MPS) << "Unable to locate prv file originally at: " + obj["original_path"].toString();
                 return "";
             }
             return path0;
@@ -588,20 +592,20 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
         QString input_path = node->inputs["input"].toString();
         QString output_path = node->outputs["output"].toString();
         if (input_path.isEmpty()) {
-            qWarning() << "Input path for create_prv is empty.";
+            qCWarning(MPS) << "Input path for create_prv is empty.";
             return false;
         }
         if (!QFile::exists(input_path)) {
-            qWarning() << "Input file for create_prv does not exist: " + input_path;
+            qCWarning(MPS) << "Input file for create_prv does not exist: " + input_path;
             return false;
         }
         if (!output_path.endsWith(".prv")) {
-            qWarning() << "Problem creating .prv file. The file path must end with .prv.";
+            qCWarning(MPS) << "Problem creating .prv file. The file path must end with .prv.";
             return false;
         }
 
         if (!output_path.endsWith(".prv")) {
-            qWarning() << ".prv file must end with .prv extension";
+            qCWarning(MPS) << ".prv file must end with .prv extension";
             return false;
         }
         QJsonObject obj = make_prv_object_2(input_path);
@@ -611,7 +615,7 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
         QSet<int> node_indices_already_used; //to avoid infinite cycles, which can happen, for example, when an input file is the same as an output file
         obj["processes"] = get_prv_processes_2(m_pipeline_nodes, node_indices_for_outputs, input_path, node_indices_already_used, &ok);
         if (!ok) {
-            qWarning() << "Error in get_prv_processes";
+            qCWarning(MPS) << "Error in get_prv_processes";
             return false;
         }
         QString obj_json = QJsonDocument(obj).toJson(QJsonDocument::Indented);
@@ -620,7 +624,7 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
             return true;
         }
         else {
-            qWarning() << "Unable to write prv file: " << output_path;
+            qCWarning(MPS) << "Unable to write prv file: " << output_path;
             return false;
         }
     }
@@ -629,11 +633,11 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
         QString output_path = node->outputs["output"].toString();
         printf("COPYING FILE: %s -> %s", input_path.toUtf8().data(), output_path.toUtf8().data());
         if (input_path.isEmpty()) {
-            qWarning() << "Input path for copy_file is empty.";
+            qCWarning(MPS) << "Input path for copy_file is empty.";
             return false;
         }
         if (!QFile::exists(input_path)) {
-            qWarning() << "Input file for copy_file does not exist: " + input_path;
+            qCWarning(MPS) << "Input file for copy_file does not exist: " + input_path;
             return false;
         }
 
@@ -655,11 +659,11 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
         if (QFile::exists(input_path)) { //note that the file may not exist if the .rprv from a previous run already exists
             qDebug().noquote() << QString("Removing intermediate file: %1").arg(input_path);
             if (!create_rprv(input_path)) {
-                qWarning() << "Unable to create .rprv file";
+                qCWarning(MPS) << "Unable to create .rprv file";
                 return false;
             }
             if (!QFile::remove(input_path)) {
-                qWarning() << "Unable to remove intermediate file: " + input_path;
+                qCWarning(MPS) << "Unable to remove intermediate file: " + input_path;
                 return false;
             }
         }
@@ -667,7 +671,7 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
         return true;
     }
     if (!PM->checkParameters(node->processor_name, parameters0)) {
-        qWarning() << "Error checking parameters for processor: " + node->processor_name;
+        qCWarning(MPS) << "Error checking parameters for processor: " + node->processor_name;
         return false;
     }
     if ((!m_force_run) && (PM->processAlreadyCompleted(node->processor_name, parameters0, true, true))) {
@@ -682,7 +686,7 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
             printf("Launching process %s\n", node->processor_name.toLatin1().data());
             P1 = run_process(node->processor_name, parameters0, m_force_run, m_preserve_tempdir, node->process_output_fname, m_num_threads);
             if (!P1) {
-                qWarning() << "Unable to launch process: " + node->processor_name;
+                qCWarning(MPS) << "Unable to launch process: " + node->processor_name;
                 return false;
             }
         }
@@ -690,7 +694,7 @@ bool ScriptController2Private::run_or_queue_node(PipelineNode2* node, const QMap
             printf("Queuing process from script controller: %s\n", node->processor_name.toLatin1().data());
             P1 = queue_process(node->processor_name, parameters0, false, m_force_run, m_preserve_tempdir, node->process_output_fname, m_num_threads);
             if (!P1) {
-                qWarning() << "Unable to queue process: " + node->processor_name;
+                qCWarning(MPS) << "Unable to queue process: " + node->processor_name;
                 return false;
             }
         }
@@ -767,7 +771,7 @@ bool ScriptController2Private::handle_running_processes()
         PipelineNode2* node = &m_pipeline_nodes[i];
         if (node->running) {
             if (!node->qprocess) {
-                qCritical() << "Unexpected problem" << __FILE__ << __LINE__;
+                qCCritical(MPS) << "Unexpected problem" << __FILE__ << __LINE__;
                 return false;
             }
             {
@@ -784,11 +788,11 @@ bool ScriptController2Private::handle_running_processes()
                     printf("%s", str.data());
                 }
                 if (node->qprocess->exitStatus() == QProcess::CrashExit) {
-                    qWarning() << "Process crashed: " + node->processor_name;
+                    qCWarning(MPS) << "Process crashed: " + node->processor_name;
                     return false;
                 }
                 if (node->qprocess->exitCode() != 0) {
-                    qWarning() << "Process returned with non-zero exit code: " + node->processor_name;
+                    qCWarning(MPS) << "Process returned with non-zero exit code: " + node->processor_name;
                     return false;
                 }
                 node->completed = true;
@@ -797,7 +801,7 @@ bool ScriptController2Private::handle_running_processes()
                 if (!node->process_output_fname.isEmpty()) {
                     QString tmp_json = TextFile::read(node->process_output_fname);
                     if (tmp_json.isEmpty()) {
-                        qWarning() << "process output file is empty or does not exist for processor: " + node->processor_name;
+                        qCWarning(MPS) << "process output file is empty or does not exist for processor: " + node->processor_name;
                     }
                     CacheManager::globalInstance()->setTemporaryFileDuration(node->process_output_fname, 600);
                     //QFile::remove(node->process_output_fname);
@@ -831,7 +835,7 @@ bool ScriptController2Private::get_node_indices_for_outputs(QMap<QString, int>& 
         foreach (QString path, output_paths) {
             if (!path.isEmpty()) {
                 if (node_indices_for_outputs.contains(path)) {
-                    qWarning() << "Same output is created twice in pipeline." << path;
+                    qCWarning(MPS) << "Same output is created twice in pipeline." << path;
                     return false;
                 }
             }
@@ -860,7 +864,7 @@ bool ScriptController2Private::okay_to_remove_intermediate_file(const QString& p
 bool ScriptController2Private::create_rprv(const QString& path)
 {
     if (!QFile::exists(path)) {
-        qWarning() << "In create_prv: file does not exist: " + path;
+        qCWarning(MPS) << "In create_prv: file does not exist: " + path;
         return false;
     }
     QJsonObject obj = MLUtil::createPrvObject(path);
@@ -870,7 +874,7 @@ bool ScriptController2Private::create_rprv(const QString& path)
 
     QString json = QJsonDocument(obj).toJson();
     if (!TextFile::write(path + ".rprv", json)) {
-        qWarning() << "Unable to write .rprv file: " + path + ".rprv";
+        qCWarning(MPS) << "Unable to write .rprv file: " + path + ".rprv";
         return false;
     }
     return true;
@@ -885,7 +889,7 @@ QString resolve_file_name_2(QStringList server_urls, QString server_base_path, Q
         if (fname.startsWith(str + "/mdaserver")) {
             fname = server_base_path + "/" + fname.mid((str + "/mdaserver").count());
             if (fname.mid(server_base_path.count()).contains("..")) {
-                qWarning() << "Illegal .. in file path: " + fname;
+                qCWarning(MPS) << "Illegal .. in file path: " + fname;
                 fname = "";
             }
         }

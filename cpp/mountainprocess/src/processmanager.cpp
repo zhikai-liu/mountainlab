@@ -23,6 +23,10 @@
 #include <cachemanager.h>
 #include "mpdaemon.h"
 
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(MPM, "mp.manager");
+
 struct PMProcess {
     MLProcessInfo info;
     QString tempdir = "";
@@ -121,21 +125,21 @@ bool ProcessManager::loadProcessorFile(const QString& path)
             QProcess pp;
             pp.start(path, QStringList("spec"));
             if (!pp.waitForFinished()) {
-                qWarning() << "Problem with executable processor file, waiting for finish: " + path;
+                qCWarning(MPM) << "Problem with executable processor file, waiting for finish: " + path;
                 return false;
             }
             pp.waitForReadyRead();
             QString output = pp.readAll();
             json = output;
             if (json.isEmpty()) {
-                qWarning() << "Potential problem with executable processor file: " + path + ". Expected json output but got empty string.";
+                qCWarning(MPM) << "Potential problem with executable processor file: " + path + ". Expected json output but got empty string.";
                 if (QFileInfo(path).size() < 1e6) {
                     json = TextFile::read(path);
                     //now test it, since it is executable we are suspicious...
                     QJsonParseError error;
                     QJsonObject obj = QJsonDocument::fromJson(json.toLatin1(), &error).object();
                     if (error.error != QJsonParseError::NoError) {
-                        qWarning() << "Executable processor file did not return output for spec: " + path;
+                        qCWarning(MPM) << "Executable processor file did not return output for spec: " + path;
                         return false;
                     }
                     else {
@@ -143,7 +147,7 @@ bool ProcessManager::loadProcessorFile(const QString& path)
                     }
                 }
                 else {
-                    qWarning() << "File is too large to be a text file. Executable processor file did not return output for spec: " + path;
+                    qCWarning(MPM) << "File is too large to be a text file. Executable processor file did not return output for spec: " + path;
                     return false;
                 }
             }
@@ -155,30 +159,30 @@ bool ProcessManager::loadProcessorFile(const QString& path)
     else {
         json = TextFile::read(path);
         if (json.isEmpty()) {
-            qWarning() << "Processor file is empty: " + path;
+            qCWarning(MPM) << "Processor file is empty: " + path;
             return false;
         }
     }
     QJsonParseError error;
     QJsonObject obj = QJsonDocument::fromJson(json.toLatin1(), &error).object();
     if (error.error != QJsonParseError::NoError) {
-        qWarning() << "Json parse error when loading processor plugin: " << error.errorString();
+        qCWarning(MPM) << "Json parse error when loading processor plugin: " << error.errorString();
         return false;
     }
     if (!obj["processors"].isArray()) {
-        qWarning() << "Problem with processor file: processors field is missing or not any array: " + path;
+        qCWarning(MPM) << "Problem with processor file: processors field is missing or not any array: " + path;
         return false;
     }
     QJsonArray processors = obj["processors"].toArray();
     for (int i = 0; i < processors.count(); i++) {
         if (!processors[i].isObject()) {
-            qWarning() << "Problem with processor file: processor is not an object: " + path;
+            qCWarning(MPM) << "Problem with processor file: processor is not an object: " + path;
             return false;
         }
         MLProcessor P = d->create_processor_from_json_object(processors[i].toObject());
         P.basepath = QFileInfo(path).path();
         if (P.name.isEmpty()) {
-            qWarning() << "Problem with processor file: processor error: " + path;
+            qCWarning(MPM) << "Problem with processor file: processor error: " + path;
             return false;
         }
         d->m_processors[P.name] = P;
@@ -201,7 +205,7 @@ void delete_tempdir(QString tempdir)
     //return; // Uncomment this line for debugging -- but remember to put it back!!!
     // to be safe!
     if (!tempdir.startsWith(CacheManager::globalInstance()->localTempPath())) {
-        qWarning() << "Unexpected tempdir in delete_tempdir: " + tempdir;
+        qCWarning(MPM) << "Unexpected tempdir in delete_tempdir: " + tempdir;
         return;
     }
 
@@ -235,12 +239,12 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     QVariantMap parameters = d->resolve_file_names_in_parameters(processor_name, parameters_in);
 
     if (!this->checkParameters(processor_name, parameters)) {
-        qWarning() << "Problem checking parameters";
+        qCWarning(MPM) << "Problem checking parameters";
         return "";
     }
 
     if (!d->m_processors.contains(processor_name)) {
-        qWarning() << "Unable to find processor (165): " + processor_name;
+        qCWarning(MPM) << "Unable to find processor (165): " + processor_name;
         return "";
     }
     MLProcessor P = d->m_processors[processor_name];
@@ -251,7 +255,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
         foreach (QString key, keys) {
             if (!parameters.contains(key)) {
                 if (!P.parameters[key].optional) {
-                    qWarning() << QString("Missing required parameter in processor %1: %2").arg(P.name).arg(key);
+                    qCWarning(MPM) << QString("Missing required parameter in processor %1: %2").arg(P.name).arg(key);
                     return "";
                 }
             }
@@ -263,7 +267,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
 
     QString tempdir = CacheManager::globalInstance()->makeLocalFile("tempdir_" + id, CacheManager::ShortTerm);
     if (!do_mkdir(tempdir, 3)) {
-        qWarning() << "Error creating temporary directory for process: " + tempdir;
+        qCWarning(MPM) << "Error creating temporary directory for process: " + tempdir;
         QCoreApplication::exit(-1);
     }
 
@@ -331,7 +335,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
 
     PP.qprocess->setProperty("pp_id", id);
     if (!PP.qprocess->waitForStarted(2000)) {
-        qWarning() << "Problem starting process: " + exe_command;
+        qCWarning(MPM) << "Problem starting process: " + exe_command;
         delete_tempdir(tempdir);
         delete PP.qprocess;
         return "";
@@ -353,7 +357,7 @@ bool ProcessManager::checkParameters(const QString& processor_name, const QVaria
     if (processor_name.isEmpty())
         return true; //empty processor name is for handling .prv files
     if (!d->m_processors.contains(processor_name)) {
-        qWarning() << "checkProcess: Unable to find processor (233): " + processor_name;
+        qCWarning(MPM) << "checkProcess: Unable to find processor (233): " + processor_name;
         return false;
     }
     if (processor_name.isEmpty())
@@ -364,7 +368,7 @@ bool ProcessManager::checkParameters(const QString& processor_name, const QVaria
         foreach (QString key, keys) {
             if (!P.inputs[key].optional) {
                 if (!parameters.contains(key)) {
-                    qWarning() << QString("checkProcess: Missing input in %1: %2").arg(processor_name).arg(key);
+                    qCWarning(MPM) << QString("checkProcess: Missing input in %1: %2").arg(processor_name).arg(key);
                     return false;
                 }
             }
@@ -375,7 +379,7 @@ bool ProcessManager::checkParameters(const QString& processor_name, const QVaria
         foreach (QString key, keys) {
             if (!parameters.contains(key)) {
                 if (!P.outputs[key].optional) {
-                    qWarning() << QString("checkProcess: Missing required output in %1: %2").arg(processor_name).arg(key);
+                    qCWarning(MPM) << QString("checkProcess: Missing required output in %1: %2").arg(processor_name).arg(key);
                     return false;
                 }
             }
@@ -386,7 +390,7 @@ bool ProcessManager::checkParameters(const QString& processor_name, const QVaria
         foreach (QString key, keys) {
             if (!P.parameters[key].optional) {
                 if (!parameters.contains(key)) {
-                    qWarning() << QString("checkProcess: Missing required parameter in %1: %2").arg(processor_name).arg(key);
+                    qCWarning(MPM) << QString("checkProcess: Missing required parameter in %1: %2").arg(processor_name).arg(key);
                     return false;
                 }
             }
@@ -503,7 +507,7 @@ bool output_object_still_exists(const QJsonObject& obj)
 
 void ProcessManager::cleanUpCompletedProcessRecords()
 {
-    qDebug().noquote() << "Cleaning up completed process records...";
+    qCDebug(MPM).noquote() << "Cleaning up completed process records...";
     QString path = MPDaemon::daemonPath() + "/completed_processes";
     QStringList list = QDir(path).entryList(QStringList("*.json"), QDir::Files, QDir::Name);
     foreach (QString fname, list) {
@@ -515,7 +519,7 @@ void ProcessManager::cleanUpCompletedProcessRecords()
             QJsonObject A = outputs[pname].toObject();
             if (A["size"].toDouble()) { //maybe there is no such output
                 if (!output_object_still_exists(A)) {
-                    qDebug().noquote() << "Removing completed process record: " + path2;
+                    qCDebug(MPM).noquote() << "Removing completed process record: " + path2;
                     QFile::remove(path2);
                 }
             }
@@ -533,7 +537,7 @@ void ProcessManager::slot_process_finished()
 {
     QProcess* qprocess = qobject_cast<QProcess*>(sender());
     if (!qprocess) {
-        qCritical() << "Unexpected problem in slot_process_finished: qprocess is null.";
+        qCCritical(MPM) << "Unexpected problem in slot_process_finished: qprocess is null.";
         return;
     }
     {
@@ -545,7 +549,7 @@ void ProcessManager::slot_process_finished()
     }
     QString id = qprocess->property("pp_id").toString();
     if (!d->m_processes.contains(id)) {
-        qWarning() << "Process not found in slot_process_finished. It was probably cleared beforehand: " + id;
+        qCWarning(MPM) << "Process not found in slot_process_finished. It was probably cleared beforehand: " + id;
         return;
     }
     d->update_process_info(id);
@@ -553,7 +557,7 @@ void ProcessManager::slot_process_finished()
         QString processor_name = d->m_processes[id].info.processor_name;
         QVariantMap parameters = d->m_processes[id].info.parameters;
         if (!d->m_processors.contains(processor_name)) {
-            qCritical() << "Unexpected problem in slot_process_finished. processor not found!!! " + processor_name;
+            qCCritical(MPM) << "Unexpected problem in slot_process_finished. processor not found!!! " + processor_name;
         }
         else {
             MLProcessor processor = d->m_processors[processor_name];
@@ -649,12 +653,12 @@ QString ProcessManagerPrivate::resolve_file_name_p(QString fname)
         QJsonParseError err;
         QJsonObject obj = QJsonDocument::fromJson(txt.toUtf8(), &err).object();
         if (err.error != QJsonParseError::NoError) {
-            qWarning() << "Error parsing .prv file: " + fname;
+            qCWarning(MPM) << "Error parsing .prv file: " + fname;
             return "";
         }
         QString path0 = locate_prv(obj);
         if (path0.isEmpty()) {
-            qWarning() << "Unable to locate prv file originally at: " + obj["original_path"].toString();
+            qCWarning(MPM) << "Unable to locate prv file originally at: " + obj["original_path"].toString();
             return "";
         }
         return path0;
@@ -669,7 +673,7 @@ QString ProcessManagerPrivate::resolve_file_name_p(QString fname)
         if (fname.startsWith(str + "/mdaserver")) {
             fname = server_base_path + "/" + fname.mid((str + "/mdaserver").count());
             if (fname.mid(server_base_path.count()).contains("..")) {
-                qWarning() << "Illegal .. in file path: " + fname;
+                qCWarning(MPM) << "Illegal .. in file path: " + fname;
                 fname = "";
             }
         }
@@ -684,7 +688,7 @@ QVariantMap ProcessManagerPrivate::resolve_file_names_in_parameters(QString proc
     QVariantMap parameters = parameters_in;
 
     if (!m_processors.contains(processor_name)) {
-        qWarning() << "Unable to find processor in resolve_file_names_in_parameters(): " + processor_name;
+        qCWarning(MPM) << "Unable to find processor in resolve_file_names_in_parameters(): " + processor_name;
         return parameters_in;
     }
     MLProcessor MLP = m_processors[processor_name];

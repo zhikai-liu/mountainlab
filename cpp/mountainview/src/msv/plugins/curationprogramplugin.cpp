@@ -44,8 +44,8 @@ void CurationProgramPlugin::initialize(MVMainWindow* mw)
     mw->registerViewFactory(new CurationProgramFactory(mw));
     MVContext* c = qobject_cast<MVContext*>(mw->mvContext());
     Q_ASSERT(c);
-    if (c->firings().N2() > 1)
-        compute_basic_metrics(mw->mvContext());
+    //if (c->firings().N2() > 1)
+    //    compute_basic_metrics(mw->mvContext());
 }
 
 CurationProgramFactory::CurationProgramFactory(MVMainWindow* mw, QObject* parent)

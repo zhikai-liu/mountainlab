@@ -574,9 +574,9 @@ public:
         parser.addOption(QCommandLineOption("search_path", "search_path", "path to search (leave empty to search default locations)"));
         parser.addOption(QCommandLineOption("server", "server", "[url or name of prvbucket server to search or upload]"));
         parser.addOption(QCommandLineOption("verbose", "verbose"));
-//        if (m_cmd == "locate")|| {
-            parser.addOption(QCommandLineOption("traverse","traverse"));
-//        }
+        //        if (m_cmd == "locate")|| {
+        parser.addOption(QCommandLineOption("traverse", "traverse"));
+        //        }
     }
     int execute(const QCommandLineParser& parser)
     {
@@ -624,13 +624,13 @@ public:
                     }
                 }
                 else {
-                    if (m_cmd=="locate") {
+                    if (m_cmd == "locate") {
                         QJsonObject obj;
-                        obj=MLUtil::createPrvObject(src_path);
+                        obj = MLUtil::createPrvObject(src_path);
                         objects[""] = obj;
                     }
-                    else if (m_cmd=="upload") {
-                        if (!interactive_upload_file_to_server(src_path,params))
+                    else if (m_cmd == "upload") {
+                        if (!interactive_upload_file_to_server(src_path, params))
                             return -1;
                     }
                     else {
@@ -726,7 +726,7 @@ public:
                         qWarning() << QString("Unable to find file on local machine. Original path = %1").arg(obj["original_path"].toString());
                     }
                     else {
-                        if (!interactive_upload_file_to_server(fname,params))
+                        if (!interactive_upload_file_to_server(fname, params))
                             return -1;
                     }
                 }
@@ -844,15 +844,16 @@ private:
         return ret;
     }
 
-    bool interactive_upload_file_to_server(QString fname, QVariantMap params) {
+    bool interactive_upload_file_to_server(QString fname, QVariantMap params)
+    {
 
-        QString server=params["server"].toString();
+        QString server = params["server"].toString();
         if (server.isEmpty()) {
             qWarning() << "Server is empty. Use --server=[name]";
             return false;
         }
 
-        QJsonObject obj=MLUtil::createPrvObject(fname);
+        QJsonObject obj = MLUtil::createPrvObject(fname);
 
         QString url = locate_file(obj, params, false);
 

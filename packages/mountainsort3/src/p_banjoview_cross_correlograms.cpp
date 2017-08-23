@@ -31,7 +31,7 @@ bool p_banjoview_cross_correlograms(QString firings_path, QString correlograms_o
     int K = MLCompute::max(labels);
     if (opts.clusters.isEmpty()) {
         QSet<int> labels_present;
-        for (bigint aa=0; aa<labels.count(); aa++) {
+        for (bigint aa = 0; aa < labels.count(); aa++) {
             labels_present.insert(labels[aa]);
         }
         for (int k = 1; k <= K; k++) {
@@ -86,7 +86,7 @@ bool p_banjoview_cross_correlograms(QString firings_path, QString correlograms_o
             jjj++;
         jjj_last = jjj;
         while ((jjj < times.count()) && (t1 + tmin <= times[jjj]) && (times[jjj] < t1 + tmax)) {
-            if (jjj!=ii) {
+            if (jjj != ii) {
                 double t2 = times[jjj];
                 int k2 = labels[jjj];
                 bigint num = (k1 - 1) + K * (k2 - 1);

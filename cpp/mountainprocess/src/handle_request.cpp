@@ -11,11 +11,17 @@
 #include "mpdaemon.h"
 #include <unistd.h>
 
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(HR, "mp.handle_request")
+
 QJsonObject handle_request_run_process(QString processor_name, const QJsonObject& inputs, const QJsonObject& outputs, const QJsonObject& parameters, QString prvbucket_path);
 
 QJsonObject handle_request(const QJsonObject& request, QString prvbucket_path)
 {
     QString action = request["action"].toString();
+
+    qCInfo(HR) << "Handling request" << action << QJsonDocument(request).toJson(QJsonDocument::Compact) << "prvbucket_path: " + prvbucket_path;
 
     QJsonObject response;
     response["success"] = false; //assume the worst
@@ -23,14 +29,20 @@ QJsonObject handle_request(const QJsonObject& request, QString prvbucket_path)
     if (action == "run_process") {
         QString processor_name = request["processor_name"].toString();
         if (processor_name.isEmpty()) {
+            qCCritical(HR) << "Processor name is empty";
             response["error"] = "Processor name is empty";
             return response;
         }
 
+        qCInfo(HR) << "Starting handle_request_run_process: " + processor_name;
+        QTime timer;
+        timer.start();
         response = handle_request_run_process(processor_name, request["inputs"].toObject(), request["outputs"].toObject(), request["parameters"].toObject(), prvbucket_path);
+        qCInfo(HR) << "Done running process: " + processor_name << "Elapsed:" << timer.elapsed();
         return response;
     }
     else {
+        qCCritical(HR) << "Unknown action: " + action;
         response["error"] = "Unknown action: " + action;
         return response;
     }

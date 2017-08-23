@@ -27,6 +27,10 @@
 #include <qprocessmanager.h>
 #include <signal.h>
 
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(MPD, "mp.daemon");
+
 static bool stopDaemon = false;
 
 void sighandler(int num)
@@ -66,7 +70,7 @@ void append_line_to_file(QString fname, QString line)
         static bool reported = false;
         if (!reported) {
             reported = true;
-            qCritical() << "Unable to write to log file" << fname;
+            qCCritical(MPD) << "Unable to write to log file" << fname;
         }
     }
 }
@@ -261,9 +265,9 @@ bool MountainProcessServerClient::handleMessage(const QByteArray& ba)
     QJsonParseError error;
     QJsonObject obj = QJsonDocument::fromJson(ba, &error).object();
     if (error.error != QJsonParseError::NoError) {
-        qCritical() << "Error in slot_commands_directory_changed parsing json file";
+        qCCritical(MPD) << "Error in slot_commands_directory_changed parsing json file";
     }
-    printf("Received commmand: %s\n", obj["command"].toString().toUtf8().constData());
+    qCDebug(MPD).noquote() << QString("Recieved command: %1").arg(obj["command"].toString());
     if (obj["command"] == "stop") {
         MountainProcessServer* s = static_cast<MountainProcessServer*>(server());
         s->stop();
@@ -369,13 +373,18 @@ void MountainProcessServer::contignousLog()
 bool MountainProcessServer::queueScript(const MPDaemonPript& script)
 {
     if (m_pripts.contains(script.id)) {
+        qCCritical(MPD) << QString("Unable to queue script. Process or script with id %1 already exists.").arg(script.id);
+        /*
         writeLogRecord("error",
             "message",
             QString("Unable to queue script. "
                     "Process or script with id %1 already exists: ").arg(script.id));
+                    */
         return false;
     }
-    writeLogRecord("queue-script", "pript_id", script.id);
+    //writeLogRecord("queue-script", "pript_id", script.id);
+    qCInfo(MPD) << "queue-script"
+                << "pript_id" << script.id;
     m_pripts[script.id] = script;
     write_pript_file(script);
     return true;
@@ -384,13 +393,18 @@ bool MountainProcessServer::queueScript(const MPDaemonPript& script)
 bool MountainProcessServer::queueProcess(const MPDaemonPript& process)
 {
     if (m_pripts.contains(process.id)) {
+        qCCritical(MPD) << QString("Unable to queue process. Process or script with id %1 already exists.").arg(process.id);
+        /*
         writeLogRecord("error",
             "message",
             QString("Unable to queue process. "
                     "Process or script with id %1 already exists: ").arg(process.id));
+                    */
         return false;
     }
-    writeLogRecord("queue-process", process.id);
+    //writeLogRecord("queue-process", process.id);
+    qCInfo(MPD) << "queue-process"
+                << "pript_id" << process.id;
     m_pripts[process.id] = process;
     write_pript_file(process);
     return true;
@@ -418,7 +432,8 @@ bool MountainProcessServer::start()
 
     m_is_running = true;
 
-    writeLogRecord("start-daemon");
+    //writeLogRecord("start-daemon");
+    qCInfo(MPD) << "start-daemon";
     QTimer timer;
     connect(&timer, &QTimer::timeout, [this]() {
         iterate();
@@ -426,7 +441,8 @@ bool MountainProcessServer::start()
     timer.start(100);
     qApp->exec();
     m_is_running = false;
-    writeLogRecord("stop-daemon");
+    //writeLogRecord("stop-daemon");
+    qCInfo(MPD) << "stop-daemon";
     signal(SIGINT, SIG_DFL);
     signal(SIGTERM, SIG_DFL);
     stopServer();
@@ -466,7 +482,7 @@ void MountainProcessServer::clientAboutToBeDestroyed(LocalServer::Client* client
 bool MountainProcessServer::startServer()
 {
     if (!acquireServer()) {
-        printf("Another daemon seems to be running. Closing.\n");
+        qCDebug(MPD).noquote() << "Another daemon seems to be running. Closing.";
         return false;
     }
     return true;
@@ -639,7 +655,7 @@ bool MountainProcessServer::stop_or_remove_pript(const QString& key)
     MPDaemonPript* PP = &m_pripts[key];
     if ((PP->is_running)) {
         if (PP->qprocess) {
-            qWarning() << "Terminating qprocess: " + key;
+            qCWarning(MPD) << "Terminating qprocess: " + key;
             //PP->qprocess->terminate(); // I think it's okay to terminate a process. It won't cause this program to crash.
             if (PP->parent_pid) {
                 //if we can, kill the parent pid instead so that the qprocess will exit gracefully when it discovers it has no parent
@@ -652,17 +668,33 @@ bool MountainProcessServer::stop_or_remove_pript(const QString& key)
         }
         finish_and_finalize(*PP);
         m_pripts.remove(key);
-        if (PP->prtype == ScriptType)
-            writeLogRecord("stop-script", "pript_id", key, "reason", "requested");
-        else
-            writeLogRecord("stop-process", "pript_id", key, "reason", "requested");
+        if (PP->prtype == ScriptType) {
+            qCInfo(MPD) << "stop-script"
+                        << "pript_id" << key << "reason"
+                        << "requested";
+            //writeLogRecord("stop-script", "pript_id", key, "reason", "requested");
+        }
+        else {
+            qCInfo(MPD) << "stop-process"
+                        << "pript_id" << key << "reason"
+                        << "requested";
+            //writeLogRecord("stop-process", "pript_id", key, "reason", "requested");
+        }
     }
     else {
         m_pripts.remove(key);
-        if (PP->prtype == ScriptType)
-            writeLogRecord("unqueue-script", "pript_id", key, "reason", "requested");
-        else
-            writeLogRecord("unqueue-process", "pript_id", key, "reason", "requested");
+        if (PP->prtype == ScriptType) {
+            qCInfo(MPD) << "unqueue-script"
+                        << "pript_id" << key << "reason"
+                        << "requested";
+            //writeLogRecord("unqueue-script", "pript_id", key, "reason", "requested");
+        }
+        else {
+            qCInfo(MPD) << "unqueue-process"
+                        << "pript_id" << key << "reason"
+                        << "requested";
+            //writeLogRecord("unqueue-process", "pript_id", key, "reason", "requested");
+        }
     }
     return true;
 }
@@ -687,12 +719,12 @@ void MountainProcessServer::stop_orphan_processes_and_scripts()
                 debug_log(__FUNCTION__, __FILE__, __LINE__);
                 if (m_pripts[key].qprocess) {
                     if (m_pripts[key].prtype == ScriptType) {
-                        writeLogRecord("stop-script", "pript_id", key, "reason", "orphan", "parent_pid", m_pripts[key].parent_pid);
-                        qWarning() << "Terminating orphan script qprocess: " + key;
+                        //writeLogRecord("stop-script", "pript_id", key, "reason", "orphan", "parent_pid", m_pripts[key].parent_pid);
+                        qCWarning(MPD) << "Terminating orphan script qprocess: " + key;
                     }
                     else {
-                        writeLogRecord("stop-process", "pript_id", key, "reason", "orphan", "parent_pid", m_pripts[key].parent_pid);
-                        qWarning() << "Terminating orphan process qprocess: " + key;
+                        //writeLogRecord("stop-process", "pript_id", key, "reason", "orphan", "parent_pid", m_pripts[key].parent_pid);
+                        qCWarning(MPD) << "Terminating orphan process qprocess: " + key;
                     }
 
                     m_pripts[key].qprocess->disconnect(); //so we don't go into the finished slot
@@ -704,12 +736,12 @@ void MountainProcessServer::stop_orphan_processes_and_scripts()
                 }
                 else {
                     if (m_pripts[key].prtype == ScriptType) {
-                        writeLogRecord("unqueue-script", "pript_id", key, "reason", "orphan", "parent_pid", m_pripts[key].parent_pid);
-                        qWarning() << "Removing orphan script: " + key + " " + m_pripts[key].script_paths.value(0);
+                        //writeLogRecord("unqueue-script", "pript_id", key, "reason", "orphan", "parent_pid", m_pripts[key].parent_pid);
+                        qCWarning(MPD) << "Removing orphan script: " + key + " " + m_pripts[key].script_paths.value(0);
                     }
                     else {
-                        writeLogRecord("unqueue-process", "pript_id", key, "reason", "orphan", "parent_pid", m_pripts[key].parent_pid);
-                        qWarning() << "Removing orphan process: " + key + " " + m_pripts[key].processor_name;
+                        //writeLogRecord("unqueue-process", "pript_id", key, "reason", "orphan", "parent_pid", m_pripts[key].parent_pid);
+                        qCWarning(MPD) << "Removing orphan process: " + key + " " + m_pripts[key].processor_name;
                     }
                     finish_and_finalize(m_pripts[key]);
                     m_pripts.remove(key);
@@ -726,11 +758,11 @@ bool MountainProcessServer::handle_scripts()
         int old_num_pending_scripts = num_pending_scripts();
         if (num_pending_scripts() > 0) {
             if (launch_next_script()) {
-                printf("%d scripts running.\n", num_running_scripts());
+                qCDebug(MPD).noquote() << QString("%1 scripts running").arg(num_running_scripts());
             }
             else {
                 if (num_pending_scripts() == old_num_pending_scripts) {
-                    qCritical() << "Failed to launch_next_script and the number of pending scripts has not decreased (unexpected). This has potential for infinite loop. So we are aborting.";
+                    qCCritical(MPD) << "Failed to launch_next_script and the number of pending scripts has not decreased (unexpected). This has potential for infinite loop. So we are aborting.";
                     abort();
                 }
             }
@@ -761,7 +793,10 @@ bool MountainProcessServer::handle_processes()
                         }
                     }
                     else {
-                        writeLogRecord("unqueue-process", "pript_id", key, "reason", "processor not found or parameters are incorrect.");
+                        qCInfo(MPD) << "unqueue-process"
+                                    << "pript_id" << key << "reason"
+                                    << "processor not found or parameters are incorrect.";
+                        //writeLogRecord("unqueue-process", "pript_id", key, "reason", "processor not found or parameters are incorrect.");
                         m_pripts.remove(key);
                     }
                 }
@@ -816,18 +851,18 @@ bool MountainProcessServer::launch_pript(QString pript_id)
 {
     MPDaemonPript* S;
     if (!m_pripts.contains(pript_id)) {
-        qCritical() << "Unexpected problem. No pript exists with id: " + pript_id;
+        qCCritical(MPD) << "Unexpected problem. No pript exists with id: " + pript_id;
         abort();
         return false;
     }
     S = &m_pripts[pript_id];
     if (S->is_running) {
-        qCritical() << "Unexpected problem. Pript is already running: " + pript_id;
+        qCCritical(MPD) << "Unexpected problem. Pript is already running: " + pript_id;
         abort();
         return false;
     }
     if (S->is_finished) {
-        qCritical() << "Unexpected problem. Pript is already finished: " + pript_id;
+        qCCritical(MPD) << "Unexpected problem. Pript is already finished: " + pript_id;
         abort();
         return false;
     }
@@ -846,18 +881,20 @@ bool MountainProcessServer::launch_pript(QString pript_id)
             QString fname = S->script_paths[ii];
             if (!QFile::exists(fname)) {
                 QString message = "Script file does not exist: " + fname;
-                qWarning() << message;
-                writeLogRecord("error", "message", message);
-                writeLogRecord("unqueue-script", "pript_id", pript_id, "reason", message);
+                qCWarning(MPD) << "unqueue-script"
+                               << "pript_id" << pript_id << "reason" << message;
+                //writeLogRecord("error", "message", message);
+                //writeLogRecord("unqueue-script", "pript_id", pript_id, "reason", message);
                 m_pripts.remove(pript_id);
                 return false;
             }
             if (MLUtil::computeSha1SumOfFile(fname) != S->script_path_checksums.value(ii)) {
                 QString message = "Script checksums do not match. Script file has changed since queueing: " + fname + " Not launching process: " + pript_id;
-                qWarning() << message;
-                qWarning() << MLUtil::computeSha1SumOfFile(fname) << "<>" << S->script_path_checksums.value(ii);
-                writeLogRecord("error", "message", message);
-                writeLogRecord("unqueue-script", "pript_id", pript_id, "reason", "Script file has changed: " + fname);
+                qCWarning(MPD) << "unqueue-script"
+                               << "pript_id" << pript_id << "reason" << message;
+                qCWarning(MPD) << MLUtil::computeSha1SumOfFile(fname) << "<>" << S->script_path_checksums.value(ii);
+                //writeLogRecord("error", "message", message);
+                //writeLogRecord("unqueue-script", "pript_id", pript_id, "reason", "Script file has changed: " + fname);
                 m_pripts.remove(pript_id);
                 return false;
             }
@@ -902,19 +939,17 @@ bool MountainProcessServer::launch_pript(QString pript_id)
     qprocess->setProcessChannelMode(QProcess::MergedChannels);
     QObject::connect(qprocess, SIGNAL(readyRead()), this, SLOT(slot_qprocess_output()));
     if (S->prtype == ScriptType) {
-        printf("   Launching script %s: ", pript_id.toLatin1().data());
-        writeLogRecord("start-script", "pript_id", pript_id);
+        QString logstr;
         foreach (QString fname, S->script_paths) {
-            QString str = QFileInfo(fname).fileName();
-            printf("%s ", str.toLatin1().data());
+            logstr += QFileInfo(fname).fileName() + " ";
         }
-        printf("\n");
+        qCDebug(MPD).noquote() << QString("   Launching script %1: %2").arg(pript_id).arg(logstr);
     }
     else {
-        printf("   Launching process %s %s: ", S->processor_name.toLatin1().data(), pript_id.toLatin1().data());
-        writeLogRecord("start-process", "pript_id", pript_id);
         QString cmd = args.join(" ");
-        printf("%s\n", cmd.toLatin1().data());
+        qCDebug(MPD).noquote() << QString("   Launching process %1 %2: %3").arg(S->processor_name).arg(pript_id).arg(cmd);
+        printf("   Launching process %s %s: ", S->processor_name.toLatin1().data(), pript_id.toLatin1().data());
+        //writeLogRecord("start-process", "pript_id", pript_id);
     }
 
     QObject::connect(qprocess, SIGNAL(finished(int)), this, SLOT(slot_pript_qprocess_finished()));
@@ -931,7 +966,7 @@ bool MountainProcessServer::launch_pript(QString pript_id)
         qprocess->setArguments(args);
         QProcessManager *manager=ObjectRegistry::getObject<QProcessManager>();
         if (!manager) {
-            qCritical() << "No QProcessManager object found in object registry. Aborting.";
+            qCCritical(MPD) << "No QProcessManager object found in object registry. Aborting.";
             abort();
         }
         manager->start(qprocess);
@@ -939,17 +974,21 @@ bool MountainProcessServer::launch_pript(QString pript_id)
     }
     if (qprocess->waitForStarted()) {
         if (S->prtype == ScriptType) {
-            writeLogRecord("started-script", "pript_id", pript_id, "pid", (int)qprocess->processId());
+            qCInfo(MPD) << "started-script"
+                        << "pript_id" << pript_id << "pid" << (int)qprocess->processId();
+            //writeLogRecord("started-script", "pript_id", pript_id, "pid", (int)qprocess->processId());
         }
         else {
-            writeLogRecord("started-process", "pript_id", pript_id, "pid", (int)qprocess->processId());
+            qCInfo(MPD) << "started-process"
+                        << "pript_id" << pript_id << "pid" << (int)qprocess->processId();
+            //writeLogRecord("started-process", "pript_id", pript_id, "pid", (int)qprocess->processId());
         }
         S->qprocess = qprocess;
         if (!S->stdout_fname.isEmpty()) {
             S->stdout_file = new QFile(S->stdout_fname);
             if (!S->stdout_file->open(QFile::WriteOnly)) {
-                qCritical() << "Unable to open stdout file for writing: " + S->stdout_fname;
-                writeLogRecord("error", "message", "Unable to open stdout file for writing: " + S->stdout_fname);
+                qCCritical(MPD) << "Unable to open stdout file for writing: " + S->stdout_fname;
+                //writeLogRecord("error", "message", "Unable to open stdout file for writing: " + S->stdout_fname);
                 delete S->stdout_file;
                 S->stdout_file = 0;
             }
@@ -962,12 +1001,12 @@ bool MountainProcessServer::launch_pript(QString pript_id)
     else {
         debug_log(__FUNCTION__, __FILE__, __LINE__);
         if (S->prtype == ScriptType) {
-            writeLogRecord("stop-script", "pript_id", pript_id, "reason", "Unable to start script.");
-            qCritical() << "Unable to start script: " + S->id;
+            //writeLogRecord("stop-script", "pript_id", pript_id, "reason", "Unable to start script.");
+            qCCritical(MPD) << "Unable to start script: " + S->id;
         }
         else {
-            writeLogRecord("stop-process", "pript_id", pript_id, "reason", "Unable to start process.");
-            qCritical() << "Unable to start process: " + S->processor_name + " " + S->id;
+            //writeLogRecord("stop-process", "pript_id", pript_id, "reason", "Unable to start process.");
+            qCCritical(MPD) << "Unable to start process: " + S->processor_name + " " + S->id;
         }
         qprocess->disconnect();
         delete qprocess;
@@ -1015,15 +1054,15 @@ bool MountainProcessServer::process_parameters_are_okay(const QString& key) cons
     MPDaemonPript P0 = m_pripts[key];
     MLProcessor MLP = PM->processor(P0.processor_name);
     if (QJsonDocument(MLP.spec).toJson() != QJsonDocument(P0.processor_spec).toJson()) {
-        qWarning() << "Processor spec does not match. Perhaps the processor has changed and the daemon needs to be restarted.";
+        qCWarning(MPD) << "Processor spec does not match. Perhaps the processor has changed and the daemon needs to be restarted.";
         return false;
     }
     if (MLP.name != P0.processor_name) {
-        qWarning() << "Unable to find processor **: " + P0.processor_name;
+        qCWarning(MPD) << "Unable to find processor **: " + P0.processor_name;
         return false;
     }
     if (!PM->checkParameters(P0.processor_name, P0.parameters)) {
-        qWarning() << "Failure in checkParameters: " + P0.processor_name;
+        qCWarning(MPD) << "Failure in checkParameters: " + P0.processor_name;
         return false;
     }
     return true;
@@ -1118,8 +1157,8 @@ void MountainProcessServer::slot_pript_qprocess_finished()
         S = &m_pripts[pript_id];
     }
     else {
-        writeLogRecord("error", "message", "Unexpected problem in slot_pript_qprocess_finished. Unable to find script or process with id: " + pript_id);
-        qCritical() << "Unexpected problem in slot_pript_qprocess_finished. Unable to find script or process with id: " + pript_id;
+        //writeLogRecord("error", "message", "Unexpected problem in slot_pript_qprocess_finished. Unable to find script or process with id: " + pript_id);
+        qCCritical(MPD) << "Unexpected problem in slot_pript_qprocess_finished. Unable to find script or process with id: " + pript_id;
         return;
     }
     if (!S->output_fname.isEmpty()) {
@@ -1153,25 +1192,26 @@ void MountainProcessServer::slot_pript_qprocess_finished()
     obj0["success"] = S->success;
     obj0["error"] = S->error;
     if (S->prtype == ScriptType) {
-        writeLogRecord("stop-script", obj0);
-        printf("  Script %s finished ", pript_id.toLatin1().data());
+        //writeLogRecord("stop-script", obj0);
+        qCDebug(MPD).noquote() << QString("  Script %1 finished ").arg(pript_id);
     }
     else {
-        writeLogRecord("stop-process", obj0);
-        printf("  Process %s %s finished ", S->processor_name.toLatin1().data(), pript_id.toLatin1().data());
+        //writeLogRecord("stop-process", obj0);
+        QString tmpstr;
+        if (S->success)
+            tmpstr = "successfully";
+        else
+            tmpstr = QString("with error: %1").arg(S->error);
+        qCDebug(MPD).noquote() << QString("    Process %1 %2 finished %3").arg(S->processor_name).arg(pript_id).arg(tmpstr);
     }
-    if (S->success)
-        printf("successfully\n");
-    else
-        printf("with error: %s\n", S->error.toLatin1().data());
     if (S->qprocess) {
         if (S->qprocess->state() == QProcess::Running) {
             if (S->qprocess->waitForFinished(1000)) {
                 delete S->qprocess;
             }
             else {
-                writeLogRecord("error", "pript_id", pript_id, "message", "Process did not finish after waiting even though we are in the slot for finished!!");
-                qCritical() << "Process did not finish after waiting even though we are in the slot for finished!!";
+                //writeLogRecord("error", "pript_id", pript_id, "message", "Process did not finish after waiting even though we are in the slot for finished!!");
+                qCCritical(MPD) << "Process did not finish after waiting even though we are in the slot for finished!!";
             }
         }
         S->qprocess = 0;
@@ -1235,14 +1275,14 @@ bool MPDaemon::waitForFileToAppear(QString fname, qint64 timeout_ms, bool remove
         if ((timeout_ms >= 0) && (timer.elapsed() > timeout_ms))
             return false;
         if ((parent_pid) && (!MPDaemon::pidExists(parent_pid))) {
-            qWarning() << "Exiting waitForFileToAppear because parent process is gone.";
+            qCWarning(MPD) << "Exiting waitForFileToAppear because parent process is gone.";
             break;
         }
         if ((!stdout_fname.isEmpty()) && (!failed_to_open_stdout_file)) {
             if (QFile::exists(stdout_fname)) {
                 if (!stdout_file.isOpen()) {
                     if (!stdout_file.open(QFile::ReadOnly)) {
-                        qCritical() << "Unable to open stdout file for reading: " + stdout_fname;
+                        qCCritical(MPD) << "Unable to open stdout file for reading: " + stdout_fname;
                         failed_to_open_stdout_file = true;
                     }
                 }
@@ -1259,7 +1299,7 @@ bool MPDaemon::waitForFileToAppear(QString fname, qint64 timeout_ms, bool remove
 
         /*
         if (debug_timer.elapsed() > 20000) {
-            qWarning() << QString("Still waiting for file to appear after %1 sec: %2").arg(timer.elapsed() * 1.0 / 1000).arg(fname);
+            qCWarning(MPD) << QString("Still waiting for file to appear after %1 sec: %2").arg(timer.elapsed() * 1.0 / 1000).arg(fname);
             debug_timer.restart();
         }
         */
@@ -1298,9 +1338,9 @@ bool MPDaemon::waitForFinishedAndWriteOutput(QProcess* P, int parent_pid)
         qApp->processEvents();
         if (parent_pid) {
             if (!pidExists(parent_pid)) {
-                qWarning() << "Parent pid does not exist. Terminating process...." << P->pid();
+                qCWarning(MPD) << "Parent pid does not exist. Terminating process...." << P->pid();
                 kill_process_and_children(P);
-                qWarning() << "Process killed.";
+                qCWarning(MPD) << "Process killed.";
                 return false;
             }
         }
@@ -1343,7 +1383,7 @@ void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, 
     TextFile::write(bash_script_fname, script);
     QProcessManager* manager = ObjectRegistry::getObject<QProcessManager>();
     if (!manager) {
-        qCritical() << "No QProcessManager object found in object registry. Aborting.";
+        qCCritical(MPD) << "No QProcessManager object found in object registry. Aborting.";
         abort();
     }
     //    qprocess->setProgram("/bin/bash");
