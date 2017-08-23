@@ -44,13 +44,19 @@ Contact the authors for information on the slack team for users and developers.
 
 [The .prv data management system](old/doc/prv_system.md)
 
-## Automated curation
+## Automated curation/annotation
 
-[Cluster metrics and automated curation](old/doc/metrics_automated_curation.md)
+Documentation on using annotation scripts will be forthcoming.
+
+Because one of the goals of mountainsort is to enable reproducible spike sorting, we strongly advise against manual modifications that go beyond merging bursting clusters and perhaps rejecting certain noise clusters.  Instead, we suggest that you export the cluster metrics along with the sorted clusters and then set cutoffs for inclusion of data in analyses based on those metrics.  This will make it easy to describe your subsequent analyses and easy to determine how those analyses do or do not depend on cluster quality.
+
+The isolation and noise overlap metrics we provide work well for the situations we have focused on, but they can be supplemented or replaced by other objective metrics as needed. Such metric processors may be included in the pipeline as post-processing plugins as C++, matlab, or python modules. Contact us if you you would like to contribute additional cluster metrics, or need help with integration.
 
 ## Other documentation
 
 [A guide to using MountainSort with snippets, rather than continuous data acquisition](https://github.com/mari-sosa/Mountainsort_for_snippets/blob/master/mountainsort_for_snippets.md)
+
+An old guide: [Cluster metrics and automated curation](old/doc/metrics_automated_curation.md)
 
 ## Acknowledgements
 
