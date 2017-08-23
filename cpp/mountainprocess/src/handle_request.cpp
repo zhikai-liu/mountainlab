@@ -67,6 +67,12 @@ QString compute_unique_object_code(QJsonObject obj)
     return QString(hash.result().toHex());
 }
 
+bool wait_for_file_to_exist(QString fname,int timeout_ms) {
+    QTime timer; timer.elapsed();
+    while ((!QFile::exists(fname))&&(timer.elapsed()<=timeout_ms));
+    return QFile::exists(fname);
+}
+
 QJsonObject handle_request_run_process(QString processor_name, const QJsonObject& inputs, const QJsonObject& outputs, const QJsonObject& parameters, QString prvbucket_path)
 {
     QJsonObject response;
@@ -176,10 +182,6 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
 
     pp.waitForFinished();
 
-    /// Witold, could you weigh in on the following?
-    // Yikes, this might be needed to make sure the files are done writing to the system. I added this because the output files were not found on some occassions.
-    usleep(1e6);
-
     /*
     int ret = pp.execute(exe, args);
     if (ret != 0) {
@@ -192,7 +194,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     foreach (QString key, okeys) {
         if (outputs[key].toBool()) {
             QString fname = output_files[key];
-            if (!QFile::exists(fname)) {
+            if (!wait_for_file_to_exist(fname,1000)) {
                 response["error"] = "Output file does not exist: " + fname;
                 return response;
             }
