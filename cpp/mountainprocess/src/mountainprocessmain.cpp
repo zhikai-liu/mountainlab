@@ -903,10 +903,12 @@ int main(int argc, char* argv[])
                     }
                 }
                 else {
-                    qDebug().noquote() << "Creating prv object for: "+fname0;
-                    obj0=MLUtil::createPrvObject(fname0);
-                    //qWarning() << "Inputs must all be .prv files when using remote processing";
-                    //return -1;
+                    if (!fname0.isEmpty()) {
+                        qDebug().noquote() << "Creating prv object for: "+fname0;
+                        obj0=MLUtil::createPrvObject(fname0);
+                        //qWarning() << "Inputs must all be .prv files when using remote processing";
+                        //return -1;
+                    }
                 }
                 inputs[key]=obj0;
 
@@ -971,6 +973,11 @@ int main(int argc, char* argv[])
             }
         }
 
+        if (server_url.isEmpty()) {
+            qWarning() << "Unable to find server_url associated with server="+server;
+            return -1;
+        }
+
         QString url = server_url + "/mountainprocess/?a=mountainprocess&mpreq=" + request_json;
         QString txt0 = http_get_text_curl_1(url, 1000 * 60 * 60);
 
@@ -980,7 +987,7 @@ int main(int argc, char* argv[])
             response = QJsonDocument::fromJson(txt0.toUtf8(), &parse_error).object();
             if (parse_error.error != QJsonParseError::NoError) {
                 qDebug().noquote() << txt0;
-                qWarning() << "Error parsing response";
+                qWarning() << "Error parsing response from "+url;
                 return -1;
             }
         }
