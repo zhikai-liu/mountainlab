@@ -69,7 +69,9 @@ QString compute_unique_object_code(QJsonObject obj)
 
 bool wait_for_file_to_exist(QString fname,int timeout_ms) {
     QTime timer; timer.start();
-    while ((!QFile::exists(fname))&&(timer.elapsed()<=timeout_ms));
+    while ((!QFile::exists(fname))&&(timer.elapsed()<=timeout_ms)) {
+	usleep(10000);
+    }
     return QFile::exists(fname);
 }
 
@@ -198,8 +200,9 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     foreach (QString key, okeys) {
         if (outputs[key].toBool()) {
             QString fname = output_files[key];
-            if (!wait_for_file_to_exist(fname,1000)) {
-                response["error"] = "Output file does not exist: " + fname;
+	    QTime timer0; timer0.start();
+            if (!wait_for_file_to_exist(fname,15000)) {
+                response["error"] = "Output file does not exist: " + fname+QString(" after waiting %1 msec").arg(timer0.elapsed());
                 return response;
             }
             QString tmp_prv = fname + ".prv";
