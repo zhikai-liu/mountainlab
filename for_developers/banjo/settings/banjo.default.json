@@ -2,8 +2,8 @@
 	"banjoview_url":"http://banjoview.herokuapp.com",
 	"use_config_url":true,
 	"url4text":{
-		"host":"datalaboratory.org",
-		"port":10005,
+		"host":"url4text.herokuapp.com",
+		"port":80,
 		"path":"/api/text/"
 	}
 }

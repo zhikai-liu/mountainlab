@@ -166,7 +166,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
 
     /// Witold, could you weigh in on the following?
     // Yikes, this might be needed to make sure the files are done writing to the system. I added this because the output files were not found on some occassions.
-    usleep(1e9);
+    usleep(1e6);
 
     /*
     int ret = pp.execute(exe, args);
