@@ -161,9 +161,9 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
                     fname = QString("%1/_mountainprocess/output_%2_%3").arg(prvbucket_path).arg(key).arg(code);
                 }
                 else {
-                    fname = CacheManager::globalInstance()->makeExpiringFile("output_%1_%2", 60 * 60).arg(key).arg(code);
+                    fname = CacheManager::globalInstance()->makeLocalFile(QString("output_%1_%2").arg(key).arg(code));
                 }
-                CacheManager::globalInstance()->setTemporaryFileDuration(fname, 60 * 60);
+                CacheManager::globalInstance()->setTemporaryFileDuration(fname, 60 * 60 * 24 * 7);
                 args << QString("--%1=%2").arg(key).arg(fname);
                 output_files[key] = fname;
             }
