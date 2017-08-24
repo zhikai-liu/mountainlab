@@ -89,7 +89,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     }
 
     QStringList args;
-    args << "run-process" << processor_name;
+    args << "queue-process" << processor_name;
 
     QStringList ikeys = inputs.keys();
     QStringList pkeys = parameters.keys();
