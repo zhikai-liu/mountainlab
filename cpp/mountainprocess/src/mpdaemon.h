@@ -42,37 +42,6 @@ void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString ex
 void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, int pid);
 }
 
-#if 0
-class MPDaemonPrivate;
-class MPDaemon : public QObject {
-    Q_OBJECT
-public:
-    friend class MPDaemonPrivate;
-    MPDaemon();
-    virtual ~MPDaemon();
-    void setTotalResourcesAvailable(ProcessResources PR);
-    void setLogPath(const QString& path);
-    bool run();
-    void clearProcessing();
-
-    static QString daemonPath();
-//    static QString makeTimestamp(const QDateTime& dt = QDateTime::currentDateTime());
-//    static QDateTime parseTimestamp(const QString& timestamp);
-    static bool waitForFileToAppear(QString fname, qint64 timeout_ms = -1, bool remove_on_appear = false, qint64 parent_pid = 0, QString stdout_fname = "");
-    static void wait(qint64 msec);
-    static bool pidExists(qint64 pid);
-    static bool waitForFinishedAndWriteOutput(QProcess* P);
-
-private slots:
-    void slot_pript_qprocess_finished();
-    void slot_qprocess_output();
-    void iterate();
-
-private:
-    MPDaemonPrivate* d;
-};
-#endif
-
 class QSharedMemory;
 class MountainProcessServer : public LocalServer::Server, public MPDaemonIface {
     Q_OBJECT
@@ -197,6 +166,8 @@ struct MPDaemonPript {
     QDateTime timestamp_finished;
     QProcess* qprocess = 0;
     QFile* stdout_file = 0;
+
+    QDateTime orphaned_timestamp = QDateTime();
 
     //For a script:
     QStringList script_paths;

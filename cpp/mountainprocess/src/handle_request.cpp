@@ -67,9 +67,12 @@ QString compute_unique_object_code(QJsonObject obj)
     return QString(hash.result().toHex());
 }
 
-bool wait_for_file_to_exist(QString fname,int timeout_ms) {
-    QTime timer; timer.start();
-    while ((!QFile::exists(fname))&&(timer.elapsed()<=timeout_ms));
+bool wait_for_file_to_exist(QString fname, int timeout_ms)
+{
+    QTime timer;
+    timer.start();
+    while ((!QFile::exists(fname)) && (timer.elapsed() <= timeout_ms))
+        ;
     return QFile::exists(fname);
 }
 
@@ -175,7 +178,8 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
 
     qCDebug(HR).noquote() << "Running: " + exe + " " + args.join(" ");
 
-    QTime timer; timer.start();
+    QTime timer;
+    timer.start();
 
     QProcess pp;
     pp.setProcessChannelMode(QProcess::MergedChannels);
@@ -184,7 +188,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
 
     pp.waitForFinished(-1);
 
-    qCDebug(HR).noquote() << QString("Elapsed time for running processor (%1): %2 sec").arg(processor_name).arg(timer.elapsed()*1.0/1000);
+    qCDebug(HR).noquote() << QString("Elapsed time for running processor (%1): %2 sec").arg(processor_name).arg(timer.elapsed() * 1.0 / 1000);
 
     /*
     int ret = pp.execute(exe, args);
@@ -198,7 +202,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     foreach (QString key, okeys) {
         if (outputs[key].toBool()) {
             QString fname = output_files[key];
-            if (!wait_for_file_to_exist(fname,100)) {
+            if (!wait_for_file_to_exist(fname, 100)) {
                 response["error"] = "Output file does not exist: " + fname;
                 return response;
             }

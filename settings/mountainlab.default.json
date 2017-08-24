@@ -5,7 +5,9 @@
 	},
 	"mountainprocess":{
 		"max_num_simultaneous_processes":2,
-		"processor_paths":["cpp/mountainprocess/processors","user/processors","packages"]
+		"processor_paths":["cpp/mountainprocess/processors","user/processors","packages"],
+		"mpdaemonmonitor_url":"mpdaemonmonitor.herokuapp.com",
+		"mpdaemon_name":"","mpdaemon_secret":""
 	},
 	"prv":{
 		"local_search_paths":["examples"],

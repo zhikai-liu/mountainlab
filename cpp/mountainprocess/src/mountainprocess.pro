@@ -24,13 +24,15 @@ HEADERS += \
     mpdaemoninterface.h \
     localserver.h \
     handle_request.h \
-    mllogmaster.h
+    mllogmaster.h \
+    mpdaemonmonitorinterface.h
 SOURCES += \
     mpdaemon.cpp \
     mpdaemoninterface.cpp \
     localserver.cpp \
     handle_request.cpp \
-    mllogmaster.cpp
+    mllogmaster.cpp \
+    mpdaemonmonitorinterface.cpp
 
 HEADERS += \
     processmanager.h \

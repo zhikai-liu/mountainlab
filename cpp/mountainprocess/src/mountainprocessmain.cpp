@@ -45,6 +45,7 @@ If anything crashes along the way, every involved QProcess is killed.
 
 #include "mpdaemon.h"
 #include "mpdaemoninterface.h"
+#include "mpdaemonmonitorinterface.h"
 
 #include <QCoreApplication>
 #include <QFile>
@@ -728,6 +729,11 @@ int main(int argc, char* argv[])
         cleaner.addPath(mdachunk_data_path + "/tmp_short_term", MAX_MDACHUNK_GB);
         cleaner.addPath(mdachunk_data_path + "/tmp_long_term", MAX_MDACHUNK_GB);
         */
+
+        //MPDaemonMonitorInterface::setMPDaemonMonitorUrl("http://mpdaemonmonitor.herokuapp.com");
+        MPDaemonMonitorInterface::setMPDaemonMonitorUrl(MLUtil::configValue("mountainprocess", "mpdaemonmonitor_url").toString());
+        MPDaemonMonitorInterface::setDaemonName(MLUtil::configValue("mountainprocess", "mpdaemon_name").toString());
+        MPDaemonMonitorInterface::setDaemonSecret(MLUtil::configValue("mountainprocess", "mpdaemon_secret").toString());
 
         MountainProcessServer server;
         server.setLogPath(log_path);
