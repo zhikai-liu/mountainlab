@@ -8,7 +8,7 @@ function BanjoGenerator(context) {
 
 	this.extractFirings=function(firings,opts,callback) {extractFirings(firings,opts,callback);};
 	this.computeTemplates=function(timeseries,firings,opts,callback) {computeTemplates(timeseries,firings,opts,callback);};
-	this.computeAutocorrelograms=function(firings,opts,callback) {computeAutocorrelograms(firings,opts,callbacks);};
+	this.computeAutocorrelograms=function(firings,opts,callback) {computeAutocorrelograms(firings,opts,callback);};
 	this.computeFiringsEvents=function(timeseries,firings,opts,callback) {computeFiringsEvents(timeseries,firings,opts,callback);};
 
 	this.createTemplatesView=function(templates,opts,callback) {createTemplatesView(templates,opts,callback);};
@@ -56,6 +56,22 @@ function BanjoGenerator(context) {
 			}
 		);
 	}
+	function computeAutocorrelograms(firings,opts,callback) {
+		var bin_size_msec=opts.bin_size_msec||2;
+		var max_dt_msec=opts.max_dt_msec||100;
+		var samplerate=opts.samplerate||30000;
+		mp_run_process('banjoview.cross_correlograms',
+			{firings:firings},
+			{correlograms_out:true},
+			{bin_size_msec:bin_size_msec,max_dt_msec:max_dt_msec,samplerate:samplerate,mode:'autocorrelograms'},
+			{server:m_server},
+			function(tmp) {
+				tmp.outputs=tmp.outputs||{};
+				var correlograms_out=tmp.outputs.correlograms_out||null;
+				callback({success:tmp.success,correlograms_out:correlograms_out});
+			}
+		);
+	}
 
 	function createTemplatesView(templates,opts,callback) {
 		console.log ('Creating templates view...');
@@ -65,6 +81,18 @@ function BanjoGenerator(context) {
 				return;
 			}
 			var view0={view_type:'templates',templates_url:tmp.url,label:'Templates'};
+			callback({success:true,view:view0});
+		});
+	}
+
+	function createCorrelogramsView(correlograms,opts,callback) {
+		console.log ('Creating correlograms view...');
+		get_url_for_prv(correlograms,function(tmp) {
+			if (!tmp.success) {
+				callback({success:false,error:tmp.error||''});
+				return;
+			}
+			var view0={view_type:'correlograms',correlograms_url:tmp.url,label:opts.label||'Correlograms'};
 			callback({success:true,view:view0});
 		});
 	}

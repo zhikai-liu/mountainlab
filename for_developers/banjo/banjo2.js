@@ -40,13 +40,27 @@ else if ((params0.firings)&&(params0.timeseries)) {
 		console.log('---');
 		console.log(tmp);
 		var templates=tmp.templates_out;
-		console.log('aaaaaaaaaaaaaaaaaaaaaa'+JSON.stringify(templates));
 		BG.createTemplatesView(templates,{},function(tmp2) {
 			if (!tmp2.success) {
 				console.log(tmp2.error);
 				return;
 			}
 			BG.addView('north',tmp2.view);
+			finalize();
+		});
+	});
+	BG.computeAutocorrelograms(firings,{},function(tmp) {
+		if (!tmp.success) {
+			console.log(tmp.error);
+			return;
+		}
+		var correlograms=tmp.correlograms_out;
+		BG.createCorrelogramsView(correlograms,{label:'Autocorrelograms'},function(tmp2) {
+			if (!tmp2.success) {
+				console.log(tmp2.error);
+				return;
+			}
+			BG.addView('south',tmp2.view);
 			finalize();
 		});
 	});
