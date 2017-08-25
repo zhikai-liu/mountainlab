@@ -9,10 +9,14 @@ bool p_extract_firings(QString firings, QString metrics, QString firings_out, P_
 {
     QSet<int> labels_to_exclude;
     QJsonParseError err;
-    QJsonObject obj = QJsonDocument::fromJson(TextFile::read(metrics).toUtf8(), &err).object();
-    if (err.error != QJsonParseError::NoError) {
-        qWarning() << "Error parsing json file: " + metrics + " : " + err.errorString();
-        return false;
+    QJsonObject obj;
+
+    if (!metrics.isEmpty()) {
+        QJsonDocument::fromJson(TextFile::read(metrics).toUtf8(), &err).object();
+        if (err.error != QJsonParseError::NoError) {
+            qWarning() << "Error parsing json file: " + metrics + " : " + err.errorString();
+            return false;
+        }
     }
 
     QJsonArray clusters = obj["clusters"].toArray();
@@ -39,7 +43,7 @@ bool p_extract_firings(QString firings, QString metrics, QString firings_out, P_
     bigint L = FF.N2();
     for (bigint i = 0; i < L; i++) {
         double t0=FF.value(1,i);
-        if ((t0<=opts.t1)&&((opts.t2<0)||(t0<=opts.t2))) {
+        if ((opts.t1<=t0)&&((opts.t2<0)||(t0<=opts.t2))) {
             int k = FF.value(2, i);
             if (!labels_to_exclude.contains(k)) {
                 if (labels_to_include.contains(k)) {
