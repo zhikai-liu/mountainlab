@@ -33,13 +33,32 @@ bool p_extract_firings(QString firings, QString metrics, QString firings_out, P_
     qDebug().noquote() << "Excluding clusters: " << labels_to_exclude.toList();
 
     QVector<bigint> inds_to_use;
+    QSet<int> labels_to_include;
 
     DiskReadMda FF(firings);
     bigint L = FF.N2();
     for (bigint i = 0; i < L; i++) {
-        int k = FF.value(2, i);
-        if (!labels_to_exclude.contains(k))
-            inds_to_use << i;
+        double t0=FF.value(1,i);
+        if ((t0<=opts.t1)&&((opts.t2<0)||(t0<=opts.t2))) {
+            int k = FF.value(2, i);
+            if (!labels_to_exclude.contains(k)) {
+                if (labels_to_include.contains(k)) {
+                    inds_to_use << i;
+                }
+                else {
+                    if (opts.clusters.isEmpty())
+                        labels_to_include.insert(k);
+                    else {
+                        if (opts.clusters.contains(k))
+                            labels_to_include.insert(k);
+                        else
+                            labels_to_exclude.insert(k);
+                    }
+                    if (labels_to_include.contains(k))
+                        inds_to_use << i;
+                }
+            }
+        }
     }
 
     bigint L2 = inds_to_use.count();

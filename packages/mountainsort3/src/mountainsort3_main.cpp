@@ -134,6 +134,9 @@ QJsonObject get_spec()
         X.addOptionalInputs("metrics");
         X.addOutputs("firings_out");
         X.addOptionalParameter("exclusion_tags", "", "");
+        X.addOptionalParameter("clusters","","");
+        X.addOptionalParameter("t1","","");
+        X.addOptionalParameter("t2","","");
         processors.push_back(X.get_spec());
     }
     {
@@ -304,6 +307,18 @@ int main(int argc, char* argv[])
         QString firings_out = CLP.named_parameters["firings_out"].toString();
         P_extract_firings_opts opts;
         opts.exclusion_tags = MLUtil::toStringList(CLP.named_parameters["exclusion_tags"]);
+        {
+            QStringList clusters_str=CLP.named_parameters["clusters"].toString().split(",");
+            opts.clusters=MLUtil::stringListToIntList(clusters_str);
+        }
+        {
+            QString t1_str=CLP.named_parameters["t1"].toString();
+            if (t1_str.isEmpty()) t1_str="-1";
+            QString t2_str=CLP.named_parameters["t2"].toString();
+            if (t2_str.isEmpty()) t2_str="-1";
+            opts.t1=t1_str.toDouble();
+            opts.t2=t2_str.toDouble();
+        }
         ret = p_extract_firings(firings, metrics, firings_out, opts);
     }
     else if (arg1 == "mountainsort.concat_timeseries") {
