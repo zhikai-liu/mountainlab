@@ -288,7 +288,7 @@ int main(int argc, char* argv[])
         PM->setDefaultParameters(processor_name, process_parameters);
         if ((!force_run) && (!exec_mode) && (PM->processAlreadyCompleted(processor_name, process_parameters))) {
             // We have a record of this procesor already completed. If so, we save a lot of time by not re-running
-            qCInfo(MP) << "Process already completed: "+processor_name;
+            qCInfo(MP) << "Process already completed: " + processor_name;
             printf("Process already completed: %s\n", processor_name.toLatin1().data());
         }
         else {
@@ -302,7 +302,7 @@ int main(int argc, char* argv[])
             else {
                 RequestProcessResources RPR;
                 RPR.request_num_threads = request_num_threads;
-                qCInfo(MP) << "Starting process: "+processor_name;
+                qCInfo(MP) << "Starting process: " + processor_name;
                 id = PM->startProcess(processor_name, process_parameters, RPR, exec_mode, preserve_tempdir); //start the process and retrieve a unique id
                 if (id.isEmpty()) {
                     error_message = "Problem starting process: " + processor_name;

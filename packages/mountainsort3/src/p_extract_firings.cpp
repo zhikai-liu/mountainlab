@@ -42,8 +42,8 @@ bool p_extract_firings(QString firings, QString metrics, QString firings_out, P_
     DiskReadMda FF(firings);
     bigint L = FF.N2();
     for (bigint i = 0; i < L; i++) {
-        double t0=FF.value(1,i);
-        if ((opts.t1<=t0)&&((opts.t2<0)||(t0<=opts.t2))) {
+        double t0 = FF.value(1, i);
+        if ((opts.t1 <= t0) && ((opts.t2 < 0) || (t0 <= opts.t2))) {
             int k = FF.value(2, i);
             if (!labels_to_exclude.contains(k)) {
                 if (labels_to_include.contains(k)) {

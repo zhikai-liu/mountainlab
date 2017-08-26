@@ -181,9 +181,9 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
         }
     }
 
-    QString process_output_fname=CacheManager::globalInstance()->makeLocalFile("process_output_"+processor_name+"_"+MLUtil::makeRandomId()+".json");
+    QString process_output_fname = CacheManager::globalInstance()->makeLocalFile("process_output_" + processor_name + "_" + MLUtil::makeRandomId() + ".json");
     //CacheManager::globalInstance()->setTemporaryFileExpirePid(process_output_fname,qApp->applicationPid());
-    args << "--_process_output="+process_output_fname;
+    args << "--_process_output=" + process_output_fname;
 
     QString exe = qApp->applicationDirPath() + "/mountainprocess";
 
@@ -212,21 +212,21 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
 
     QJsonObject process_output;
     if (!QFile::exists(process_output_fname)) {
-        process_output["success"]=false;
-        process_output["error"]="Process output file does not exist: "+process_output_fname;
+        process_output["success"] = false;
+        process_output["error"] = "Process output file does not exist: " + process_output_fname;
     }
     else {
-        QString json=TextFile::read(process_output_fname);
+        QString json = TextFile::read(process_output_fname);
         QJsonParseError error;
-        process_output=QJsonDocument::fromJson(json.toUtf8(),&error).object();
-        if (error.error!=QJsonParseError::NoError) {
-            process_output["success"]=false;
-            process_output["error"]="Error parsing json in process output file";
+        process_output = QJsonDocument::fromJson(json.toUtf8(), &error).object();
+        if (error.error != QJsonParseError::NoError) {
+            process_output["success"] = false;
+            process_output["error"] = "Error parsing json in process output file";
         }
     }
     if (!process_output["success"].toBool()) {
         response["success"] = false;
-        response["error"]="Process error: "+process_output["error"].toString();
+        response["error"] = "Process error: " + process_output["error"].toString();
         return response;
     }
 

@@ -8,11 +8,7 @@
 
 bool p_banjoview_cross_correlograms(QString firings_path, QString correlograms_out, P_banjoview_cross_correlograms_opts opts)
 {
-    qDebug() << __FILE__ << __LINE__;
-
     DiskReadMda firings(firings_path);
-
-    qDebug() << __FILE__ << __LINE__;
 
     //get the sorted times and labels
     MLVector<double> times(firings.N2());
@@ -30,10 +26,8 @@ bool p_banjoview_cross_correlograms(QString firings_path, QString correlograms_o
             labels[i] = labels_unsorted[sort_inds[i]];
         }
     }
-    qDebug() << __FILE__ << __LINE__;
 
     int K = MLCompute::max(labels);
-    qDebug() << __FILE__ << __LINE__;
     if (opts.clusters.isEmpty()) {
         QSet<int> labels_present;
         for (bigint aa = 0; aa < labels.count(); aa++) {
@@ -44,7 +38,6 @@ bool p_banjoview_cross_correlograms(QString firings_path, QString correlograms_o
                 opts.clusters << k;
         }
     }
-    qDebug() << __FILE__ << __LINE__;
 
     QVector<int> k1s, k2s;
     if (opts.mode == Autocorrelograms) {
@@ -61,7 +54,6 @@ bool p_banjoview_cross_correlograms(QString firings_path, QString correlograms_o
             }
         }
     }
-    qDebug() << __FILE__ << __LINE__;
 
     //set up the histogram bins
     int R = ceil((opts.max_dt_msec) / (opts.bin_size_msec));
@@ -69,7 +61,6 @@ bool p_banjoview_cross_correlograms(QString firings_path, QString correlograms_o
     double tmin = -R * opts.bin_size_msec / 1000 * opts.samplerate;
     double tmax = R * opts.bin_size_msec / 1000 * opts.samplerate;
     double bin_size = opts.bin_size_msec / 1000 * opts.samplerate;
-    qDebug() << __FILE__ << __LINE__;
 
     //initialize the histograms with zeros
     QMap<bigint, QVector<double> > histogram_counts;
@@ -83,7 +74,6 @@ bool p_banjoview_cross_correlograms(QString firings_path, QString correlograms_o
 
     qDebug().noquote() << "k1s:" << k1s;
     qDebug().noquote() << "k2s:" << k1s;
-    qDebug() << times.count();
 
     bigint jjj_last = 0;
     for (bigint ii = 0; ii < times.count(); ii++) {
