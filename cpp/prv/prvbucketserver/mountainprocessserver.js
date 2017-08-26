@@ -50,7 +50,12 @@ exports.RequestHandler=function(hopts) {
 						}
 						var json_response=read_json_file(response_fname);
 						remove_file(response_fname);
-						send_json_response({success:true,response:json_response});
+						if (json_response) {
+							send_json_response(json_response);
+						}
+						else {
+							send_json_response({success:false,error:'unable to parse json in response_fname'});
+						}
 					});
 					REQ.on('close', function (err) {
 						if (!done) {
@@ -144,7 +149,7 @@ function read_json_file(fname) {
 		return JSON.parse(read_text_file(fname));
 	}
 	catch(err) {
-		return '';
+		return 0;
 	}	
 }
 

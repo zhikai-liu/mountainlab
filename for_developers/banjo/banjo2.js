@@ -17,6 +17,23 @@ var context={
 var params0=CLP.namedParameters;
 
 var BG=new BanjoGenerator(context);
+
+if ((params0.firings)&&((params0.clusters)||('t1' in params0)||('t2' in params0))) {
+	BG.extractFirings(params0.firings,{clusters:params0.clusters||'',t1:params0.t1||0,t2:params0.t2||-1},function(tmp) {
+		if (!tmp.success) {
+			console.log('Error extracting firings: '+tmp.error);
+			return;
+		}
+		params0.firings=tmp.firings_out;
+		step2();
+	});
+}
+else {
+	step2();
+}
+
+function step2() {
+
 if (params0.templates) {
 	var templates=read_json_file(params0.templates);
 
@@ -66,6 +83,8 @@ else if ((params0.firings)&&(params0.timeseries)) {
 	});
 }
 
+}
+
 function finalize() {
 	BG.createPageUrl(function(tmp2) {
 		if (!tmp2.success) {
@@ -78,7 +97,6 @@ function finalize() {
 
 function http_get_json(url,callback) {
 	http_get_text(url,function(tmp) {
-		console.log('DDDDDDDDDDDDDDDDDDDd'+JSON.stringify(tmp));
 		if (!tmp.success) {
 			callback(tmp);
 			return;
@@ -88,13 +106,10 @@ function http_get_json(url,callback) {
 			obj=JSON.parse(tmp.text);
 		}
 		catch(err) {
-			console.log('###########');
-			console.log(tmp);
-			console.log(tmp.text);
 			callback({success:false,error:'Error parsing json response: '+tmp.text});
 			return;
 		}
-		callback({success:true,response:obj});
+		callback({success:true,object:obj});
 	});
 }
 

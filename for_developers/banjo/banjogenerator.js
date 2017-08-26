@@ -29,7 +29,7 @@ function BanjoGenerator(context) {
 			mp_run_process('mountainsort.extract_firings',
 				{firings:firings},
 				{firings_out:true},
-				{t1:opts.t1||-1,t2:opts.t2||-1,clusters:(opts.clusters||'').join(',')},
+				{t1:opts.t1||-1,t2:opts.t2||-1,clusters:(opts.clusters||'')},
 				{server:m_server},
 				function(tmp) {
 					tmp.outputs=tmp.outputs||{};
@@ -153,19 +153,15 @@ function BanjoGenerator(context) {
 		var server_url=m_server.host+':'+m_server.port;
 		var url0=server_url+'/mountainprocess?a=mountainprocess&mpreq='+JSON.stringify(request);
 		context.http_get_json(url0,function(tmp) {
-			console.log('url0='+url0);
-			console.log(tmp);
 			if (!tmp.success) {
 				callback({success:false,error:tmp.error});
 				return;
 			}
-			if (!tmp.response.success) {
-				callback({success:false,error:tmp.response.error});
+			if (!tmp.object.success) {
+				callback({success:false,error:tmp.object.error});
 				return;	
 			}
-			console.log('aaaaa');
-			console.log(tmp.response.response);
-			callback({success:true,outputs:tmp.response.response.outputs});
+			callback({success:true,outputs:tmp.object.response.outputs});
 		});
 	}
 }

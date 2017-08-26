@@ -971,12 +971,7 @@ int main(int argc, char* argv[])
             qCWarning(MP) << "Error in response: " + response["error"].toString();
             return -1;
         }
-        QJsonObject response2 = response["response"].toObject();
-        if (!response2["success"].toBool()) {
-            qCWarning(MP) << "Error in response2: " + response2["error"].toString();
-            return -1;
-        }
-        QJsonObject outputs0 = response2["outputs"].toObject();
+        QJsonObject outputs0 = response["outputs"].toObject();
         foreach (QString key, PP.outputs.keys()) {
             if (process_parameters.contains(key)) {
                 QString fname0 = process_parameters[key].toString();
