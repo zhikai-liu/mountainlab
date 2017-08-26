@@ -79,11 +79,11 @@ bool wait_for_file_to_exist(QString fname, int timeout_ms)
 QJsonObject handle_request_run_process(QString processor_name, const QJsonObject& inputs, const QJsonObject& outputs, const QJsonObject& parameters, QString prvbucket_path)
 {
     QJsonObject response;
-    response["success"] = false; //assume the worst
 
     ProcessManager* PM = ProcessManager::globalInstance();
     MLProcessor PP = PM->processor(processor_name);
     if (PP.name != processor_name) { //rather use PP.isNull()
+        response["success"] = false;
         response["error"] = "Unable to find processor: " + processor_name;
         return response;
     }
@@ -97,6 +97,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     foreach (QString key, PP.inputs.keys()) {
         if (!PP.inputs[key].optional) {
             if (!ikeys.contains(key)) {
+                response["success"] = false;
                 response["error"] = "Missing input: " + key;
                 return response;
             }
@@ -105,6 +106,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     foreach (QString key, PP.outputs.keys()) {
         if (!PP.outputs[key].optional) {
             if (!okeys.contains(key)) {
+                response["success"] = false;
                 response["error"] = "Missing output: " + key;
                 return response;
             }
@@ -113,6 +115,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     foreach (QString key, PP.parameters.keys()) {
         if (!PP.parameters[key].optional) {
             if (!pkeys.contains(key)) {
+                response["success"] = false;
                 response["error"] = "Missing parameter: " + key;
                 return response;
             }
@@ -124,12 +127,14 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
             QJsonObject prv_object = inputs[key].toObject();
             QString path0 = locate_prv(prv_object);
             if (path0.isEmpty()) {
+                response["success"] = false;
                 response["error"] = QString("Unable to locate prv for key=%1. (original_path=%2,checksum=%3)").arg(key).arg(prv_object["original_path"].toString()).arg(prv_object["original_checksum"].toString());
                 return response;
             }
             args << QString("--%1=%2").arg(key).arg(path0);
         }
         else {
+            response["success"] = false;
             response["error"] = "Unexpected input: " + key;
             return response;
         }
@@ -140,6 +145,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
             args << QString("--%1=%2").arg(key).arg(parameters[key].toVariant().toString());
         }
         else {
+            response["success"] = false;
             response["error"] = "Unexpected parameter: " + key;
             return response;
         }
@@ -169,10 +175,15 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
             }
         }
         else {
+            response["success"] = false;
             response["error"] = "Unexpected output: " + key;
             return response;
         }
     }
+
+    QString process_output_fname=CacheManager::globalInstance()->makeLocalFile("process_output_"+processor_name+"_"+MLUtil::makeRandomId()+".json");
+    CacheManager::globalInstance()->setTemporaryFileExpirePid(process_output_fname,qApp->applicationPid());
+    args << "_process_output="+process_output_fname;
 
     QString exe = qApp->applicationDirPath() + "/mountainprocess";
 
@@ -193,26 +204,50 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     /*
     int ret = pp.execute(exe, args);
     if (ret != 0) {
+        response["success"] = false;
         response["error"] = "Error running processor.";
         return response;
     }
     */
+
+    QJsonObject process_output;
+    if (!QFile::exists(process_output_fname)) {
+        process_output["success"]=false;
+        process_output["error"]="Process output file does not exist.";
+    }
+    else {
+        QString json=TextFile::read(process_output_fname);
+        QJsonParseError error;
+        process_output=QJsonDocument::fromJson(json.toUtf8(),&error).object();
+        if (error.error!=QJsonParseError::NoError) {
+            process_output["success"]=false;
+            process_output["error"]="Error parsing json in process output file";
+        }
+    }
+    if (!process_output["success"].toBool()) {
+        response["success"] = false;
+        response["error"]="Process error: "+process_output["error"].toString();
+        return response;
+    }
 
     QJsonObject outputs0;
     foreach (QString key, okeys) {
         if (outputs[key].toBool()) {
             QString fname = output_files[key];
             if (!wait_for_file_to_exist(fname, 100)) {
+                response["success"] = false;
                 response["error"] = "Output file does not exist: " + fname;
                 return response;
             }
             QString tmp_prv = fname + ".prv";
             if (!create_prv(fname, tmp_prv)) {
+                response["success"] = false;
                 response["error"] = "Unable to create prv object for: " + fname;
                 return response;
             }
             QString prv_json = TextFile::read(tmp_prv);
             if (prv_json.isEmpty()) {
+                response["success"] = false;
                 response["error"] = "Problem creating prv object for: " + fname;
                 return response;
             }
@@ -221,7 +256,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
         }
     }
 
-    response["outputs"] = outputs0;
     response["success"] = true;
+    response["outputs"] = outputs0;
     return response;
 }
