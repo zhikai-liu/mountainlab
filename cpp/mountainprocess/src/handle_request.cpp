@@ -213,7 +213,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     QJsonObject process_output;
     if (!QFile::exists(process_output_fname)) {
         process_output["success"]=false;
-        process_output["error"]="Process output file does not exist.";
+        process_output["error"]="Process output file does not exist: "+process_output_fname;
     }
     else {
         QString json=TextFile::read(process_output_fname);
