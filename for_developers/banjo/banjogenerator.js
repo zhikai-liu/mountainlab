@@ -43,6 +43,7 @@ function BanjoGenerator(context) {
 		}
 	}
 	function computeTemplates(timeseries,firings,opts,callback) {
+		console.log ('Computing templates...');
 		var clip_size=opts.clip_size||100;
 		mp_run_process('mountainsort.compute_templates',
 			{timeseries:timeseries,firings:firings},
@@ -57,6 +58,7 @@ function BanjoGenerator(context) {
 		);
 	}
 	function computeAutocorrelograms(firings,opts,callback) {
+		console.log ('Computing autocorrelograms...');
 		var bin_size_msec=opts.bin_size_msec||2;
 		var max_dt_msec=opts.max_dt_msec||100;
 		var samplerate=opts.samplerate||30000;
@@ -68,6 +70,7 @@ function BanjoGenerator(context) {
 			function(tmp) {
 				tmp.outputs=tmp.outputs||{};
 				var correlograms_out=tmp.outputs.correlograms_out||null;
+				console.log (JSON.stringify(correlograms_out));
 				callback({success:tmp.success,correlograms_out:correlograms_out});
 			}
 		);
@@ -161,7 +164,7 @@ function BanjoGenerator(context) {
 				callback({success:false,error:tmp.object.error});
 				return;	
 			}
-			callback({success:true,outputs:tmp.object.response.outputs});
+			callback({success:true,outputs:tmp.object.outputs});
 		});
 	}
 }

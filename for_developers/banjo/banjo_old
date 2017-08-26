@@ -1,0 +1,681 @@
+#!/usr/bin/env nodejs
+
+var fs=require('fs');
+
+CLP=new CLParams(process.argv);
+var arg1=CLP.unnamedParameters[0]||'';
+
+var banjo_config=load_banjo_config();
+
+if (ends_with(arg1,'.bv')) {
+	var config=read_json_file(arg1);
+	if (!config) {
+		process.exit(-1);
+	}
+	if (!open_banjoview(config)) {
+		process.exit(-1);
+	}
+}
+if (arg1=='view') {
+	var params=JSON.parse(JSON.stringify(CLP.namedParameters));
+	view(params,function(tmp) {
+		if (!tmp.success) {
+			console.error('Error viewing.');
+			process.exit(-1);	
+		}
+	});
+}
+else {
+	console.error('Unrecognized command: '+arg1);
+	process.exit(-1);
+}
+
+function load_banjo_config() {
+	var obj1=read_json_file(__dirname+'/settings/banjo.default.json');
+	return obj1;
+}
+
+function read_json_file(fname) {
+	var txt=read_text_file(fname);
+	if (!txt) {
+		console.error('File does not exist or is empty: '+fname);
+		return 0;
+	}
+	var obj=parse_json(txt);
+	if (!obj) {
+		console.error('Error parsing json file: '+fname);
+		return 0;
+	}
+	return obj;
+}
+
+function open_banjoview(config) {
+	var config_txt=JSON.stringify(config);
+	if (banjo_config.use_config_url) {
+		open_banjoview_with_config_url(config_txt,function(success) {
+			if (!success) {
+				console.log ('Unable to to open with config url. Trying other way...');
+				open_banjoview_with_config(config_txt);
+			}
+		});
+	}
+	else {
+		open_banjoview_with_config(config_txt);
+	}
+}
+
+function open_banjoview_with_config_url(config_txt,callback) {
+	url4text(config_txt,function(url0) {
+		var url1;
+		if (url0) {
+			var url0_encoded=base64encode(url0);
+			url1=banjo_config.banjoview_url+'?config_url='+url0_encoded;		
+			//var success=open_in_browser(url1);
+			console.log(url1);
+			callback({success:true});
+		}
+		else {
+			callback({success:false});				
+		}
+	});
+}
+
+function open_banjoview_with_config(config_txt) {
+	var txt_encoded=base64encode(config_txt);
+	var url1=banjo_config.banjoview_url+'?config='+txt_encoded;		
+	return open_in_browser(url1);
+}
+
+function url4text(txt,callback) {
+	http_post_json(banjo_config.url4text.host,banjo_config.url4text.port,banjo_config.url4text.path,{text:txt},cb);
+	function cb(response) {
+		response=response||'{}';
+		response=JSON.parse(response);
+		var url0=response.raw||0;
+		callback(url0);
+	}
+}
+
+function http_post_json(host,port,path,data,callback) {
+	var post_data=JSON.stringify(data);
+
+	// An object of options to indicate where to post to
+	var post_options = {
+		host: host,
+		port: port,
+		path: path,
+		method: 'POST',
+		headers: {
+		  'Content-Type': 'application/json',
+		  'Content-Length': Buffer.byteLength(post_data)
+		}
+	};
+
+	// Set up the request
+	var post_req = require('http').request(post_options, function(res) {
+		res.setEncoding('utf8');
+		res.on('data', function (body) {
+			callback(body);
+		});
+	});
+	post_req.on('error',function() {
+		callback('');
+	});
+
+	// post the data
+	post_req.write(post_data);
+	post_req.end();
+}
+
+function show_usage_view() {
+	//console.log('banjo view --templates=[templates.mda or templates.mda.prv] --correlograms=[correlograms.json] --firing_events=firings_with_amps.mda');
+}
+
+function view(params,callback) {
+	if (('firings' in params)&&(('t1' in params)||('t2' in params)||('clusters' in params))) {
+		extract_firings(params.firings,params,function(new_firings) {
+			if (!new_firings) {
+				console.log('Failed to extract firings.');
+				callback({success:false});
+			}
+			else {
+				params.firings=new_firings;
+				view_part_2(params,callback);
+			}
+		});
+	}
+	else {
+		view_part_2(params,callback);
+	}
+}
+function view_part_2(params,callback) {
+
+	var server=params.server||'';
+	if (!server) {
+		console.error('Server is empty. Use --server=[name].');
+		callback({success:false});
+		return;
+	}
+
+	var north_views=params.north_views||'templates';
+	var south_views=params.south_views||'autocorrelograms';
+	north_views=north_views.split(',');
+	south_views=south_views.split(',');
+	var all_views=[];
+	for (var i in north_views) {
+		all_views.push({view_type:north_views[i],container:'north'});
+	}
+	for (var i in south_views) {
+		all_views.push({view_type:south_views[i],container:'south'});
+	}
+
+	var clusters=params.clusters||'';
+	var t1=-1,t2=-1;
+	if ('t1' in params)
+		t1=Number(params.t1);
+	if ('t2' in params)
+		t2=Number(params.t2);
+
+	var views=[];
+	var i=0;
+
+	var views=[];
+	foreach(all_views,{},function(i,view0,cb) {
+		var view_type=view0.view_type;
+		var container=view0.container;
+		create_view(view_type,params,function(X) {
+			if (X) {
+				X.container=container;
+				views.push(X);
+				cb();
+			}
+			else {
+				console.log ('Problem creating view: '+view_type);
+				callback({success:false});
+			}
+		});
+	},function() {
+		var config={views:views};
+		if (open_banjoview(config)) {
+			callback({success:true});
+		}
+	});
+}
+
+function extract_firings(firings,params,callback) {
+	var firings_out='tmp.firings.mda.prv';
+	mp_run_process_remotely('mountainsort.extract_firings',
+		{firings:firings},
+		{firings_out:firings_out},
+		{t1:params.t1||'',t2:params.t2||'',clusters:params.clusters||''},
+		params.server,
+		function(tmp) {
+			if (tmp.success) {
+				callback(firings_out);
+			}
+			else {
+				callback('');
+			}
+		}
+	);
+}
+
+function create_view(view_type,params,callback) {
+	if (view_type=='templates') {
+		create_templates_view(params,callback);
+	}
+	else if (view_type=='autocorrelograms') {
+		create_autocorrelograms_view(params,callback);
+	}
+	else if (view_type=='firing_events') {
+		create_firing_events_view(params,callback);
+	}
+}
+
+function create_templates_view(params,callback) {
+	var server=params.server||'';
+	get_templates_url(function(url) {
+		if (url) {
+			callback({
+				view_type:'templates',
+				templates_url:url,
+				label:'Templates'
+			});
+		}
+		else {
+			callback(null);
+		}
+	});
+	function get_templates_url(callback) {
+		if ('templates' in params) {
+			get_url_for_file(params.templates,server,callback);
+		}
+		else if (('firings' in params)&&('timeseries' in params)) {
+			compute_templates(params.timeseries,params.firings,function(prv) {
+				if (!prv) {
+					console.log ('Problem computing templates.')
+					callback('');
+				}
+				else {
+					get_url_for_prv(prv,server,callback);
+				}
+			});
+		}
+		else {
+			console.log ('Insufficient parameters to create templates view')
+			callback('');
+		}
+	}
+	function compute_templates(timeseries,firings,callback) {
+		var templates_out='tmp.templates.mda.prv';
+		mp_run_process_remotely('mountainsort.compute_templates',
+			{timeseries:timeseries,firings:firings},
+			{templates_out:templates_out},
+			{clip_size:50},
+			server,
+			function(result) {
+				if (!result.success) {
+					callback('');
+				}
+				else {
+					callback(read_json_file(templates_out));
+				}
+			}
+		);
+	}
+}
+
+function create_autocorrelograms_view(params,callback) {
+	var server=params.server||'';
+	get_autocorrelograms_url(function(url) {
+		if (url) {
+			callback({
+				view_type:'correlograms',
+				correlograms_url:url,
+				label:'Autocorrelograms'
+			});
+		}
+		else {
+			callback(null);
+		}
+	});
+	function get_autocorrelograms_url(callback) {
+		if ('autocorrelograms' in params) {
+			get_url_for_file(params.autocorrelograms,server,callback);
+		}
+		else if ('firings' in params) {
+			compute_autocorrelograms(params.firings,function(prv) {
+				if (!prv) {
+					console.log ('Problem computing autocorrelograms.')
+					callback('');
+				}
+				else {
+					get_url_for_prv(prv,server,callback);
+				}
+			});
+		}
+		else {
+			console.log ('Insufficient parameters to create autocorrelograms view')
+			callback('');
+		}
+	}
+	function compute_autocorrelograms(firings,callback) {
+		var autocorrelograms_out='tmp.autocorrelograms.mda.prv';
+		
+		mp_run_process_remotely('banjoview.cross_correlograms',
+			{firings:firings},
+			{correlograms_out:autocorrelograms_out},
+			{bin_size_msec:1,max_dt_msec:100,samplerate:30000,mode:'autocorrelograms'},
+			server,
+			function(result) {
+				if (!result.success) {
+					callback('');
+				}
+				else {
+					callback(read_json_file(autocorrelograms_out));
+				}
+			}
+		);
+	}
+}
+
+function create_firing_events_view(params,callback) {
+	var server=params.server||'';
+	get_firing_events_url(function(url) {
+		if (url) {
+			callback({
+				view_type:'firing_events',
+				firing_events_url:url,
+				label:'Firing events'
+			});
+		}
+		else {
+			callback(null);
+		}
+	});
+	function get_firing_events_url(callback) {
+		if ('firing_events' in params) {
+			get_url_for_file(params.firing_events,server,callback);
+		}
+		else if (('timeseries' in params)&&('firings' in params)) {
+			compute_firing_events(params.timeseries,params.firings,function(prv) {
+				if (!prv) {
+					console.log ('Problem computing firing events.')
+					callback('');
+				}
+				else {
+					get_url_for_prv(prv,server,callback);
+				}
+			});
+		}
+		else {
+			console.log ('Insufficient parameters to create firing events view')
+			callback('');
+		}
+	}
+	function compute_firing_events(timeseries,firings,callback) {
+		var firing_events_out='tmp.firing_events.mda.prv';
+		
+		mp_run_process_remotely('compute_amplitudes',
+			{timeseries:timeseries,firings:firings},
+			{firings_out:firing_events_out},
+			{},
+			server,
+			function(result) {
+				if (!result.success) {
+					callback('');
+				}
+				else {
+					callback(read_json_file(firing_events_out));
+				}
+			}
+		);
+	}
+}
+
+function mp_run_process_remotely(processor_name,inputs,outputs,params,server,callback) {
+	for (var key in outputs) {
+		remove_file_if_exists(outputs[key]);
+	}
+	var exe='mp-run-process-remotely';
+	var args=[processor_name];
+	for (var key in inputs) {
+		args.push('--'+key+'='+inputs[key]);
+	}
+	for (var key in outputs) {
+		args.push('--'+key+'='+outputs[key]);
+	}
+	for (var key in params) {
+		args.push('--'+key+'='+params[key]);
+	}
+	args.push('--_server='+server);
+	run_process_and_read_stdout(exe,args,function() {
+		for (var key in outputs) {
+			if (!file_exists(outputs[key])) {
+				console.log ('Output file does not exist: '+outputs[key]);
+				callback({success:false});
+				return;
+			}
+		}
+		callback({success:true});
+	});
+}
+
+function remove_file_if_exists(fname) {
+	if (file_exists(fname)) {
+		fs.unlinkSync(fname);
+	}
+}
+
+function file_exists(fname) {
+	return fs.existsSync(fname);
+}
+
+/*
+	var AA=[];
+	if (templates_fname) {
+		console.log(templates_fname);
+		AA.push(function(cb) {
+			get_url_for_file(templates_fname,server,function(url0) {
+				if (!url0) {
+					console.error('Unable to get url for file.');
+					cb({success:false});
+					return;
+				}
+				var view0={
+					view_type:'templates',
+					templates_url:url0,
+					container:'north',
+					label:'Templates'
+				};
+				views.push(view0);
+				cb({success:true});
+			});
+		});
+	}
+	if (correlograms_fname) {
+		console.log(correlograms_fname);
+		AA.push(function(cb) {
+			get_url_for_file(correlograms_fname,server,function(url0) {
+				if (!url0) {
+					console.error('Unable to get url for file.');
+					callback({success:false});
+					return;
+				}
+				var view0={
+					view_type:'correlograms',
+					correlograms_url:url0,
+					container:'south',
+					label:'Correlograms'
+				};
+				views.push(view0);
+				cb();
+			});
+		});
+	}
+	if (firing_events_fname) {
+		console.log(firing_events_fname);
+		AA.push(function(cb) {
+			get_url_for_file(firing_events_fname,server,function(url0) {
+				if (!url0) {
+					console.error('Unable to get url for file.');
+					callback({success:false});
+					return;
+				}
+				var view0={
+					view_type:'firing_events',
+					firing_events_url:url0,
+					container:'south',
+					label:'Firing events'
+				};
+				views.push(view0);
+				cb();
+			});
+		});
+	}
+
+	foreach(AA,{},function(i,a,cb) {
+		a(cb);
+	},function(result) {
+		
+	});	
+}
+*/
+
+function find_default_browser_exe() {
+	return 'firefox';
+}
+
+function open_in_browser(url) {
+	//var browser_exe=banjo_config.browser_exe||find_default_browser_exe();
+	//console.log('Opening link in browser: '+url);
+	//console.log('Trying browser_exe='+browser_exe);
+	//require('child_process').exec(browser_exe+' '+url);
+	/*
+	else {
+		if (module_is_available('opn2')) {
+			require('opn')(url);
+		}
+		else {
+			//var browser_exe='firefox';
+			var browser_exe='google-chrome';
+			console.log('The opn module was not found. Try typing "npm install opn". Using '+browser_exe+' for now.');
+			require('child_process').exec(browser_exe+' '+url);
+		}
+	}
+	*/
+	//return true;
+}
+
+function get_url_for_file(fname,server,callback) {
+	var exe='prv';
+	var args=['locate',fname,'--server='+server];
+	run_process_and_read_stdout(exe,args,function(txt) {
+		console.log(txt);
+		if (starts_with(txt,'http'))
+			callback(txt);
+		else {
+			console.log ('Unable to find file url: '+txt);
+			callback('');
+		}
+	});
+}
+
+function get_url_for_prv(prv,server,callback) {
+	var exe='prv';
+	var args=['locate','--checksum='+prv.original_checksum,'--size='+prv.original_size,'--fcs='+prv.original_fcs,'--server='+server];
+	run_process_and_read_stdout(exe,args,function(txt) {
+		console.log(txt);
+		if (starts_with(txt,'http'))
+			callback(txt);
+		else {
+			console.log ('Unable to find url for prv.');
+			callback('');
+		}
+	});
+}
+
+function run_process_and_read_stdout(exe,args,callback) {
+	console.log ('RUNNING: '+exe+' '+args.join(' '));
+	var P;
+	try {
+		P=require('child_process').spawn(exe,args);
+	}
+	catch(err) {
+		console.log (err);
+		console.log ("Problem launching: "+exe+" "+args.join(" "));
+		return "";
+	}
+	var txt='';
+	P.stderr.on('data',function(chunk) {
+		console.log('stderr: '+chunk);
+	});
+	P.stdout.on('data',function(chunk) {
+		txt+=chunk;
+	});
+	P.on('close',function(code) {
+		callback(txt);
+	});
+}
+
+function module_is_available(module_name) {
+	try {
+		require.resolve(module_name);
+		return true;
+	}
+	catch(err) {
+		return false;
+	}
+}
+
+
+function base64encode(str) {
+	return (new Buffer(str)).toString('base64');
+}
+
+function starts_with(str,str2) {
+	return (str.slice(0,str2.length)==str2);
+}
+
+function ends_with(str,str2) {
+	if (str2.length>str.length) return false;
+	return (str.slice(str.length-str2.length)==str2);
+}
+
+function read_text_file(fname) {
+	try {
+		return fs.readFileSync(fname,'utf8');
+	}
+	catch(err) {
+		return '';
+	}
+}
+
+function parse_json(txt) {
+	try {
+		var obj=JSON.parse(txt);
+		return obj;
+	}
+	catch(err) {
+		return 0;
+	}
+}
+
+function CLParams(argv) {
+	this.unnamedParameters=[];
+	this.namedParameters={};
+
+	var args=argv.slice(2);
+	for (var i=0; i<args.length; i++) {
+		var arg0=args[i];
+		if (arg0.indexOf('--')===0) {
+			arg0=arg0.slice(2);
+			var ind=arg0.indexOf('=');
+			if (ind>=0) {
+				this.namedParameters[arg0.slice(0,ind)]=arg0.slice(ind+1);
+			}
+			else {
+				this.namedParameters[arg0]=args[i+1]||'';
+				i++;
+			}
+		}
+		else if (arg0.indexOf('-')===0) {
+			arg0=arg0.slice(1);
+			this.namedParameters[arg0]='';
+		}
+		else {
+			this.unnamedParameters.push(arg0);
+		}
+	}
+}
+
+function foreach(array,opts,step_function,end_function) {
+	var num_parallel=opts.num_parallel||1;
+	var num_running=0;
+	var num_finished=0;
+	var already_called_end=false;
+	var ii=0;
+	next_step();
+	function next_step() {
+		if (num_finished>=array.length) {
+			setTimeout(function() { //important to do it this way so we don't accumulate a call stack
+				if (!already_called_end) { 
+					already_called_end=true;
+					end_function();
+				}
+			},0);
+			return;
+		}
+		while ((ii<array.length)&&(num_running<num_parallel)) {
+			num_running++;
+			ii++;
+			step_function(ii-1,array[ii-1],function() {
+				num_running--;
+				num_finished++;
+				setTimeout(function() { //important to do it this way so we don't accumulate a call stack
+					next_step();
+				},0);
+			});
+		}
+	}
+}
