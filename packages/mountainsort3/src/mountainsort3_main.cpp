@@ -155,6 +155,8 @@ int main(int argc, char* argv[])
 {
     QCoreApplication app(argc, argv);
 
+    qDebug() << __FILE__ << __LINE__;
+
     CLParams CLP(argc, argv);
 
     QString arg1 = CLP.unnamed_parameters.value(0);

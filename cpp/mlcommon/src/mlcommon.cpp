@@ -361,31 +361,37 @@ QVariant clp_string_to_variant(const QString& str)
 
 double MLCompute::min(const QVector<double>& X)
 {
+    if (X.count()==0) return 0;
     return *std::min_element(X.constBegin(), X.constEnd());
 }
 
 double MLCompute::max(const QVector<double>& X)
 {
+    if (X.count()==0) return 0;
     return *std::max_element(X.constBegin(), X.constEnd());
 }
 
 double MLCompute::min(const MLVector<double>& X)
 {
+    if (X.count()==0) return 0;
     return *std::min_element(X.begin(), X.end());
 }
 
 double MLCompute::max(const MLVector<double>& X)
 {
+    if (X.count()==0) return 0;
     return *std::max_element(X.begin(), X.end());
 }
 
 int MLCompute::min(const MLVector<int>& X)
 {
+    if (X.count()==0) return 0;
     return *std::min_element(X.begin(), X.end());
 }
 
 int MLCompute::max(const MLVector<int>& X)
 {
+    if (X.count()==0) return 0;
     return *std::max_element(X.begin(), X.end());
 }
 

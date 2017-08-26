@@ -1464,6 +1464,7 @@ double mean(const MLVector<double>& X)
 
 double min(const MLVector<double>& X)
 {
+    if (X.count()==0) return 0;
     return *std::min_element(X.begin(), X.end());
 }
 
