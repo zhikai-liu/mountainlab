@@ -531,7 +531,8 @@ QList<int> MLUtil::stringListToIntList(const QStringList& list)
             ret.append(MLUtil::stringListToIntList(str.split(",")));
         }
         else {
-            ret << str.toInt();
+            if (!str.isEmpty())
+                ret << str.toInt();
         }
     }
     return ret;
@@ -542,7 +543,8 @@ QList<bigint> MLUtil::stringListToBigIntList(const QStringList& list)
     QList<bigint> ret;
     ret.reserve(list.size());
     foreach (QString str, list) {
-        ret << str.toLongLong();
+        if (str.isEmpty())
+            ret << str.toLongLong();
     }
     return ret;
 }

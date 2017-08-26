@@ -12,7 +12,7 @@ bool p_extract_firings(QString firings, QString metrics, QString firings_out, P_
     QJsonObject obj;
 
     if (!metrics.isEmpty()) {
-        QJsonDocument::fromJson(TextFile::read(metrics).toUtf8(), &err).object();
+        obj = QJsonDocument::fromJson(TextFile::read(metrics).toUtf8(), &err).object();
         if (err.error != QJsonParseError::NoError) {
             qWarning() << "Error parsing json file: " + metrics + " : " + err.errorString();
             return false;
@@ -50,8 +50,9 @@ bool p_extract_firings(QString firings, QString metrics, QString firings_out, P_
                     inds_to_use << i;
                 }
                 else {
-                    if (opts.clusters.isEmpty())
+                    if (opts.clusters.isEmpty()) {
                         labels_to_include.insert(k);
+                    }
                     else {
                         if (opts.clusters.contains(k))
                             labels_to_include.insert(k);
