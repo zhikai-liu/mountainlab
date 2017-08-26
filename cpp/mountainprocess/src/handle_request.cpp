@@ -182,7 +182,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     }
 
     QString process_output_fname=CacheManager::globalInstance()->makeLocalFile("process_output_"+processor_name+"_"+MLUtil::makeRandomId()+".json");
-    CacheManager::globalInstance()->setTemporaryFileExpirePid(process_output_fname,qApp->applicationPid());
+    //CacheManager::globalInstance()->setTemporaryFileExpirePid(process_output_fname,qApp->applicationPid());
     args << "_process_output="+process_output_fname;
 
     QString exe = qApp->applicationDirPath() + "/mountainprocess";
