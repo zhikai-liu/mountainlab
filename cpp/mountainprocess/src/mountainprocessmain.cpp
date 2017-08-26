@@ -288,6 +288,7 @@ int main(int argc, char* argv[])
         PM->setDefaultParameters(processor_name, process_parameters);
         if ((!force_run) && (!exec_mode) && (PM->processAlreadyCompleted(processor_name, process_parameters))) {
             // We have a record of this procesor already completed. If so, we save a lot of time by not re-running
+            qCInfo(MP) << "Process already completed: "+processor_name;
             printf("Process already completed: %s\n", processor_name.toLatin1().data());
         }
         else {
@@ -301,6 +302,7 @@ int main(int argc, char* argv[])
             else {
                 RequestProcessResources RPR;
                 RPR.request_num_threads = request_num_threads;
+                qCInfo(MP) << "Starting process: "+processor_name;
                 id = PM->startProcess(processor_name, process_parameters, RPR, exec_mode, preserve_tempdir); //start the process and retrieve a unique id
                 if (id.isEmpty()) {
                     error_message = "Problem starting process: " + processor_name;
@@ -354,12 +356,16 @@ int main(int argc, char* argv[])
         obj["finish_time"] = info.finish_time.toString("yyyy-MM-dd:hh-mm-ss.zzz");
         //obj["monitor_stats"]=monitor_stats_to_json_array(info.monitor_stats); -- at some point we can include this in the file. For now we only worry about the computed peak values
         if (!output_fname.isEmpty()) { //The user wants the results to go in this file
+            qCInfo(MP) << QString("Writing process output to file: %1 (%2)").arg(output_fname).arg(processor_name);
             QFile::remove(output_fname); //important -- added 9/9/16
             QString obj_json = QJsonDocument(obj).toJson();
             if (!TextFile::write(output_fname, obj_json)) {
                 qCCritical(MP) << "Unable to write results to: " + output_fname;
                 return -1;
             }
+        }
+        else {
+            qCInfo(MP) << "Not writing process output to any file because output_fname is empty.";
         }
         if (!error_message.isEmpty()) {
             qCCritical(MP) << "Error in mountainprocessmain" << error_message;
