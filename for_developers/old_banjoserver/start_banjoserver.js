@@ -12,19 +12,9 @@ CLP=new CLParams(process.argv);
 var listen_port=CLP.namedParameters['listen_port']||0;
 var listen_hostname=CLP.namedParameters['listen_hostname']||'';
 
-var config=read_config();
-if (!config) {
-	console.log('Invalid or missing file: banjoserver.user.json');
-	return;
-}
-if (!config.passcode) {
-	console.log('Missing config: passcode');
-	return;	
-}
-
 // The first argument is the data directory -- the base path from which files will be served
 var data_directory=CLP.unnamedParameters[0]||'';
-if ((!data_directory)||(!listen_port)) {
+if (!data_directory) {
 	print_usage();
 	process.exit(-1);
 }
@@ -45,8 +35,14 @@ handler_opts.prv_exe=prv_exe;
 handler_opts.mp_exe=mp_exe;
 handler_opts.download_url=CLP.namedParameters.download_url||'';
 //handler_opts.prvbucket_url_path=prvbucket_url_path;
-handler_opts.passcode=config.passcode;
 handler_opts.data_directory=data_directory;
+
+if (!listen_port) {
+	print_usage();
+	process.exit(-1);
+}
+
+
 var Handler=new banjoserver.RequestHandler(handler_opts);
 var SERVER=http.createServer(Handler.handle_request);
 if (listen_hostname)
@@ -55,16 +51,6 @@ else
 	SERVER.listen(listen_port);
 SERVER.timeout=1000*60*60*24*7; //give it a week!
 console.log ('Listening on port: '+listen_port+', host: '+listen_hostname);
-
-function read_config() {
-	try {
-		var json=require('fs').readFileSync(__dirname+'/banjoserver.user.json','utf8');
-		return JSON.parse(json);
-	}
-	catch(err) {
-		return null;
-	}
-}
 
 function CLParams(argv) {
 	this.unnamedParameters=[];
@@ -93,3 +79,4 @@ function CLParams(argv) {
 		}
 	}
 }
+
