@@ -105,7 +105,8 @@ function OtherServerHandler() {
 						var obj;
 						try {
 							obj=JSON.parse(body0);
-							callback({success})
+							callback({success:true});
+							ended=true;
 						}
 						catch(err) {
 							if (!ended) {
