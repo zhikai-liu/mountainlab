@@ -51,13 +51,13 @@ function OtherServerHandler() {
 			});
 		}
 		else {
-			if (!req.path) {
-				callback({success:false,error:'Expected req.path for mode=download'});
+			if (!req.download_path) {
+				callback({success:false,error:'Expected req.download_path for mode=download'});
 				return;
 			}
 			var ended=false;
 			var num_bytes_posted=0;
-			var path0=req.path;
+			var path0=req.download_path;
 			var get_opts={
 				url:m_otherserver_url+'/'+path0+'?mode=download',
 				method:'GET'
@@ -70,8 +70,8 @@ function OtherServerHandler() {
 				if (res.headers['content-length'])
 					headers_for_post['content-length']=res.headers['content-length'];
 				headers_for_post['Content-Type']='application/octet-stream';
-				if (req.path) {
-					headers_for_post['content-disposition']="attachment; filename=\""+require('path').basename(req.path)+"\"";
+				if (req.download_path) {
+					headers_for_post['content-disposition']="attachment; filename=\""+require('path').basename(req.download_path)+"\"";
 				}
 				start_post_request(headers_for_post);
 				res.on('data', function (body) {

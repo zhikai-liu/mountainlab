@@ -8,6 +8,10 @@ if (!config) {
 }
 
 var data_directory=config.data_directory||'';
+if (!('download_base_url' in config)) {
+	config.download_base_url="${base}/raw";
+}
+var download_base_url=config.download_base_url||'';
 var prv_exe=__dirname+'/../../bin/prv';
 var mp_exe=__dirname+'/../../bin/mountainprocess';
 
@@ -21,6 +25,7 @@ var handler_opts={};
 handler_opts.prv_exe=prv_exe;
 handler_opts.mp_exe=mp_exe;
 handler_opts.data_directory=data_directory;
+handler_opts.download_base_url=download_base_url;
 var larinetserver=require(__dirname+'/larinetserver.js');
 var Handler=new larinetserver.RequestHandler(handler_opts);
 

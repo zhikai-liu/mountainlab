@@ -34,6 +34,10 @@ function larinetserver(req,onclose,callback,hopts) {
 			}
 			txt=txt.slice(hopts.data_directory.length+1);
 			var resp={success:true,found:true,path:txt};
+			console.log('testing: '+hopts.download_url);
+			if (hopts.download_base_url)
+				resp.url=hopts.download_base_url+'/'+resp.path;
+			console.log(resp);
 			callback(resp);
 		});	
 	}

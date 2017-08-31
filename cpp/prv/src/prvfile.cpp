@@ -422,6 +422,7 @@ QString PrvFilePrivate::find_remote_file(bigint size, const QString& checksum, c
         //QString passcode = server0["passcode"].toString();
         //QString url0 = host + ":" + QString::number(port) + url_path + QString("/?a=locate&checksum=%1&fcs=%2&size=%3&passcode=%4").arg(checksum).arg(fcs_optional).arg(size).arg(passcode);
         QString server_url = remote_servers[i].toString();
+        /*
         QJsonArray prv_servers = MLUtil::configValue("prv", "servers").toArray();
         for (int k = 0; k < prv_servers.count(); k++) {
             QJsonObject obj = prv_servers[k].toObject();
@@ -429,12 +430,29 @@ QString PrvFilePrivate::find_remote_file(bigint size, const QString& checksum, c
                 server_url = obj["host"].toString() + ":" + QString("%1").arg(obj["port"].toInt());
             }
         }
-        QString url0 = server_url + QString("/prvbucket?a=locate&checksum=%1&size=%2&fcs=%3").arg(checksum).arg(size).arg(fcs_optional);
+        */
+        //QString url0 = server_url + QString("/prvbucket?a=locate&checksum=%1&size=%2&fcs=%3").arg(checksum).arg(size).arg(fcs_optional);
+        QString url0 = QString("http://kulele.herokuapp.com/subserver/%1?a=prv-locate&checksum=%2&size=%3&fcs=%4").arg(server_url).arg(checksum).arg(size).arg(fcs_optional);
         if (opts.verbose) {
             printf("%s\n", url0.toUtf8().data());
         }
         QString txt = http_get_text_curl_0(url0);
-        return txt;
+
+        QJsonObject obj=QJsonDocument::fromJson(txt.toUtf8()).object();
+        //QString path0=obj["path"].toString();
+        QString url1=obj["url"].toString();
+        if (!url1.isEmpty()) {
+            url1=url1.split("${base}").join(QString("http://kulele.herokuapp.com/subserver/%1").arg(server_url));
+            return url1;
+        }
+        else return "";
+        //if (!path0.isEmpty()) {
+        //    QString url1=QString("http://kulele.herokuapp.com/subserver/%1/raw/%2").arg(server_url).arg(path0);
+        //    return url1;
+        //}
+
+
+        //return txt;
         /*if (!txt.isEmpty()) {
             if (!txt.contains(" ")) { //filter out error messages (good idea, or not?)
                 if (!is_url(txt)) {
