@@ -17,7 +17,7 @@
 #include <QJsonArray>
 #include "localserver.h"
 #include "mpdaemoninterface.h"
-#include "processmanager.h" //for RequestProcessResources
+#include "processmanager.h" //for RequestProcessResources and ProcessLimits
 
 struct ProcessResources {
     double num_threads = 0;
@@ -38,8 +38,8 @@ bool waitForFileToAppear(QString fname, qint64 timeout_ms = -1, bool remove_on_a
 void wait(qint64 msec);
 bool waitForFinishedAndWriteOutput(QProcess* P, int parent_pid);
 bool pidExists(qint64 pid);
-void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe_command, int pid);
-void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, int pid);
+void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe_command, int pid, ProcessLimits PL);
+void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, int pid, ProcessLimits PL);
 }
 
 class QSharedMemory;
@@ -177,6 +177,7 @@ struct MPDaemonPript {
     QString processor_name;
     //double num_threads_requested = 1;
     //double memory_gb_requested = 0;
+    double max_ram_gb = 0;
     RequestProcessResources RPR;
     ProcessRuntimeOpts runtime_opts; //defined at run time
     QJsonObject processor_spec;

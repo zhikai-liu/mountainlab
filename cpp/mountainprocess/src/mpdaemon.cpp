@@ -972,6 +972,8 @@ bool MountainProcessServer::launch_pript(QString pript_id)
             args << "--_process_output=" + S->output_fname;
         if (S->preserve_tempdir)
             args << "--_preserve_tempdir";
+        if (S->max_ram_gb)
+            args << QString("--_max_ram_gb=%1").arg(S->max_ram_gb);
         args << QString("--_parent_pid=%1").arg(S->parent_pid);
         QStringList pkeys = S->parameters.keys();
         foreach (QString pkey, pkeys) {
@@ -1020,7 +1022,8 @@ bool MountainProcessServer::launch_pript(QString pript_id)
     debug_log(__FUNCTION__, __FILE__, __LINE__);
 
     if (S->parent_pid) {
-        MPDaemon::start_bash_command_and_kill_when_pid_is_gone(qprocess, exe, args, S->parent_pid);
+        ProcessLimits PL;
+        MPDaemon::start_bash_command_and_kill_when_pid_is_gone(qprocess, exe, args, S->parent_pid, PL);
     }
     else {
         qprocess->start(exe, args);
@@ -1448,7 +1451,7 @@ bool MPDaemon::pidExists(qint64 pid)
     return (kill(pid, 0) == 0);
 }
 
-void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe_command, int pid)
+void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe_command, int pid, ProcessLimits PL)
 {
     QString bash_script_fname = CacheManager::globalInstance()->makeLocalFile();
 
@@ -1464,6 +1467,14 @@ void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, 
     script += "        wait $cmdpid\n"; //get the return code for the process that has already completed
     script += "        exit $?\n";
     script += "    fi\n";
+    if (PL.max_ram_gb) {
+        script += "    mem_usage_kb=$(ps -p $cmdpid -o vsz=)\n";
+        script += QString("    if [ \"$mem_usage_kb\" -gt \"%1\" ]; then\n").arg((bigint)(PL.max_ram_gb * 1e6));
+        script += "      echo \"exceeded memory limit\"\n";
+        script += "      kill $cmdpid\n"; //the parent pid is gone
+        script += "      exit 11\n"; //return error exit code (11 means out of memory)
+        script += "    fi\n";
+    }
     script += "done ;\n";
     script += "kill $cmdpid\n"; //the parent pid is gone
     script += "exit 255\n"; //return error exit code
@@ -1487,8 +1498,8 @@ void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, 
     //qprocess->start("/bin/bash", QStringList(bash_script_fname));
 }
 
-void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, int pid)
+void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, int pid, ProcessLimits PL)
 {
     QString exe_command = exe + " " + args.join(" ");
-    start_bash_command_and_kill_when_pid_is_gone(qprocess, exe_command, pid);
+    start_bash_command_and_kill_when_pid_is_gone(qprocess, exe_command, pid, PL);
 }

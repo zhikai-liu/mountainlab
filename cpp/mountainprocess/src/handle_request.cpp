@@ -26,7 +26,7 @@ QJsonObject handle_request(const QJsonObject& request, QString prvbucket_path)
     QJsonObject response;
     response["success"] = false; //assume the worst
 
-    if ((action == "run_process")||(action=="queue_process")) {
+    if ((action == "run_process") || (action == "queue_process")) {
         QString processor_name = request["processor_name"].toString();
         if (processor_name.isEmpty()) {
             qCCritical(HR) << "Processor name is empty";
@@ -195,7 +195,8 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     QProcess pp;
     pp.setProcessChannelMode(QProcess::MergedChannels);
 
-    MPDaemon::start_bash_command_and_kill_when_pid_is_gone(&pp, exe + " " + args.join(" "), QCoreApplication::applicationPid());
+    ProcessLimits PL;
+    MPDaemon::start_bash_command_and_kill_when_pid_is_gone(&pp, exe + " " + args.join(" "), QCoreApplication::applicationPid(), PL);
 
     pp.waitForFinished(-1);
 

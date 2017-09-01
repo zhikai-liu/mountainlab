@@ -283,6 +283,9 @@ int main(int argc, char* argv[])
 
         bool preserve_tempdir = CLP.named_parameters.contains("_preserve_tempdir");
 
+        ProcessLimits process_limits;
+        process_limits.max_ram_gb = CLP.named_parameters.value("_max_ram_gb", 0).toDouble();
+
         bool force_run = CLP.named_parameters.contains("_force_run"); // do not check for already computed
         int request_num_threads = CLP.named_parameters.value("_request_num_threads", 0).toInt(); // the processor may or may not respect this request. But mountainsort/omp does.
         PM->setDefaultParameters(processor_name, process_parameters);
@@ -303,7 +306,7 @@ int main(int argc, char* argv[])
                 RequestProcessResources RPR;
                 RPR.request_num_threads = request_num_threads;
                 qCInfo(MP) << "Starting process: " + processor_name;
-                id = PM->startProcess(processor_name, process_parameters, RPR, exec_mode, preserve_tempdir); //start the process and retrieve a unique id
+                id = PM->startProcess(processor_name, process_parameters, RPR, exec_mode, preserve_tempdir, process_limits); //start the process and retrieve a unique id
                 if (id.isEmpty()) {
                     error_message = "Problem starting process: " + processor_name;
                     ret = -1;
@@ -1371,6 +1374,7 @@ bool queue_pript(PriptType prtype, const CLParams& CLP, QString working_path)
         // It is a process
         PP.output_fname = CLP.named_parameters["_process_output"].toString();
         PP.preserve_tempdir = CLP.named_parameters.contains("_preserve_tempdir");
+        PP.max_ram_gb = CLP.named_parameters.value("_max_ram_gb").toDouble();
         if (!PP.output_fname.isEmpty()) {
             PP.output_fname = QDir::current().absoluteFilePath(PP.output_fname); //make it absolute
             QFile::remove(PP.output_fname); //important, added 9/9/16

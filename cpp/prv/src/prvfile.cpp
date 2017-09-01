@@ -438,19 +438,19 @@ QString PrvFilePrivate::find_remote_file(bigint size, const QString& checksum, c
         }
         QString txt = http_get_text_curl_0(url0);
 
-        QJsonObject obj=QJsonDocument::fromJson(txt.toUtf8()).object();
+        QJsonObject obj = QJsonDocument::fromJson(txt.toUtf8()).object();
         //QString path0=obj["path"].toString();
-        QString url1=obj["url"].toString();
+        QString url1 = obj["url"].toString();
         if (!url1.isEmpty()) {
-            url1=url1.split("${base}").join(QString("http://kulele.herokuapp.com/subserver/%1").arg(server_url));
+            url1 = url1.split("${base}").join(QString("http://kulele.herokuapp.com/subserver/%1").arg(server_url));
             return url1;
         }
-        else return "";
+        else
+            return "";
         //if (!path0.isEmpty()) {
         //    QString url1=QString("http://kulele.herokuapp.com/subserver/%1/raw/%2").arg(server_url).arg(path0);
         //    return url1;
         //}
-
 
         //return txt;
         /*if (!txt.isEmpty()) {
