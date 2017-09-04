@@ -103,7 +103,8 @@ MPDaemon::MPDaemon()
 void kill_process_and_children(int pid)
 {
     /// Witold, do we need to worry about making this cross-platform?
-    QString cmd = QString("CPIDS=$(pgrep -P %1); (sleep 33 && kill -KILL $CPIDS &); kill -TERM $CPIDS").arg(pid);
+    // jfm added CPIDS=\"$CPIDS %1\"; on 9/4/17 to include the process itself
+    QString cmd = QString("CPIDS=$(pgrep -P %1); CPIDS=\"$CPIDS %1\"; (sleep 33 && kill -KILL $CPIDS &); kill -TERM $CPIDS").arg(pid);
     int ret = system(cmd.toUtf8().data());
     Q_UNUSED(ret);
 }
@@ -161,6 +162,10 @@ QJsonObject pript_struct_to_obj(MPDaemonPript S, RecordType rt)
     }
     ret["force_run"] = S.force_run;
     ret["working_path"] = S.working_path;
+    ret["max_ram_gb"] = S.max_ram_gb;
+    ret["max_etime_sec"] = S.max_etime_sec;
+    ret["max_cputime_sec"] = S.max_cputime_sec;
+    ret["max_cpu_pct"] = S.max_cpu_pct;
     ret["id"] = S.id;
     ret["success"] = S.success;
     ret["error"] = S.error;
@@ -205,6 +210,10 @@ MPDaemonPript pript_obj_to_struct(QJsonObject obj)
     ret.parent_pid = obj.value("parent_pid").toString().toLongLong();
     ret.force_run = obj.value("force_run").toBool();
     ret.working_path = obj.value("working_path").toString();
+    ret.max_ram_gb = obj.value("max_ram_gb").toDouble();
+    ret.max_etime_sec = obj.value("max_etime_sec").toDouble();
+    ret.max_cputime_sec = obj.value("max_cputime_sec").toDouble();
+    ret.max_cpu_pct = obj.value("max_cpu_pct").toDouble();
     ret.timestamp_queued = QDateTime::fromString(obj.value("timestamp_queued").toString(), "yyyy-MM-dd|hh:mm:ss.zzz");
     ret.timestamp_started = QDateTime::fromString(obj.value("timestamp_started").toString(), "yyyy-MM-dd|hh:mm:ss.zzz");
     ret.timestamp_finished = QDateTime::fromString(obj.value("timestamp_finished").toString(), "yyyy-MM-dd|hh:mm:ss.zzz");
@@ -821,6 +830,81 @@ bool MountainProcessServer::handle_scripts()
     return true;
 }
 
+struct ProcStat {
+    double rss = 0;
+    double etime = 0;
+    double cputime = 0;
+    double cpu_pct = 0;
+};
+ProcStat get_proc_stat(int pid)
+{
+    ProcStat ret;
+    QString cmd0 = QString("procstat %1").arg(pid);
+    QString tmp = execute_and_read_stdout(cmd0);
+    QJsonObject obj = QJsonDocument::fromJson(tmp.toUtf8()).object();
+    QJsonObject mm = obj["maxima"].toObject();
+    ret.rss = mm["rss"].toDouble();
+    ret.etime = mm["etime"].toDouble();
+    ret.cputime = mm["cputime"].toDouble();
+    ret.cpu_pct = mm["%cpu"].toDouble();
+    return ret;
+}
+
+void MountainProcessServer::monitor_process(const QString& key)
+{
+    bool remove = false;
+    QString remove_reason = "";
+    //ProcessManager* PM = ProcessManager::globalInstance();
+    double cpu_pct_tolerance = 20;
+    MPDaemonPript* PP = &m_pripts[key];
+    if (PP->removed)
+        return;
+    if ((PP->max_ram_gb > 0) || (PP->max_etime_sec > 0) || (PP->max_cputime_sec > 0) || (PP->max_cpu_pct > 0)) {
+        ProcStat PC = get_proc_stat(PP->qprocess->pid());
+        if (0) {
+            remove = true;
+            remove_reason = QString("just because %1 %2").arg(PC.etime).arg(PC.rss / 1e6);
+        }
+        else if ((PP->max_ram_gb) && (PC.rss / 1e6 > PP->max_ram_gb)) {
+            remove = true;
+            remove_reason = QString("Process RAM exceeds limit: %1 > %2").arg(PC.rss / 1e6).arg(PP->max_ram_gb);
+        }
+        else if ((PP->max_etime_sec) && (PC.etime > PP->max_etime_sec)) {
+            remove = true;
+            remove_reason = QString("Elapsed time exceeds limit: %1 > %2").arg(PC.etime).arg(PP->max_etime_sec);
+        }
+        else if ((PP->max_cputime_sec) && (PC.cputime > PP->max_cputime_sec)) {
+            remove = true;
+            remove_reason = QString("Elapsed cpu time exceeds limit: %1 > %2").arg(PC.cputime).arg(PP->max_cputime_sec);
+        }
+        else if ((PP->max_cpu_pct) && (PC.cpu_pct > PP->max_cpu_pct + cpu_pct_tolerance)) {
+            remove = true;
+            remove_reason = QString("CPU usage exceeds limit: %1% > %2%").arg(PC.cpu_pct).arg(PP->max_cpu_pct);
+        }
+    }
+    if (remove) {
+        qCWarning(MPD) << QString("Terminating process (%1): %2").arg(key).arg(remove_reason);
+        PP->removed = true;
+        PP->remove_reason = remove_reason;
+        kill_process_and_children(PP->qprocess);
+
+        /*
+        MPDaemonMonitorEvent evt("process_removed");
+        evt.process_id = PP.id;
+        evt.processor_name = PP.processor_name;
+        evt.process_error = remove_reason;
+        MPDaemonMonitorInterface::sendEvent(evt);
+
+        PP.qprocess->disconnect(); //so we don't go into the finished slot
+        kill_process_and_children(PP.qprocess);
+        delete PP.qprocess;
+        PP.error=remove_reason;
+        finish_and_finalize(PP);
+        m_pripts.remove(key);
+        */
+    }
+}
+
 bool MountainProcessServer::handle_processes()
 {
     ProcessManager* PM = ProcessManager::globalInstance();
@@ -830,7 +914,10 @@ bool MountainProcessServer::handle_processes()
     QStringList keys = m_pripts.keys();
     foreach (QString key, keys) {
         if (m_pripts[key].prtype == ProcessType) {
-            if ((!m_pripts[key].is_running) && (!m_pripts[key].is_finished)) {
+            if (m_pripts[key].is_running) {
+                monitor_process(key);
+            }
+            else if ((!m_pripts[key].is_running) && (!m_pripts[key].is_finished)) {
                 ProcessResources pr_needed = compute_process_resources_needed(m_pripts[key]);
                 if (is_at_most(pr_needed, pr_available, m_total_resources_available)) {
                     if (process_parameters_are_okay(key)) {
@@ -972,8 +1059,6 @@ bool MountainProcessServer::launch_pript(QString pript_id)
             args << "--_process_output=" + S->output_fname;
         if (S->preserve_tempdir)
             args << "--_preserve_tempdir";
-        if (S->max_ram_gb)
-            args << QString("--_max_ram_gb=%1").arg(S->max_ram_gb);
         args << QString("--_parent_pid=%1").arg(S->parent_pid);
         QStringList pkeys = S->parameters.keys();
         foreach (QString pkey, pkeys) {
@@ -1022,8 +1107,7 @@ bool MountainProcessServer::launch_pript(QString pript_id)
     debug_log(__FUNCTION__, __FILE__, __LINE__);
 
     if (S->parent_pid) {
-        ProcessLimits PL;
-        MPDaemon::start_bash_command_and_kill_when_pid_is_gone(qprocess, exe, args, S->parent_pid, PL);
+        MPDaemon::start_bash_command_and_kill_when_pid_is_gone(qprocess, exe, args, S->parent_pid);
     }
     else {
         qprocess->start(exe, args);
@@ -1230,6 +1314,7 @@ void MountainProcessServer::slot_pript_qprocess_finished()
     if (!P)
         return;
     QString pript_id = P->property("pript_id").toString();
+
     MPDaemonPript* S;
     if (m_pripts.contains(pript_id)) {
         S = &m_pripts[pript_id];
@@ -1243,10 +1328,19 @@ void MountainProcessServer::slot_pript_qprocess_finished()
         debug_log(__FUNCTION__, __FILE__, __LINE__);
         QString runtime_results_json = TextFile::read(S->output_fname);
         if (runtime_results_json.isEmpty()) {
-            S->success = false;
-            S->error = "Could not read results file ****: " + S->output_fname;
+            if (S->removed) {
+                S->runtime_results["success"] = false;
+                S->runtime_results["error"] = S->remove_reason;
+            }
+            else {
+                S->runtime_results["success"] = false;
+                S->runtime_results["error"] = "Unexpected: results file does not exist or is empty: " + S->output_fname;
+            }
+            if (!TextFile::write(S->output_fname, QJsonDocument(S->runtime_results).toJson())) {
+                qCWarning(MPD) << "Unable to write runtime results to output file.";
+            }
         }
-        else {
+        {
             QJsonParseError error;
             S->runtime_results = QJsonDocument::fromJson(runtime_results_json.toLatin1(), &error).object();
             if (error.error != QJsonParseError::NoError) {
@@ -1395,6 +1489,13 @@ bool MPDaemon::waitForFileToAppear(QString fname, qint64 timeout_ms, bool remove
         }
         */
     }
+    if (stdout_file.isOpen()) {
+        wait(200);
+        QByteArray str = stdout_file.readAll();
+        if (!str.isEmpty()) {
+            printf("%s", str.data());
+        }
+    }
     if (stdout_file.isOpen())
         stdout_file.close();
     if (remove_on_appear) {
@@ -1451,7 +1552,7 @@ bool MPDaemon::pidExists(qint64 pid)
     return (kill(pid, 0) == 0);
 }
 
-void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe_command, int pid, ProcessLimits PL)
+void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe_command, int pid)
 {
     QString bash_script_fname = CacheManager::globalInstance()->makeLocalFile();
 
@@ -1467,6 +1568,7 @@ void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, 
     script += "        wait $cmdpid\n"; //get the return code for the process that has already completed
     script += "        exit $?\n";
     script += "    fi\n";
+    /*
     if (PL.max_ram_gb) {
         script += "    mem_usage_kb=$(ps -p $cmdpid -o vsz=)\n";
         script += QString("    if [ \"$mem_usage_kb\" -gt \"%1\" ]; then\n").arg((bigint)(PL.max_ram_gb * 1e6));
@@ -1475,6 +1577,7 @@ void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, 
         script += "      exit 11\n"; //return error exit code (11 means out of memory)
         script += "    fi\n";
     }
+    */
     script += "done ;\n";
     script += "kill $cmdpid\n"; //the parent pid is gone
     script += "exit 255\n"; //return error exit code
@@ -1498,8 +1601,8 @@ void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, 
     //qprocess->start("/bin/bash", QStringList(bash_script_fname));
 }
 
-void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, int pid, ProcessLimits PL)
+void MPDaemon::start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, int pid)
 {
     QString exe_command = exe + " " + args.join(" ");
-    start_bash_command_and_kill_when_pid_is_gone(qprocess, exe_command, pid, PL);
+    start_bash_command_and_kill_when_pid_is_gone(qprocess, exe_command, pid);
 }

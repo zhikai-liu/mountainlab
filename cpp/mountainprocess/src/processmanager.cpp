@@ -233,7 +233,7 @@ bool do_mkdir(QString path, int num_tries = 1)
     return true;
 }
 
-QString ProcessManager::startProcess(const QString& processor_name, const QVariantMap& parameters_in, const RequestProcessResources& RPR, bool exec_mode, bool preserve_tempdir, ProcessLimits process_limits)
+QString ProcessManager::startProcess(const QString& processor_name, const QVariantMap& parameters_in, const RequestProcessResources& RPR, bool exec_mode, bool preserve_tempdir)
 {
     QVariantMap parameters = d->resolve_file_names_in_parameters(processor_name, parameters_in);
 
@@ -329,7 +329,7 @@ QString ProcessManager::startProcess(const QString& processor_name, const QVaria
     PP.info.start_time = QDateTime::currentDateTime();
 
     // Do it this way so that special characters are handled exactly like a system call
-    MPDaemon::start_bash_command_and_kill_when_pid_is_gone(PP.qprocess, PP.info.exe_command, QCoreApplication::applicationPid(), process_limits);
+    MPDaemon::start_bash_command_and_kill_when_pid_is_gone(PP.qprocess, PP.info.exe_command, QCoreApplication::applicationPid());
     //PP.qprocess->start(PP.info.exe_command); //not this way
 
     PP.qprocess->setProperty("pp_id", id);

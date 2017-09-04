@@ -17,7 +17,7 @@
 #include <QJsonArray>
 #include "localserver.h"
 #include "mpdaemoninterface.h"
-#include "processmanager.h" //for RequestProcessResources and ProcessLimits
+#include "processmanager.h" //for RequestProcessResources
 
 struct ProcessResources {
     double num_threads = 0;
@@ -38,8 +38,8 @@ bool waitForFileToAppear(QString fname, qint64 timeout_ms = -1, bool remove_on_a
 void wait(qint64 msec);
 bool waitForFinishedAndWriteOutput(QProcess* P, int parent_pid);
 bool pidExists(qint64 pid);
-void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe_command, int pid, ProcessLimits PL);
-void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, int pid, ProcessLimits PL);
+void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe_command, int pid);
+void start_bash_command_and_kill_when_pid_is_gone(QProcess* qprocess, QString exe, QStringList args, int pid);
 }
 
 class QSharedMemory;
@@ -89,6 +89,7 @@ protected:
     void stop_orphan_processes_and_scripts();
     bool handle_scripts();
     bool handle_processes();
+    void monitor_process(const QString& key);
 
     int num_running_scripts() const
     {
@@ -178,9 +179,16 @@ struct MPDaemonPript {
     //double num_threads_requested = 1;
     //double memory_gb_requested = 0;
     double max_ram_gb = 0;
+    double max_etime_sec = 0;
+    double max_cputime_sec = 0;
+    double max_cpu_pct = 0; // 100 corresponds to one single cpu
     RequestProcessResources RPR;
     ProcessRuntimeOpts runtime_opts; //defined at run time
     QJsonObject processor_spec;
+
+    //internal
+    bool removed = false;
+    QString remove_reason;
 };
 
 enum RecordType {

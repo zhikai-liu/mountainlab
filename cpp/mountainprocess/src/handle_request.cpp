@@ -195,8 +195,7 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
     QProcess pp;
     pp.setProcessChannelMode(QProcess::MergedChannels);
 
-    ProcessLimits PL;
-    MPDaemon::start_bash_command_and_kill_when_pid_is_gone(&pp, exe + " " + args.join(" "), QCoreApplication::applicationPid(), PL);
+    MPDaemon::start_bash_command_and_kill_when_pid_is_gone(&pp, exe + " " + args.join(" "), QCoreApplication::applicationPid());
 
     pp.waitForFinished(-1);
 
