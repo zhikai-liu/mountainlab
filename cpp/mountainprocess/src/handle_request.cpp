@@ -15,7 +15,7 @@
 
 Q_LOGGING_CATEGORY(HR, "mp.handle_request")
 
-QJsonObject handle_request_run_process(QString processor_name, const QJsonObject& inputs, const QJsonObject& outputs, const QJsonObject& parameters, QString prvbucket_path);
+QJsonObject handle_request_queue_process(QString processor_name, const QJsonObject& inputs, const QJsonObject& outputs, const QJsonObject& parameters, const QJsonObject& resources, QString prvbucket_path);
 
 QJsonObject handle_request(const QJsonObject& request, QString prvbucket_path)
 {
@@ -34,10 +34,10 @@ QJsonObject handle_request(const QJsonObject& request, QString prvbucket_path)
             return response;
         }
 
-        qCInfo(HR) << "Starting handle_request_run_process: " + processor_name;
+        qCInfo(HR) << "Starting handle_request_queue_process: " + processor_name;
         QTime timer;
         timer.start();
-        response = handle_request_run_process(processor_name, request["inputs"].toObject(), request["outputs"].toObject(), request["parameters"].toObject(), prvbucket_path);
+        response = handle_request_queue_process(processor_name, request["inputs"].toObject(), request["outputs"].toObject(), request["parameters"].toObject(), request["resources"].toObject(), prvbucket_path);
         qCInfo(HR) << "Done running process: " + processor_name << "Elapsed:" << timer.elapsed();
         return response;
     }
@@ -76,7 +76,7 @@ bool wait_for_file_to_exist(QString fname, int timeout_ms)
     return QFile::exists(fname);
 }
 
-QJsonObject handle_request_run_process(QString processor_name, const QJsonObject& inputs, const QJsonObject& outputs, const QJsonObject& parameters, QString prvbucket_path)
+QJsonObject handle_request_queue_process(QString processor_name, const QJsonObject& inputs, const QJsonObject& outputs, const QJsonObject& parameters, const QJsonObject& resources, QString prvbucket_path)
 {
     QJsonObject response;
 
@@ -179,6 +179,15 @@ QJsonObject handle_request_run_process(QString processor_name, const QJsonObject
             response["error"] = "Unexpected output: " + key;
             return response;
         }
+    }
+
+    args << QString("--_max_ram_gb=%1").arg(resources["max_ram_gb"].toDouble());
+    args << QString("--_max_etime_sec=%1").arg(resources["max_etime_sec"].toDouble());
+    args << QString("--_max_cputime_sec=%1").arg(resources["max_cputime_sec"].toDouble());
+    args << QString("--_max_cpu_pct=%1").arg(resources["max_cpu_pct"].toDouble());
+
+    if (resources["force_run"].toBool()) {
+        args << "--_force_run";
     }
 
     QString process_output_fname = CacheManager::globalInstance()->makeLocalFile("process_output_" + processor_name + "_" + MLUtil::makeRandomId() + ".json");

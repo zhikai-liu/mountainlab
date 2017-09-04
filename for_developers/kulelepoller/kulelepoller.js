@@ -292,7 +292,11 @@ function http_get_json(url,callback) {
 
 function http_get_text(url,callback) {
 	// Set up the request
-	var get_req = require('http').get(url, function(res) {
+
+	var HTTP=require('http');
+	if (starts_with(url,'https')) HTTP=require('https');
+
+	var get_req = HTTP.get(url, function(res) {
 		res.setEncoding('utf8');
 		res.on('data', function (body) {
 			callback({success:true,text:body});
@@ -321,8 +325,11 @@ function http_post_json(url,data,onclose,callback) {
 		method: 'POST'
 	};
 
+	var HTTP=require('http');
+	if (starts_with(url,'https')) HTTP=require('https');
+
 	// Set up the request
-	var post_req = require('http').request(post_options, function(res) {
+	var post_req = HTTP.request(post_options, function(res) {
 		res.setEncoding('utf8');
 		res.on('data', function (body) {
 			try {
@@ -397,4 +404,8 @@ function read_json_file(fname) {
 		console.log ('Error parsing json: '+txt);
 		return null;
 	}	
+}
+
+function starts_with(str,str2) {
+	return (str.slice(0,str2.length)==str2);
 }
