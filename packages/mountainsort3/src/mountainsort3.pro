@@ -1,12 +1,10 @@
 QT += core
 QT -= gui
 QT += qml
-CONFIG -= app_bundle #Please apple, don't make a bundle today :)
 
 CONFIG += c++11
 
-include(../../../cpp/mlcommon/mlcommon.pri)
-include(../../../cpp/mlcommon/mda.pri)
+CONFIG += mlcommon fftw3
 
 DESTDIR = ../bin
 OBJECTS_DIR = ../build
@@ -16,21 +14,14 @@ TEMPLATE = app
 
 #FFTW
 USE_FFTW3=$$(USE_FFTW3)
-contains(CONFIG,"no_fftw3") {
-    DEFINES += NO_FFTW3
-    message(Warning: Not using FFTW3)
+CONFIG("no_fftw3") {
+    warning(Not using FFTW3)
 }
 else {
-    LIBS += -fopenmp -lfftw3 -lfftw3_threads
     SOURCES += p_spikeview_templates.cpp
     HEADERS += p_spikeview_templates.h
 }
 
-#OPENMP
-!macx {
-  QMAKE_LFLAGS += -fopenmp
-  QMAKE_CXXFLAGS += -fopenmp
-}
 #-std=c++11   # AHB removed since not in GNU gcc 4.6.3
 
 SOURCES += \

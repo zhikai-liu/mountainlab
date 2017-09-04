@@ -1,19 +1,10 @@
-QT += core gui network
-
-QT += qml
+QT += core gui network qml widgets concurrent
 
 CONFIG += c++11
 QMAKE_CXXFLAGS += -Wno-reorder #qaccordion
 
-CONFIG -= app_bundle #Please apple, don't make a bundle today
-
-include(../../mvcommon/mvcommon.pri)
-include(../../mlcommon/mlcommon.pri)
-include(../../mlcommon/mda.pri)
-include(../../mlcommon/taskprogress.pri)
-
-QT += widgets
-QT += concurrent
+#TODO: Do we need openmp for mountainview?
+CONFIG += mlcommon mvcommon openmp taskprogress
 
 DESTDIR = ../bin
 OBJECTS_DIR = ../build
@@ -174,12 +165,6 @@ VPATH += ../../mountainsort/src/processors
 HEADERS += extract_clips.h
 SOURCES += extract_clips.cpp
 
-#TODO: Do we need openmp for mountainview?
-#OPENMP
-!macx {
-  QMAKE_LFLAGS += -fopenmp
-  QMAKE_CXXFLAGS += -fopenmp
-}
 #-std=c++11   # AHB removed since not in GNU gcc 4.6.3
 
 FORMS += \

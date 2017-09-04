@@ -2,12 +2,9 @@ QT = core network
 QT += widgets
 QT += qml
 
-INCLUDEPATH += ../../mlcommon/include ../../mlcommon/include/cachemanager ../../mlcommon/include/componentmanager
-include(../../mlcommon/mlcommon.pri)
-include(../../mlcommon/taskprogress.pri)
+CONFIG += mlcommon taskprogress
 
 CONFIG += c++11
-CONFIG -= app_bundle
 CONFIG += staticlib
 
 DESTDIR = ../lib

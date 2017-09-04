@@ -7,10 +7,7 @@ QMAKE_CXXFLAGS += -Wno-reorder #qaccordion
 
 CONFIG -= app_bundle #Please apple, don't make a bundle today
 
-include(../../../../mvcommon/mvcommon.pri)
-include(../../../../mlcommon/mlcommon.pri)
-include(../../../../mlcommon/mda.pri)
-include(../../../../mlcommon/taskprogress.pri)
+CONFIG += mlcommon mvcommon taskprogress openmp
 
 QT += widgets
 QT+=concurrent
@@ -64,11 +61,5 @@ SOURCES += ../../../../prv-gui/src/prvgui.cpp
 #SOURCES += resolveprvsdialog.cpp
 #FORMS += resolveprvsdialog.ui
 
-#TODO: Do we need openmp for mountainview?
-#OPENMP
-!macx {
-  QMAKE_LFLAGS += -fopenmp
-  QMAKE_CXXFLAGS += -fopenmp
-}
 #-std=c++11   # AHB removed since not in GNU gcc 4.6.3
 
