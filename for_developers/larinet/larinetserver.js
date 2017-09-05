@@ -40,27 +40,11 @@ function larinetserver(req,onclose,callback,hopts) {
 		});	
 	}
 	function queue_process(query,callback) {
-		console.log('queue_process',JSON.stringify(query));
 		var processor_name=query.processor_name||'';
-		var inputs_str=query.inputs;
-		var outputs_str=query.outputs;
-		var parameters_str=query.parameters;
-		var resources_str=query.resources;
-		if ((!processor_name)||(!inputs_str)||(!outputs_str)||(!parameters_str)) {
-			callback({success:false,error:'Invalid query for queue-process'});
-			return;
-		}
-		var inputs,outputs,parameters,resources;
-		try {
-			inputs=JSON.parse(inputs_str);
-			outputs=JSON.parse(outputs_str);
-			parameters=JSON.parse(parameters_str);
-			resources=JSON.parse(resources_str);
-		}
-		catch(err) {
-			callback({success:false,error:'Problem parsing json in query'});
-			return;	
-		}
+		var inputs=query.inputs||{};
+		var outputs=query.outputs||{};
+		var parameters=query.parameters||{};
+		var resources=query.resources||{};
 		var opts={};
 		queue_process2(processor_name,inputs,outputs,parameters,resources,opts,callback);
 	}
