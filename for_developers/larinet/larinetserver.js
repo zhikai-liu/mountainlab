@@ -1,5 +1,5 @@
 var exports = module.exports = {};
-var base64_arraybuffer=require('base64-arraybuffer');
+//var base64_arraybuffer=require('base64-arraybuffer');
 
 function larinetserver(req,onclose,callback,hopts) {
 	var action=req.a||'';
