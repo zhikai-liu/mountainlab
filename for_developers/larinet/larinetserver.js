@@ -1,4 +1,5 @@
 var exports = module.exports = {};
+var base64_arraybuffer=require('base64-arraybuffer');
 
 function larinetserver(req,onclose,callback,hopts) {
 	var action=req.a||'';
@@ -9,6 +10,11 @@ function larinetserver(req,onclose,callback,hopts) {
 
 	if (action=='prv-locate') {
 		prv_locate(req,function(resp) {
+			callback(resp);
+		});
+	}
+	else if (action=='prv-upload') {
+		prv_upload(req,function(resp) {
 			callback(resp);
 		});
 	}
@@ -37,6 +43,41 @@ function larinetserver(req,onclose,callback,hopts) {
 			if (hopts.download_base_url)
 				resp.url=hopts.download_base_url+'/'+resp.path;
 			callback(resp);
+		});	
+	}
+	function prv_upload(query,callback) {
+		if (!query.size) {
+			callback({success:false,error:"Invalid query."});	
+			return;
+		}
+		if (!query.data_base64) {
+			callback({success:false,error:"Invalid query. Missing data_base64."});	
+			return;	
+		}
+		//var buf = base64_arraybuffer.decode(query.data_base64);
+		var buf = new Buffer(query.data_base64,'base64');;
+		var fname=uploads_directory()+"/"+make_random_id(10)+'.dat';
+		require('fs').writeFile(fname,buf,function(err) {
+			if (err) {
+				callback({success:false,error:'Problem writing file: '+err.message});
+				return;
+			}
+			run_process_and_read_stdout(hopts.prv_exe,['stat',fname],function(txt) {
+				txt=txt.trim();
+				var stat=null;
+				try {
+					stat=JSON.parse(txt);
+				}
+				catch(err) {
+					callback({success:false,error:'Problem parsing json from prv stat'});
+					return;
+				}
+				if (stat.size!=req.size) {
+					callback({success:false,error:'Unexpected size of new file: '+stat.size+' <> '+req.size});
+					return;	
+				}
+				callback({success:true,prv_stat:stat});
+			});
 		});	
 	}
 	function queue_process(query,callback) {
@@ -96,6 +137,12 @@ function larinetserver(req,onclose,callback,hopts) {
 	}
 	function make_tmp_json_file(data_directory) {
 		return data_directory+'/tmp.'+make_random_id(10)+'.json';
+	}
+	function uploads_directory() {
+		var ret=hopts.data_directory+"/_uploads";
+		try {require('fs').mkdirSync(ret);}
+		catch(err) {}
+		return ret;
 	}
 	function make_random_id(len) {
 	    var text = "";

@@ -298,8 +298,13 @@ function http_get_text(url,callback) {
 
 	var get_req = HTTP.get(url, function(res) {
 		res.setEncoding('utf8');
+		var chunks=[];
 		res.on('data', function (body) {
-			callback({success:true,text:body});
+			chunks.push(body);
+		});
+		res.on('end',function() {
+			var text=chunks.join();
+			callback({success:true,text:text});
 		});
 	});
 	get_req.on('error',function() {
@@ -331,15 +336,22 @@ function http_post_json(url,data,onclose,callback) {
 	// Set up the request
 	var post_req = HTTP.request(post_options, function(res) {
 		res.setEncoding('utf8');
+		var chunks=[];
 		res.on('data', function (body) {
+			chunks.push(body);
+		});
+		res.on('end',function() {
+			var body=chunks.join();
+			var obj;
 			try {
-				var obj=JSON.parse(body);
-				callback({success:true,object:obj});
+				obj=JSON.parse(body);
 			}
 			catch(err) {
 				callback({success:false,error:'Problem parsing json response: '+body});
+				return;
 			}
-		});
+			callback({success:true,object:obj});
+		})
 	});
 	post_req.on('error',function() {
 		callback({success:false,error:'Error in post: '+url});
