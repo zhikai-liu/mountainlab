@@ -1,6 +1,3 @@
 packages/mountainsort2/bin/ /opt/mountainlab/packages/mountainsort2/
-packages/mountainsort2/algs/ /opt/mountainlab/packages/mountainsort2/
 packages/mountainsort3/bin/ /opt/mountainlab/packages/mountainsort3/
-packages/mountainsort3/algs/ /opt/mountainlab/packages/mountainsort3/
-packages/spikeview1/bin/ /opt/mountainlab/packages/spikeview1/
 bin/ /opt/mountainlab/
