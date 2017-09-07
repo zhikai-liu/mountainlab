@@ -85,6 +85,7 @@ EXIT_CODE=$?
 if [[ $EXIT_CODE -ne 0 ]]; then
 	echo "Problem in compilation."
 else
+	make install # added by jfm on 9/7/17
 	echo ""
 	echo "Compilation successful."
 
