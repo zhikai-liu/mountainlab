@@ -49,7 +49,9 @@ Makefile*
 
 *server.cfg
 
+bin
 */bin
 */tmp
 *.m~
 *.tmp
+*.user.json
