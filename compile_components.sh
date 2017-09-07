@@ -4,8 +4,8 @@
 #    echo ""
 #    echo "usage:"
 #    echo "./compile_components.sh default"
-#    echo "./compile_components.sh mountainview"
-#    echo "example components: mdachunk mdaconvert mountainprocess mountainsort mountainview mountaincompare prv mda"
+#    echo "./compile_components.sh mountainprocess"
+#    echo "example components: mda mdaconvert mountainprocess mountainsort prv mda"
 #    exit 0
 #fi
 
@@ -45,14 +45,13 @@ fi
 args0=""
 components0=""
 for var in "$@"; do
-	if [[ "$var" == "nogui" ]]; then
-		args0="$args0 \"GUI = off\""
-	elif [[ "$var" == "default" ]]; then
+	if [[ "$var" == "default" ]]; then
 		echo ""
 	else
 		components0="$components0 $var"
 	fi
 
+    # witold, i think we can remove this line, correct?
     [ "$var" == 'nogui' ] && ARGS+=("$var")
 done
 

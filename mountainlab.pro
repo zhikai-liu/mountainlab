@@ -2,9 +2,9 @@ TEMPLATE = subdirs
 
 # usage:
 # qmake
-# qmake "COMPONENTS = mountainview"
+# qmake "COMPONENTS = mountainprocess"
 
-#COMPONENTS = mdaconvert  mountainprocess mountainview prv
+#COMPONENTS = mdaconvert  mountainprocess prv
 
 #!CONFIG("no_fftw3"):!packagesExist(fftw3) {
 #  echo("FFTW3 does not seem to be installed on your system. Please install it.")
@@ -19,14 +19,10 @@ TEMPLATE = subdirs
 #}
 
 isEmpty(COMPONENTS) {
-    COMPONENTS = mda mdaconvert mountainprocess mountainsort mountainview mountaincompare prv mountainsort3 mountainsort2 spikeview1
-}
-isEmpty(GUI) {
-    GUI = on
+    COMPONENTS = mda mdaconvert mountainprocess mountainsort prv mountainsort3 mountainsort2
 }
 
 CONFIG += ordered
-
 
 defineReplace(ifcomponent) {
   contains(COMPONENTS, $$1) {
@@ -45,14 +41,6 @@ SUBDIRS += $$ifcomponent(mountainsort,cpp/mountainsort/src/mountainsort.pro)
 SUBDIRS += $$ifcomponent(prv,cpp/prv/src/prv.pro)
 SUBDIRS += $$ifcomponent(mountainsort2,packages/mountainsort2/src/mountainsort2.pro)
 SUBDIRS += $$ifcomponent(mountainsort3,packages/mountainsort3/src/mountainsort3.pro)
-equals(GUI,"on") {
-  SUBDIRS += cpp/mvcommon/src/mvcommon.pro
-  SUBDIRS += $$ifcomponent(mountainview,cpp/mountainview/src/mountainview.pro)
-  SUBDIRS += $$ifcomponent(mountaincompare,cpp/mountaincompare/src/mountaincompare.pro)
-  SUBDIRS += $$ifcomponent(mountainview-eeg,packages/mountainlab-eeg/mountainview-eeg/src/mountainview-eeg.pro)
-  SUBDIRS += $$ifcomponent(sslongview,packages/sslongview/src/sslongview.pro)
-  SUBDIRS += $$ifcomponent(spikeview1,packages/spikeview1/src/spikeview1.pro)
-}
 
 DISTFILES += features/*
 DISTFILES += debian/*
