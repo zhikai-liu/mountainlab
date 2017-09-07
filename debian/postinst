@@ -3,6 +3,5 @@
 set -e
 case "$1" in
   configure)
-    echo "Executing postinst"
     ;;
 esac

@@ -11,7 +11,9 @@
 #include <QDebug>
 #include <QCoreApplication>
 #include <QFileInfo>
+#include <QDir>
 
+#include "mlcommon.h"
 #include "mlconfigpage.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -195,7 +197,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-QString read_text_file(const QString& path)
+inline QString read_text_file(const QString& path)
 {
     QFile f(path);
     if (!f.open(QFile::ReadOnly | QFile::Text))
@@ -203,8 +205,10 @@ QString read_text_file(const QString& path)
     QTextStream in(&f);
     return in.readAll();
 }
-void write_text_file(const QString& path, const QString& txt)
+
+inline void write_text_file(const QString& path, const QString& txt)
 {
+    QDir().mkpath(QFileInfo(path).dir().absolutePath());
     QFile f(path);
     if (!f.open(QFile::WriteOnly | QFile::Text))
         return;
@@ -214,10 +218,12 @@ void write_text_file(const QString& path, const QString& txt)
 
 QJsonObject read_config()
 {
-    QString fname1 = qApp->applicationDirPath() + "/../../../settings/mountainlab.default.json";
-    QString fname2 = qApp->applicationDirPath() + "/../../../settings/mountainlab.user.json";
+    QString fname1 = MLUtil::defaultConfigPath().absoluteFilePath();
+    QString fname2 = MLUtil::userConfigPath().absoluteFilePath();
+    qDebug() << fname1;
+    qDebug() << fname2;
     QString json1 = read_text_file(fname1);
-    QString json2 = read_text_file(fname2);
+    QString json2 = fname2.isEmpty() ? QString() : read_text_file(fname2);
     if (json2.isEmpty())
         json2 = "{}";
     QJsonObject obj1 = QJsonDocument::fromJson(json1.toUtf8()).object();
@@ -228,8 +234,12 @@ QJsonObject read_config()
 
 void write_config(QJsonObject obj)
 {
-    QString fname1 = qApp->applicationDirPath() + "/../../../settings/mountainlab.default.json";
-    QString fname2 = qApp->applicationDirPath() + "/../../../settings/mountainlab.user.json";
+    QString fname1 = MLUtil::defaultConfigPath().absoluteFilePath();
+    QString fname2 = MLUtil::userConfigPath().absoluteFilePath();
+    if (fname2.isEmpty())
+        fname2 = MLUtil::userConfigPath(MLUtil::ConfigPathType::Preferred)
+                .absoluteFilePath();
+    qDebug() << Q_FUNC_INFO << fname2;
     QString json1 = read_text_file(fname1);
     QJsonObject obj1 = QJsonDocument::fromJson(json1.toUtf8()).object();
     QJsonObject obj2 = dupstend_object(obj1, obj);

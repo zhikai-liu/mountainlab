@@ -893,10 +893,8 @@ QStringList MLUtil::configResolvedPathList(const QString& group, const QString& 
     return ret;
 }
 
-QJsonValue MLUtil::configValue(const QString& group, const QString& key)
+QFileInfo MLUtil::defaultConfigPath(ConfigPathType t)
 {
-    QString json1;
-#ifdef Q_OS_LINUX
     /* lookup order:
      * ~/.config/mountainlab/
      * /etc/mountainlab/
@@ -905,15 +903,59 @@ QJsonValue MLUtil::configValue(const QString& group, const QString& key)
      */
     /// TODO: Extend with QStandardPaths to make it platform independent
     static const QStringList globalDirs = {
+    #ifdef Q_OS_UNIX
+    #ifdef Q_OS_LINUX
         QDir::homePath()+"/.config/mountainlab",
-        "/etc/mountainlab", "/usr/local/share/mountainlab/settings", "/usr/share/mountainlab/settings"
+    #endif
+        "/etc/mountainlab",
+        "/opt/mountainlab/settings",
+        "/usr/local/share/mountainlab/settings",
+        "/usr/share/mountainlab/settings",
+    #endif
+        MLUtil::mountainlabBasePath()+"/settings"
     };
-    for(int i = 0; i < globalDirs.size() && json1.isEmpty(); ++i)
-        json1 = TextFile::read(globalDirs.at(i) + "/mountainlab.default.json");
+    if (t == ConfigPathType::Preferred)
+        return QFileInfo(QDir(globalDirs[0]), "mountainlab.default.json");
+    foreach(const QString globalDir, globalDirs) {
+        QFileInfo fileInfo = QFileInfo(QDir(globalDir), "mountainlab.default.json");
+        if (!fileInfo.exists() || !fileInfo.isReadable()) continue;
+        if (fileInfo.size() == 0) continue;
+        return fileInfo;
+    }
+    return QFileInfo();
+}
+
+QFileInfo MLUtil::userConfigPath(ConfigPathType t)
+{
+    /* lookup order:
+     * ~/.config/mountainlab/
+     *
+     *
+     */
+    static const QStringList userDirs = {
+#ifdef Q_OS_LINUX
+        QDir::homePath()+"/.config/mountainlab",
 #endif
-    if (json1.isEmpty())
-        json1 = TextFile::read(MLUtil::mountainlabBasePath() + "/settings/mountainlab.default.json");
-    if (json1.isEmpty()) {
+        MLUtil::mountainlabBasePath()
+    };
+    if (t == ConfigPathType::Preferred)
+        return QFileInfo(QDir(userDirs[0]), "mountainlab.user.json");
+    foreach(const QString userDir, userDirs) {
+        QFileInfo fileInfo = QFileInfo(QDir(userDir), "mountainlab.user.json");
+        if (!fileInfo.exists() || !fileInfo.isReadable()) continue;
+        // we accept an empty file
+        return fileInfo;
+    }
+    return QFileInfo();
+}
+
+QJsonValue MLUtil::configValue(const QString& group, const QString& key)
+{
+    QString json1;
+    QFileInfo globalConfig = defaultConfigPath();
+    if (globalConfig.isFile())
+        json1 = TextFile::read(globalConfig.absoluteFilePath());
+    else {
         qFatal("Couldn't locate mountainlab.default.json or file is empty.");
         abort();
     }
@@ -928,25 +970,10 @@ QJsonValue MLUtil::configValue(const QString& group, const QString& key)
         return QJsonValue();
     }
     QJsonObject obj2;
-    /* lookup order:
-     * ~/.config/mountainlab/
-     *
-     *
-     */
-    static const QStringList userDirs = {
-#ifdef Q_OS_LINUX
-        QDir::homePath()+"/.config/mountainlab",
-#endif
-        MLUtil::mountainlabBasePath()
-    };
     QString json2;
-    for(int i = 0; i < userDirs.size() && json2.isEmpty(); ++i) {
-        if (!QFile::exists(userDirs.at(i) + "/mountainlab.user.json"))
-            continue;
-        json2 = TextFile::read(userDirs.at(i) + "/mountainlab.user.json");
-        // we want to break if the file exists, even if it is empty
-        break;
-    }
+    QFileInfo userConfig = userConfigPath();
+    if (userConfig.isFile())
+        json2 = TextFile::read(userConfig.absoluteFilePath());
     if (!json2.isEmpty()) {
         QJsonParseError err2;
         obj2 = QJsonDocument::fromJson(json2.toUtf8(), &err2).object();
@@ -1312,3 +1339,4 @@ QString MLUtil::locatePrv(const QJsonObject& obj, const QStringList& local_searc
         return fname;
     }
 }
+

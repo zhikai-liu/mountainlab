@@ -2,6 +2,7 @@ QT += core
 QT -= gui
 
 CONFIG += c++11
+CONFIG += mlcommon
 
 DESTDIR = ../bin
 OBJECTS_DIR = ../build

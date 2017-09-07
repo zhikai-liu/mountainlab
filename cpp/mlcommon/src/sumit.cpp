@@ -59,7 +59,7 @@ void create_directory_if_doesnt_exist(const QString& dirname)
     QDir(parent_dirname).mkdir(folder_name);
 }
 
-QString read_text_file(const QString& path)
+inline QString read_text_file(const QString& path)
 {
     QFile f(path);
     if (!f.open(QFile::ReadOnly | QFile::Text))
@@ -67,8 +67,9 @@ QString read_text_file(const QString& path)
     QTextStream in(&f);
     return in.readAll();
 }
-void write_text_file(const QString& path, const QString& txt)
+inline void write_text_file(const QString& path, const QString& txt)
 {
+    QDir().mkpath(QFileInfo(path).dir().absolutePath());
     QFile f(path);
     if (!f.open(QFile::WriteOnly | QFile::Text))
         return;
