@@ -12,10 +12,11 @@ SOURCES += prvmain.cpp \
 
 CONFIG += mlcommon taskprogress mlnetwork
 
+#AUX.files=bin/prv-create bin/prv-download
+#AUX.path=/bin
+#INSTALLS += AUX
 
-
-AUX.files=bin/prv-create bin/prv-download
-AUX.path=/bin
-INSTALLS += AUX
+EXTRA_INSTALLS = # (clear it out) used by installbin.pri
+EXTRA_INSTALLS += "$$PWD/../bin_extra/*"
 
 include(../../installbin.pri)

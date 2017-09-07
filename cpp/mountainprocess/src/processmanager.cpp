@@ -115,10 +115,11 @@ bool ProcessManager::loadProcessors(const QString& path, bool recursive)
 
 bool ProcessManager::loadProcessorFile(const QString& path)
 {
+    QString spec_tmp_fname=CacheManager::globalInstance()->makeLocalFile(MLUtil::computeSha1SumOfString(path)+".spec"); //changed by jfm on 9/7/17, see below
     QString json;
     if (QFileInfo(path).isExecutable()) {
-        if ((QFile::exists(path + ".spec")) && (QFileInfo(path).lastModified().secsTo(QFileInfo(path + ".spec").lastModified()) >= 0) && (QFileInfo(path + ".spec").lastModified().secsTo(QDateTime::currentDateTime()) <= 60)) {
-            json = TextFile::read(path + ".spec"); // read the saved spec so we don't need to make the system call next time, but let's be careful about it... regenerate every 60 seconds
+        if ((QFile::exists(spec_tmp_fname)) && (QFileInfo(spec_tmp_fname).lastModified().secsTo(QFileInfo(spec_tmp_fname).lastModified()) >= 0) && (QFileInfo(spec_tmp_fname).lastModified().secsTo(QDateTime::currentDateTime()) <= 60)) {
+            json = TextFile::read(spec_tmp_fname); // read the saved spec so we don't need to make the system call next time, but let's be careful about it... regenerate every 60 seconds
         }
         else {
             QProcess pp;
@@ -151,7 +152,10 @@ bool ProcessManager::loadProcessorFile(const QString& path)
                 }
             }
             else {
-                TextFile::write(path + ".spec", json); // so we don't need to make the system call this time
+                // jfm changed the following on 9/7/17 so as not to write to a place we should not
+                //TextFile::write(path + ".spec", json); // so we don't need to make the system call this time
+                TextFile::write(spec_tmp_fname,json);
+                CacheManager::globalInstance()->setTemporaryFileDuration(spec_tmp_fname,600);
             }
         }
     }

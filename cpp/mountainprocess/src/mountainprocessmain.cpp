@@ -421,6 +421,7 @@ int main(int argc, char* argv[])
             QString str = CLP.unnamed_parameters[i];
             if ((str.endsWith(".js")) || (str.endsWith(".pipeline"))) { // it is a javascript source file
                 if (!QFile::exists(str)) {
+                    // a final holdout for mountainlabBasePath(), but scripts will go away anyway
                     QString str2 = MLUtil::mountainlabBasePath() + "/mountainprocess/scripts/" + str;
                     if (QFile::exists(str2)) {
                         str = str2;

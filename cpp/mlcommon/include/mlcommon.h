@@ -60,7 +60,7 @@ void fromJsonValue(QVector<double>& X, const QJsonValue& val);
 QByteArray readByteArray(const QString& path);
 bool writeByteArray(const QString& path, const QByteArray& X);
 QJsonObject mountainlabConfig();
-QFileInfo defaultConfigPath(ConfigPathType t = ConfigPathType::Existing);
+//QFileInfo defaultConfigPath(ConfigPathType t = ConfigPathType::Existing);
 QFileInfo userConfigPath(ConfigPathType t = ConfigPathType::Existing);
 QJsonValue configValue(const QString& group, const QString& key);
 QString configResolvedPath(const QString& group, const QString& key);

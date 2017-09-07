@@ -54,4 +54,6 @@ test {
     SOURCES += mountainprocessmain.cpp
 }
 
+EXTRA_INSTALLS = # (clear it out) used by installbin.pri
+EXTRA_INSTALLS += "$$PWD/../bin_extra/*"
 include(../../installbin.pri)

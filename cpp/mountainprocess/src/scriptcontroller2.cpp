@@ -450,7 +450,8 @@ void ScriptController2::removeFile(const QString& path)
 
 QProcess* ScriptController2Private::queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, bool preserve_tempdir, QString process_output_fname, int request_num_threads)
 {
-    QString exe = qApp->applicationFilePath();
+    //QString exe = qApp->applicationFilePath();
+    QString exe = "mountainprocess"; //changed by jfm on 9/7/17
     QStringList args;
     if (use_run) {
         args << "run-process";

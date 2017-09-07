@@ -11,7 +11,7 @@ int get_optimal_time_shift_between_templates(const Mda32& template0, const Mda32
 void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector<int>& central_channels, Mda32& templates, Merge_across_channels_opts opts)
 {
     //Important: We assume the times are already sorted!!
-    templates.write32("/home/magland/tmp/templates0.mda");
+    //templates.write32("/home/magland/tmp/templates0.mda");
 
     int M = templates.N1();
     int T = templates.N2();
@@ -72,7 +72,7 @@ void merge_across_channels(QVector<double>& times, QVector<int>& labels, QVector
             }
         }
     }
-    candidate_pairs.write32("/home/magland/tmp/candidate_pairs.mda");
+    //candidate_pairs.write32("/home/magland/tmp/candidate_pairs.mda");
 
     //sort by largest peak so we can go through in order
     QVector<double> abs_peaks_on_own_channels;

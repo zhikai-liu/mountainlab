@@ -1011,7 +1011,8 @@ bool MountainProcessServer::launch_pript(QString pript_id)
         return false;
     }
 
-    QString exe = qApp->applicationFilePath();
+    //QString exe = qApp->applicationFilePath();
+    QString exe = "mountainprocess"; //changed by jfm on 9/7/17
     QStringList args;
 
     if (S->prtype == ScriptType) {

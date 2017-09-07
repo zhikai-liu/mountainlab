@@ -104,15 +104,18 @@ bool TextFile::write_single_try(const QString& fname, const QString& txt, QTextC
 bool TextFile::write(const QString& fname, const QString& txt, QTextCodec* codec)
 {
     int num_tries = 2;
+    /*
     QFileInfo finfo(fname);
     if (!finfo.isWritable()) {
         qWarning() << "Problem in TextFile::write. File is not writable" << fname;
     }
+    */
     for (int i = 0; i < num_tries; i++) {
         if (TextFile::write_single_try(fname, txt, codec)) {
             return true;
         }
     }
+    qWarning() << "Problem in TextFile -- unable to write file: " << fname;
     return false;
 }
 
@@ -193,6 +196,7 @@ QString find_ancestor_path_with_file(QString path, QString file_name)
 
 QString MLUtil::mountainlabBasePath()
 {
+    qWarning() << "mountainlabBasePath should no longer be used";
     /// Witold, there should be a better way to find the mountainlab base path. hmmm
     QString ret = find_ancestor_path_with_name(qApp->applicationDirPath(), "mountainlab");
     if (ret.isEmpty()) {
@@ -749,7 +753,8 @@ void run_process(QString processor_name, QMap<QString, QVariant> inputs, QMap<QS
     if (force_run) {
         args << "--_force_run";
     }
-    QString exe = MLUtil::mountainlabBasePath() + "/cpp/mountainprocess/bin/mountainprocess";
+    //QString exe = MLUtil::mountainlabBasePath() + "/cpp/mountainprocess/bin/mountainprocess";
+    QString exe = "mountainprocess"; //changed by jfm on 9/7/17
     task.log() << "Running process:" << args.join(" ");
     QProcess P;
     P.start(exe, args);
@@ -883,20 +888,25 @@ QString parallel_download_file_from_prvfileserver_to_temp_dir(QString url, int s
 
 QString MLUtil::configResolvedPath(const QString& group, const QString& key)
 {
+    QString mountainlab_base_path=MOUNTAINLAB_SRC_PATH;
     QString ret = MLUtil::configValue(group, key).toString();
-    return QDir(MLUtil::mountainlabBasePath()).filePath(ret);
+    return QDir(mountainlab_base_path).filePath(ret); // jfm 9/7/17 -- we no longer use mountainlabBasePath for anything
+    //return QDir(MLUtil::mountainlabBasePath()).filePath(ret);
 }
 
 QStringList MLUtil::configResolvedPathList(const QString& group, const QString& key)
 {
+    QString mountainlab_base_path=MOUNTAINLAB_SRC_PATH;
     QJsonArray array = MLUtil::configValue(group, key).toArray();
     QStringList ret;
     for (int i = 0; i < array.count(); i++) {
-        ret << QDir(MLUtil::mountainlabBasePath()).filePath(array[i].toString());
+        ret << QDir(mountainlab_base_path).filePath(array[i].toString()); // jfm 9/7/17 -- we no longer use mountainlabBasePath for anything
+        //ret << QDir(MLUtil::mountainlabBasePath()).filePath(array[i].toString());
     }
     return ret;
 }
 
+#if 0
 QFileInfo MLUtil::defaultConfigPath(ConfigPathType t)
 {
     /* lookup order:
@@ -907,17 +917,20 @@ QFileInfo MLUtil::defaultConfigPath(ConfigPathType t)
      */
     /// TODO: Extend with QStandardPaths to make it platform independent
     static const QStringList globalDirs = {
-    #ifdef Q_OS_UNIX
-    #ifdef Q_OS_LINUX
-        QDir::homePath()+"/.config/mountainlab",
-    #endif
+    //#ifdef Q_OS_UNIX
+    //#ifdef Q_OS_LINUX
+        //QDir::homePath()+"/.config/mountainlab"
+    //#endif
         "/etc/mountainlab",
         "/opt/mountainlab/settings",
         "/usr/local/share/mountainlab/settings",
         "/usr/share/mountainlab/settings",
-    #endif
-        MLUtil::mountainlabBasePath()+"/settings"
+    //#endif
+        //MLUtil::mountainlabBasePath()+"/settings" //jfm 9/7/17 we no longer use mountainlabBasePath() for anything
     };
+    if (!globalDirs.value(0).isEmpty()) {
+        MLUtil::mkdirIfNeeded(globalDirs.value(0));
+    }
     if (t == ConfigPathType::Preferred)
         return QFileInfo(QDir(globalDirs[0]), "mountainlab.default.json");
     foreach(const QString globalDir, globalDirs) {
@@ -928,6 +941,7 @@ QFileInfo MLUtil::defaultConfigPath(ConfigPathType t)
     }
     return QFileInfo();
 }
+#endif
 
 QFileInfo MLUtil::userConfigPath(ConfigPathType t)
 {
@@ -938,10 +952,13 @@ QFileInfo MLUtil::userConfigPath(ConfigPathType t)
      */
     static const QStringList userDirs = {
 #ifdef Q_OS_LINUX
-        QDir::homePath()+"/.config/mountainlab",
+        QDir::homePath()+"/.config/mountainlab"
 #endif
-        MLUtil::mountainlabBasePath()
+        //MLUtil::mountainlabBasePath() //jfm 9/7/17 -- we are not having mountainlabBasePath() for anything
     };
+    if (!userDirs.value(0).isEmpty()) {
+        MLUtil::mkdirIfNeeded(userDirs.value(0));
+    }
     if (t == ConfigPathType::Preferred)
         return QFileInfo(QDir(userDirs[0]), "mountainlab.user.json");
     foreach(const QString userDir, userDirs) {
@@ -955,6 +972,7 @@ QFileInfo MLUtil::userConfigPath(ConfigPathType t)
 
 QJsonValue MLUtil::configValue(const QString& group, const QString& key)
 {
+    /*
     QString json1;
     QFileInfo globalConfig = defaultConfigPath();
     if (globalConfig.isFile())
@@ -963,6 +981,33 @@ QJsonValue MLUtil::configValue(const QString& group, const QString& key)
         qFatal("Couldn't locate mountainlab.default.json or file is empty.");
         abort();
     }
+    */
+    QString json1 =
+    "{"
+    "        \"general\":{"
+    "                \"temporary_path\":\"/tmp\","
+    "                \"max_cache_size_gb\":40"
+    "        },"
+    "        \"mountainprocess\":{"
+    "                \"max_num_simultaneous_processes\":2,"
+    "                \"processor_paths\":[\"cpp/mountainprocess/processors\",\"user/processors\",\"packages\"],"
+    "                \"mpdaemonmonitor_url\":\"http://mpdaemonmonitor.herokuapp.com\","
+    "                \"mpdaemon_name\":\"\",\"mpdaemon_secret\":\"\""
+    "        },"
+    "        \"prv\":{"
+    "                \"local_search_paths\":[\"examples\"],"
+    "                \"servers\":["
+    "                        {\"name\":\"datalaboratory\",\"passcode\":\"\",\"host\":\"http://datalaboratory.org\",\"port\":8005},"
+    "                        {\"name\":\"river\",\"passcode\":\"\",\"host\":\"http://river.simonsfoundation.org\",\"port\":60001},"
+    "                        {\"name\":\"localhost\",\"passcode\":\"\",\"host\":\"http://localhost\",\"port\":8080}"
+    "                ]"
+    "        },"
+    "        \"kron\":{"
+    "                \"dataset_paths\":[\"cpp/mountainsort/example_datasets\",\"user/datasets\"],"
+    "                \"pipeline_paths\":[\"cpp/mountainsort/pipelines\",\"user/pipelines\",\"packages\"],"
+    "                \"view_program_paths\":[\"cpp/mountainsort/view_programs\",\"/user/view_programs\"]"
+    "        }"
+    "}";
     QJsonParseError err1;
     QJsonObject obj1 = QJsonDocument::fromJson(json1.toUtf8(), &err1).object();
     if (err1.error != QJsonParseError::NoError) {

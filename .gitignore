@@ -13,7 +13,6 @@ mountainlab.user.json
 *.dll
 *.dylib
 output
-bin
 mountainsort.mp
 *.mda
 mountainlab.ini

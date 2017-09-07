@@ -1,6 +1,7 @@
 QT = core network
 
 DEFINES += USE_REMOTE_READ_MDA
+DEFINES += MOUNTAINLAB_SRC_PATH=\\\"$$PWD/../../..\\\"
 
 CONFIG += c++11
 CONFIG += staticlib
