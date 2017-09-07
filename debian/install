@@ -1,3 +1,4 @@
 packages/mountainsort2/bin/ /opt/mountainlab/packages/mountainsort2/
 packages/mountainsort3/bin/ /opt/mountainlab/packages/mountainsort3/
 bin/ /opt/mountainlab/
+kron/* /opt/mountainlab/bin

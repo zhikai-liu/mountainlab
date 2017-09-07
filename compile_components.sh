@@ -45,13 +45,14 @@ fi
 args0=""
 components0=""
 for var in "$@"; do
-	if [[ "$var" == "default" ]]; then
+	if [[ "$var" == "nogui" ]]; then
+		args0="$args0 \"GUI = off\""
+	elif [[ "$var" == "default" ]]; then
 		echo ""
 	else
 		components0="$components0 $var"
 	fi
 
-    # witold, i think we can remove this line, correct?
     [ "$var" == 'nogui' ] && ARGS+=("$var")
 done
 
