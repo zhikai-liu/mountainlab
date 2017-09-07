@@ -104,6 +104,10 @@ bool TextFile::write_single_try(const QString& fname, const QString& txt, QTextC
 bool TextFile::write(const QString& fname, const QString& txt, QTextCodec* codec)
 {
     int num_tries = 2;
+    QFileInfo finfo(fname);
+    if (!finfo.isWritable()) {
+        qWarning() << "Problem in TextFile::write. File is not writable" << fname;
+    }
     for (int i = 0; i < num_tries; i++) {
         if (TextFile::write_single_try(fname, txt, codec)) {
             return true;
