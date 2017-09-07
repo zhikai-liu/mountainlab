@@ -147,9 +147,9 @@ VPATH += msv/contextmenuhandlers
 HEADERS += clustercontextmenuhandler.h clusterpaircontextmenuhandler.h
 SOURCES += clustercontextmenuhandler.cpp clusterpaircontextmenuhandler.cpp
 
-INCLUDEPATH += ../../mountainsort/src/utils
-DEPENDPATH += ../../mountainsort/src/utils
-VPATH += ../../mountainsort/src/utils
+INCLUDEPATH += ../../../cpp/mountainsort/src/utils
+DEPENDPATH += ../../../cpp/mountainsort/src/utils
+VPATH += ../../../cpp/mountainsort/src/utils
 HEADERS += msmisc.h
 SOURCES += msmisc.cpp
 HEADERS += get_pca_features.h get_principal_components.h eigenvalue_decomposition.h
@@ -159,9 +159,9 @@ SOURCES += affinetransformation.cpp
 HEADERS += compute_templates_0.h
 SOURCES += compute_templates_0.cpp
 
-INCLUDEPATH += ../../mountainsort/src/processors
-DEPENDPATH += ../../mountainsort/src/processors
-VPATH += ../../mountainsort/src/processors
+INCLUDEPATH += ../../../cpp/mountainsort/src/processors
+DEPENDPATH += ../../../cpp/mountainsort/src/processors
+VPATH += ../../../cpp/mountainsort/src/processors
 HEADERS += extract_clips.h
 SOURCES += extract_clips.cpp
 
@@ -174,4 +174,4 @@ DISTFILES += \
     msv/views/curationprogram.js
 
 
-include(../../installbin.pri)
+include(../../../cpp/installbin.pri)
