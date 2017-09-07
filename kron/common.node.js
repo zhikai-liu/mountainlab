@@ -1,5 +1,5 @@
 var exports = module.exports = {};
-var extend=require('extend');
+//var extend=require('extend');
 var common=exports;
 
 var fs=require('fs');
