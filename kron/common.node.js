@@ -180,7 +180,7 @@ function find_absolute_dataset_folder_path(folder,text_file_path) {
 
 function find_absolute_pipeline_script_path(script_path,text_file_path) {
 	//var pipeline_paths=config.kron.pipeline_paths;
-	var pipeline_paths=[__dirname+'/../mountainlab/packages'];
+	var pipeline_paths=[__dirname+'/../packages'];
 	if (text_file_path)
 		pipeline_paths.push(text_file_path);
 	for (var i in pipeline_paths) {
