@@ -11,9 +11,11 @@ TARGET = mproc
 TEMPLATE = app
 
 HEADERS += mprocmain.h \
-    processormanager.h
+    processormanager.h \
+    processresourcemonitor.h
 SOURCES += mprocmain.cpp \
-    processormanager.cpp
+    processormanager.cpp \
+    processresourcemonitor.cpp
 
 EXTRA_INSTALLS = # (clear it out) used by installbin.pri
 EXTRA_INSTALLS += "$$PWD/../bin_extra/*"

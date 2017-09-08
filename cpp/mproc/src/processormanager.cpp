@@ -38,7 +38,6 @@ ProcessorManager::ProcessorManager()
 {
     d = new ProcessorManagerPrivate;
     d->q = this;
-
 }
 
 ProcessorManager::~ProcessorManager()
@@ -77,7 +76,7 @@ bool ProcessorManager::loadProcessors(const QString& path, bool recursive)
 
 bool ProcessorManager::loadProcessorFile(const QString& path)
 {
-    QString spec_tmp_fname=CacheManager::globalInstance()->makeLocalFile(MLUtil::computeSha1SumOfString(path)+".spec"); //changed by jfm on 9/7/17, see below
+    QString spec_tmp_fname = CacheManager::globalInstance()->makeLocalFile(MLUtil::computeSha1SumOfString(path) + ".spec"); //changed by jfm on 9/7/17, see below
     QString json;
     if (QFileInfo(path).isExecutable()) {
         if ((QFile::exists(spec_tmp_fname)) && (QFileInfo(spec_tmp_fname).lastModified().secsTo(QFileInfo(spec_tmp_fname).lastModified()) >= 0) && (QFileInfo(spec_tmp_fname).lastModified().secsTo(QDateTime::currentDateTime()) <= 60)) {
@@ -116,8 +115,8 @@ bool ProcessorManager::loadProcessorFile(const QString& path)
             else {
                 // jfm changed the following on 9/7/17 so as not to write to a place we should not
                 //TextFile::write(path + ".spec", json); // so we don't need to make the system call this time
-                TextFile::write(spec_tmp_fname,json);
-                CacheManager::globalInstance()->setTemporaryFileDuration(spec_tmp_fname,600);
+                TextFile::write(spec_tmp_fname, json);
+                CacheManager::globalInstance()->setTemporaryFileDuration(spec_tmp_fname, 600);
             }
         }
     }
@@ -211,11 +210,11 @@ bool ProcessorManager::checkParameters(const QString& processor_name, const QVar
         }
     }
     {
-        QStringList parameters_keys=parameters.keys();
-        foreach (QString key,parameters_keys) {
+        QStringList parameters_keys = parameters.keys();
+        foreach (QString key, parameters_keys) {
             if (!key.startsWith("_")) {
-                if ((!P.parameters.contains(key))&&(!P.inputs.contains(key))&&(!P.outputs.contains(key))) {
-                    qCWarning(MPM) << QString("checkProcess: invalid parameter: "+key);
+                if ((!P.parameters.contains(key)) && (!P.inputs.contains(key)) && (!P.outputs.contains(key))) {
+                    qCWarning(MPM) << QString("checkProcess: invalid parameter: " + key);
                     return false;
                 }
             }

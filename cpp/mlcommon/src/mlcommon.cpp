@@ -64,8 +64,10 @@ bool TextFile::write_single_try(const QString& fname, const QString& txt, QTextC
     //(should we really do this before testing whether writing is successful? I think yes)
     if (QFile::exists(fname)) {
         if (!QFile::remove(fname)) {
-            qWarning() << "Problem in TextFile::write. Could not remove file even though it exists" << fname;
-            return false;
+            if (QFile::exists(fname)) {
+                qWarning() << "Problem in TextFile::write. Could not remove file even though it exists" << fname;
+                return false;
+            }
         }
     }
 
@@ -92,9 +94,21 @@ bool TextFile::write_single_try(const QString& fname, const QString& txt, QTextC
         return false;
     }
 
+    //check again if we need to remove the file
+    if (QFile::exists(fname)) {
+        if (!QFile::remove(fname)) {
+            if (QFile::exists(fname)) {
+                qWarning() << "Problem in TextFile::write. Could not remove file even though it exists (**)" << fname;
+                QFile::remove(tmp_fname);
+                return false;
+            }
+        }
+    }
+
     //finally, rename the file
     if (!QFile::rename(tmp_fname, fname)) {
-        qWarning() << "Problem in TextFile::write. Unable to rename file at the end of the write command" << fname;
+        qWarning() << "Problem in TextFile::write. Unable to rename file at the end of the write command" << fname << "Src/dst files exist?:" << QFile::exists(tmp_fname) << QFile::exists(fname);
+        QFile::remove(tmp_fname);
         return false;
     }
 
@@ -888,7 +902,7 @@ QString parallel_download_file_from_prvfileserver_to_temp_dir(QString url, int s
 
 QString MLUtil::configResolvedPath(const QString& group, const QString& key)
 {
-    QString mountainlab_base_path=MOUNTAINLAB_SRC_PATH;
+    QString mountainlab_base_path = MOUNTAINLAB_SRC_PATH;
     QString ret = MLUtil::configValue(group, key).toString();
     return QDir(mountainlab_base_path).filePath(ret); // jfm 9/7/17 -- we no longer use mountainlabBasePath for anything
     //return QDir(MLUtil::mountainlabBasePath()).filePath(ret);
@@ -896,7 +910,7 @@ QString MLUtil::configResolvedPath(const QString& group, const QString& key)
 
 QStringList MLUtil::configResolvedPathList(const QString& group, const QString& key)
 {
-    QString mountainlab_base_path=MOUNTAINLAB_SRC_PATH;
+    QString mountainlab_base_path = MOUNTAINLAB_SRC_PATH;
     QJsonArray array = MLUtil::configValue(group, key).toArray();
     QStringList ret;
     for (int i = 0; i < array.count(); i++) {
@@ -952,7 +966,7 @@ QFileInfo MLUtil::userConfigPath(ConfigPathType t)
      */
     static const QStringList userDirs = {
 #ifdef Q_OS_LINUX
-        QDir::homePath()+"/.config/mountainlab"
+        QDir::homePath() + "/.config/mountainlab"
 #endif
         //MLUtil::mountainlabBasePath() //jfm 9/7/17 -- we are not having mountainlabBasePath() for anything
     };
@@ -961,9 +975,10 @@ QFileInfo MLUtil::userConfigPath(ConfigPathType t)
     }
     if (t == ConfigPathType::Preferred)
         return QFileInfo(QDir(userDirs[0]), "mountainlab.user.json");
-    foreach(const QString userDir, userDirs) {
+    foreach (const QString userDir, userDirs) {
         QFileInfo fileInfo = QFileInfo(QDir(userDir), "mountainlab.user.json");
-        if (!fileInfo.exists() || !fileInfo.isReadable()) continue;
+        if (!fileInfo.exists() || !fileInfo.isReadable())
+            continue;
         // we accept an empty file
         return fileInfo;
     }
@@ -982,32 +997,31 @@ QJsonValue MLUtil::configValue(const QString& group, const QString& key)
         abort();
     }
     */
-    QString json1 =
-    "{"
-    "        \"general\":{"
-    "                \"temporary_path\":\"/tmp\","
-    "                \"max_cache_size_gb\":40"
-    "        },"
-    "        \"mountainprocess\":{"
-    "                \"max_num_simultaneous_processes\":2,"
-    "                \"processor_paths\":[\"cpp/mountainprocess/processors\",\"user/processors\",\"packages\"],"
-    "                \"mpdaemonmonitor_url\":\"http://mpdaemonmonitor.herokuapp.com\","
-    "                \"mpdaemon_name\":\"\",\"mpdaemon_secret\":\"\""
-    "        },"
-    "        \"prv\":{"
-    "                \"local_search_paths\":[\"examples\"],"
-    "                \"servers\":["
-    "                        {\"name\":\"datalaboratory\",\"passcode\":\"\",\"host\":\"http://datalaboratory.org\",\"port\":8005},"
-    "                        {\"name\":\"river\",\"passcode\":\"\",\"host\":\"http://river.simonsfoundation.org\",\"port\":60001},"
-    "                        {\"name\":\"localhost\",\"passcode\":\"\",\"host\":\"http://localhost\",\"port\":8080}"
-    "                ]"
-    "        },"
-    "        \"kron\":{"
-    "                \"dataset_paths\":[\"cpp/mountainsort/example_datasets\",\"user/datasets\"],"
-    "                \"pipeline_paths\":[\"cpp/mountainsort/pipelines\",\"user/pipelines\",\"packages\"],"
-    "                \"view_program_paths\":[\"cpp/mountainsort/view_programs\",\"/user/view_programs\"]"
-    "        }"
-    "}";
+    QString json1 = "{"
+                    "        \"general\":{"
+                    "                \"temporary_path\":\"/tmp\","
+                    "                \"max_cache_size_gb\":40"
+                    "        },"
+                    "        \"mountainprocess\":{"
+                    "                \"max_num_simultaneous_processes\":2,"
+                    "                \"processor_paths\":[\"cpp/mountainprocess/processors\",\"user/processors\",\"packages\"],"
+                    "                \"mpdaemonmonitor_url\":\"http://mpdaemonmonitor.herokuapp.com\","
+                    "                \"mpdaemon_name\":\"\",\"mpdaemon_secret\":\"\""
+                    "        },"
+                    "        \"prv\":{"
+                    "                \"local_search_paths\":[\"examples\"],"
+                    "                \"servers\":["
+                    "                        {\"name\":\"datalaboratory\",\"passcode\":\"\",\"host\":\"http://datalaboratory.org\",\"port\":8005},"
+                    "                        {\"name\":\"river\",\"passcode\":\"\",\"host\":\"http://river.simonsfoundation.org\",\"port\":60001},"
+                    "                        {\"name\":\"localhost\",\"passcode\":\"\",\"host\":\"http://localhost\",\"port\":8080}"
+                    "                ]"
+                    "        },"
+                    "        \"kron\":{"
+                    "                \"dataset_paths\":[\"cpp/mountainsort/example_datasets\",\"user/datasets\"],"
+                    "                \"pipeline_paths\":[\"cpp/mountainsort/pipelines\",\"user/pipelines\",\"packages\"],"
+                    "                \"view_program_paths\":[\"cpp/mountainsort/view_programs\",\"/user/view_programs\"]"
+                    "        }"
+                    "}";
     QJsonParseError err1;
     QJsonObject obj1 = QJsonDocument::fromJson(json1.toUtf8(), &err1).object();
     if (err1.error != QJsonParseError::NoError) {
@@ -1388,4 +1402,3 @@ QString MLUtil::locatePrv(const QJsonObject& obj, const QStringList& local_searc
         return fname;
     }
 }
-

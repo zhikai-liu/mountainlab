@@ -224,32 +224,31 @@ QJsonObject read_config()
     //qDebug() << fname2;
     //QString json1 = read_text_file(fname1);
 
-    QString json1 =
-    "{"
-    "        \"general\":{"
-    "                \"temporary_path\":\"/tmp\","
-    "                \"max_cache_size_gb\":40"
-    "        },"
-    "        \"mountainprocess\":{"
-    "                \"max_num_simultaneous_processes\":2,"
-    "                \"processor_paths\":[\"cpp/mountainprocess/processors\",\"user/processors\",\"packages\"],"
-    "                \"mpdaemonmonitor_url\":\"http://mpdaemonmonitor.herokuapp.com\","
-    "                \"mpdaemon_name\":\"\",\"mpdaemon_secret\":\"\""
-    "        },"
-    "        \"prv\":{"
-    "                \"local_search_paths\":[\"examples\"],"
-    "                \"servers\":["
-    "                        {\"name\":\"datalaboratory\",\"passcode\":\"\",\"host\":\"http://datalaboratory.org\",\"port\":8005},"
-    "                        {\"name\":\"river\",\"passcode\":\"\",\"host\":\"http://river.simonsfoundation.org\",\"port\":60001},"
-    "                        {\"name\":\"localhost\",\"passcode\":\"\",\"host\":\"http://localhost\",\"port\":8080}"
-    "                ]"
-    "        },"
-    "        \"kron\":{"
-    "                \"dataset_paths\":[\"cpp/mountainsort/example_datasets\",\"user/datasets\"],"
-    "                \"pipeline_paths\":[\"cpp/mountainsort/pipelines\",\"user/pipelines\",\"packages\"],"
-    "                \"view_program_paths\":[\"cpp/mountainsort/view_programs\",\"/user/view_programs\"]"
-    "        }"
-    "}";
+    QString json1 = "{"
+                    "        \"general\":{"
+                    "                \"temporary_path\":\"/tmp\","
+                    "                \"max_cache_size_gb\":40"
+                    "        },"
+                    "        \"mountainprocess\":{"
+                    "                \"max_num_simultaneous_processes\":2,"
+                    "                \"processor_paths\":[\"cpp/mountainprocess/processors\",\"user/processors\",\"packages\"],"
+                    "                \"mpdaemonmonitor_url\":\"http://mpdaemonmonitor.herokuapp.com\","
+                    "                \"mpdaemon_name\":\"\",\"mpdaemon_secret\":\"\""
+                    "        },"
+                    "        \"prv\":{"
+                    "                \"local_search_paths\":[\"examples\"],"
+                    "                \"servers\":["
+                    "                        {\"name\":\"datalaboratory\",\"passcode\":\"\",\"host\":\"http://datalaboratory.org\",\"port\":8005},"
+                    "                        {\"name\":\"river\",\"passcode\":\"\",\"host\":\"http://river.simonsfoundation.org\",\"port\":60001},"
+                    "                        {\"name\":\"localhost\",\"passcode\":\"\",\"host\":\"http://localhost\",\"port\":8080}"
+                    "                ]"
+                    "        },"
+                    "        \"kron\":{"
+                    "                \"dataset_paths\":[\"cpp/mountainsort/example_datasets\",\"user/datasets\"],"
+                    "                \"pipeline_paths\":[\"cpp/mountainsort/pipelines\",\"user/pipelines\",\"packages\"],"
+                    "                \"view_program_paths\":[\"cpp/mountainsort/view_programs\",\"/user/view_programs\"]"
+                    "        }"
+                    "}";
 
     QString json2 = fname2.isEmpty() ? QString() : read_text_file(fname2);
     if (json2.isEmpty())
@@ -266,35 +265,34 @@ void write_config(QJsonObject obj)
     QString fname2 = MLUtil::userConfigPath().absoluteFilePath();
     if (fname2.isEmpty())
         fname2 = MLUtil::userConfigPath(MLUtil::ConfigPathType::Preferred)
-                .absoluteFilePath();
+                     .absoluteFilePath();
     qDebug() << Q_FUNC_INFO << fname2;
     //QString json1 = read_text_file(fname1);
-    QString json1 =
-    "{"
-    "        \"general\":{"
-    "                \"temporary_path\":\"/tmp\","
-    "                \"max_cache_size_gb\":40"
-    "        },"
-    "        \"mountainprocess\":{"
-    "                \"max_num_simultaneous_processes\":2,"
-    "                \"processor_paths\":[\"cpp/mountainprocess/processors\",\"user/processors\",\"packages\"],"
-    "                \"mpdaemonmonitor_url\":\"http://mpdaemonmonitor.herokuapp.com\","
-    "                \"mpdaemon_name\":\"\",\"mpdaemon_secret\":\"\""
-    "        },"
-    "        \"prv\":{"
-    "                \"local_search_paths\":[\"examples\"],"
-    "                \"servers\":["
-    "                        {\"name\":\"datalaboratory\",\"passcode\":\"\",\"host\":\"http://datalaboratory.org\",\"port\":8005},"
-    "                        {\"name\":\"river\",\"passcode\":\"\",\"host\":\"http://river.simonsfoundation.org\",\"port\":60001},"
-    "                        {\"name\":\"localhost\",\"passcode\":\"\",\"host\":\"http://localhost\",\"port\":8080}"
-    "                ]"
-    "        },"
-    "        \"kron\":{"
-    "                \"dataset_paths\":[\"cpp/mountainsort/example_datasets\",\"user/datasets\"],"
-    "                \"pipeline_paths\":[\"cpp/mountainsort/pipelines\",\"user/pipelines\",\"packages\"],"
-    "                \"view_program_paths\":[\"cpp/mountainsort/view_programs\",\"/user/view_programs\"]"
-    "        }"
-    "}";
+    QString json1 = "{"
+                    "        \"general\":{"
+                    "                \"temporary_path\":\"/tmp\","
+                    "                \"max_cache_size_gb\":40"
+                    "        },"
+                    "        \"mountainprocess\":{"
+                    "                \"max_num_simultaneous_processes\":2,"
+                    "                \"processor_paths\":[\"cpp/mountainprocess/processors\",\"user/processors\",\"packages\"],"
+                    "                \"mpdaemonmonitor_url\":\"http://mpdaemonmonitor.herokuapp.com\","
+                    "                \"mpdaemon_name\":\"\",\"mpdaemon_secret\":\"\""
+                    "        },"
+                    "        \"prv\":{"
+                    "                \"local_search_paths\":[\"examples\"],"
+                    "                \"servers\":["
+                    "                        {\"name\":\"datalaboratory\",\"passcode\":\"\",\"host\":\"http://datalaboratory.org\",\"port\":8005},"
+                    "                        {\"name\":\"river\",\"passcode\":\"\",\"host\":\"http://river.simonsfoundation.org\",\"port\":60001},"
+                    "                        {\"name\":\"localhost\",\"passcode\":\"\",\"host\":\"http://localhost\",\"port\":8080}"
+                    "                ]"
+                    "        },"
+                    "        \"kron\":{"
+                    "                \"dataset_paths\":[\"cpp/mountainsort/example_datasets\",\"user/datasets\"],"
+                    "                \"pipeline_paths\":[\"cpp/mountainsort/pipelines\",\"user/pipelines\",\"packages\"],"
+                    "                \"view_program_paths\":[\"cpp/mountainsort/view_programs\",\"/user/view_programs\"]"
+                    "        }"
+                    "}";
     QJsonObject obj1 = QJsonDocument::fromJson(json1.toUtf8()).object();
     QJsonObject obj2 = dupstend_object(obj1, obj);
     QString json2 = QJsonDocument(obj2).toJson(QJsonDocument::Indented);
