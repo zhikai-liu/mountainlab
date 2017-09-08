@@ -100,7 +100,7 @@ function larinetserver(req,onclose,callback,hopts) {
 		var done=false;
 		var ppp=run_process_and_read_stdout(hopts.mp_exe,['handle-request','--prvbucket_path='+hopts.data_directory,request_fname,response_fname],function(txt) {
 			done=true;
-			//remove_file(request_fname);
+			remove_file(request_fname);
 			if (!require('fs').existsSync(response_fname)) {
 				callback({success:false,error:'Response file does not exist: '+response_fname});
 				return;
