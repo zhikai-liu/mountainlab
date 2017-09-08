@@ -745,7 +745,7 @@ void run_process(QString processor_name, QMap<QString, QVariant> inputs, QMap<QS
 {
     TaskProgress task("Running: " + processor_name);
     QStringList args;
-    args << "run-process" << processor_name;
+    args << processor_name;
     {
         QStringList keys = inputs.keys();
         foreach (QString key, keys) {
@@ -768,7 +768,7 @@ void run_process(QString processor_name, QMap<QString, QVariant> inputs, QMap<QS
         args << "--_force_run";
     }
     //QString exe = MLUtil::mountainlabBasePath() + "/cpp/mountainprocess/bin/mountainprocess";
-    QString exe = "mountainprocess"; //changed by jfm on 9/7/17
+    QString exe = "mp-run-process"; //changed by jfm on 9/7/17 and then on 9/8/17
     task.log() << "Running process:" << args.join(" ");
     QProcess P;
     P.start(exe, args);

@@ -379,6 +379,8 @@ int main(int argc, char* argv[])
         //clean up expired files
         CacheManager::globalInstance()->removeExpiredFiles();
 
+        /*
+        //this check removed on 9/8/17 by jfm, because we are not using daemon anymore -- using mproc
         QString daemon_id = qgetenv("MP_DAEMON_ID");
         if (!CLP.named_parameters.contains("_nodaemon")) {
             if (daemon_id.isEmpty()) {
@@ -399,6 +401,7 @@ int main(int argc, char* argv[])
                 return -1;
             }
         }
+        */
 
         if (!initialize_process_manager()) { // load the processor plugins etc
             //log_end();
@@ -481,6 +484,7 @@ int main(int argc, char* argv[])
 
         if (ret == 0) { //success
 
+            /*
             printf("\nPeak Memory (MB):\n");
             for (int i = 0; i < PP.count(); i++) {
                 QJsonObject QQ = PP[i].toObject();
@@ -530,6 +534,7 @@ int main(int argc, char* argv[])
                     printf("%s\n", tmp.toUtf8().data());
                 }
             }
+            */
         }
 
         //log_end();

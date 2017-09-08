@@ -181,7 +181,7 @@ bool ProcessorManager::checkParameters(const QString& processor_name, const QVar
         foreach (QString key, keys) {
             if (!P.inputs[key].optional) {
                 if (!parameters.contains(key)) {
-                    qCWarning(MPM) << QString("checkProcess: Missing input in %1: %2").arg(processor_name).arg(key);
+                    qCWarning(MPM) << QString("checkProcess for %1: Missing input: %2").arg(processor_name).arg(key);
                     return false;
                 }
             }
@@ -192,7 +192,7 @@ bool ProcessorManager::checkParameters(const QString& processor_name, const QVar
         foreach (QString key, keys) {
             if (!parameters.contains(key)) {
                 if (!P.outputs[key].optional) {
-                    qCWarning(MPM) << QString("checkProcess: Missing required output in %1: %2").arg(processor_name).arg(key);
+                    qCWarning(MPM) << QString("checkProcess for %1: Missing required output: %2").arg(processor_name).arg(key);
                     return false;
                 }
             }
@@ -203,7 +203,7 @@ bool ProcessorManager::checkParameters(const QString& processor_name, const QVar
         foreach (QString key, keys) {
             if (!P.parameters[key].optional) {
                 if (!parameters.contains(key)) {
-                    qCWarning(MPM) << QString("checkProcess: Missing required parameter in %1: %2").arg(processor_name).arg(key);
+                    qCWarning(MPM) << QString("checkProcess for %1: Missing required parameter: %2").arg(processor_name).arg(key);
                     return false;
                 }
             }
@@ -214,7 +214,7 @@ bool ProcessorManager::checkParameters(const QString& processor_name, const QVar
         foreach (QString key, parameters_keys) {
             if (!key.startsWith("_")) {
                 if ((!P.parameters.contains(key)) && (!P.inputs.contains(key)) && (!P.outputs.contains(key))) {
-                    qCWarning(MPM) << QString("checkProcess: invalid parameter: " + key);
+                    qCWarning(MPM) << QString("checkProcess for %1: invalid parameter: %2").arg(processor_name).arg(key);
                     return false;
                 }
             }

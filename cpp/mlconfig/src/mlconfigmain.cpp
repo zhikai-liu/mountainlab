@@ -266,7 +266,7 @@ void write_config(QJsonObject obj)
     if (fname2.isEmpty())
         fname2 = MLUtil::userConfigPath(MLUtil::ConfigPathType::Preferred)
                      .absoluteFilePath();
-    qDebug() << Q_FUNC_INFO << fname2;
+    //qDebug() << Q_FUNC_INFO << fname2;
     //QString json1 = read_text_file(fname1);
     QString json1 = "{"
                     "        \"general\":{"

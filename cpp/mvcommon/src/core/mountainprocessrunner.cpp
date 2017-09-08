@@ -172,9 +172,9 @@ void MountainProcessRunner::runProcess()
     if (d->m_mlproxy_url.isEmpty()) {
         //QString mountainsort_exe = mountainlabBasePath() + "/mountainsort/bin/mountainsort";
         //QString mountainprocess_exe = MLUtil::mountainlabBasePath() + "/cpp/mountainprocess/bin/mountainprocess";
-        QString mountainprocess_exe = "mountainprocess"; // jfm changed on 9/7/17
+        //QString mountainprocess_exe = "mountainprocess"; // jfm changed on 9/7/17
         QStringList args;
-        args << "run-process";
+        //args << "run-process";
         args << d->m_processor_name;
         QStringList keys = d->m_parameters.keys();
         foreach (QString key, keys) {
@@ -184,7 +184,7 @@ void MountainProcessRunner::runProcess()
         //if (d->m_detach) {
         //    args << QString("--_detach=1");
         //}
-        task.log(QString("Executing locally: %1").arg(mountainprocess_exe));
+        //task.log(QString("Executing locally: %1").arg(mountainprocess_exe));
         foreach (QString key, keys) {
             QString val = d->m_parameters[key].toString();
             task.log(QString("%1 = %2").arg(key).arg(val));
@@ -194,14 +194,15 @@ void MountainProcessRunner::runProcess()
             }
         }
 
-        task.log(mountainprocess_exe + " " + args.join(" "));
+        QString exe = "mp-run-process";
+        task.log(exe + " " + args.join(" "));
 
         QProcess* process0 = new QProcess;
         process0->setProcessChannelMode(QProcess::MergedChannels);
 
         //process0.start(mountainprocess_exe, args);
 
-        process0->setProgram(mountainprocess_exe);
+        process0->setProgram(exe);
         process0->setArguments(args);
 
         QProcessManager* manager = ObjectRegistry::getObject<QProcessManager>();

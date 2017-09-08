@@ -451,13 +451,14 @@ void ScriptController2::removeFile(const QString& path)
 QProcess* ScriptController2Private::queue_process(QString processor_name, const QVariantMap& parameters, bool use_run, bool force_run, bool preserve_tempdir, QString process_output_fname, int request_num_threads)
 {
     //QString exe = qApp->applicationFilePath();
-    QString exe = "mountainprocess"; //changed by jfm on 9/7/17
+    //QString exe = "mountainprocess"; //changed by jfm on 9/7/17
+    QString exe;
     QStringList args;
     if (use_run) {
-        args << "run-process";
+        exe = "mp-run-process";
     }
     else {
-        args << "queue-process";
+        exe = "mp-queue-process";
     }
     args << processor_name;
     QStringList pkeys = parameters.keys();
@@ -802,7 +803,8 @@ bool ScriptController2Private::handle_running_processes()
                 if (!node->process_output_fname.isEmpty()) {
                     QString tmp_json = TextFile::read(node->process_output_fname);
                     if (tmp_json.isEmpty()) {
-                        qCWarning(MPS) << "process output file is empty or does not exist for processor: " + node->processor_name;
+                        //supress this warning as of 9/8/17
+                        //qCWarning(MPS) << "process output file is empty or does not exist for processor: " + node->processor_name;
                     }
                     CacheManager::globalInstance()->setTemporaryFileDuration(node->process_output_fname, 600);
                     //QFile::remove(node->process_output_fname);

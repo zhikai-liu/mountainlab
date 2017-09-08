@@ -293,32 +293,29 @@ QString resolve_file_name_prv(QString fname)
         return fname;
 }
 
-QVariantMap resolve_file_names_in_parameters(const MLProcessor& MLP, const QVariantMap& parameters_in)
+QVariantMap resolve_file_names_in_inputs(const MLProcessor& MLP, const QVariantMap& parameters_in, bool* success)
 {
+    (*success) = true;
     QVariantMap parameters = parameters_in;
 
     foreach (MLParameter P, MLP.inputs) {
         QStringList list = MLUtil::toStringList(parameters[P.name]);
         if (list.count() == 1) {
             parameters[P.name] = resolve_file_name_prv(list[0]);
-        }
-        else {
-            QVariantList list2;
-            foreach (QString str, list) {
-                list2 << resolve_file_name_prv(str);
+            if ((!list[0].isEmpty()) && (parameters[P.name].toString().isEmpty())) {
+                (*success) = false;
+                return QVariantMap();
             }
-            parameters[P.name] = list2;
-        }
-    }
-    foreach (MLParameter P, MLP.outputs) {
-        QStringList list = MLUtil::toStringList(parameters[P.name]);
-        if (list.count() == 1) {
-            parameters[P.name] = resolve_file_name_prv(list[0]);
         }
         else {
             QVariantList list2;
             foreach (QString str, list) {
-                list2 << resolve_file_name_prv(str);
+                QString str2 = resolve_file_name_prv(str);
+                if ((!str.isEmpty()) && (str2.isEmpty())) {
+                    (*success) = false;
+                    return QVariantMap();
+                }
+                list2 << str2;
             }
             parameters[P.name] = list2;
         }
@@ -397,7 +394,10 @@ void remove_output_files(const MLProcessor& MLP, const QMap<QString, QVariant>& 
 
 int launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVariant>& clp_in, QString monitor_file_name)
 {
-    QVariantMap clp = resolve_file_names_in_parameters(MLP, clp_in);
+    bool success;
+    QVariantMap clp = resolve_file_names_in_inputs(MLP, clp_in, &success);
+    if (!success)
+        return -1;
 
     set_defaults_for_optional_parameters(MLP, clp);
 
@@ -453,6 +453,7 @@ int launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVariant
 
     remove_output_files(MLP, clp);
 
+    qDebug().noquote() << QString("RUNNING %1: " + exe_command).arg(MLP.name);
     QProcess qprocess;
     if (!run_command_as_bash_script(&qprocess, exe_command, monitor_file_name)) {
         return -1;
