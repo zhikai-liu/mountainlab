@@ -89,7 +89,7 @@ QJsonObject handle_request_queue_process(QString processor_name, const QJsonObje
     }
 
     QStringList args;
-    args << "queue-process" << processor_name;
+    args << processor_name;
 
     QStringList ikeys = inputs.keys();
     QStringList pkeys = parameters.keys();
@@ -194,7 +194,8 @@ QJsonObject handle_request_queue_process(QString processor_name, const QJsonObje
     //CacheManager::globalInstance()->setTemporaryFileExpirePid(process_output_fname,qApp->applicationPid());
     args << "--_process_output=" + process_output_fname;
 
-    QString exe = qApp->applicationDirPath() + "/mountainprocess";
+    //QString exe = qApp->applicationDirPath() + "/mountainprocess";
+    QString exe = "mp-queue-process";
 
     qCDebug(HR).noquote() << "Running: " + exe + " " + args.join(" ");
 
