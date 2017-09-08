@@ -1,7 +1,19 @@
 var exports = module.exports = {};
 //var base64_arraybuffer=require('base64-arraybuffer');
 
-function larinetserver(req,onclose,callback,hopts) {
+var m_queued_jobs={};
+cleanup_jobs();
+function cleanup_jobs() {
+	for (var id in m_queued_jobs) {
+		if (m_queued_jobs[id].elapsedSinceKeepAlive()>60000) {
+			console.log('deleting old job record');
+			delete m_queued_jobs[id];
+		}
+	}
+	setTimeout(cleanup_jobs,10000);
+}
+
+function larinetserver(req/*,onclose*/,callback,hopts) {
 	var action=req.a||'';
 	if (!action) {
 		callback({success:false,error:'Empty action.'});
@@ -20,6 +32,16 @@ function larinetserver(req,onclose,callback,hopts) {
 	}
 	else if (action=='queue-process') {
 		queue_process(req,function(resp) {
+			callback(resp);
+		});
+	}
+	else if (action=='probe-process') {
+		probe_process(req,function(resp) {
+			callback(resp);
+		});
+	}
+	else if (action=='cancel-process') {
+		cancel_process(req,function(resp) {
 			callback(resp);
 		});
 	}
@@ -87,33 +109,121 @@ function larinetserver(req,onclose,callback,hopts) {
 		var parameters=query.parameters||{};
 		var resources=query.resources||{};
 		var opts={};
-		queue_process2(processor_name,inputs,outputs,parameters,resources,opts,callback);
+		var J=new QueuedJob(hopts);
+		J.start(processor_name,inputs,outputs,parameters,resources,opts,function(tmp) {
+			if (!tmp.success) {
+				callback(tmp);
+				return;
+			}
+			setTimeout(function() {
+				if (J.isComplete()) {
+					callback(J.response());
+				}
+				else {
+					var process_id=make_random_id(10);
+					m_queued_jobs[process_id]=J;
+					callback({success:true,process_id:process_id});	
+				}
+			},(query.wait_msec||0));
+		});
 	}
-	function queue_process2(processor_name,inputs,outputs,parameters,resources,opts,callback) {
-		var request_fname=make_tmp_json_file(hopts.data_directory);
-		var response_fname=make_tmp_json_file(hopts.data_directory);
-		var mpreq={action:'queue_process',processor_name:processor_name,inputs:inputs,outputs:outputs,parameters:parameters,resources:resources};
+	function probe_process(query,callback) {
+		var process_id=query.process_id||'';
+		if (!(process_id in m_queued_jobs)) {
+			callback({success:false,error:'Process id not found: '+process_id});
+			return;
+		}
+		var J=m_queued_jobs[process_id];
+		J.keepAlive();
+		if (J.isComplete()) {
+			callback(J.response());
+		}
+		else {
+			callback({success:true,state:'running'});
+		}
+	}
+	function cancel_process(query,callback) {
+		var process_id=query.process_id||'';
+		if (!(process_id in m_queued_jobs)) {
+			callback({success:false,error:'Process id not found: '+process_id});
+			return;
+		}
+		var J=m_queued_jobs[process_id];
+		J.cancel(callback);	
+	}
+
+	function starts_with(str,substr) {
+		return (str.slice(0,substr.length)==substr);
+	}
+	
+	function uploads_directory() {
+		var ret=hopts.data_directory+"/_uploads";
+		try {require('fs').mkdirSync(ret);}
+		catch(err) {}
+		return ret;
+	}
+	function make_random_id(len) {
+	    var text = "";
+	    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+	    for( var i=0; i < len; i++ )
+	        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+	    return text;
+	}
+}
+
+function QueuedJob(hopts) {
+	var that=this;
+
+	this.keepAlive=function() {m_alive_timer=new Date();};
+	this.cancel=function(callback) {cancel(callback);};
+	this.isComplete=function() {return m_is_complete;};
+	this.response=function() {return m_response;};
+	this.elapsedSinceKeepAlive=function() {return (new Date())-m_alive_timer;};
+
+	var m_response=null;
+	var m_alive_timer=new Date();
+	var m_is_complete=false;
+	var m_ppp=null;
+
+	var request_fname,response_fname,mpreq;
+	this.start=function(processor_name,inputs,outputs,parameters,resources,opts,callback) {
+		console.log('start');
+		request_fname=make_tmp_json_file(hopts.data_directory);
+		response_fname=make_tmp_json_file(hopts.data_directory);
+		mpreq={action:'queue_process',processor_name:processor_name,inputs:inputs,outputs:outputs,parameters:parameters,resources:resources};
 		if (!write_text_file(request_fname,JSON.stringify(mpreq))) {
 			callback({success:false,error:'Problem writing mpreq to file'});
 			return;
 		}
+		callback({success:true});
+		setTimeout(part2,10);
+	}
+	function part2() {
+		console.log('part2');
 		var done=false;
-		var ppp=run_process_and_read_stdout(hopts.mp_exe,['handle-request','--prvbucket_path='+hopts.data_directory,request_fname,response_fname],function(txt) {
+		setTimeout(housekeeping,1000);
+		m_ppp=run_process_and_read_stdout(hopts.mp_exe,['handle-request','--prvbucket_path='+hopts.data_directory,request_fname,response_fname],function(txt) {
 			done=true;
 			remove_file(request_fname);
 			if (!require('fs').existsSync(response_fname)) {
-				callback({success:false,error:'Response file does not exist: '+response_fname});
+				m_is_complete=true;
+				m_response={success:false,error:'Response file does not exist: '+response_fname};
 				return;
 			}
 			var json_response=read_json_file(response_fname);
 			remove_file(response_fname);
 			if (json_response) {
-				callback(json_response);
+				m_is_complete=true;
+				m_response=json_response;
 			}
 			else {
-				callback({success:false,error:'unable to parse json in response file'});
+				m_is_complete=true;
+				m_response={success:false,error:'unable to parse json in response file'};
 			}
 		});
+		/*
 		onclose(function() {
 			if (!done) {
 				//request has been canceled
@@ -125,24 +235,35 @@ function larinetserver(req,onclose,callback,hopts) {
 				}
 			}
 		});
-		/*if (REQ) {
-			REQ.on('close', function (err) {
-				
-			});
-		}*/
+		*/
 	}
-
-	function starts_with(str,substr) {
-		return (str.slice(0,substr.length)==substr);
+	function cancel(callback) {
+		console.log('cancel');
+		if (m_ppp) {
+			console.log ('Canceling process: '+m_pid.pid);
+			m_ppp.stdout.pause();
+			m_ppp.kill('SIGKILL');
+			if (callback) callback({success:true});
+		}
+		else {
+			if (callback) callback({success:false,error:'m_ppp is null.'});
+		}
+	}
+	function housekeeping() {
+		console.log('housekeeping');
+		if (m_is_complete) return;
+		var timeout=20000;
+		var elapsed_since_keep_alive=that.elapsedSinceKeepAlive();
+		if (elapsed_since_keep_alive>timeout) {
+			console.log ('Canceling process due to keep-alive timeout');
+			cancel();
+		}
+		else {
+			setTimeout(housekeeping,1000);
+		}
 	}
 	function make_tmp_json_file(data_directory) {
 		return data_directory+'/tmp.'+make_random_id(10)+'.json';
-	}
-	function uploads_directory() {
-		var ret=hopts.data_directory+"/_uploads";
-		try {require('fs').mkdirSync(ret);}
-		catch(err) {}
-		return ret;
 	}
 	function make_random_id(len) {
 	    var text = "";
@@ -181,12 +302,14 @@ exports.RequestHandler=function(hopts) {
 		}
 		else if (REQ.method=='GET') {
 			console.log ('GET: '+REQ.url);
+			/*
 			var onclose0=function(to_run_on_close) {
 				REQ.on('close',function() {
 					to_run_on_close();
 				});
 			}
-			larinetserver(query,onclose0,function(resp) {
+			*/
+			larinetserver(query/*,onclose0*/,function(resp) {
 				if (resp) send_json_response(resp);
 			},hopts);
 		}
@@ -198,12 +321,13 @@ exports.RequestHandler=function(hopts) {
 					send_json_response({success:false,error:err});
 					return;
 				}
+				/*
 				var onclose0=function(to_run_on_close) {
 					REQ.on('close',function() {
 						to_run_on_close();
 					});
-				}
-				larinetserver(obj,onclose0,function(resp) {
+				}*/
+				larinetserver(obj,/*onclose0,*/function(resp) {
 					if (resp) send_json_response(resp);
 				},hopts);
 			});
