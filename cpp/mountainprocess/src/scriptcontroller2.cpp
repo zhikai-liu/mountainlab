@@ -804,7 +804,7 @@ bool ScriptController2Private::handle_running_processes()
                     QString tmp_json = TextFile::read(node->process_output_fname);
                     if (tmp_json.isEmpty()) {
                         //supress this warning as of 9/8/17
-                        //qCWarning(MPS) << "process output file is empty or does not exist for processor: " + node->processor_name;
+                        qCWarning(MPS) << "process output file is empty or does not exist for processor: " + node->processor_name;
                     }
                     CacheManager::globalInstance()->setTemporaryFileDuration(node->process_output_fname, 600);
                     //QFile::remove(node->process_output_fname);

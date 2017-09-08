@@ -64,8 +64,6 @@ else
 eval qmake \"COMPONENTS = $components0\" $args0
 fi
 
-sha1sum_output_before=$(sha1sum cpp/mountainprocess/bin/mountainprocess)
-
 NPROCCMD=$(which nproc)
 
 if [ -z "$NPROCCMD" ]
@@ -100,30 +98,5 @@ else
 		echo "information."
 		echo "******************************************"
 	fi
-
-	sha1sum_output_after=$(sha1sum cpp/mountainprocess/bin/mountainprocess)
-	if [[ $sha1sum_output_before != $sha1sum_output_after ]]; then
-		output=$(bin/mp-daemon-state-summary)
-		if [[ $output == "Daemon is running"* ]]; then
-			echo ""
-			echo "******************************************"
-			echo "It appears a processing daemon is running"
-			echo "and the mountainprocess binary has changed."
-			echo "You may want to restart the daemon using:"
-			echo "mp-daemon-restart"
-			echo "******************************************"
-		fi
-	fi
-fi
-
-if [ -f mountainlab.user.json ]; then
-	echo "******************************************"
-	echo "It appears you are in a directory that used to"
-	echo "be occupied by an older version of mountainlab."
-	echo "I suspect that because mountainlab.user.json is"
-	echo "in the old location. It is highly recommended that"
-	echo "you do a fresh clone of mountainlab, checkout this"
-	echo "branch and then compile. Questions? Ask Jeremy."
-	echo "******************************************"
 fi
 

@@ -242,10 +242,14 @@ int exec_run_or_queue(QString arg1, QString arg2, const QMap<QString, QVariant>&
     }
 
     {
+        MLProcessInfo info;
         QTime timer;
         timer.start();
-        int ret = launch_process_and_wait(MLP, clp, monitor_file_name);
+        int ret = launch_process_and_wait(MLP, clp, monitor_file_name, info);
         double elapsed_sec = timer.elapsed() * 1.0 / 1000;
+        if (!clp.value("_process_output").toString().isEmpty()) {
+            write_process_output_file(clp.value("_process_output").toString(), info);
+        }
         if (ret == 0) {
             qDebug().noquote() << QString("Process completed successfully: %1 (Elapsed: %2 sec)").arg(processor_name).arg(elapsed_sec);
         }
@@ -392,7 +396,7 @@ void remove_output_files(const MLProcessor& MLP, const QMap<QString, QVariant>& 
     }
 }
 
-int launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVariant>& clp_in, QString monitor_file_name)
+int launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVariant>& clp_in, QString monitor_file_name, MLProcessInfo& info)
 {
     bool success;
     QVariantMap clp = resolve_file_names_in_inputs(MLP, clp_in, &success);
@@ -454,6 +458,8 @@ int launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVariant
     remove_output_files(MLP, clp);
 
     qDebug().noquote() << QString("RUNNING %1: " + exe_command).arg(MLP.name);
+    info.exe_command = exe_command;
+    info.start_time = QDateTime::currentDateTime();
     QProcess qprocess;
     if (!run_command_as_bash_script(&qprocess, exe_command, monitor_file_name)) {
         return -1;
@@ -464,6 +470,7 @@ int launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVariant
     PRM.setCLP(clp);
     QTime timer0;
     timer0.start();
+    bool terminated = false;
     while (1) {
         qprocess.waitForFinished(200);
         QString str = qprocess.readAll();
@@ -478,22 +485,31 @@ int launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVariant
                 qprocess.terminate();
                 if (qprocess.state() == QProcess::Running)
                     qprocess.kill();
-                if (!monitor_file_name.isEmpty())
-                    QFile::remove(monitor_file_name);
-                return -1;
+                terminated = true;
+                break;
             }
         }
     }
+    info.finish_time = QDateTime::currentDateTime();
+    info.exit_code = qprocess.exitCode();
+    if (terminated)
+        info.exit_code = -1;
+    info.parameters = clp;
+    info.processor_name = MLP.name;
     if (!monitor_file_name.isEmpty()) {
         if (QFile::exists(monitor_file_name)) {
-            qCWarning(MP).noquote() << "Unexpected: Monitor file still exists! Removing: " + monitor_file_name;
+            if (!terminated)
+                qCWarning(MP).noquote() << "Unexpected: Monitor file still exists! Removing: " + monitor_file_name;
             if (!QFile::remove(monitor_file_name)) {
                 qCWarning(MP).noquote() << "Unexpected: Unable to remove monitor file: " + monitor_file_name;
             }
         }
     }
 
-    return qprocess.exitCode();
+    if (terminated)
+        return -1;
+    else
+        return qprocess.exitCode();
 }
 
 bool all_input_and_output_files_exist(MLProcessor P, const QVariantMap& parameters, bool verbose)
@@ -814,4 +830,21 @@ QString wait_until_ready_to_run(const MLProcessor& MLP, const QMap<QString, QVar
     }
 
     return monitor_file_name;
+}
+
+void write_process_output_file(QString fname, const MLProcessInfo& info)
+{
+    QJsonObject obj; //the output info to be saved
+    obj["exe_command"] = info.exe_command;
+    obj["exit_code"] = info.exit_code;
+    obj["parameters"] = QJsonObject::fromVariantMap(info.parameters);
+    obj["processor_name"] = info.processor_name;
+    obj["success"] = (info.exit_code == 0);
+    obj["error"] = "";
+    if (info.exit_code != 0)
+        obj["error"] = QString("Non-zero exit code (%1) for %2").arg(info.exit_code).arg(info.processor_name);
+    obj["start_time"] = info.start_time.toString("yyyy-MM-dd:hh-mm-ss.zzz");
+    obj["finish_time"] = info.finish_time.toString("yyyy-MM-dd:hh-mm-ss.zzz");
+    QString json = QJsonDocument(obj).toJson();
+    TextFile::write(fname, json);
 }

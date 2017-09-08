@@ -61,7 +61,8 @@ QJsonObject get_spec()
     */
     {
         ProcessorSpec X("mountainsort.mountainsort3", "0.14");
-        X.addInputs("timeseries", "geom");
+        X.addInputs("timeseries");
+        X.addOptionalInputs("geom");
         X.addOutputs("firings_out");
         X.addOptionalParameter("adjacency_radius", "", 0);
         X.addOptionalParameter("consolidate_clusters", "", "true");

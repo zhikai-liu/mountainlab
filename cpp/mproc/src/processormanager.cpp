@@ -180,7 +180,7 @@ bool ProcessorManager::checkParameters(const QString& processor_name, const QVar
         QStringList keys = P.inputs.keys();
         foreach (QString key, keys) {
             if (!P.inputs[key].optional) {
-                if (!parameters.contains(key)) {
+                if (MLUtil::toStringList(parameters[key]).isEmpty()) {
                     qCWarning(MPM) << QString("checkProcess for %1: Missing input: %2").arg(processor_name).arg(key);
                     return false;
                 }
@@ -190,8 +190,8 @@ bool ProcessorManager::checkParameters(const QString& processor_name, const QVar
     {
         QStringList keys = P.outputs.keys();
         foreach (QString key, keys) {
-            if (!parameters.contains(key)) {
-                if (!P.outputs[key].optional) {
+            if (!P.outputs[key].optional) {
+                if (MLUtil::toStringList(parameters[key]).isEmpty()) {
                     qCWarning(MPM) << QString("checkProcess for %1: Missing required output: %2").arg(processor_name).arg(key);
                     return false;
                 }

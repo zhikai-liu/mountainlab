@@ -1104,7 +1104,8 @@ QStringList MLUtil::toStringList(const QVariant& val)
         ret = val.toStringList();
     }
     else {
-        ret << val.toString();
+        if (!val.toString().isEmpty())
+            ret << val.toString();
     }
     return ret;
 }
