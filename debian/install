@@ -2,6 +2,4 @@ packages/mountainsort2/bin/ /opt/mountainlab/packages/mountainsort2/
 packages/mountainsort2/algs/ /opt/mountainlab/packages/mountainsort2/
 packages/mountainsort3/bin/ /opt/mountainlab/packages/mountainsort3/
 packages/mountainsort3/algs/ /opt/mountainlab/packages/mountainsort3/
-bin/m* /opt/mountainlab/bin/
-bin/prv-* /opt/mountainlab/bin/
 kron/* /opt/mountainlab/bin/
