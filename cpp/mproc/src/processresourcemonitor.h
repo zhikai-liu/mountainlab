@@ -13,7 +13,7 @@ public:
     void setProcessor(const MLProcessor& MLP);
     void setCLP(const QVariantMap& clp);
 
-    bool withinLimits();
+    bool withinLimits(QString *errstr);
 
 private:
     ProcessResourceMonitorPrivate* d;

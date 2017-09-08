@@ -85,7 +85,7 @@ Limits get_limits_from_clp(const QVariantMap& clp)
     return ret;
 }
 
-bool ProcessResourceMonitor::withinLimits()
+bool ProcessResourceMonitor::withinLimits(QString *errstr)
 {
     if (!d->m_qprocess)
         return true;
@@ -96,19 +96,23 @@ bool ProcessResourceMonitor::withinLimits()
         ProcStat PC = get_proc_stat(d->m_qprocess->processId());
         //d->m_peak_ram_usage_gb=qMax(d->m_peak_ram_usage).arg(PC.rss/1e6);
         if ((L.max_ram_gb) && (PC.rss / 1e6 > L.max_ram_gb)) {
-            qCWarning(PRM) << QString("Process RAM exceeds limit: %1 > %2 GB").arg(PC.rss / 1e6).arg(L.max_ram_gb);
+            *errstr =QString("Process RAM exceeds limit: %1 > %2 GB").arg(PC.rss / 1e6).arg(L.max_ram_gb);
+            qCWarning(PRM) << *errstr;
             return false;
         }
         else if ((L.max_etime_sec) && (PC.etime > L.max_etime_sec)) {
-            qCWarning(PRM) << QString("Elapsed time exceeds limit: %1 > %2 sec").arg(PC.etime).arg(L.max_etime_sec);
+            *errstr = QString("Elapsed time exceeds limit: %1 > %2 sec").arg(PC.etime).arg(L.max_etime_sec);
+            qCWarning(PRM) << *errstr;
             return false;
         }
         else if ((L.max_cputime_sec) && (PC.cputime > L.max_cputime_sec)) {
-            qCWarning(PRM) << QString("Elapsed cpu time exceeds limit: %1 > %2 sec").arg(PC.cputime).arg(L.max_cputime_sec);
+            *errstr = QString("Elapsed cpu time exceeds limit: %1 > %2 sec").arg(PC.cputime).arg(L.max_cputime_sec);
+            qCWarning(PRM) << *errstr;
             return false;
         }
         else if ((L.max_cpu_pct) && (PC.cpu_pct > L.max_cpu_pct + cpu_pct_tolerance)) {
-            qCWarning(PRM) << QString("CPU usage exceeds limit: %1% > %2%").arg(PC.cpu_pct).arg(L.max_cpu_pct);
+            *errstr = QString("CPU usage exceeds limit: %1% > %2%").arg(PC.cpu_pct).arg(L.max_cpu_pct);
+            qCWarning(PRM) << *errstr;
             return false;
         }
     }
