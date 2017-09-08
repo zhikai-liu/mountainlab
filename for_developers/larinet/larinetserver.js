@@ -240,7 +240,7 @@ function QueuedJob(hopts) {
 	function cancel(callback) {
 		console.log('cancel');
 		if (m_ppp) {
-			console.log ('Canceling process: '+m_pid.pid);
+			console.log ('Canceling process: '+m_ppp.pid);
 			m_ppp.stdout.pause();
 			m_ppp.kill('SIGKILL');
 			if (callback) callback({success:true});
