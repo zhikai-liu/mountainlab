@@ -55,3 +55,5 @@ bin
 *.m~
 *.tmp
 *.user.json
+
+node_modules
