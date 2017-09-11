@@ -164,7 +164,7 @@ MLProcessor ProcessorManager::processor(const QString& name)
     return d->m_processors.value(name);
 }
 
-bool ProcessorManager::checkParameters(const QString& processor_name, const QVariantMap& parameters, QString *errstr)
+bool ProcessorManager::checkParameters(const QString& processor_name, const QVariantMap& parameters, QString* errstr)
 {
     if (processor_name.isEmpty()) {
         qCWarning(MPM) << "checkProcess: processor name is empty.";

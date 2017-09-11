@@ -12,7 +12,7 @@ struct MLProcessInfo {
     QString processor_name;
     QVariantMap parameters;
     QString exe_command;
-    int exit_code=0;
+    int exit_code = 0;
     QString error;
     QString console_output;
 };

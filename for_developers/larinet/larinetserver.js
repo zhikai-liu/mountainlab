@@ -77,7 +77,7 @@ function QueuedJob(hopts) {
 		if (m_ppp) {
 			console.log ('Canceling process: '+m_ppp.pid);
 			m_ppp.stdout.pause();
-			m_ppp.kill('SIGKILL');
+			m_ppp.kill('SIGTERM');
 			if (callback) callback({success:true});
 		}
 		else {
@@ -88,6 +88,7 @@ function QueuedJob(hopts) {
 		if (m_is_complete) return;
 		var timeout=20000;
 		var elapsed_since_keep_alive=that.elapsedSinceKeepAlive();
+		console.log('##################### '+elapsed_since_keep_alive);
 		if (elapsed_since_keep_alive>timeout) {
 			console.log ('Canceling process due to keep-alive timeout');
 			cancel();
@@ -110,7 +111,7 @@ function QueuedJob(hopts) {
 	}
 }
 
-function larinetserver(req,callback,hopts) {
+function larinetserver(req,onclose,callback,hopts) {
 	var action=req.a||'';
 	if (!action) {
 		callback({success:false,error:'Empty action.'});
@@ -118,7 +119,7 @@ function larinetserver(req,callback,hopts) {
 	}
 
 	if (action=='prv-locate') {
-		prv_locate(req,function(resp) {
+		prv_locate(req,onclose,function(resp) {
 			callback(resp);
 		});
 	}
@@ -146,23 +147,35 @@ function larinetserver(req,callback,hopts) {
 		callback({success:false,error:'Unexpected action: '+action});
 	}
 
-	function prv_locate(query,callback) {
+	function prv_locate(query,onclose,callback) {
 		if ((!query.checksum)||(!query.size)||(!('fcs' in query))) {
-			callback({success:false,error:"Invalid query."});	
+			if (callback) {
+				callback({success:false,error:"Invalid query."});	
+				callback=null;
+			}
 			return;
 		}
-		run_process_and_read_stdout(hopts.prv_exe,['locate','--search_path='+hopts.data_directory,'--checksum='+query.checksum,'--size='+query.size,'--fcs='+(query.fcs||'')],function(txt) {
+		var ppp=run_process_and_read_stdout(hopts.prv_exe,['locate','--search_path='+hopts.data_directory,'--checksum='+query.checksum,'--size='+query.size,'--fcs='+(query.fcs||'')],function(txt) {
 			txt=txt.trim();
 			if (!starts_with(txt,hopts.data_directory+'/')) {
-				callback({success:true,found:false});
+				if (callback) callback({success:true,found:false});
+				callback=null;
 				return;
 			}
 			txt=txt.slice(hopts.data_directory.length+1);
 			var resp={success:true,found:true,path:txt};
 			if (hopts.download_base_url)
 				resp.url=hopts.download_base_url+'/'+resp.path;
-			callback(resp);
-		});	
+			if (callback) callback(resp);
+			callback=null;
+		});
+		onclose(function() {
+			console.log ('Ending prv-locate command...');
+			ppp.stdout.pause();
+			ppp.kill('SIGKILL');
+			if (callback) callback({success:false,error:'Ended prv-locate command'});
+			callback=null;
+		});
 	}
 	function prv_upload(query,callback) {
 		if (!query.size) {
@@ -299,14 +312,12 @@ exports.RequestHandler=function(hopts) {
 		}
 		else if (REQ.method=='GET') {
 			console.log ('GET: '+REQ.url);
-			/*
 			var onclose0=function(to_run_on_close) {
 				REQ.on('close',function() {
 					to_run_on_close();
 				});
 			}
-			*/
-			larinetserver(query/*,onclose0*/,function(resp) {
+			larinetserver(query,onclose0,function(resp) {
 				if (resp) send_json_response(resp);
 			},hopts);
 		}
@@ -318,13 +329,12 @@ exports.RequestHandler=function(hopts) {
 					send_json_response({success:false,error:err});
 					return;
 				}
-				/*
 				var onclose0=function(to_run_on_close) {
 					REQ.on('close',function() {
 						to_run_on_close();
 					});
-				}*/
-				larinetserver(obj,/*onclose0,*/function(resp) {
+				}
+				larinetserver(obj,onclose0,function(resp) {
 					if (resp) send_json_response(resp);
 				},hopts);
 			});

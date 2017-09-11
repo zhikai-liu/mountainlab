@@ -9,7 +9,7 @@ class ProcessResourceMonitorPrivate {
 public:
     ProcessResourceMonitor* q;
 
-    QProcess* m_qprocess = 0;
+    int m_pid = 0;
     MLProcessor m_processor;
     QVariantMap m_clp;
 };
@@ -25,9 +25,9 @@ ProcessResourceMonitor::~ProcessResourceMonitor()
     delete d;
 }
 
-void ProcessResourceMonitor::setQProcess(QProcess* qprocess)
+void ProcessResourceMonitor::setPid(int pid)
 {
-    d->m_qprocess = qprocess;
+    d->m_pid = pid;
 }
 
 void ProcessResourceMonitor::setProcessor(const MLProcessor& MLP)
@@ -85,18 +85,18 @@ Limits get_limits_from_clp(const QVariantMap& clp)
     return ret;
 }
 
-bool ProcessResourceMonitor::withinLimits(QString *errstr)
+bool ProcessResourceMonitor::withinLimits(QString* errstr)
 {
-    if (!d->m_qprocess)
+    if (!d->m_pid)
         return true;
     Limits L = get_limits_from_clp(d->m_clp);
 
     if ((L.max_ram_gb > 0) || (L.max_etime_sec > 0) || (L.max_cputime_sec > 0) || (L.max_cpu_pct > 0)) {
         double cpu_pct_tolerance = 20;
-        ProcStat PC = get_proc_stat(d->m_qprocess->processId());
+        ProcStat PC = get_proc_stat(d->m_pid);
         //d->m_peak_ram_usage_gb=qMax(d->m_peak_ram_usage).arg(PC.rss/1e6);
         if ((L.max_ram_gb) && (PC.rss / 1e6 > L.max_ram_gb)) {
-            *errstr =QString("Process RAM exceeds limit: %1 > %2 GB").arg(PC.rss / 1e6).arg(L.max_ram_gb);
+            *errstr = QString("Process RAM exceeds limit: %1 > %2 GB").arg(PC.rss / 1e6).arg(L.max_ram_gb);
             qCWarning(PRM) << *errstr;
             return false;
         }

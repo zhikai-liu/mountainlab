@@ -47,7 +47,7 @@ public:
     QStringList processorNames() const;
     MLProcessor processor(const QString& name);
 
-    bool checkParameters(const QString& processor_name, const QVariantMap& parameters, QString *errstr);
+    bool checkParameters(const QString& processor_name, const QVariantMap& parameters, QString* errstr);
     void setDefaultParameters(const QString& processor_name, QVariantMap& parameters);
 
 private:

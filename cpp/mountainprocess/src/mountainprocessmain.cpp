@@ -168,9 +168,6 @@ int main(int argc, char* argv[])
 
     //bool detach_mode = CLP.named_parameters.contains("_detach");
 
-    MLLogMaster LM;
-    LM.install();
-
     // If _working_path is specified then we change the current directory
     QString working_path = CLP.named_parameters.value("_working_path").toString();
     if (working_path.isEmpty())

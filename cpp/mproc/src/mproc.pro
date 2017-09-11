@@ -12,10 +12,12 @@ TEMPLATE = app
 
 HEADERS += mprocmain.h \
     processormanager.h \
-    processresourcemonitor.h
+    processresourcemonitor.h \
+    handle_request.h mllogmaster.h
 SOURCES += mprocmain.cpp \
     processormanager.cpp \
-    processresourcemonitor.cpp
+    processresourcemonitor.cpp \
+    handle_request.cpp mllogmaster.cpp
 
 EXTRA_INSTALLS = # (clear it out) used by installbin.pri
 EXTRA_INSTALLS += "$$PWD/../bin_extra/*"

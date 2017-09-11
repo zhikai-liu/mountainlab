@@ -13,7 +13,7 @@ if (!('download_base_url' in config)) {
 }
 var download_base_url=config.download_base_url||'';
 var prv_exe=__dirname+'/../../bin/prv';
-var mp_exe=__dirname+'/../../bin/mountainprocess';
+var mp_exe=__dirname+'/../../bin/mproc';
 
 if (!data_directory) {
 	console.log ('problem: data_directory is empty.');

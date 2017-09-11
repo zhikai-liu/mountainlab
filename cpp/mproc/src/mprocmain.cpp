@@ -1,3 +1,4 @@
+#include "mllogmaster.h"
 #include "mprocmain.h"
 #include "processormanager.h"
 #include "processresourcemonitor.h"
@@ -12,22 +13,29 @@
 #include <QJsonArray>
 #include <QCryptographicHash>
 #include "cachemanager.h"
+#include "handle_request.h"
+#include "mllogmaster.h"
 
 #include "signal.h"
 #include <unistd.h>
 
 Q_LOGGING_CATEGORY(MP, "mproc.main")
 
+bool initialize_processor_manager(ProcessorManager& PM, QString* error_str);
+
 int main(int argc, char* argv[])
 {
     QCoreApplication app(argc, argv);
     CLParams CLP(argc, argv);
 
-    ObjectRegistry registry;
+    MLLogMaster LM;
+    LM.install();
+
+    //ObjectRegistry registry;
 
     //The qprocess manager (very different from the ProcessManager!)
-    QProcessManager* qprocessManager = new QProcessManager;
-    registry.addAutoReleasedObject(qprocessManager);
+    //QProcessManager* qprocessManager = new QProcessManager;
+    //registry.addAutoReleasedObject(qprocessManager);
     signal(SIGINT, sig_handler);
     signal(SIGKILL, sig_handler);
     signal(SIGTERM, sig_handler);
@@ -65,9 +73,9 @@ int main(int argc, char* argv[])
     }
     else if ((arg1 == "exec") || (arg1 == "run") || (arg1 == "queue")) {
         CacheManager::globalInstance()->removeExpiredFiles();
-        return exec_run_or_queue(arg1, arg2, CLP.named_parameters);
+        int ret = exec_run_or_queue(arg1, arg2, CLP.named_parameters);
+        return ret;
     }
-    /*
     else if (arg1 == "handle-request") {
         QString request_fname = arg2;
         QString response_fname = arg3;
@@ -91,11 +99,13 @@ int main(int argc, char* argv[])
                 response["error"] = "Error parsing request json.";
             }
             else {
-                if (!initialize_process_manager()) { // load the processor plugins etc
-                    response["error"] = "Failed to initialize process manager.";
+                ProcessorManager PM;
+                QString errstr;
+                if (!initialize_processor_manager(PM, &errstr)) {
+                    response["error"] = "Failed to initialize process manager: " + errstr;
                 }
                 else {
-                    response = handle_request(request, prvbucket_path);
+                    response = handle_request(request, prvbucket_path, &PM);
                 }
             }
         }
@@ -112,7 +122,6 @@ int main(int argc, char* argv[])
             return 0;
         }
     }
-    */
     else {
         print_usage(); //print usage information
         return -1;
@@ -123,12 +132,15 @@ int main(int argc, char* argv[])
 
 void sig_handler(int signum)
 {
+    set_terminate_requested(true);
+    /*
     (void)signum;
     QProcessManager* manager = ObjectRegistry::getObject<QProcessManager>();
     if (manager) {
         manager->closeAll();
     }
     abort();
+    */
 }
 
 void print_usage()
@@ -141,7 +153,7 @@ void print_usage()
     printf("mproc spec [processor_name]\n");
 }
 
-bool initialize_processor_manager(ProcessorManager& PM,QString *error_str)
+bool initialize_processor_manager(ProcessorManager& PM, QString* error_str)
 {
     // Load the processor paths
     QStringList processor_paths = MLUtil::configResolvedPathList("mountainprocess", "processor_paths");
@@ -184,7 +196,7 @@ bool spec(QString arg2)
     qInstallMessageHandler(silent_message_output);
     ProcessorManager PM;
     QString errstr;
-    if (!initialize_processor_manager(PM,&errstr)) {
+    if (!initialize_processor_manager(PM, &errstr)) {
         return false;
     }
     if (!arg2.isEmpty()) {
@@ -207,8 +219,9 @@ bool spec(QString arg2)
     return true;
 }
 
-void finalize(QString arg1, const MLProcessor &MLP, const QMap<QString, QVariant>& clp, const MLProcessInfo &info) {
-    if (((arg1 == "run") || (arg1 == "queue"))&&(info.exit_code==0)) {
+void finalize(QString arg1, const MLProcessor& MLP, const QMap<QString, QVariant>& clp, const MLProcessInfo& info)
+{
+    if (((arg1 == "run") || (arg1 == "queue")) && (info.exit_code == 0)) {
         record_completed_process(MLP, clp);
     }
 
@@ -225,36 +238,34 @@ int exec_run_or_queue(QString arg1, QString arg2, const QMap<QString, QVariant>&
     ProcessorManager PM;
     QString error_str;
     MLProcessor MLP;
-    if (!initialize_processor_manager(PM,&error_str)) {
-        info.exit_code=-1;
-        info.error=error_str;
-        finalize(arg1,MLP,clp,info);
+    if (!initialize_processor_manager(PM, &error_str)) {
+        info.exit_code = -1;
+        info.error = error_str;
+        finalize(arg1, MLP, clp, info);
         return info.exit_code;
     }
     MLP = PM.processor(processor_name);
     if (MLP.name != processor_name) {
-        info.exit_code=-1;
-        info.error="Unable to find processor: " + processor_name;;
-        finalize(arg1,MLP,clp,info);
+        info.exit_code = -1;
+        info.error = "Unable to find processor: " + processor_name;
+        ;
+        finalize(arg1, MLP, clp, info);
         return info.exit_code;
     }
 
     if (!PM.checkParameters(processor_name, clp, &error_str)) {
-        info.exit_code=-1;
-        info.error=error_str;
-        finalize(arg1,MLP,clp,info);
+        info.exit_code = -1;
+        info.error = error_str;
+        finalize(arg1, MLP, clp, info);
         return info.exit_code;
     }
-
-
-
 
     bool force_run = clp.contains("_force_run");
     if (((arg1 == "run") || (arg1 == "queue")) && (!force_run)) {
         if (process_already_completed(MLP, clp)) {
             qDebug().noquote() << "Process already completed: " + processor_name;
-            info.exit_code=0;
-            finalize(arg1,MLP,clp,info);
+            info.exit_code = 0;
+            finalize(arg1, MLP, clp, info);
             return info.exit_code;
         }
     }
@@ -265,21 +276,21 @@ int exec_run_or_queue(QString arg1, QString arg2, const QMap<QString, QVariant>&
         monitor_file_name = wait_until_ready_to_run(MLP, clp, &already_completed);
         if (already_completed) {
             qDebug().noquote() << "Process already completed: " + processor_name;
-            info.exit_code=0;
-            finalize(arg1,MLP,clp,info);
+            info.exit_code = 0;
+            finalize(arg1, MLP, clp, info);
             return info.exit_code;
         }
         if (monitor_file_name.isEmpty()) {
             qDebug().noquote() << "Process ended by system: " + processor_name;
-            info.exit_code=-1;
-            info.error="Process ended by system: " + processor_name;
-            finalize(arg1,MLP,clp,info);
+            info.exit_code = -1;
+            info.error = "Process ended by system: " + processor_name;
+            finalize(arg1, MLP, clp, info);
             return info.exit_code;
         }
     }
     else {
-        monitor_file_name = CacheManager::globalInstance()->makeLocalFile("monitor_file_"+MLUtil::makeRandomId()+".json");
-        TextFile::write(monitor_file_name,"dummy");
+        monitor_file_name = CacheManager::globalInstance()->makeLocalFile("monitor_file_" + MLUtil::makeRandomId() + ".json");
+        TextFile::write(monitor_file_name, "dummy");
     }
 
     {
@@ -289,13 +300,13 @@ int exec_run_or_queue(QString arg1, QString arg2, const QMap<QString, QVariant>&
         double elapsed_sec = timer.elapsed() * 1.0 / 1000;
         if (info.exit_code == 0) {
             qDebug().noquote() << QString("Process completed successfully: %1 (Elapsed: %2 sec)").arg(processor_name).arg(elapsed_sec);
-            finalize(arg1,MLP,clp,info);
+            finalize(arg1, MLP, clp, info);
             return info.exit_code;
         }
         else {
             qCWarning(MP).noquote() << info.error;
             qCWarning(MP).noquote() << QString("Process returned with non-zero exit code (%1): %2 (Elapsed: %3 sec)").arg(info.exit_code).arg(processor_name).arg(elapsed_sec);
-            finalize(arg1,MLP,clp,info);
+            finalize(arg1, MLP, clp, info);
             return info.exit_code;
         }
     }
@@ -332,7 +343,7 @@ QString resolve_file_name_prv(QString fname)
         return fname;
 }
 
-QVariantMap resolve_file_names_in_inputs(const MLProcessor& MLP, const QVariantMap& parameters_in, bool* success, QString *errstr)
+QVariantMap resolve_file_names_in_inputs(const MLProcessor& MLP, const QVariantMap& parameters_in, bool* success, QString* errstr)
 {
     (*success) = true;
     QVariantMap parameters = parameters_in;
@@ -343,7 +354,7 @@ QVariantMap resolve_file_names_in_inputs(const MLProcessor& MLP, const QVariantM
             parameters[P.name] = resolve_file_name_prv(list[0]);
             if ((!list[0].isEmpty()) && (parameters[P.name].toString().isEmpty())) {
                 (*success) = false;
-                *errstr = "Error resolving prv: "+list[0];
+                *errstr = "Error resolving prv: " + list[0];
                 return QVariantMap();
             }
         }
@@ -353,7 +364,7 @@ QVariantMap resolve_file_names_in_inputs(const MLProcessor& MLP, const QVariantM
                 QString str2 = resolve_file_name_prv(str);
                 if ((!str.isEmpty()) && (str2.isEmpty())) {
                     (*success) = false;
-                    *errstr = "Error resolving prv: "+str;
+                    *errstr = "Error resolving prv: " + str;
                     return QVariantMap();
                 }
                 list2 << str2;
@@ -376,56 +387,6 @@ void set_defaults_for_optional_parameters(const MLProcessor& MLP, QVariantMap& p
     }
 }
 
-bool run_command_as_bash_script(QProcess* qprocess, const QString& exe_command, QString monitor_file_name)
-{
-    QString bash_script_fname = CacheManager::globalInstance()->makeLocalFile();
-
-    int this_pid = QCoreApplication::applicationPid();
-
-    QString cleanup_cmd = "";
-    if (!monitor_file_name.isEmpty()) {
-        cleanup_cmd = "rm " + monitor_file_name;
-    }
-
-    QString script;
-    script += QString("#!/bin/bash\n\n");
-    script += QString(exe_command + " &\n"); //run the command
-    script += QString("cmdpid=$!\n"); //get the pid of the exe_command
-    script += QString("trap \"kill $cmdpid; %1; exit 255;\" SIGINT SIGTERM\n").arg(cleanup_cmd); //capture the terminate signal and pass it on
-    script += QString("while kill -0 %1 >/dev/null 2>&1; do\n").arg(this_pid); //while the (parent) pid still exists
-    script += QString("    if kill -0 $cmdpid > /dev/null 2>&1; then\n");
-    script += QString("        sleep 1;\n"); //we are still going
-    if (!monitor_file_name.isEmpty()) {
-        script += QString("        touch %1;\n").arg(monitor_file_name); //touch the monitor file
-        script += QString("        if [ -e \"%1.stop\" ]; then\n").arg(monitor_file_name);
-        script += QString("          kill $cmdpid\n"); //if a stop file exists, then kill the process
-        script += QString("        fi\n");
-    }
-    script += QString("    else\n"); //else the exe process is done
-    script += QString("        wait $cmdpid\n"); //get the return code for the process that has already completed
-    if (!cleanup_cmd.isEmpty()) {
-        script += QString("        %1\n").arg(cleanup_cmd);
-    }
-    script += QString("        exit $?\n");
-    script += QString("    fi\n");
-    script += QString("done ;\n");
-    script += QString("kill $cmdpid\n"); //the parent pid is gone
-    if (!cleanup_cmd.isEmpty()) {
-        script += QString("%1\n").arg(cleanup_cmd);
-    }
-    script += QString("exit 255\n"); //return error exit code
-
-    TextFile::write(bash_script_fname, script);
-    qprocess->start("/bin/bash", QStringList(bash_script_fname));
-    if (!qprocess->waitForStarted(2000)) {
-        qCWarning(MP).noquote() << "Error starting process script for: " + exe_command;
-        QFile::remove(bash_script_fname);
-        return false;
-    }
-    CacheManager::globalInstance()->setTemporaryFileExpirePid(bash_script_fname, qprocess->processId());
-    return true;
-}
-
 void remove_output_files(const MLProcessor& MLP, const QMap<QString, QVariant>& clp)
 {
     QStringList okeys = MLP.outputs.keys();
@@ -437,13 +398,13 @@ void remove_output_files(const MLProcessor& MLP, const QMap<QString, QVariant>& 
 }
 
 void launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVariant>& clp_in, QString monitor_file_name, MLProcessInfo& info)
-{   
+{
     bool success;
     QString errstr;
     QVariantMap clp = resolve_file_names_in_inputs(MLP, clp_in, &success, &errstr);
     if (!success) {
-        info.exit_code=-1;
-        info.error=errstr;
+        info.exit_code = -1;
+        info.error = errstr;
         return;
     }
 
@@ -454,8 +415,8 @@ void launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVarian
     MLUtil::mkdirIfNeeded(tempdir);
     if (!QFile::exists(tempdir)) {
         qCWarning(MP) << "Error creating temporary directory for process: " + tempdir;
-        info.exit_code=-1;
-        info.error="Error creating temporary directory for process: " + tempdir;
+        info.exit_code = -1;
+        info.error = "Error creating temporary directory for process: " + tempdir;
         return;
     }
 
@@ -507,43 +468,61 @@ void launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVarian
     info.exe_command = exe_command;
     info.start_time = QDateTime::currentDateTime();
     QProcess qprocess;
-    if (!run_command_as_bash_script(&qprocess, exe_command, monitor_file_name)) {
-        info.exit_code=-1;
-        info.error="Unexpected error running command as bash script.";
+    qprocess.setProcessChannelMode(QProcess::MergedChannels);
+    qprocess.start(exe_command);
+    if (!qprocess.waitForStarted(2000)) {
+        info.exit_code = -1;
+        info.error = "Problem starting: " + exe_command;
         return;
     }
+    qint64 pid = qprocess.pid();
     ProcessResourceMonitor PRM;
-    PRM.setQProcess(&qprocess);
+    PRM.setPid(pid);
     PRM.setProcessor(MLP);
     PRM.setCLP(clp);
     QTime timer0;
     timer0.start();
     bool terminated = false;
     while (1) {
-        qprocess.waitForFinished(200);
+        qprocess.waitForFinished(10);
+        if (terminate_requested()) {
+            info.error = "Terminate requested";
+            info.exit_code = -1;
+            qprocess.terminate();
+            qprocess.kill();
+            terminated = true;
+            break;
+        }
         QString str = qprocess.readAll();
         if (!str.isEmpty()) {
             qDebug().noquote() << str;
-            info.console_output+=str;
+            info.console_output += str;
         }
-        if (qprocess.state() == QProcess::NotRunning) {
+        if (qprocess.state() != QProcess::Running) {
             break;
         }
         if (timer0.elapsed() > 1000) {
             QString errstr;
             if (!PRM.withinLimits(&errstr)) {
-                /*
+                info.error = errstr;
+                info.exit_code = -1;
                 qprocess.terminate();
-                if (qprocess.state() == QProcess::Running)
-                    qprocess.kill();
-                    */
-                info.error=errstr;
-                info.exit_code=-1;
-                QString stop_fname=monitor_file_name+".stop";
-                TextFile::write(stop_fname,"stop, please");
-                CacheManager::globalInstance()->setTemporaryFileExpirePid(stop_fname,QCoreApplication::applicationPid());
+                qprocess.kill();
                 terminated = true;
+                break;
             }
+            else if (QFile::exists(monitor_file_name + ".stop")) {
+                info.error = "Found .stop file";
+                info.exit_code = -1;
+                qprocess.terminate();
+                qprocess.kill();
+                terminated = true;
+                break;
+            }
+            else {
+                touch(monitor_file_name);
+            }
+            timer0.restart();
         }
     }
     info.finish_time = QDateTime::currentDateTime();
@@ -700,17 +679,6 @@ QJsonObject compute_unique_process_object(MLProcessor P, const QVariantMap& para
     return obj;
 }
 
-QString compute_unique_object_code(QJsonObject obj)
-{
-    /// Witold I need a string that depends on the json object. However I am worried about the order of the fields. Is there a way to make this canonical?
-    /// Jeremy: You can sort all keys in the dictionary, convert that to string and
-    ///         calculate hash of that. However this is going to be CPU consuming
-    QByteArray json = QJsonDocument(obj).toJson();
-    QCryptographicHash hash(QCryptographicHash::Sha1);
-    hash.addData(json);
-    return QString(hash.result().toHex());
-}
-
 bool process_already_completed(const MLProcessor& MLP, const QMap<QString, QVariant>& clp)
 {
     if (!all_input_and_output_files_exist(MLP, clp, false))
@@ -750,17 +718,6 @@ void record_completed_process(const MLProcessor& MLP, const QMap<QString, QVaria
             qCWarning(MP).noquote() << "Unexpected problem in record_completed_process: unable to write file: " + path1;
         }
     }
-}
-
-void sleep_msec(int msec)
-{
-    int microseconds = msec * 1000;
-    usleep(microseconds);
-}
-
-void touch(const QString& filePath)
-{
-    QProcess::execute("touch", QStringList(filePath));
 }
 
 void remove_stale_monitor_files(QString path)

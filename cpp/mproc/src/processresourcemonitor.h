@@ -9,11 +9,11 @@ public:
     friend class ProcessResourceMonitorPrivate;
     ProcessResourceMonitor();
     virtual ~ProcessResourceMonitor();
-    void setQProcess(QProcess* qprocess);
+    void setPid(int pid);
     void setProcessor(const MLProcessor& MLP);
     void setCLP(const QVariantMap& clp);
 
-    bool withinLimits(QString *errstr);
+    bool withinLimits(QString* errstr);
 
 private:
     ProcessResourceMonitorPrivate* d;
