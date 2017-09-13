@@ -1,6 +1,0 @@
-echo ""
-echo "Notice: I moved everything into the old/ directory."
-echo "You should switch to one of the mountainlab branches (for example 'git checkout ms3' or 'git checkout 2017_06'). See README.md."
-echo "The 2017_06 branch is a snapshot of the June 30th version. The ms3 branch is under development."
-echo "If you can, use ms3, or think about switching in the relatively near future."
-echo ""
