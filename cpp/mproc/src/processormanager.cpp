@@ -277,6 +277,12 @@ MLProcessor ProcessorManagerPrivate::create_processor_from_json_object(QJsonObje
         MLParameter param = create_parameter_from_json_object(outputs[i].toObject());
         P.outputs[param.name] = param;
     }
+    if (!P.outputs.contains("console_out")) {
+        MLParameter param;
+        param.name="console_out";
+        param.optional=true;
+        P.outputs["console_out"] = param;
+    }
 
     QJsonArray parameters = obj["parameters"].toArray();
     for (int i = 0; i < parameters.count(); i++) {

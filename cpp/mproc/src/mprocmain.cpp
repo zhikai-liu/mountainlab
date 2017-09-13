@@ -132,6 +132,7 @@ int main(int argc, char* argv[])
 
 void sig_handler(int signum)
 {
+    (void)signum;
     set_terminate_requested(true);
     /*
     (void)signum;
@@ -398,7 +399,7 @@ void remove_output_files(const MLProcessor& MLP, const QMap<QString, QVariant>& 
 }
 
 void launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVariant>& clp_in, QString monitor_file_name, MLProcessInfo& info)
-{
+{   
     bool success;
     QString errstr;
     QVariantMap clp = resolve_file_names_in_inputs(MLP, clp_in, &success, &errstr);
@@ -475,6 +476,18 @@ void launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVarian
         info.error = "Problem starting: " + exe_command;
         return;
     }
+
+    QString console_output_fname=clp.value("console_out").toString();
+    QFile confile;
+    if (!console_output_fname.isEmpty()) {
+        confile.setFileName(console_output_fname);
+        if (!confile.open(QIODevice::WriteOnly)) {
+            info.exit_code=-1;
+            info.error="Unable to open console output file: "+console_output_fname;
+            return;
+        }
+    }
+
     qint64 pid = qprocess.pid();
     ProcessResourceMonitor PRM;
     PRM.setPid(pid);
@@ -493,10 +506,13 @@ void launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVarian
             terminated = true;
             break;
         }
-        QString str = qprocess.readAll();
+        QByteArray str = qprocess.readAll();
         if (!str.isEmpty()) {
             qDebug().noquote() << str;
             info.console_output += str;
+            if (confile.isOpen()) {
+                confile.write(str);
+            }
         }
         if (qprocess.state() != QProcess::Running) {
             break;
@@ -525,6 +541,9 @@ void launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVarian
             timer0.restart();
         }
     }
+    if (confile.isOpen()) {
+        confile.close();
+    }
     info.finish_time = QDateTime::currentDateTime();
     if (!terminated)
         info.exit_code = qprocess.exitCode();
@@ -532,8 +551,8 @@ void launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVarian
     info.processor_name = MLP.name;
     if (!monitor_file_name.isEmpty()) {
         if (QFile::exists(monitor_file_name)) {
-            if (!terminated)
-                qCWarning(MP).noquote() << "Unexpected: Monitor file still exists! Removing: " + monitor_file_name;
+            //if (!terminated)
+            //    qCWarning(MP).noquote() << "Unexpected: Monitor file still exists! Removing: " + monitor_file_name;
             if (!QFile::remove(monitor_file_name)) {
                 qCWarning(MP).noquote() << "Unexpected: Unable to remove monitor file: " + monitor_file_name;
             }
