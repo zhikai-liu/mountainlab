@@ -1,7 +1,5 @@
 # MountainLab Spike Sorting Software
 
-Notice: We recently moved everything in the master branch into the old/ directory. You should switch to one of the working branches (for example 'git checkout ms3' or 'git checkout 2017_06'). See installation instructions. The 2017_06 branch is a snapshot of the June 30th version. The ms3 branch is under development. If you can, use ms3, or think about switching in the relatively near future.
-
 ## About
 
 MountainSort (a component of MountainLab) is spike sorting software developed by Jeremy Magland, Alex Barnett, and Leslie Greengard at the Center for Computational Biology, Flatiron Institute in close collaboration with Jason Chung and Loren Frank at UCSF department of Physiology. It is part of MountainLab, a general framework for data analysis and visualization.
@@ -12,25 +10,25 @@ The software comprises tools for processing electrophysiological recordings and 
 
 Contact the authors for information on the slack team for users and developers.
 
+## Installation
+
+[Installation instructions](old/doc/installation.md)
+
+## How to run spike sorting
+
+[The first sort](old/doc/the_first_sort.md)
+
 ## Working branches
 
 * [ms3](https://github.com/magland/mountainlab/tree/ms3) - development branch with the ms3 processing pipeline (preferred)
 
 * [2017_06 branch](https://github.com/magland/mountainlab/tree/2017_06) - snapshot with only critical bug fix updates
 
-## Installation
-
-[Installation instructions](old/doc/installation.md)
-
 ## Some demo videos
 
 * [Installation demo and introduction to Mountainlab](https://www.youtube.com/watch?v=P-WqvIvmx84) -- skip to the end of the video to see the example sort and the GUI. Also describes how the software is organized and some of its philosophy.
 
 * [Demo of additional WIP GUI for viewing very large datasets -- spikeview](https://www.youtube.com/watch?v=z1V1di8sQOI)
-
-## How to run spike sorting
-
-[The first sort](old/doc/the_first_sort.md)
 
 ## Tests
 
