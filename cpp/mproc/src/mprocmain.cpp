@@ -382,7 +382,7 @@ void set_defaults_for_optional_parameters(const MLProcessor& MLP, QVariantMap& p
     foreach (QString key, pkeys) {
         MLParameter pp = MLP.parameters[key];
         if (pp.optional) {
-            if ((!params.contains(key))||(params[key].toString().isEmpty()))
+            if ((!params.contains(key)) || (params[key].toString().isEmpty()))
                 params[key] = pp.default_value;
         }
     }
@@ -399,7 +399,7 @@ void remove_output_files(const MLProcessor& MLP, const QMap<QString, QVariant>& 
 }
 
 void launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVariant>& clp_in, QString monitor_file_name, MLProcessInfo& info)
-{   
+{
     bool success;
     QString errstr;
     QVariantMap clp = resolve_file_names_in_inputs(MLP, clp_in, &success, &errstr);
@@ -477,13 +477,13 @@ void launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVarian
         return;
     }
 
-    QString console_output_fname=clp.value("console_out").toString();
+    QString console_output_fname = clp.value("console_out").toString();
     QFile confile;
     if (!console_output_fname.isEmpty()) {
         confile.setFileName(console_output_fname);
         if (!confile.open(QIODevice::WriteOnly)) {
-            info.exit_code=-1;
-            info.error="Unable to open console output file: "+console_output_fname;
+            info.exit_code = -1;
+            info.error = "Unable to open console output file: " + console_output_fname;
             return;
         }
     }

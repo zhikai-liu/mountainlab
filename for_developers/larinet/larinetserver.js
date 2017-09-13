@@ -118,6 +118,8 @@ function larinetserver(req,onclose,callback,hopts) {
 		return;
 	}
 
+	console.log(JSON.stringify(req));
+
 	if (action=='prv-locate') {
 		prv_locate(req,onclose,function(resp) {
 			callback(resp);
@@ -245,15 +247,6 @@ function larinetserver(req,onclose,callback,hopts) {
 		callback(resp);
 		
 	}
-	function make_response_for_J(process_id,J) {
-		var resp={success:true};
-		resp.process_id=process_id;
-		resp.complete=J.isComplete();
-		if (J.isComplete())
-			resp.result=J.result();
-		callback(resp);
-	}
-
 	function cancel_process(query,callback) {
 		var process_id=query.process_id||'';
 		var J=m_job_manager.job(process_id);
@@ -261,7 +254,15 @@ function larinetserver(req,onclose,callback,hopts) {
 			callback({success:false,error:'Process id not found: '+process_id});
 			return;
 		}
-		J.cancel(callback);	
+		J.cancel(callback);
+	}
+	function make_response_for_J(process_id,J) {
+		var resp={success:true};
+		resp.process_id=process_id;
+		resp.complete=J.isComplete();
+		if (J.isComplete())
+			resp.result=J.result();
+		callback(resp);
 	}
 
 	function starts_with(str,substr) {

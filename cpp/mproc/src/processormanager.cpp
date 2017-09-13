@@ -279,8 +279,8 @@ MLProcessor ProcessorManagerPrivate::create_processor_from_json_object(QJsonObje
     }
     if (!P.outputs.contains("console_out")) {
         MLParameter param;
-        param.name="console_out";
-        param.optional=true;
+        param.name = "console_out";
+        param.optional = true;
         P.outputs["console_out"] = param;
     }
 

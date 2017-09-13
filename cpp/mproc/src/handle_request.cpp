@@ -129,8 +129,8 @@ QJsonObject handle_request_queue_process(QString processor_name, const QJsonObje
                 args << QString("--%1=%2").arg(key).arg(path0);
             }
             else if (inputs[key].isArray()) {
-                QJsonArray prv_object_list=inputs[key].toArray();
-                for (int aa=0; aa<prv_object_list.count(); aa++) {
+                QJsonArray prv_object_list = inputs[key].toArray();
+                for (int aa = 0; aa < prv_object_list.count(); aa++) {
                     QJsonObject prv_object = prv_object_list[aa].toObject();
                     QString path0 = locate_prv(prv_object);
                     if (path0.isEmpty()) {
