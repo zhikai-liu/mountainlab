@@ -10,6 +10,7 @@
 #include <QDir>
 #include <unistd.h>
 
+#include <QJsonArray>
 #include <QLoggingCategory>
 #include <QProcess>
 #include <QTime>
@@ -117,14 +118,34 @@ QJsonObject handle_request_queue_process(QString processor_name, const QJsonObje
 
     foreach (QString key, ikeys) {
         if (PP.inputs.contains(key)) {
-            QJsonObject prv_object = inputs[key].toObject();
-            QString path0 = locate_prv(prv_object);
-            if (path0.isEmpty()) {
+            if (inputs[key].isObject()) {
+                QJsonObject prv_object = inputs[key].toObject();
+                QString path0 = locate_prv(prv_object);
+                if (path0.isEmpty()) {
+                    response["success"] = false;
+                    response["error"] = QString("Unable to locate prv for key=%1. (original_path=%2,checksum=%3)").arg(key).arg(prv_object["original_path"].toString()).arg(prv_object["original_checksum"].toString());
+                    return response;
+                }
+                args << QString("--%1=%2").arg(key).arg(path0);
+            }
+            else if (inputs[key].isArray()) {
+                QJsonArray prv_object_list=inputs[key].toArray();
+                for (int aa=0; aa<prv_object_list.count(); aa++) {
+                    QJsonObject prv_object = prv_object_list[aa].toObject();
+                    QString path0 = locate_prv(prv_object);
+                    if (path0.isEmpty()) {
+                        response["success"] = false;
+                        response["error"] = QString("Unable to locate prv for key=%1. (original_path=%2,checksum=%3)").arg(key).arg(prv_object["original_path"].toString()).arg(prv_object["original_checksum"].toString());
+                        return response;
+                    }
+                    args << QString("--%1=%2").arg(key).arg(path0);
+                }
+            }
+            else {
                 response["success"] = false;
-                response["error"] = QString("Unable to locate prv for key=%1. (original_path=%2,checksum=%3)").arg(key).arg(prv_object["original_path"].toString()).arg(prv_object["original_checksum"].toString());
+                response["error"] = "Unexpected: Input is neither object nor array: " + key;
                 return response;
             }
-            args << QString("--%1=%2").arg(key).arg(path0);
         }
         else {
             response["success"] = false;
