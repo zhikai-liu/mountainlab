@@ -382,7 +382,7 @@ void set_defaults_for_optional_parameters(const MLProcessor& MLP, QVariantMap& p
     foreach (QString key, pkeys) {
         MLParameter pp = MLP.parameters[key];
         if (pp.optional) {
-            if (!params.contains(key))
+            if ((!params.contains(key))||(params[key].toString().isEmpty()))
                 params[key] = pp.default_value;
         }
     }
