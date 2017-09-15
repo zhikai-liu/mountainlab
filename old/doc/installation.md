@@ -118,3 +118,5 @@ We recommend installing this in your home directory, which does not require admi
 
 Once installed you will need to prepend the path to qmake to your PATH environment variable. On my system that is `/home/magland/Qt/5.7/gcc_64/bin`.
 You may instead do `sudo ln -s /home/magland/Qt/5.7/gcc_64/bin/qmake /usr/local/bin/qmake`.
+
+Anaconda users may need to un-export anaconda/miniconda path in order to make qt5 from the operating system available rather than the one supplied with anaconda. To do this, edit your ~/.bashrc file, comment out the export command containing anaconda or miniconda path, and open a new terminal. Make sure you are using your OS' installation by running ```which qmake``` 
