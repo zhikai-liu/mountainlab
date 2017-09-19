@@ -36,8 +36,8 @@ defineReplace(ifcomponent) {
   return("")
 }
 
-SUBDIRS += cpp/mlconfig/src/mlconfig.pro
 SUBDIRS += cpp/mlcommon/src/mlcommon.pro
+SUBDIRS += cpp/mlconfig/src/mlconfig.pro
 SUBDIRS += $$ifcomponent(mdaconvert,cpp/mdaconvert/src/mdaconvert.pro)
 SUBDIRS += $$ifcomponent(mda,cpp/mda/src/mda.pro)
 SUBDIRS += $$ifcomponent(mountainprocess,cpp/mountainprocess/src/mountainprocess.pro)
