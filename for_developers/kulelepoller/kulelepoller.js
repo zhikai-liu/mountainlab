@@ -168,9 +168,8 @@ function KulelePoller() {
 	var m_last_poll_request_timestamp=new Date(); //the last time we made a poll request
 	var m_active_client_requests={}; //these are the active client requests that we are responding to
 
-	var m_desired_num_active_poll_requests=3; //this is how many we want at any given time
-	var m_poll_request_duration=3000; //how long we wait until giving up
-	var m_poll_request_interval=200; //how long we wait until candidate poll requests 
+	var m_desired_num_active_poll_requests=6; //this is how many we want at any given time
+	var m_poll_request_interval=20; //how long we wait until candidate poll requests 
 
 	function start() {
 		housekeeping(); //the housekeeping function does it all
@@ -245,7 +244,7 @@ function KulelePoller() {
 						m_active_client_requests[resp.cancel_client_request_id].to_run_on_close();
 					}
 				}
-				else {fused
+				else {
 					console.log ('Warning: unexpected response to poll: '+JSON.stringify(resp));
 				}
 			}
