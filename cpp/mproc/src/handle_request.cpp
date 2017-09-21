@@ -261,8 +261,8 @@ QJsonObject handle_request_queue_process(QString processor_name, const QJsonObje
     }
     */
 
-    bool success0=true;
-    QString error0="";
+    bool success0 = true;
+    QString error0 = "";
     QJsonObject outputs0;
     foreach (QString key, okeys) {
         if (outputs[key].toBool()) {
