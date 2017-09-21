@@ -263,6 +263,38 @@ QJsonObject handle_request_queue_process(QString processor_name, const QJsonObje
 
     bool success0 = true;
     QString error0 = "";
+
+    QJsonObject process_output;
+    if (terminated) {
+        if (success0) {
+            success0 = false;
+            process_output["error"] = "Terminated.";
+        }
+    }
+    else if (!QFile::exists(process_output_fname)) {
+        if (success0) {
+            success0 = false;
+            process_output["error"] = "Process output file does not exist: " + process_output_fname;
+        }
+    }
+    else {
+        QString json = TextFile::read(process_output_fname);
+        QJsonParseError error;
+        process_output = QJsonDocument::fromJson(json.toUtf8(), &error).object();
+        if (error.error != QJsonParseError::NoError) {
+            if (success0) {
+                success0 = false;
+                process_output["error"] = "Error parsing json in process output file";
+            }
+        }
+    }
+    if (!process_output["success"].toBool()) {
+        if (success0) {
+            success0 = false;
+            error0 = "Process error: " + process_output["error"].toString();
+        }
+    }
+
     QJsonObject outputs0;
     foreach (QString key, okeys) {
         if (outputs[key].toBool()) {
@@ -298,36 +330,9 @@ QJsonObject handle_request_queue_process(QString processor_name, const QJsonObje
         }
     }
     response["outputs"] = outputs0;
-    if (!success0) {
-        response["success"] = false;
-        response["error"] = error0;
-    }
 
-    QJsonObject process_output;
-    if (terminated) {
-        process_output["success"] = false;
-        process_output["error"] = "Terminated.";
-    }
-    else if (!QFile::exists(process_output_fname)) {
-        process_output["success"] = false;
-        process_output["error"] = "Process output file does not exist: " + process_output_fname;
-    }
-    else {
-        QString json = TextFile::read(process_output_fname);
-        QJsonParseError error;
-        process_output = QJsonDocument::fromJson(json.toUtf8(), &error).object();
-        if (error.error != QJsonParseError::NoError) {
-            process_output["success"] = false;
-            process_output["error"] = "Error parsing json in process output file";
-        }
-    }
-    if (!process_output["success"].toBool()) {
-        response["success"] = false;
-        response["error"] = "Process error: " + process_output["error"].toString();
-        return response;
-    }
-
-    response["success"] = true;
+    response["success"] = success0;
+    response["error"] = error0;
 
     return response;
 }
