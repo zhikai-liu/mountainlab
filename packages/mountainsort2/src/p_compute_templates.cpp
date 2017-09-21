@@ -33,8 +33,9 @@ bool p_compute_templates(QStringList timeseries_list, QString firings_path, QStr
             clusters << kk;
     }
     if (clusters.isEmpty()) {
-        qWarning() << "Unexpected: Clusters is empty.";
-        return false;
+        //there must really be no clusters. so we should return no templates
+        Mda32 templates00;
+        return templates00.write32(templates_out);
     }
 
     bigint Kmax = MLCompute::max(clusters.toVector());
