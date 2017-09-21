@@ -261,6 +261,48 @@ QJsonObject handle_request_queue_process(QString processor_name, const QJsonObje
     }
     */
 
+    bool success0=true;
+    QString error0="";
+    QJsonObject outputs0;
+    foreach (QString key, okeys) {
+        if (outputs[key].toBool()) {
+            QString fname = output_files[key];
+            if (!wait_for_file_to_exist(fname, 100)) {
+                if (success0) {
+                    success0 = false;
+                    error0 = "Output file does not exist: " + fname;
+                }
+            }
+            else {
+                QString tmp_prv = fname + ".prv";
+                if (!create_prv(fname, tmp_prv)) {
+                    if (success0) {
+                        success0 = false;
+                        error0 = "Unable to create prv object for: " + fname;
+                    }
+                }
+                else {
+                    QString prv_json = TextFile::read(tmp_prv);
+                    if (prv_json.isEmpty()) {
+                        if (success0) {
+                            success0 = false;
+                            error0 = "Problem creating prv object for: " + fname;
+                        }
+                    }
+                    else {
+                        outputs0[key] = QJsonDocument::fromJson(prv_json.toUtf8()).object();
+                    }
+                    QFile::remove(tmp_prv);
+                }
+            }
+        }
+    }
+    response["outputs"] = outputs0;
+    if (!success0) {
+        response["success"] = false;
+        response["error"] = error0;
+    }
+
     QJsonObject process_output;
     if (terminated) {
         process_output["success"] = false;
@@ -285,34 +327,8 @@ QJsonObject handle_request_queue_process(QString processor_name, const QJsonObje
         return response;
     }
 
-    QJsonObject outputs0;
-    foreach (QString key, okeys) {
-        if (outputs[key].toBool()) {
-            QString fname = output_files[key];
-            if (!wait_for_file_to_exist(fname, 100)) {
-                response["success"] = false;
-                response["error"] = "Output file does not exist: " + fname;
-                return response;
-            }
-            QString tmp_prv = fname + ".prv";
-            if (!create_prv(fname, tmp_prv)) {
-                response["success"] = false;
-                response["error"] = "Unable to create prv object for: " + fname;
-                return response;
-            }
-            QString prv_json = TextFile::read(tmp_prv);
-            if (prv_json.isEmpty()) {
-                response["success"] = false;
-                response["error"] = "Problem creating prv object for: " + fname;
-                return response;
-            }
-            QFile::remove(tmp_prv);
-            outputs0[key] = QJsonDocument::fromJson(prv_json.toUtf8()).object();
-        }
-    }
-
     response["success"] = true;
-    response["outputs"] = outputs0;
+
     return response;
 }
 
