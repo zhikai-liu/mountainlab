@@ -37,7 +37,7 @@ QJsonObject handle_request(const QJsonObject& request, QString prvbucket_path, P
             return response;
         }
 
-        qCInfo(HR) << "Starting handle_request_queue_process: " + processor_name;
+        qCInfo(HR) << "Starting handle_request_queue_process (**): " + processor_name;
         QTime timer;
         timer.start();
         response = handle_request_queue_process(processor_name, request["inputs"].toObject(), request["outputs"].toObject(), request["parameters"].toObject(), request["resources"].toObject(), prvbucket_path, PM);
