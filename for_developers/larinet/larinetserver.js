@@ -155,6 +155,27 @@ function larinetserver(req,onclose,callback,hopts) {
 	}
 
 	function prv_locate(query,onclose,callback) {
+		if (query.user_storage) {
+			if ((!query.userid)||(!query.filename)) {
+				callback({success:false,error:'invalid query'});
+				return;
+			}
+			var userid_encoded=new Buffer(query.userid).toString('base64');
+			var filename_encoded=new Buffer(query.filename).toString('base64');
+			var file_path=user_storage_directory(userid_encoded,false)+'/'+filename_encoded;
+			if (!require('fs').existsSync(file_path)) {
+				console.log ('not found: '+file_path);
+				callback({success:true,found:false,userid_encoded:userid_encoded});
+				return;
+			}
+			var txt=file_path.slice(hopts.data_directory.length+1);
+			var resp={success:true,found:true,path:txt};
+			if (hopts.download_base_url) {
+				resp.url=hopts.download_base_url+'/'+resp.path;
+			}
+			callback(resp);
+			return;
+		}
 		if ((!query.checksum)||(!query.size)||(!('fcs' in query))) {
 			if (callback) {
 				callback({success:false,error:"Invalid query."});	
@@ -195,7 +216,23 @@ function larinetserver(req,onclose,callback,hopts) {
 		}
 		//var buf = base64_arraybuffer.decode(query.data_base64);
 		var buf = new Buffer(query.data_base64,'base64');;
-		var fname=uploads_directory()+"/"+make_random_id(10)+'.dat';
+		var fname;
+		if (query.user_storage) {
+			if ((!query.userid)||(!query.filename)) {
+				callback({success:false,error:'invalid query'});
+				return;
+			}
+			if ((query.userid.length>80)||(query.filename.length>80)) {
+				callback({success:false,error:'userid or filename is too long'});
+				return;
+			}
+			var userid_encoded=new Buffer(query.userid).toString('base64');
+			var filename_encoded=new Buffer(query.filename).toString('base64');
+			fname=user_storage_directory(userid_encoded,true)+'/'+filename_encoded;
+		}
+		else {
+			fname=uploads_directory(true)+"/"+make_random_id(10)+'.dat';
+		}
 		require('fs').writeFile(fname,buf,function(err) {
 			if (err) {
 				callback({success:false,error:'Problem writing file: '+err.message});
@@ -298,10 +335,22 @@ function larinetserver(req,onclose,callback,hopts) {
 		return (str.slice(0,substr.length)==substr);
 	}
 	
-	function uploads_directory() {
+	function uploads_directory(create_if_needed) {
 		var ret=hopts.data_directory+"/_uploads";
-		try {require('fs').mkdirSync(ret);}
-		catch(err) {}
+		if (create_if_needed) {
+			try {require('fs').mkdirSync(ret);} catch(err) {}
+		}
+		return ret;
+	}
+	function user_storage_directory(userid_encoded,create_if_needed) {
+		var ret=hopts.data_directory+'/_user_storage';
+		if (create_if_needed) {
+			try {require('fs').mkdirSync(ret);} catch(err) {}
+		}
+		ret+='/'+userid_encoded;
+		if (create_if_needed) {
+			try {require('fs').mkdirSync(ret);} catch(err) {}
+		}
 		return ret;
 	}
 	function make_tmp_json_file(data_directory) {
