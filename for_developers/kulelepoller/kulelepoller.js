@@ -311,7 +311,50 @@ function http_get_text(url,callback) {
 	});
 }
 
+function http_post_json(url,data,callback) {
+	var url_parts = require('url').parse(url,true);
+	var host=url_parts.hostname;
+	var path=url_parts.pathname;
+	var port=url_parts.port;
 
+	var post_data=JSON.stringify(data);
+
+	// An object of options to indicate where to post to
+	var post_options = {
+		host: host,
+		port: port,
+		path: path,
+		method: 'POST',
+		headers: {
+		  'Content-Type': 'application/json',
+		  'Content-Length': Buffer.byteLength(post_data)
+		}
+	};
+
+	// Set up the request
+	var post_req = require('http').request(post_options, function(res) {
+		res.setEncoding('utf8');
+		res.on('data', function (body) {
+			try {
+				var obj=JSON.parse(body);
+				callback({success:true,response:obj});
+			}
+			catch(err) {
+				callback({success:false,error:'Problem parsing json response: '+body});
+			}
+		});
+	});
+	post_req.on('error',function() {
+		callback({success:false,error:'Error in post: '+url});
+	});
+
+	// post the data
+	post_req.write(post_data);
+	post_req.end();
+}
+
+
+/*
 function http_post_json(url,data,onclose,callback) {
 	var url_parts = require('url').parse(url,true);
 	var host=url_parts.hostname;
@@ -366,6 +409,7 @@ function http_post_json(url,data,onclose,callback) {
 	post_req.write(post_data);
 	post_req.end();
 }
+*/
 
 function CLParams(argv) {
 	this.unnamedParameters=[];
