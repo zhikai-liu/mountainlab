@@ -59,8 +59,8 @@ QJsonObject get_spec()
         ProcessorSpec X("mountainsort.extract_segment_timeseries", "0.11");
         X.addInputs("timeseries");
         X.addOutputs("timeseries_out");
-        X.addOptionalParameter("t1","",-1);
-        X.addOptionalParameter("t2","",-1);
+        X.addOptionalParameter("t1", "", -1);
+        X.addOptionalParameter("t2", "", -1);
         X.addOptionalParameter("channels", "Comma-separated list of channels to extract", "");
         processors.push_back(X.get_spec());
     }
@@ -346,8 +346,8 @@ int main(int argc, char* argv[])
     else if (arg1 == "mountainsort.extract_segment_timeseries") {
         QStringList timeseries_list = MLUtil::toStringList(CLP.named_parameters["timeseries"]);
         QString timeseries_out = CLP.named_parameters["timeseries_out"].toString();
-        bigint t1 = CLP.named_parameters.value("t1",-1).toDouble(); //to double to handle scientific notation
-        bigint t2 = CLP.named_parameters.value("t2",-1).toDouble(); //to double to handle scientific notation
+        bigint t1 = CLP.named_parameters.value("t1", -1).toDouble(); //to double to handle scientific notation
+        bigint t2 = CLP.named_parameters.value("t2", -1).toDouble(); //to double to handle scientific notation
         QStringList channels_str = CLP.named_parameters["channels"].toString().split(",", QString::SkipEmptyParts);
         QList<int> channels = MLUtil::stringListToIntList(channels_str);
         if (timeseries_list.count() <= 1) {

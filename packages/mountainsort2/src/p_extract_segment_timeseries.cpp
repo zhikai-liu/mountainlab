@@ -20,8 +20,10 @@ bool p_extract_segment_timeseries(QString timeseries, QString timeseries_out, bi
     DiskReadMda32 X(timeseries);
     bigint M = X.N1();
     //bigint N=X.N2();
-    if (t1<0) t1=0;
-    if (t2<0) t2=X.N2()-1;
+    if (t1 < 0)
+        t1 = 0;
+    if (t2 < 0)
+        t2 = X.N2() - 1;
     bigint N2 = t2 - t1 + 1;
 
     qDebug().noquote() << QString("Extracting segment timeseries M=%1, N2=%2").arg(M).arg(N2);

@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
             return 0;
         }
         else {
-            qCInfo(MP) << "Writing response file: "+response_fname+QString(" size of json response: %1 bytes").arg(response_json.count());
+            qCInfo(MP) << "Writing response file: " + response_fname + QString(" size of json response: %1 bytes").arg(response_json.count());
             if (!TextFile::write(response_fname, response_json)) {
                 qCWarning(MP) << "Error writing response to file";
                 return -1;
@@ -443,7 +443,7 @@ void launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVarian
                 QStringList list = MLUtil::toStringList(clp[key]);
                 exe_command.replace(QRegExp(QString("\\$%1\\$").arg(key)), list.value(0)); //note that only the first file name is inserted here
                 foreach (QString str, list) {
-                    if (key!="console_out")
+                    if (key != "console_out")
                         ppp += QString("--%1=%2 ").arg(key).arg(str);
                 }
             }

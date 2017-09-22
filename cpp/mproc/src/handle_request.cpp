@@ -50,7 +50,8 @@ QJsonObject handle_request(const QJsonObject& request, QString prvbucket_path, P
         QTime timer;
         timer.start();
         response = handle_request_processor_spec(PM);
-        qCInfo(HR) << "Done with handle_request_processor_spec." << "Elapsed:" << timer.elapsed();
+        qCInfo(HR) << "Done with handle_request_processor_spec."
+                   << "Elapsed:" << timer.elapsed();
         return response;
     }
     else {
@@ -60,7 +61,8 @@ QJsonObject handle_request(const QJsonObject& request, QString prvbucket_path, P
     }
 }
 
-QJsonObject get_processor_spec(ProcessorManager* PM) {
+QJsonObject get_processor_spec(ProcessorManager* PM)
+{
     QJsonArray processors_array;
     QStringList pnames = PM->processorNames();
     foreach (QString pname, pnames) {
@@ -94,10 +96,10 @@ bool wait_for_file_to_exist(QString fname, int timeout_ms)
 
 QJsonObject handle_request_processor_spec(ProcessorManager* PM)
 {
-    QJsonObject obj=get_processor_spec(PM);
+    QJsonObject obj = get_processor_spec(PM);
     QJsonObject response;
-    response["success"]=true;
-    response["spec"]=obj;
+    response["success"] = true;
+    response["spec"] = obj;
     return response;
 }
 
