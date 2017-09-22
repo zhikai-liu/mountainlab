@@ -311,7 +311,7 @@ function http_get_text(url,callback) {
 	});
 }
 
-function http_post_json(url,data,callback) {
+function http_post_json(url,data,onclose,callback) {
 	var url_parts = require('url').parse(url,true);
 	var host=url_parts.hostname;
 	var path=url_parts.pathname;
@@ -347,6 +347,13 @@ function http_post_json(url,data,callback) {
 	post_req.on('error',function() {
 		callback({success:false,error:'Error in post: '+url});
 	});
+
+	/*if (onclose) {
+		onclose(function() {
+			post_req.connection.destroy();
+			post_req.abort();
+		});
+	}*/
 
 	// post the data
 	post_req.write(post_data);
