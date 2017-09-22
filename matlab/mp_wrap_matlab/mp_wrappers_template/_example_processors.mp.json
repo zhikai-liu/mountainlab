@@ -1,0 +1,17 @@
+{
+	"processors":[
+		{
+			"name":"matlab_tests.random_array",
+			"version":"0.1",
+			"description":"",
+			"inputs":[],
+			"outputs":[
+				{"name":"output"}
+			],
+			"parameters":[
+				{"name":"dims","optional":false},{"name":"distribution","optional":false}
+			],
+			"exe_command":"$(basepath)/run_matlab.sh $(basepath)/.. \"addpath('$(basepath)'); params=struct('dims','$dims$','distribution','$distribution$'); p_random_array('$output$',params);\""
+		}
+	]
+}

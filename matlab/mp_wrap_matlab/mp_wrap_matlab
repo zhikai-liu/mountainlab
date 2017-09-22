@@ -1,0 +1,196 @@
+#!/usr/bin/env nodejs
+
+// First install fs-extra: npm install fs-extra
+
+var CLP=new CLParams(process.argv);
+var path=CLP.unnamedParameters[0]||'.';
+mkdir(path+'/mp_wrappers');
+remove_all_files_in_folder(path+'/mp_wrappers');
+copy_all_template_files(__dirname+'/mp_wrappers_template',path+'/mp_wrappers');
+
+var mfile_names=find_mfile_names(path);
+var processors=[];
+for (var i in mfile_names) {
+	var mfile_name=mfile_names[i];
+	var mfile=new MFile(mfile_name);
+	var spec=mfile.processorSpec();
+	if (spec.name)
+		processors.push(spec);
+	else {
+		console.warn('Unable to get processor spec for file: '+mfile_name);
+	}
+}
+
+console.log ('Wrapping '+processors.length+' matlab scripts');
+
+var obj={processors:processors};
+if (!write_text_file(path+'/mp_wrappers/processors.mp',JSON.stringify(obj,null,4))) {
+	console.error('Unable to write file: '+path+'/mp_wrappers/processors.mp');
+}
+
+function MFile(fname) {
+	this.processorSpec=function() {return m_spec;};
+
+	var m_spec={name:'',version:'',description:'',inputs:[],outputs:[],parameters:[]};
+	var m_text=read_text_file(fname);
+	var m_lines=m_text.split('\n');
+	var m_inputs_and_outputs_names=[];
+	for (var i in m_lines) {
+		var line=m_lines[i].trim();
+		var vals=remove_empty_strings(line.split(' '));
+
+		if (vals.length>=2) {
+			if ((starts_with(vals[0],'%'))&&(starts_with(vals[1],'mp-'))) {
+				if (vals[1]=='mp-declare-processor') {
+					m_spec.name=vals[2]||'';
+				}
+				else if (vals[1]=='mp-declare-version') {
+					m_spec.version=vals[2]||'';
+				}
+				else if (vals[1]=='mp-declare-description') {
+					m_spec.description=vals.slice(2).join(' ');
+				}
+				else if (vals[1]=='mp-declare-input') {
+					m_spec.inputs.push({name:vals[2]});
+					m_inputs_and_outputs_names.push(vals[2]);
+				}
+				else if (vals[1]=='mp-declare-output') {
+					m_spec.outputs.push({name:vals[2]});
+					m_inputs_and_outputs_names.push(vals[2]);
+				}
+				else if (vals[1]=='mp-declare-parameter') {
+					m_spec.parameters.push({name:vals[2]});
+				}
+			}
+		}
+	}
+	var params_struct='struct(';
+	params_struct+=')';
+	var mfile_function_name=get_mfile_function_name(fname);
+	var call_str=mfile_function_name+'(';
+	for (var i=0; i<m_inputs_and_outputs_names.length; i++) {
+		var name0=m_inputs_and_outputs_names[i];
+		if (i>0) call_str+=',';
+		call_str+='$'+name0+'$';
+	}
+	call_str+=',params)';
+	m_spec.exe_command="$(basepath)/run_matlab.sh $(basepath)/.. \"addpath('$(basepath)'); params="+params_struct+"; "+call_str+";\"";
+
+	function get_mfile_function_name(mfile_fname) {
+		var list=mfile_fname.split('/');
+		if (list.length===0) return '';
+		return list[list.length-1].slice(0,list.length-1);
+	}
+}
+
+function remove_empty_strings(list) {
+	var list2=[];
+	for (var i in list) {
+		if (list[i]) list2.push(list[i]);
+	}
+	return list2;
+}
+
+function find_mfile_names(path) {
+	var list=require('fs').readdirSync(path);
+	var ret=[];
+	for (var i in list) {
+		if (ends_with(list[i],'.m')) {
+			ret.push(path+'/'+list[i]);
+		}
+	}
+	return ret;
+}
+
+function remove_all_files_in_folder(path) {
+	var list=require('fs').readdirSync(path);
+	for (var i in list) {
+		var path0=path+'/'+list[i];
+		require('fs').unlinkSync(path0);
+	}
+}
+
+function copy_all_template_files(srcpath,dstpath) {
+	var list=require('fs').readdirSync(srcpath);
+	for (var i in list) {
+		var path0=srcpath+'/'+list[i];
+		var path1=dstpath+'/'+list[i];
+		require('fs-extra').copySync(path0,path1);
+	}
+}
+
+function mkdir(path) {
+	try {
+		require('fs').mkdirSync(path);
+	}
+	catch(err) {
+	}
+}
+
+function CLParams(argv) {
+	this.unnamedParameters=[];
+	this.namedParameters={};
+
+	var args=argv.slice(2);
+	for (var i=0; i<args.length; i++) {
+		var arg0=args[i];
+		if (arg0.indexOf('--')===0) {
+			arg0=arg0.slice(2);
+			var ind=arg0.indexOf('=');
+			if (ind>=0) {
+				this.namedParameters[arg0.slice(0,ind)]=arg0.slice(ind+1);
+			}
+			else {
+				this.namedParameters[arg0]=args[i+1]||'';
+				i++;
+			}
+		}
+		else if (arg0.indexOf('-')===0) {
+			arg0=arg0.slice(1);
+			this.namedParameters[arg0]='';
+		}
+		else {
+			this.unnamedParameters.push(arg0);
+		}
+	}
+}
+
+function write_text_file(fname,txt) {
+	try {
+		require('fs').writeFileSync(fname,txt);
+		return true;
+	}
+	catch(err) {
+		return false;
+	}
+}
+
+function read_text_file(fname) {
+	try {
+		return require('fs').readFileSync(fname,'utf8');
+	}
+	catch(err) {
+		console.log ('Problem reading text file: '+fname);
+		return '';
+	}
+}
+
+function read_json_file(fname) {
+	var txt=read_text_file(fname);
+	if (!txt) return null;
+	try {
+		return JSON.parse(txt);
+	}
+	catch(err) {
+		console.log ('Error parsing json: '+txt);
+		return null;
+	}	
+}
+
+function starts_with(str,str2) {
+	return (str.slice(0,str2.length)==str2);
+}
+
+function ends_with(str,str2) {
+	return (str.slice(str.length-str2.length)==str2);
+}

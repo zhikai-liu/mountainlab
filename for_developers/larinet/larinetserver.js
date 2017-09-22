@@ -145,6 +145,11 @@ function larinetserver(req,onclose,callback,hopts) {
 			callback(resp);
 		});
 	}
+	else if (action=='processor-spec') {
+		processor_spec(req,function(resp) {
+			callback(resp);
+		});
+	}
 	else {
 		callback({success:false,error:'Unexpected action: '+action});
 	}
@@ -256,6 +261,30 @@ function larinetserver(req,onclose,callback,hopts) {
 		}
 		J.cancel(callback);
 	}
+	function processor_spec(query,callback) {
+		var req_fname=make_tmp_json_file(hopts.data_directory);
+		var resp_fname=make_tmp_json_file(hopts.data_directory);
+		var req={action:'processor_spec'};
+		if (!write_text_file(req_fname,JSON.stringify(req))) {
+			callback({success:false,error:'Problem writing req to file'});
+			return;
+		}
+		var ppp=run_process_and_read_stdout(hopts.mp_exe,['handle-request',req_fname,resp_fname],function(txt) {
+			remove_file(req_fname);
+			if (!require('fs').existsSync(resp_fname)) {
+				callback({success:false,error:'Response file does not exist: '+resp_fname});
+				return;
+			}
+			var json_response=read_json_file(resp_fname);
+			remove_file(resp_fname);
+			if (json_response) {
+				callback(json_response);
+			}
+			else {
+				callback({success:false,error:'unable to parse json in response file'});
+			}
+		});
+	}
 	function make_response_for_J(process_id,J) {
 		var resp={success:true};
 		resp.process_id=process_id;
@@ -274,6 +303,9 @@ function larinetserver(req,onclose,callback,hopts) {
 		try {require('fs').mkdirSync(ret);}
 		catch(err) {}
 		return ret;
+	}
+	function make_tmp_json_file(data_directory) {
+		return data_directory+'/tmp.'+make_random_id(10)+'.json';
 	}
 	function make_random_id(len) {
 	    var text = "";

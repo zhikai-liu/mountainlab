@@ -19,6 +19,7 @@ Q_LOGGING_CATEGORY(RB, "mp.run_as_bash")
 Q_LOGGING_CATEGORY(HR, "mp.handle_request")
 
 QJsonObject handle_request_queue_process(QString processor_name, const QJsonObject& inputs, const QJsonObject& outputs, const QJsonObject& parameters, const QJsonObject& resources, QString prvbucket_path, ProcessorManager* PM);
+QJsonObject handle_request_processor_spec(ProcessorManager* PM);
 
 QJsonObject handle_request(const QJsonObject& request, QString prvbucket_path, ProcessorManager* PM)
 {
@@ -37,11 +38,19 @@ QJsonObject handle_request(const QJsonObject& request, QString prvbucket_path, P
             return response;
         }
 
-        qCInfo(HR) << "Starting handle_request_queue_process (**): " + processor_name;
+        qCInfo(HR) << "Starting handle_request_queue_process: " + processor_name;
         QTime timer;
         timer.start();
         response = handle_request_queue_process(processor_name, request["inputs"].toObject(), request["outputs"].toObject(), request["parameters"].toObject(), request["resources"].toObject(), prvbucket_path, PM);
         qCInfo(HR) << "Done running process: " + processor_name << "Elapsed:" << timer.elapsed();
+        return response;
+    }
+    else if (action == "processor_spec") {
+        qCInfo(HR) << "Starting handle_request_processor_spec";
+        QTime timer;
+        timer.start();
+        response = handle_request_processor_spec(PM);
+        qCInfo(HR) << "Done with handle_request_processor_spec." << "Elapsed:" << timer.elapsed();
         return response;
     }
     else {
@@ -49,6 +58,18 @@ QJsonObject handle_request(const QJsonObject& request, QString prvbucket_path, P
         response["error"] = "Unknown action: " + action;
         return response;
     }
+}
+
+QJsonObject get_processor_spec(ProcessorManager* PM) {
+    QJsonArray processors_array;
+    QStringList pnames = PM->processorNames();
+    foreach (QString pname, pnames) {
+        MLProcessor MLP = PM->processor(pname);
+        processors_array.push_back(MLP.spec);
+    }
+    QJsonObject obj;
+    obj["processors"] = processors_array;
+    return obj;
 }
 
 bool create_prv(QString fname_in, QString prv_fname_out)
@@ -69,6 +90,15 @@ bool wait_for_file_to_exist(QString fname, int timeout_ms)
     while ((!QFile::exists(fname)) && (timer.elapsed() <= timeout_ms))
         ;
     return QFile::exists(fname);
+}
+
+QJsonObject handle_request_processor_spec(ProcessorManager* PM)
+{
+    QJsonObject obj=get_processor_spec(PM);
+    QJsonObject response;
+    response["success"]=true;
+    response["spec"]=obj;
+    return response;
 }
 
 QJsonObject handle_request_queue_process(QString processor_name, const QJsonObject& inputs, const QJsonObject& outputs, const QJsonObject& parameters, const QJsonObject& resources, QString prvbucket_path, ProcessorManager* PM)
