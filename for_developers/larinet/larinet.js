@@ -36,7 +36,7 @@ app.use(function(req,resp,next) {
 	var host=url_parts.host;
 	var path=url_parts.pathname;
 	var query=url_parts.query;
-	if (query.mode!='download') {
+	if (query.download_mode!='true') {
 		Handler.handle_request(req,resp);
 	}
 	else {
