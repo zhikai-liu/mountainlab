@@ -173,8 +173,10 @@ function KulelePoller() {
 	var m_last_poll_request_timestamp=new Date(); //the last time we made a poll request
 	var m_active_client_requests={}; //these are the active client requests that we are responding to
 
-	var m_desired_num_active_poll_requests=6; //this is how many we want at any given time
-	var m_poll_request_interval=20; //how long we wait until candidate poll requests 
+	//the following used to be 6, but on typhoon this caused a slowdown. using 1 is fine, i think
+	var m_desired_num_active_poll_requests=1; //this is how many we want at any given time
+	var m_poll_request_interval=20; //how long we wait (in milliseconds) until we send up another poll request
+	var m_bundle_time=100;
 
 	function start() {
 		housekeeping(); //the housekeeping function does it all
@@ -281,7 +283,7 @@ function KulelePoller() {
 			var responses=m_responses_to_client_requests;
 			m_responses_to_client_requests=[];
 			do_send_responses_to_client_requests(responses);
-		},500);
+		},m_bundle_time);
 	}
 	function do_send_responses_to_client_requests(responses) {
 		var url=m_kulele_url+'/from_subserver/'+m_subserver_name;
