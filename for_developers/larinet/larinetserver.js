@@ -78,6 +78,8 @@ function QueuedJob(hopts) {
 			console.log ('Canceling process: '+m_ppp.pid);
 			m_ppp.stdout.pause();
 			m_ppp.kill('SIGTERM');
+			m_is_complete=true;
+			m_result={success:false,error:'Process canceled'};
 			if (callback) callback({success:true});
 		}
 		else {
@@ -88,7 +90,6 @@ function QueuedJob(hopts) {
 		if (m_is_complete) return;
 		var timeout=20000;
 		var elapsed_since_keep_alive=that.elapsedSinceKeepAlive();
-		console.log('##################### '+elapsed_since_keep_alive);
 		if (elapsed_since_keep_alive>timeout) {
 			console.log ('Canceling process due to keep-alive timeout');
 			cancel();
