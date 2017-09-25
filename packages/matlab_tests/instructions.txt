@@ -1,0 +1,4 @@
+To wrap these matlab processors do the following:
+
+../../matlab/mp_wrap_matlab/mp_wrap_matlab .
+
