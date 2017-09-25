@@ -218,7 +218,6 @@ function KulelePoller() {
 				console.log ('Error in poll request: '+resp.error);
 				return;
 			}
-			console.log(resp);
 			if (resp.used) { //the poll request was used for something!
 				log('Received response from poll request',resp);
 				if (resp.requests_from_client) { //there were some requests from the client(s)
@@ -240,6 +239,7 @@ function KulelePoller() {
 		});
 	}
 	function handle_request_from_client(request_from_client) {
+		console.log ('REQUEST FROM CLIENT: '+request_from_client.a);
 		var url=m_kulele_url+'/from_subserver/'+m_subserver_name;
 		var client_request_id=request_from_client.client_request_id; //it has an id that was assigned by kulele in the cloud
 		if (!client_request_id) {
