@@ -65,21 +65,29 @@ function MFile(fname) {
 		}
 	}
 	var params_struct='struct(';
+	for (var i=0; i<m_spec.parameters.length; i++) {
+		if (i>0) params_struct+=',';
+		var name0=m_spec.parameters[i].name;
+		params_struct+='\''+name0+'\''+','+'\'$'+name0+'$\'';
+	}
 	params_struct+=')';
 	var mfile_function_name=get_mfile_function_name(fname);
 	var call_str=mfile_function_name+'(';
 	for (var i=0; i<m_inputs_and_outputs_names.length; i++) {
 		var name0=m_inputs_and_outputs_names[i];
 		if (i>0) call_str+=',';
-		call_str+='$'+name0+'$';
+		call_str+='\'$'+name0+'$\'';
 	}
+
 	call_str+=',params)';
 	m_spec.exe_command="$(basepath)/run_matlab.sh $(basepath)/.. \"addpath('$(basepath)'); params="+params_struct+"; "+call_str+";\"";
 
 	function get_mfile_function_name(mfile_fname) {
 		var list=mfile_fname.split('/');
 		if (list.length===0) return '';
-		return list[list.length-1].slice(0,list.length-1);
+		var str=list[list.length-1];
+		str=str.slice(0,str.length-2);
+		return str;
 	}
 }
 
