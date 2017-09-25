@@ -130,8 +130,6 @@ function OtherServerHandler() {
 					var obj;
 					try {
 						obj=JSON.parse(body0);
-						if (callback) callback({success:true});
-						callback=0;
 					}
 					catch(err) {
 						if (callback) callback({success:false,num_bytes_posted:num_bytes_posted,error:'Error parsing response from kulele'});
@@ -258,7 +256,7 @@ function KulelePoller() {
 			m_request_handler.handleDownloadRequest(request_from_client,onclose,url1,function(tmp) { //handle the request. The handler will post to the url
 				delete m_active_client_requests[client_request_id];
 				if (!tmp.success) {
-					console.log ('Error handling request from client (handler was supposed to post download to the url): '+error);
+					console.log ('Error handling request from client (handler was supposed to post download to the url): '+tmp.error);
 				}
 			});
 		}
