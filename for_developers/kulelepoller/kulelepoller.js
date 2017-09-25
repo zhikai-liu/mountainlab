@@ -125,6 +125,7 @@ function OtherServerHandler() {
 				var body0='';
 				res.on('data', function (body) {
 					body0+=body;
+					num_bytes_posted+=body.length;
 				});
 				res.on('end',function() {
 					var obj;
@@ -134,6 +135,7 @@ function OtherServerHandler() {
 					catch(err) {
 						if (callback) callback({success:false,num_bytes_posted:num_bytes_posted,error:'Error parsing response from kulele'});
 						callback=0;
+						return;
 					}
 					obj.num_bytes_posted=num_bytes_posted;
 					if (callback) callback(obj); //success!
