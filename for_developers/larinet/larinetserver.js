@@ -8,17 +8,23 @@ function JobManager() {
 
 	this.addJob=function(process_id,J) {m_queued_jobs[process_id]=J;};
 	this.job=function(process_id) {if (process_id in m_queued_jobs) return m_queued_jobs[process_id]; else return null;};
+	this.removeJob=function(process_id) {removeJob(process_id);};
 
 	var m_queued_jobs={};
 
 	function housekeeping() {
+		/*
 		for (var id in m_queued_jobs) {
 			if (m_queued_jobs[id].elapsedSinceKeepAlive()>60000) {
 				console.log('deleting old job record');
-				delete m_queued_jobs[id];
+				removeJob(id);
 			}
 		}
+		*/
 		setTimeout(housekeeping,10000);	
+	}
+	function removeJob(process_id) {
+		delete m_queued_jobs[process_id];
 	}
 	setTimeout(housekeeping,10000);	
 }
@@ -32,11 +38,13 @@ function QueuedJob(hopts) {
 	this.isComplete=function() {return m_is_complete;};
 	this.result=function() {return m_result;};
 	this.elapsedSinceKeepAlive=function() {return (new Date())-m_alive_timer;};
+	this.outputFilesStillValid=function() {return outputFilesStillValid();};
 
 	var m_result=null;
 	var m_alive_timer=new Date();
 	var m_is_complete=false;
 	var m_ppp=null;
+	var m_output_file_stats={};
 
 	var request_fname,response_fname,mpreq;
 	function start(processor_name,inputs,outputs,parameters,resources,opts,callback) {
@@ -66,6 +74,7 @@ function QueuedJob(hopts) {
 			if (json_response) {
 				m_is_complete=true;
 				m_result=json_response;
+				m_output_file_stats=compute_output_file_stats(m_result.outputs);
 			}
 			else {
 				m_is_complete=true;
@@ -113,6 +122,51 @@ function QueuedJob(hopts) {
 	        text += possible.charAt(Math.floor(Math.random() * possible.length));
 
 	    return text;
+	}
+	function compute_output_file_stats(outputs) {
+		var stats={};
+		for (var key in outputs) {
+			stats[key]=compute_output_file_stat(outputs[key].original_path);
+		}
+		return stats;
+	}
+	function compute_output_file_stat(path) {
+		try {
+			var ss=require('fs').statSync(path);
+			return {
+				exists:require('fs').existsSync(path),
+				size:ss.size,
+				last_modified:(ss.mtime+'') //make it a string
+			};
+		}	
+		catch(err) {
+			return {};
+		}
+	}
+	function outputFilesStillValid() {
+		var outputs0=(m_result||{}).outputs||{};
+		var stats0=m_output_file_stats||{};
+		var stats1=compute_output_file_stats(outputs0);
+		console.log('##############################');
+		console.log(JSON.stringify(stats0));
+		console.log(JSON.stringify(stats1));
+		for (var key in stats0) {
+			var stat0=stats0[key]||{};
+			var stat1=stats1[key]||{};
+			if (!stat1.exists) {
+				console.log('----------- does not exist');
+				return false;
+			}
+			if (stat1.size!=stat0.size) {
+				console.log('----------- different size');
+				return false;
+			}
+			if (stat1.last_modified!=stat0.last_modified) {
+				console.log('----------- different mtime');
+				return false;
+			}
+		}
+		return true;
 	}
 }
 
@@ -268,19 +322,57 @@ function larinetserver(req,onclose,callback,hopts) {
 		var parameters=query.parameters||{};
 		var resources=query.resources||{};
 		var opts={};
-		var J=new QueuedJob(hopts);
-		J.start(processor_name,inputs,outputs,parameters,resources,opts,function(tmp) {
-			if (!tmp.success) {
-				callback(tmp);
-				return;
+		var process_id;
+		if (query.process_id) {
+			process_id=query.process_id;
+			var J=m_job_manager.job(query.process_id);
+			if (J) {
+				if (J.isComplete()) {
+					if (!J.result().success) {
+						//complete but not successful -- start over
+						console.log('*********************** complete but not successful');
+						m_job_manager.removeJob(J);
+						do_queue_process(); //start over	
+					}
+					else if (J.outputFilesStillValid()) {
+						//already complete and the output files are still valid
+						console.log('*********************** complete and output files are still valid');
+						var resp=make_response_for_J(process_id,J);
+						callback(resp);		
+					}
+					else {
+						//complete but the output files are no longer valid
+						console.log('*********************** Complete but the output files are no longer valid');
+						m_job_manager.removeJob(J);
+						do_queue_process(); //start over		
+					}
+				}
 			}
-			var process_id=make_random_id(10);
-			m_job_manager.addJob(process_id,J);
-			setTimeout(function() {
-				var resp=make_response_for_J(process_id,J);
-				callback(resp);
-			},(query.wait_msec||0));
-		});
+			else {
+				console.log('*********************** queueing a new job');
+				do_queue_process();
+			}
+		}
+		else {
+			process_id=make_random_id(10);
+			do_queue_process();
+		}
+		function do_queue_process() {
+			var Jnew=new QueuedJob(hopts);
+			Jnew.start(processor_name,inputs,outputs,parameters,resources,opts,function(tmp) {
+				if (!tmp.success) {
+					callback(tmp);
+					return;
+				}
+				
+				m_job_manager.addJob(process_id,Jnew);
+				setTimeout(function() {
+					var resp=make_response_for_J(process_id,Jnew);
+					callback(resp);
+				},(query.wait_msec||0));
+			});	
+		}
+		
 	}
 	function probe_process(query,callback) {
 		var process_id=query.process_id||'';
