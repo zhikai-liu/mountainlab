@@ -74,6 +74,10 @@ function QueuedJob(hopts) {
 		});
 	}
 	function cancel(callback) {
+		if (m_is_complete) {
+			callback({success:true}); //already complete
+			return;
+		}
 		if (m_ppp) {
 			console.log ('Canceling process: '+m_ppp.pid);
 			m_ppp.stdout.pause();
