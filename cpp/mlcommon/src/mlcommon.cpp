@@ -252,9 +252,9 @@ void MLUtil::mkdirIfNeeded(const QString& path)
 QString MLUtil::computeSha1SumOfFile(const QString& path)
 {
     //printf("Looking up sha1: %s\n",path.toUtf8().data());
-    if (QFile::exists(path+".sha1")) {
-        QString txt=TextFile::read(path+".sha1").trimmed();
-        if (txt.count()==40) {
+    if (QFile::exists(path + ".sha1")) {
+        QString txt = TextFile::read(path + ".sha1").trimmed();
+        if (txt.count() == 40) {
             return txt;
         }
     }

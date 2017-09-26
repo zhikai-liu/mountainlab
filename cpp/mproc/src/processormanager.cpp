@@ -146,6 +146,7 @@ bool ProcessorManager::loadProcessorFile(const QString& path)
         MLProcessor P = d->create_processor_from_json_object(processors[i].toObject());
         P.basepath = QFileInfo(path).path();
         if (P.name.isEmpty()) {
+            qCDebug(MPM) << QJsonDocument(processors[i].toObject()).toJson();
             qCWarning(MPM) << "Problem with processor file: processor error: " + path;
             return false;
         }
