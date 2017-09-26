@@ -3,7 +3,7 @@
 import numpy as np
 
 class Processor:
-	name='mlpy.extract_geom',
+	name='mlpy.extract_geom'
 	description='Extract a subset of channels from a geom.csv file'
 	version='0.1'
 	inputs=[{"name":"geom","description":""}]
