@@ -57,3 +57,5 @@ bin
 *.user.json
 
 node_modules
+
+*.pyc
