@@ -321,7 +321,7 @@ function larinetserver(req,onclose,callback,hopts) {
 		var outputs=query.outputs||{};
 		var parameters=query.parameters||{};
 		var resources=query.resources||{};
-		var opts={};
+		var opts=query.opts||{};
 		var process_id;
 		if (query.process_id) {
 			process_id=query.process_id;
@@ -333,6 +333,11 @@ function larinetserver(req,onclose,callback,hopts) {
 						console.log('*********************** complete but not successful');
 						m_job_manager.removeJob(J);
 						do_queue_process(); //start over	
+					}
+					else if (('cache_output' in opts)&&(!opts.cache_output)) {
+						console.log('*********************** Complete but we are not caching output');
+						m_job_manager.removeJob(J);
+						do_queue_process(); //start over		
 					}
 					else if (J.outputFilesStillValid()) {
 						//already complete and the output files are still valid
@@ -346,6 +351,11 @@ function larinetserver(req,onclose,callback,hopts) {
 						m_job_manager.removeJob(J);
 						do_queue_process(); //start over		
 					}
+				}
+				else {
+					console.log('*********************** not yet complete');
+					var resp=make_response_for_J(process_id,J);
+					callback(resp);		
 				}
 			}
 			else {
