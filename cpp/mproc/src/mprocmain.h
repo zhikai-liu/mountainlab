@@ -27,7 +27,7 @@ void print_usage();
 void launch_process_and_wait(const MLProcessor& MLP, const QMap<QString, QVariant>& clp, QString monitor_file_name, MLProcessInfo& info);
 bool process_already_completed(const MLProcessor& MLP, const QMap<QString, QVariant>& clp);
 void record_completed_process(const MLProcessor& MLP, const QMap<QString, QVariant>& clp);
-QString wait_until_ready_to_run(const MLProcessor& MLP, const QMap<QString, QVariant>& clp, bool* already_completed); //returns monitor file name
+QString wait_until_ready_to_run(const MLProcessor& MLP, const QMap<QString, QVariant>& clp, bool* already_completed, bool force_run); //returns monitor file name
 void write_process_output_file(QString fname, const MLProcessInfo& info);
 
 #endif // MPROCMAIN_H

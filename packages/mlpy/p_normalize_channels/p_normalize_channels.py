@@ -2,6 +2,7 @@
 
 from mda.mdaio import readmda, writemda32, writemda64
 import numpy as np
+from p_normalize_channels.normalize_channels_cpp import nc_channel_variances, nc_scale_channels
 
 class Processor:
 	name='mlpy.normalize_channels'
@@ -13,14 +14,9 @@ class Processor:
 		input_path=args['input']
 		output_path=args['output']
 		X=readmda(input_path) #read
-		M=X.shape[0]
-		N=X.shape[1]
-		for m in range(0,M):
-			print('Normalizing channel ',m)
-			row=X[m,:]
-			stdev0=np.std(row)
-			row=row*(1/stdev0)
-			X[m,:]=row
+		print(X.ndim)
+		variances=nc_channel_variances(X)
+		nc_scale_channels(X,np.sqrt(variances));
 
 		writemda32(X,output_path) #write
 		return True

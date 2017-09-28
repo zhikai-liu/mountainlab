@@ -232,6 +232,19 @@ void finalize(QString arg1, const MLProcessor& MLP, const QMap<QString, QVariant
     }
 }
 
+bool cache_outputs(const MLProcessor &MLP) {
+    QJsonObject spec=MLP.spec;
+    if (spec.contains("opts")) {
+        QJsonObject opts=spec["opts"].toObject();
+        if (opts.contains("cache_output")) {
+            if (!opts["cache_output"].toBool()) {
+                return false;
+            }
+        }
+    }
+    return true; //by default
+}
+
 int exec_run_or_queue(QString arg1, QString arg2, const QMap<QString, QVariant>& clp)
 {
     MLProcessInfo info;
@@ -263,6 +276,10 @@ int exec_run_or_queue(QString arg1, QString arg2, const QMap<QString, QVariant>&
     }
 
     bool force_run = clp.contains("_force_run");
+    if (!cache_outputs(MLP)) {
+        force_run = true;
+    }
+
     if (((arg1 == "run") || (arg1 == "queue")) && (!force_run)) {
         if (process_already_completed(MLP, clp)) {
             qDebug().noquote() << "Process already completed: " + processor_name;
@@ -275,7 +292,7 @@ int exec_run_or_queue(QString arg1, QString arg2, const QMap<QString, QVariant>&
     QString monitor_file_name;
     if (arg1 == "queue") {
         bool already_completed;
-        monitor_file_name = wait_until_ready_to_run(MLP, clp, &already_completed);
+        monitor_file_name = wait_until_ready_to_run(MLP, clp, &already_completed, force_run);
         if (already_completed) {
             qDebug().noquote() << "Process already completed: " + processor_name;
             info.exit_code = 0;
@@ -804,10 +821,9 @@ bool okay_to_run(QString path, const MLProcessor& MLP, const QMap<QString, QVari
     return okay_to_run(running_process_objects, MLP, clp);
 }
 
-QString wait_until_ready_to_run(const MLProcessor& MLP, const QMap<QString, QVariant>& clp, bool* already_completed)
+QString wait_until_ready_to_run(const MLProcessor& MLP, const QMap<QString, QVariant>& clp, bool* already_completed, bool force_run)
 {
     (*already_completed) = false;
-    bool force_run = clp.contains("_force_run");
 
     //seed the random number generator (see below)
     QDateTime cd = QDateTime::currentDateTime();
