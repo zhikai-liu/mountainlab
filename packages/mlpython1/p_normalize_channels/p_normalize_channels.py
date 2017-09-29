@@ -17,7 +17,7 @@ import cppimport
 cpp=cppimport.imp('normalize_channels_cpp')
 
 class p_normalize_channels:
-	name='mlpy.normalize_channels'
+	name='mlpython1.normalize_channels'
 	inputs=[{"name":"input","description":"input .mda file"}]
 	outputs=[{"name":"output","description":"output .mda file"}]
 	parameters=[]
