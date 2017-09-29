@@ -1,11 +1,21 @@
 #!/usr/bin/python3
 
 import sys
-from mda.mdaio import readmda, writemda32, writemda64, DiskReadMda
 import numpy as np
+import os, inspect
+
+# append the parent path to search directory
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir) 
+
+# imports from mlpy
+from mlpy import ProcessorManager
+from mlpy import DiskReadMda
+
 from timeserieschunkreader import TimeseriesChunkReader
 
-class Processor:
+class p_test_chunks:
 	name='mlpy.test_chunks'
 	inputs=[{"name":"input","description":"input .mda file"}]
 	outputs=[]
@@ -37,4 +47,7 @@ class Processor:
 			self._sum=self._sum+np.sum(row)
 		return True
 
-
+PM=ProcessorManager()
+PM.registerProcessor(p_test_chunks())
+if not PM.run(sys.argv):
+	exit(-1)

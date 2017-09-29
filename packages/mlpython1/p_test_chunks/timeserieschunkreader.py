@@ -1,4 +1,4 @@
-from mda.mdaio import DiskReadMda
+from mlpy import DiskReadMda
 
 class TimeseriesChunkInfo:
 	i1=0
@@ -15,7 +15,6 @@ class TimeseriesChunkReader:
 		X=DiskReadMda(mdafile_path)
 		M=X.N1()
 		N=X.N2()
-		sections=[]
 		t=0
 		while t < N:
 			t1=t
