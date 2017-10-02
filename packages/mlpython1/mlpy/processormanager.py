@@ -1,5 +1,7 @@
 import os
 import json
+import inspect
+from . import docscrape
 
 class ProcessorManager:
     _processors=[]
@@ -21,7 +23,7 @@ class ProcessorManager:
         args=self._get_args_from_argv(argv)
         if not self._check_args(P,args):
             return False
-        return P.run(args)
+        return P(args)
     def getSpec(self,argv):
         spec={"processors":[]}
         for j in range(0,len(self._processors)):
@@ -31,10 +33,36 @@ class ProcessorManager:
             spec["processors"].append(obj)
         return spec
     def getProcessorSpec(self,P):
-        spec={"name":P.name}
-        spec["inputs"]=P.inputs
-        spec["outputs"]=P.outputs
-        spec["parameters"]=P.parameters
+        spec={"name":P.name,"version":P.version}
+        npdoc=docscrape.FunctionDoc(P)
+        #npdoc={"Summary":"","Parameters":[]}
+        spec["description"]=npdoc["Summary"];
+        params0=npdoc["Parameters"]
+        if (inspect.isclass(P)):
+            argspec0=inspect.getfullargspec(P.__call__);
+        else:
+            argspec0=inspect.getfullargspec(P);
+        defaults0=argspec0.kwonlydefaults;
+        inputs,outputs,parameters = [],[],[]
+        for j in range(len(params0)):
+            pp=params0[j]
+            pname=pp[0]
+            ptype=pp[1]
+            pdescr=pp[2]
+            qq={"name":pname,"description":pdescr}
+            if pname in defaults0:
+                qq["optional"]=True
+                qq["default_value"]=defaults0[pname]
+            if (ptype=='INPUT'):
+                inputs.append(qq)
+            elif (ptype=='OUTPUT'):
+                outputs.append(qq)
+            else:
+                qq["datatype"]=ptype
+                parameters.append(qq)
+        spec['inputs']=inputs
+        spec['outputs']=outputs
+        spec['parameters']=parameters
         return spec
     def findProcessor(self,processor_name):
         for j in range(0,len(self._processors)):

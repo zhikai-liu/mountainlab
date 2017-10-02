@@ -1,33 +1,45 @@
 import sys
 import numpy as np
-import os, inspect
+import os
 
-# append the parent path to search directory
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0,parentdir) 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # imports from mlpy
 from mlpy import ProcessorManager
 
-class p_extract_geom:
-	name='mlpython1.extract_geom'
-	description='Extract a subset of channels from a geom.csv file'
-	version='0.1'
-	inputs=[{"name":"geom","description":""}]
-	outputs=[{"name":"geom_out","description":""}]
-	parameters=[{"name":"channels","description":"","optional":False}]
-	def run(self,args):
-		geom_path=args['geom']
-		geom_out_path=args['geom_out']
-		channels_str=args['channels']
-		channels=np.fromstring(channels_str,dtype=int,sep=',')
-		X=np.loadtxt(open(geom_path, "rb"), delimiter=",")
-		X=X[channels-1,:]
-		np.savetxt(geom_out_path,X,delimiter=",",fmt="%g")
-		return True
+def extract_geom(*,geom,channels_array='',geom_out,channels=''):
+    """
+    Extract a subset of channels from a geom csv file
+
+    Parameters
+    ----------
+    geom : INPUT
+        Path of geom csv file having M rows and R columns where M is number of channels and R is the number of physical dimensions (1, 2, or 3)
+    channels_array : INPUT 
+        (optional) Path of array of channel numbers (positive integers). Either use this or the channels parameter, not both.
+        
+    geom_out : OUTPUT
+        Path of output geom csv file containing a subset of the channels
+        
+    channels : string
+        (Optional) Comma-separated list of channels to extract. Either use this or the channels_array input, not both.
+    """    
+    if channels:
+        Channels=np.fromstring(channels,dtype=int,sep=',')
+    elif channels_array:
+        Channels=channels_array
+    else:
+        Channels.np.empty(0)        
+    
+    X=np.loadtxt(open(geom, "rb"), delimiter=",")
+    X=X[(Channels-1).tolist(),:]
+    np.savetxt(geom_out,X,delimiter=",",fmt="%g")
+    return True
+            
+extract_geom.name='mlpython1.extract_geom'
+extract_geom.version="0.1"
 
 PM=ProcessorManager()
-PM.registerProcessor(p_extract_geom())
+PM.registerProcessor(extract_geom)
 if not PM.run(sys.argv):
-	exit(-1)
+    exit(-1)

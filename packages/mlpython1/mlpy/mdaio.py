@@ -2,13 +2,6 @@ import numpy as np
 import struct
 
 class MdaHeader:
-	dt_code=0
-	dt='float32'
-	num_bytes_per_entry=0
-	num_dims=2
-	dimprod=1
-	dims=[]
-	header_size=0
 	def __init__(self, dt0, dims0):
 		self.dt_code=_dt_code_from_dt(dt0)
 		self.dt=dt0
@@ -19,11 +12,13 @@ class MdaHeader:
 		self.header_size=(3+len(dims0))*4
 
 class DiskReadMda:
-	_path=''
-	_header=None
-	def __init__(self,path):
+	def __init__(self,path,header=None):
 		self._path=path
-		self._header=_read_header(self._path)
+		if (header==None):
+			self._header=_read_header(self._path)
+		else:
+			self._header=header
+			self._header.header_size=0
 	def dims(self):
 		return self._header.dims
 	def N1(self):
@@ -32,6 +27,8 @@ class DiskReadMda:
 		return self._header.dims[1]
 	def N3(self):
 		return self._header.dims[2]
+	def dt(self):
+		return self._header.dt
 	def readChunk(self,i1=-1,i2=-1,i3=-1,N1=1,N2=1,N3=1):
 		if (i2<0):
 			return self._read_chunk_1d(i1,N1)
@@ -63,8 +60,6 @@ class DiskReadMda:
 			return None
 
 class DiskWriteMda:
-	_path=''
-	_header=None
 	def __init__(self,path,dims,dt='float64'):
 		self._path=path
 		self._header=MdaHeader(dt,dims)
