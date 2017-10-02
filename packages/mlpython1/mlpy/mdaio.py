@@ -5,7 +5,7 @@ class MdaHeader:
 	def __init__(self, dt0, dims0):
 		self.dt_code=_dt_code_from_dt(dt0)
 		self.dt=dt0
-		self.num_bytes_per_entry=_num_bytes_per_entry_from_dt(dt0)
+		self.num_bytes_per_entry=get_num_bytes_per_entry_from_dt(dt0)
 		self.num_dims=len(dims0)
 		self.dimprod=np.prod(dims0)
 		self.dims=dims0
@@ -147,7 +147,7 @@ def _dt_code_from_dt(dt):
 		return -8
 	return None
 
-def _num_bytes_per_entry_from_dt(dt):
+def get_num_bytes_per_entry_from_dt(dt):
 	if dt == 'uint8':
 		return 1
 	if dt == 'float32':
@@ -248,7 +248,7 @@ def writemda16ui(X,fname):
 
 def _writemda(X,fname,dt):
 	dt_code=0
-	num_bytes_per_entry=_num_bytes_per_entry_from_dt(dt)
+	num_bytes_per_entry=get_num_bytes_per_entry_from_dt(dt)
 	dt_code=_dt_code_from_dt(dt)
 	if dt_code is None:
 		print ("Unexpected data type: {}".format(dt))

@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # imports from mlpy
 from mlpy import ProcessorManager
-from mlpy import DiskReadMda, readmda, writemda32, DiskWriteMda
+from mlpy import DiskReadMda, readmda, writemda32, writemda64, DiskWriteMda, get_num_bytes_per_entry_from_dt, MdaHeader
 from timeserieschunkreader import TimeseriesChunkReader
 
 class extract_timeseries:
@@ -54,7 +54,18 @@ class extract_timeseries:
         t1=int(t1)
         t2=int(t2)
         
-        X=DiskReadMda(timeseries)
+        header0=None
+        if (timeseries_dtype):
+            size_bytes=os.path.getsize(timeseries)
+            num_bytes_per_entry=get_num_bytes_per_entry_from_dt(timeseries_dtype)
+            num_entries=size_bytes/num_bytes_per_entry
+            if (num_entries % timeseries_num_channels != 0):
+                print("File size (%ld) is not divisible by number of channels (%g) for dtype=%s" % (size_bytes,timeseries_num_channels,timeseries_dtype))
+                return False            
+            num_timepoints=num_entries/timeseries_num_channels
+            header0=MdaHeader(timeseries_dtype,[timeseries_num_channels,num_timepoints])
+        
+        X=DiskReadMda(timeseries,header0)
         M,N = X.N1(),X.N2()
         if (self._channels.size==0):
             self._channels=np.array(1+np.arange(M))
@@ -65,7 +76,7 @@ class extract_timeseries:
         if (t2<0):
             t2=N-1
             
-        self._writer=DiskWriteMda(timeseries_out,[M2,N])
+        self._writer=DiskWriteMda(timeseries_out,[M2,N],dt=X.dt())
 
         num_mb=10
         chunk_size=np.maximum(100,int(num_mb*1e6/(M*4)))
@@ -77,8 +88,9 @@ class extract_timeseries:
         return self._writer.writeChunk(chunk,i1=0,i2=info.t1)
     def test(self):
         try:
-            M,N = 4,100
+            M,N = 4,10000
             X=np.random.rand(M,N)
+            print([M,N])
             writemda32(X,'tmp.mda')
             ret=self(timeseries="tmp.mda",timeseries_out="tmp2.mda",channels="1,3",t1="-1",t2="-1")
             assert(ret)
@@ -99,11 +111,11 @@ class extract_timeseries:
 #    print(params[j])
 #    print("")
 
-#P=extract_timeseries()
-#ret=P.test()
-#print ("Test result: %d" % (ret))
+P=extract_timeseries()
+ret=P.test()
+print ("Test result: %d" % (ret))
 
-PM=ProcessorManager()
-PM.registerProcessor(extract_timeseries)
-if not PM.run(sys.argv):
-    exit(-1)
+#PM=ProcessorManager()
+#PM.registerProcessor(extract_timeseries)
+#if not PM.run(sys.argv):
+#    exit(-1)

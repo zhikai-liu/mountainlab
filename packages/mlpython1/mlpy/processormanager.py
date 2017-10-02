@@ -33,15 +33,13 @@ class ProcessorManager:
             spec["processors"].append(obj)
         return spec
     def getProcessorSpec(self,P):
+        assert(callable(P))
         spec={"name":P.name,"version":P.version}
         npdoc=docscrape.FunctionDoc(P)
         #npdoc={"Summary":"","Parameters":[]}
         spec["description"]=npdoc["Summary"];
         params0=npdoc["Parameters"]
-        if (inspect.isclass(P)):
-            argspec0=inspect.getfullargspec(P.__call__);
-        else:
-            argspec0=inspect.getfullargspec(P);
+        argspec0=inspect.getfullargspec(P.__call__ if inspect.isclass(P) else P)
         defaults0=argspec0.kwonlydefaults;
         inputs,outputs,parameters = [],[],[]
         for j in range(len(params0)):
@@ -76,7 +74,13 @@ class ProcessorManager:
             if (arg0.startswith("--")):
                 tmp=arg0[2:].split("=")
                 if (len(tmp)==2):
-                    args[tmp[0]]=tmp[1]
+                    if (tmp[0] in args):
+                        if type(args[tmp[0]]=='list'):
+                            args[tmp[0]].append(tmp[1]) #already a list, so append
+                        else:
+                            args[tmp[0]]=[args[tmp[0]],tmp[1]] #not a list yet, so make it a list and append
+                    else:
+                        args[tmp[0]]=tmp[1] #not a list
                 else:
                     print("Warning: problem with argument: {}".format(arg0))
                     exit(-1)
