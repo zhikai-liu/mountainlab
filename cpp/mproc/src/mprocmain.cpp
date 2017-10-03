@@ -71,6 +71,12 @@ int main(int argc, char* argv[])
         else
             return -1;
     }
+    else if (arg1 == "test") { // Run test for a single processor
+        if (test_processor(arg2))
+            return 0;
+        else
+            return -1;
+    }
     else if ((arg1 == "exec") || (arg1 == "run") || (arg1 == "queue")) {
         CacheManager::globalInstance()->removeExpiredFiles();
         int ret = exec_run_or_queue(arg1, arg2, CLP.named_parameters);
@@ -153,6 +159,7 @@ void print_usage()
     printf("mproc queue [processor_name] --[param1]=[val1] --[param2]=[val2] ... [--_force_run] [--_request_num_threads=4]\n");
     printf("mproc list-processors\n");
     printf("mproc spec [processor_name]\n");
+    printf("mproc test [processor_name]\n");
 }
 
 bool initialize_processor_manager(ProcessorManager& PM, QString* error_str)
@@ -221,6 +228,43 @@ bool spec(QString arg2)
     return true;
 }
 
+void test_processor(const MLProcessor& MLP)
+{
+    QJsonObject spec = MLP.spec;
+    if (!spec["has_test"].toBool()) {
+        printf("%s\n", QString("Processor %1 has no test").arg(MLP.name).toUtf8().data());
+    }
+    else {
+        QString exe = MLP.mp_file_name;
+        int ret = system(QString(exe + " test " + MLP.name).toUtf8().data());
+        (void)ret;
+    }
+}
+
+bool test_processor(QString arg2)
+{
+    ProcessorManager PM;
+    QString errstr;
+    if (!initialize_processor_manager(PM, &errstr)) {
+        return false;
+    }
+    if (arg2.isEmpty()) {
+        //test them all
+        QStringList names = PM.processorNames();
+        foreach (QString pname, names) {
+            printf("_________ %s _________\n", pname.toUtf8().data());
+            MLProcessor MLP = PM.processor(pname);
+            test_processor(MLP);
+            printf("\n");
+        }
+    }
+    else {
+        MLProcessor MLP = PM.processor(arg2);
+        test_processor(MLP);
+    }
+    return true;
+}
+
 void finalize(QString arg1, const MLProcessor& MLP, const QMap<QString, QVariant>& clp, const MLProcessInfo& info)
 {
     if (((arg1 == "run") || (arg1 == "queue")) && (info.exit_code == 0)) {
@@ -232,10 +276,11 @@ void finalize(QString arg1, const MLProcessor& MLP, const QMap<QString, QVariant
     }
 }
 
-bool cache_outputs(const MLProcessor &MLP) {
-    QJsonObject spec=MLP.spec;
+bool cache_outputs(const MLProcessor& MLP)
+{
+    QJsonObject spec = MLP.spec;
     if (spec.contains("opts")) {
-        QJsonObject opts=spec["opts"].toObject();
+        QJsonObject opts = spec["opts"].toObject();
         if (opts.contains("cache_output")) {
             if (!opts["cache_output"].toBool()) {
                 return false;

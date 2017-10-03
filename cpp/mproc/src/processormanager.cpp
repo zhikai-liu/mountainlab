@@ -144,6 +144,7 @@ bool ProcessorManager::loadProcessorFile(const QString& path)
             return false;
         }
         MLProcessor P = d->create_processor_from_json_object(processors[i].toObject());
+        P.mp_file_name = path;
         P.basepath = QFileInfo(path).path();
         if (P.name.isEmpty()) {
             qCDebug(MPM) << QJsonDocument(processors[i].toObject()).toJson();

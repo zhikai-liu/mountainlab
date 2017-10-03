@@ -21,6 +21,7 @@ void sig_handler(int signum);
 
 bool list_processors();
 bool spec(QString arg2);
+bool test_processor(QString arg2);
 int exec_run_or_queue(QString arg1, QString arg2, const QMap<QString, QVariant>& clp);
 
 void print_usage();

@@ -2,6 +2,7 @@ import os
 import json
 import inspect
 from . import docscrape
+import traceback
 
 class ProcessorManager:
     _processors=[]
@@ -32,19 +33,33 @@ class ProcessorManager:
                 return False
             return P(args)
         else:
-            for ii in range(len(self._processors)):
-                P=self._processors[ii]
-                if hasattr(P,'test'):
-                    print ('')
-                    print ('----------------------------------------------')
-                    print ('Testing %s' % (P.name))
-                    if P.test(args):
-                        print ('SUCCESS')
-                    else:
-                        print ('FAILURE')
-                    print ('----------------------------------------------')
+            # test mode
+            if (processor_name):
+                self._run_test(processor_name,args)
+            else:
+                for ii in range(len(self._processors)):
+                    P=self._processors[ii]
+                    self._run_test(P.name,args)
+    def _run_test(self,processor_name,args):
+        P=self.findProcessor(processor_name)
+        if P is None:
+            print ("Unable to find processor: {}".format(processor_name))
+            return
+        if hasattr(P,'test'):
+            print ('')
+            print ('----------------------------------------------')
+            print ('Testing %s' % (P.name))
+            try:
+                if P.test(args):
+                    print ('SUCCESS')
                 else:
-                    print ('No test function defined for %s' % (P.name))
+                    print ('FAILURE')
+            except:
+                traceback.print_exc()
+                print ('FAILURE')
+            print ('----------------------------------------------')
+        else:
+            print ('No test function defined for %s' % (P.name))
     def getSpec(self,argv):
         spec={"processors":[]}
         for j in range(0,len(self._processors)):
@@ -82,6 +97,8 @@ class ProcessorManager:
         spec['inputs']=inputs
         spec['outputs']=outputs
         spec['parameters']=parameters
+        if hasattr(P,'test'):
+            spec['has_test']=True
         return spec
     def findProcessor(self,processor_name):
         for j in range(0,len(self._processors)):
@@ -90,7 +107,7 @@ class ProcessorManager:
         return None
     def _get_args_from_argv(self,argv):
         args={}
-        for j in range(2,len(argv)):
+        for j in range(1,len(argv)):
             arg0=argv[j]
             if (arg0.startswith("--")):
                 tmp=arg0[2:].split("=")
@@ -105,9 +122,9 @@ class ProcessorManager:
                 else:
                     print ("Warning: problem with argument: {}".format(arg0))
                     exit(-1)
-            else:
-                print ("Warning: problem with argument: {}".format(arg0))
-                exit(-1)
+            #else:
+            #    print ("Warning: problem with argument: {}".format(arg0))
+            #    exit(-1)
         return args
     def _check_args(self,P,args):
         valid_params={}

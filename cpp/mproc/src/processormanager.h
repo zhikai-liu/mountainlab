@@ -30,6 +30,7 @@ struct MLProcessor {
     QMap<QString, MLParameter> parameters;
     QString exe_command;
     QJsonObject spec;
+    QString mp_file_name;
 
     QString basepath;
 };
