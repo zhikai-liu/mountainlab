@@ -38,6 +38,20 @@ def extract_geom(*,geom,channels_array='',geom_out,channels=''):
             
 extract_geom.name='mlpython1.extract_geom'
 extract_geom.version="0.1"
+def test_extract_geom(args):
+    try:
+        G=np.array([[1,1],[2,1],[1,2],[2,2]])
+        np.savetxt('tmp.geom.csv',G,delimiter=',',fmt='%g')
+        extract_geom(geom='tmp.geom.csv',geom_out='tmp.geom2.csv',channels='1,2,4')
+        G2=np.loadtxt(open('tmp.geom2.csv','rb'),delimiter=',')
+        assert(G2.shape[0]==3)
+        assert(G2.shape[1]==2)
+        assert(np.array_equal(G[[0,1,3],:],G2))
+        return True
+    except Exception as e:
+        traceback.print_exc()
+        return False
+extract_geom.test=test_extract_geom
 
 PM=ProcessorManager()
 PM.registerProcessor(extract_geom)
