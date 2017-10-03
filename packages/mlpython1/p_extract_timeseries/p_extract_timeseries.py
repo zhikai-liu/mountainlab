@@ -60,7 +60,7 @@ class extract_timeseries:
             num_bytes_per_entry=get_num_bytes_per_entry_from_dt(timeseries_dtype)
             num_entries=size_bytes/num_bytes_per_entry
             if (num_entries % timeseries_num_channels != 0):
-                print("File size (%ld) is not divisible by number of channels (%g) for dtype=%s" % (size_bytes,timeseries_num_channels,timeseries_dtype))
+                print ("File size (%ld) is not divisible by number of channels (%g) for dtype=%s" % (size_bytes,timeseries_num_channels,timeseries_dtype))
                 return False            
             num_timepoints=num_entries/timeseries_num_channels
             header0=MdaHeader(timeseries_dtype,[timeseries_num_channels,num_timepoints])
@@ -86,11 +86,10 @@ class extract_timeseries:
     def _kernel(self,chunk,info):
         chunk=chunk[(self._channels-1).tolist(),]
         return self._writer.writeChunk(chunk,i1=0,i2=info.t1)
-    def test(self):
+    def test(self,args):
         try:
             M,N = 4,10000
             X=np.random.rand(M,N)
-            print([M,N])
             writemda32(X,'tmp.mda')
             ret=self(timeseries="tmp.mda",timeseries_out="tmp2.mda",channels="1,3",t1="-1",t2="-1")
             assert(ret)
@@ -108,14 +107,14 @@ class extract_timeseries:
 #doc=numpydoc.docscrape.FunctionDoc(extract_timeseries2)
 #params=doc["Parameters"]
 #for j in range(len(params)):
-#    print(params[j])
-#    print("")
+#    print (params[j])
+#    print ("")
 
-P=extract_timeseries()
-ret=P.test()
-print ("Test result: %d" % (ret))
+#P=extract_timeseries()
+#ret=P.test()
+#print ("Test result: %d" % (ret))
 
-#PM=ProcessorManager()
-#PM.registerProcessor(extract_timeseries)
-#if not PM.run(sys.argv):
-#    exit(-1)
+PM=ProcessorManager()
+PM.registerProcessor(extract_timeseries())
+if not PM.run(sys.argv):
+    exit(-1)
