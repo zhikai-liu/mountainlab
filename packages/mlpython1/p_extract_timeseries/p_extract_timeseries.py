@@ -3,12 +3,13 @@ import numpy as np
 import os
 import traceback
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+parent_path=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_path)
 
 # imports from mlpy
 from mlpy import ProcessorManager
 from mlpy import DiskReadMda, readmda, writemda32, writemda64, DiskWriteMda, get_num_bytes_per_entry_from_dt, MdaHeader
-from timeserieschunkreader import TimeseriesChunkReader
+from common import TimeseriesChunkReader
 
 class extract_timeseries:
     """
@@ -78,30 +79,24 @@ class extract_timeseries:
             
         self._writer=DiskWriteMda(timeseries_out,[M2,N],dt=X.dt())
 
-        num_mb=10
-        chunk_size=np.maximum(100,int(num_mb*1e6/(M*4)))
-        chunk_size=10
-        TCR=TimeseriesChunkReader(chunk_size=chunk_size, overlap_size=0, t1=t1, t2=t2)
+        chunk_size_mb=10
+        TCR=TimeseriesChunkReader(chunk_size_mb=chunk_size_mb, overlap_size=0, t1=t1, t2=t2)
         return TCR.run(timeseries,self._kernel)            
     def _kernel(self,chunk,info):
         chunk=chunk[(self._channels-1).tolist(),]
         return self._writer.writeChunk(chunk,i1=0,i2=info.t1)
     def test(self,args):
-        try:
-            M,N = 4,10000
-            X=np.random.rand(M,N)
-            writemda32(X,'tmp.mda')
-            ret=self(timeseries="tmp.mda",timeseries_out="tmp2.mda",channels="1,3",t1="-1",t2="-1")
-            assert(ret)
-            A=readmda('tmp.mda')
-            B=readmda('tmp2.mda')
-            assert(B.shape[0]==2)
-            assert(B.shape[1]==N)
-            assert(np.array_equal(A[[0,2],],B))
-            return True 
-        except Exception as e:
-            traceback.print_exc()
-            return False
+        M,N = 4,10000
+        X=np.random.rand(M,N)
+        writemda32(X,'tmp.mda')
+        ret=self(timeseries="tmp.mda",timeseries_out="tmp2.mda",channels="1,3",t1="-1",t2="-1")
+        assert(ret)
+        A=readmda('tmp.mda')
+        B=readmda('tmp2.mda')
+        assert(B.shape[0]==2)
+        assert(B.shape[1]==N)
+        assert(np.array_equal(A[[0,2],],B))
+        return True 
 
 #import numpydoc
 #doc=numpydoc.docscrape.FunctionDoc(extract_timeseries2)
@@ -113,6 +108,9 @@ class extract_timeseries:
 #P=extract_timeseries()
 #ret=P.test()
 #print ("Test result: %d" % (ret))
+
+if len(sys.argv)==1:
+    sys.argv.append('test')
 
 PM=ProcessorManager()
 PM.registerProcessor(extract_timeseries())

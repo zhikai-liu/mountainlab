@@ -40,6 +40,7 @@ class ProcessorManager:
                 for ii in range(len(self._processors)):
                     P=self._processors[ii]
                     self._run_test(P.name,args)
+            return True
     def _run_test(self,processor_name,args):
         P=self.findProcessor(processor_name)
         if P is None:
