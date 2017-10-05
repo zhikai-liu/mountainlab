@@ -29,9 +29,10 @@ class ProcessorManager:
             if P is None:
                 print ("Unable to find processor: {}".format(processor_name))
                 return False
-            if not self._check_args(P,args):
+            spec=self.getProcessorSpec(P)
+            if not self._check_args(spec,args):
                 return False
-            return P(args)
+            return P(**args)
         else:
             # test mode
             if (processor_name):
@@ -112,38 +113,36 @@ class ProcessorManager:
             arg0=argv[j]
             if (arg0.startswith("--")):
                 tmp=arg0[2:].split("=")
-                if (len(tmp)==2):
-                    if (tmp[0] in args):
-                        if type(args[tmp[0]]=='list'):
-                            args[tmp[0]].append(tmp[1]) #already a list, so append
+                if not tmp[0].startswith('_'):
+                    if (len(tmp)==2):
+                        if (tmp[0] in args):
+                            if type(args[tmp[0]]=='list'):
+                                args[tmp[0]].append(tmp[1]) #already a list, so append
+                            else:
+                                args[tmp[0]]=[args[tmp[0]],tmp[1]] #not a list yet, so make it a list and append
                         else:
-                            args[tmp[0]]=[args[tmp[0]],tmp[1]] #not a list yet, so make it a list and append
+                            args[tmp[0]]=tmp[1] #not a list
                     else:
-                        args[tmp[0]]=tmp[1] #not a list
-                else:
-                    print ("Warning: problem with argument: {}".format(arg0))
-                    exit(-1)
-            #else:
-            #    print ("Warning: problem with argument: {}".format(arg0))
-            #    exit(-1)
+                        print ("Warning: problem with argument: {}".format(arg0))
+                        exit(-1)
         return args
-    def _check_args(self,P,args):
+    def _check_args(self,spec,args):
         valid_params={}
-        for j in range(0,len(P.inputs)):
-            valid_params[P.inputs[j]["name"]]=1
-            if not P.inputs[j]["name"] in args:
-                print ("Missing input path: {}".format(P.inputs[j]["name"]))
+        for j in range(0,len(spec['inputs'])):
+            valid_params[spec['inputs'][j]["name"]]=1
+            if not spec['inputs'][j]["name"] in args:
+                print ("Missing input path: {}".format(spec['inputs'][j]["name"]))
                 return False
-        for j in range(0,len(P.outputs)):
-            valid_params[P.outputs[j]["name"]]=1
-            if not P.outputs[j]["name"] in args:
-                print ("Missing output path: {}".format(P.outputs[j]["name"]))
+        for j in range(0,len(spec['outputs'])):
+            valid_params[spec['outputs'][j]["name"]]=1
+            if not spec['outputs'][j]["name"] in args:
+                print ("Missing output path: {}".format(spec['outputs'][j]["name"]))
                 return False
-        for j in range(0,len(P.parameters)):
-            valid_params[P.parameters[j]["name"]]=1
-            if not P.parameters[j]["optional"]:
-                if not P.parameters[j]["name"] in args:
-                    print ("Missing required parameter: {}".format(P.parameters[j]["name"]))
+        for j in range(0,len(spec['parameters'])):
+            valid_params[spec['parameters'][j]["name"]]=1
+            if not spec['parameters'][j]["optional"]:
+                if not spec['parameters'][j]["name"] in args:
+                    print ("Missing required parameter: {}".format(spec['parameters'][j]["name"]))
                     return False
         for key in args:
             if not key in valid_params:

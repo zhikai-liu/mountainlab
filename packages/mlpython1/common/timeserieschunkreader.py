@@ -1,4 +1,5 @@
 from mlpy import DiskReadMda
+import time
 
 class TimeseriesChunkInfo:
     def __init__(self):
@@ -16,6 +17,8 @@ class TimeseriesChunkReader:
         self._overlap_size=overlap_size
         self._t1=t1
         self._t2=t2
+        self._elapsed_reading=0
+        self._elapsed_running=0
     def run(self, mdafile_path, func):
         X=DiskReadMda(mdafile_path)
         M,N = X.N1(),X.N2()
@@ -30,15 +33,27 @@ class TimeseriesChunkReader:
             t2=min(self._t2,t+cs-1)
             s1=max(0,t1-self._overlap_size)
             s2=min(N-1,t2+self._overlap_size)
+            
+            timer=time.time()
             chunk=X.readChunk(i1=0, N1=M, i2=s1, N2=s2-s1+1)
+            self._elapsed_reading+=time.time()-timer
+            
             info=TimeseriesChunkInfo()
             info.t1=t1
             info.t2=t2
             info.i1=t1-s1
             info.i2=t2-s1
             info.size=t2-t1+1
+            
+            timer=time.time()
             if not func(chunk, info):
                 return False
+            self._elapsed_running+=time.time()-timer                
+                
             t=t+cs
+        print('Elapsed: %g sec reading, %g sec running' % (self._elapsed_reading,self._elapsed_running))
         return True
-
+    def elapsedReading(self):
+        return self._elapsed_reading
+    def elapsedRunning(self):
+        return self._elapsed_running
