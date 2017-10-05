@@ -7,8 +7,8 @@ sys.path.append(parent_path)
 from mlpy import readmda,writemda32
 
 processor_name='pyms.synthesize_timeseries'
-processor_version='0.1'
-def synthesize_timeseries(*,firings='',waveforms='',timeseries_out,noise_level=1,num_timepoints=0,waveform_upsamplefac=1):
+processor_version='0.11a'
+def synthesize_timeseries(*,firings='',waveforms='',timeseries_out,noise_level=1,samplerate=30000,duration=60,waveform_upsamplefac=1):
     """
     Synthesize a electrophysiology timeseries from a set of ground-truth firing events and waveforms
 
@@ -24,13 +24,17 @@ def synthesize_timeseries(*,firings='',waveforms='',timeseries_out,noise_level=1
 
     noise_level : double
         (Optional) Standard deviation of the simulated background noise added to the timeseries
-    num_timepoints : int
-        (Optional) Number of timepoints (N) in the dataset. If set to zero, will use N=max(times)+clip_size where times are the event times from the firings file and clip_size is the size of the second dimension of the waveforms
+    samplerate : double
+        (Optional) Sample rate for the synthetic dataset in Hz
+    duration : double
+        (Optional) Duration of the synthetic dataset in Hz. The number of timepoints will be duration*samplerate
     waveform_upsamplefac : int
         (Optional) The upsampling factor corresponding to the input waveforms. (avoids digitization artifacts)
     """
     noise_level=np.float64(noise_level)
-    num_timepoints=np.int64(num_timepoints)
+    samplerate=np.float64(samplerate)
+    duration=np.float64(duration)
+    num_timepoints=np.int64(samplerate*duration)
     waveform_upsamplefac=int(waveform_upsamplefac)
     
     if waveforms:
@@ -44,9 +48,11 @@ def synthesize_timeseries(*,firings='',waveforms='',timeseries_out,noise_level=1
         F=np.zeros((3,0))
         
     times=F[1,:]
+    labels=F[2,:].astype('int')
     
     M,TT,K = W.shape[0],W.shape[1],W.shape[2]
-    T=TT/waveform_upsample_factor
+    T=int(TT/waveform_upsamplefac)
+    Tmid=int(np.ceil((T+1)/2-1))
     
     N=num_timepoints
     if (N==0):
@@ -56,9 +62,21 @@ def synthesize_timeseries(*,firings='',waveforms='',timeseries_out,noise_level=1
             N=max(times)+T
             
     X=np.random.randn(M,N)*noise_level
-    
-        
-    
+
+    waveform_list=[]
+    for k in range(K):
+        waveform0=W[:,:,k-1]
+        waveform_list.append(waveform0)
+
+    for j in range(times.size):
+        t0=times[j]
+        k0=labels[j]
+        waveform0=waveform_list[k0-1]
+        frac_offset=int((np.floor(t0)+1-t0)*waveform_upsamplefac)
+        tstart=np.int64(np.floor(t0))-Tmid
+        if (0<=tstart) and (tstart+T<=N):
+            X[:,tstart:tstart+T]=X[:,tstart:tstart+T]+waveform0[:,frac_offset::waveform_upsamplefac]
+
     return writemda32(X,timeseries_out)
 
 def test_synthesize_timeseries():

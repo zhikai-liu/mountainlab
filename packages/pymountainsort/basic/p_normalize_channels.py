@@ -36,13 +36,14 @@ def normalize_channels(*,timeseries,timeseries_out):
         return True
         
     def _kernel_normalize_and_write(chunk,info):
+        Nchunk=chunk.shape[1]
         means=normalize_channels._sums/N
         variances=(normalize_channels._sumsqrs-normalize_channels._sums**2/N)/(N-1)
         stdevs=np.sqrt(variances)
         stdevs[np.where(stdevs==0)]=1
         means=np.reshape(means,(M,1))
         stdevs=np.reshape(stdevs,(M,1))
-        chunk=(chunk-np.tile(means,(1,N)))/np.tile(stdevs,(1,N))
+        chunk=(chunk-np.tile(means,(1,Nchunk)))/np.tile(stdevs,(1,Nchunk))
         return _writer.writeChunk(chunk,i1=0,i2=info.t1)
     
     TCR=TimeseriesChunkReader(chunk_size_mb=chunk_size_mb, overlap_size=0)    
