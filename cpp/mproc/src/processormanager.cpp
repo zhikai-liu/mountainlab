@@ -79,8 +79,8 @@ bool ProcessorManager::loadProcessorFile(const QString& path)
     QString spec_tmp_fname = CacheManager::globalInstance()->makeLocalFile(MLUtil::computeSha1SumOfString(path) + ".spec"); //changed by jfm on 9/7/17, see below
     QString json;
     if (QFileInfo(path).isExecutable()) {
-        if ((QFile::exists(spec_tmp_fname)) && (QFileInfo(spec_tmp_fname).lastModified().secsTo(QFileInfo(spec_tmp_fname).lastModified()) >= 0) && (QFileInfo(spec_tmp_fname).lastModified().secsTo(QDateTime::currentDateTime()) <= 60)) {
-            json = TextFile::read(spec_tmp_fname); // read the saved spec so we don't need to make the system call next time, but let's be careful about it... regenerate every 60 seconds
+        if ((QFile::exists(spec_tmp_fname)) && (QFileInfo(spec_tmp_fname).lastModified().secsTo(QFileInfo(spec_tmp_fname).lastModified()) >= 0) && (QFileInfo(spec_tmp_fname).lastModified().secsTo(QDateTime::currentDateTime()) <= 10)) {
+            json = TextFile::read(spec_tmp_fname); // read the saved spec so we don't need to make the system call next time, but let's be careful about it... regenerate every few seconds
         }
         else {
             QProcess pp;
