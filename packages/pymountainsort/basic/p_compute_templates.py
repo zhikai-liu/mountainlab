@@ -9,7 +9,7 @@ from common import TimeseriesChunkReader
 
 # import the C++ code
 import cppimport
-cpp=cppimport.imp('extract_clips_cpp')
+cpp=cppimport.imp('basic_cpp')
 
 processor_name='pyms.compute_templates'
 processor_version='0.1'
@@ -45,7 +45,7 @@ def compute_templates(*,timeseries,firings,templates_out,clip_size=100):
     compute_templates._counts=np.zeros(K)
     def _kernel(chunk,info):
         inds=np.where((info.t1<=times)&(times<=info.t2))[0]
-        times0=(times[inds]-info.t1+info.i1).astype(np.int32)
+        times0=(times[inds]-info.t1+info.t1a).astype(np.int32)
         labels0=labels[inds]
         
         clips0=np.zeros((M,clip_size,len(inds)),dtype=np.float32,order='F');

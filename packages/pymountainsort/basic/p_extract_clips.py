@@ -9,7 +9,7 @@ from common import TimeseriesChunkReader
 
 # import the C++ code
 import cppimport
-cpp=cppimport.imp('extract_clips_cpp')
+cpp=cppimport.imp('basic_cpp')
 
 processor_name='pyms.extract_clips'
 processor_version='0.1'
@@ -40,7 +40,7 @@ def extract_clips(*,timeseries,firings,clips_out,clip_size=100):
     extract_clips._clips=np.zeros((M,T,L))
     def _kernel(chunk,info):
         inds=np.where((info.t1<=times)&(times<=info.t2))[0]
-        times0=times[inds]-info.t1+info.i1
+        times0=times[inds]-info.t1+info.t1a
         
         clips0=np.zeros((M,clip_size,len(inds)),dtype=np.float32,order='F');
         cpp.extract_clips(clips0,chunk,times0,clip_size)

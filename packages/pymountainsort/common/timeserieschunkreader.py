@@ -3,8 +3,8 @@ import time
 
 class TimeseriesChunkInfo:
     def __init__(self):
-        self.i1=0
-        self.i2=0
+        self.t1a=0
+        self.t2a=0
         self.t1=0
         self.t2=0
         self.size=0
@@ -41,8 +41,8 @@ class TimeseriesChunkReader:
             info=TimeseriesChunkInfo()
             info.t1=t1
             info.t2=t2
-            info.i1=t1-s1
-            info.i2=t2-s1
+            info.t1a=t1-s1
+            info.t2a=t2-s1
             info.size=t2-t1+1
             
             timer=time.time()
