@@ -52,7 +52,7 @@ class ProcessorManager:
             print ('----------------------------------------------')
             print ('Testing %s' % (P.name))
             try:
-                if P.test(args):
+                if P.test(**args):
                     print ('SUCCESS')
                 else:
                     print ('FAILURE')

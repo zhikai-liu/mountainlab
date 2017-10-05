@@ -11,7 +11,10 @@ from mlpy import ProcessorManager
 from mlpy import DiskReadMda, readmda, writemda32, writemda64, DiskWriteMda, get_num_bytes_per_entry_from_dt, MdaHeader
 from common import TimeseriesChunkReader
 
-class extract_timeseries:
+def extract_timeseries(*,timeseries,channels_array='',timeseries_out,
+                       channels='',t1=-1,t2=-1,
+                       timeseries_dtype='',timeseries_num_channels=0
+                       ):
     """
     Extract a chunk of a timeseries dataset and possibly a subset of channels
 
@@ -35,84 +38,69 @@ class extract_timeseries:
         (Optional) Only supply this if timeseries is in raw binary format. Choices are int16, uint16, int32, float32, etc.
     timeseries_num_channels : integer
         (Optional) Only supply this if timeseries is in raw binary format. Integer representing number of channels. Number of timepoints will be deduced
-    """    
-    name='mlpython1.extract_timeseries'
-    version="0.1"
-    def __call__(self,*,
-            timeseries,
-            channels_array='',
-            timeseries_out,
-            channels='',t1=-1,t2=-1,
-            timeseries_dtype='',timeseries_num_channels=0
-        ):
-        if channels:
-            self._channels=np.fromstring(channels,dtype=int,sep=',')
-        elif channels_array:
-            self._channels=channels_array
-        else:
-            self._channels=np.empty(0)
-            
-        t1=int(t1)
-        t2=int(t2)
+    """
+    if channels:
+        _channels=np.fromstring(channels,dtype=int,sep=',')
+    elif channels_array:
+        _channels=channels_array
+    else:
+        _channels=np.empty(0)
         
-        header0=None
-        if (timeseries_dtype):
-            size_bytes=os.path.getsize(timeseries)
-            num_bytes_per_entry=get_num_bytes_per_entry_from_dt(timeseries_dtype)
-            num_entries=size_bytes/num_bytes_per_entry
-            if (num_entries % timeseries_num_channels != 0):
-                print ("File size (%ld) is not divisible by number of channels (%g) for dtype=%s" % (size_bytes,timeseries_num_channels,timeseries_dtype))
-                return False            
-            num_timepoints=num_entries/timeseries_num_channels
-            header0=MdaHeader(timeseries_dtype,[timeseries_num_channels,num_timepoints])
+    t1=int(t1)
+    t2=int(t2)
+    
+    header0=None
+    if (timeseries_dtype):
+        size_bytes=os.path.getsize(timeseries)
+        num_bytes_per_entry=get_num_bytes_per_entry_from_dt(timeseries_dtype)
+        num_entries=size_bytes/num_bytes_per_entry
+        if (num_entries % timeseries_num_channels != 0):
+            print ("File size (%ld) is not divisible by number of channels (%g) for dtype=%s" % (size_bytes,timeseries_num_channels,timeseries_dtype))
+            return False            
+        num_timepoints=num_entries/timeseries_num_channels
+        header0=MdaHeader(timeseries_dtype,[timeseries_num_channels,num_timepoints])
+    
+    X=DiskReadMda(timeseries,header0)
+    M,N = X.N1(),X.N2()
+    if (_channels.size==0):
+        _channels=np.array(1+np.arange(M))
+    M2=_channels.size
+    
+    if (t1<0):
+        t1=0
+    if (t2<0):
+        t2=N-1
         
-        X=DiskReadMda(timeseries,header0)
-        M,N = X.N1(),X.N2()
-        if (self._channels.size==0):
-            self._channels=np.array(1+np.arange(M))
-        M2=self._channels.size
-        
-        if (t1<0):
-            t1=0
-        if (t2<0):
-            t2=N-1
-            
-        self._writer=DiskWriteMda(timeseries_out,[M2,N],dt=X.dt())
+    _writer=DiskWriteMda(timeseries_out,[M2,N],dt=X.dt())
 
-        chunk_size_mb=10
-        TCR=TimeseriesChunkReader(chunk_size_mb=chunk_size_mb, overlap_size=0, t1=t1, t2=t2)
-        return TCR.run(timeseries,self._kernel)            
-    def _kernel(self,chunk,info):
-        chunk=chunk[(self._channels-1).tolist(),]
-        return self._writer.writeChunk(chunk,i1=0,i2=info.t1)
-    def test(self,args):
-        M,N = 4,10000
-        X=np.random.rand(M,N)
-        writemda32(X,'tmp.mda')
-        ret=self(timeseries="tmp.mda",timeseries_out="tmp2.mda",channels="1,3",t1="-1",t2="-1")
-        assert(ret)
-        A=readmda('tmp.mda')
-        B=readmda('tmp2.mda')
-        assert(B.shape[0]==2)
-        assert(B.shape[1]==N)
-        assert(np.array_equal(A[[0,2],],B))
-        return True 
+    def _kernel(chunk,info):
+        chunk=chunk[(_channels-1).tolist(),]
+        return _writer.writeChunk(chunk,i1=0,i2=info.t1)
+    chunk_size_mb=100
+    TCR=TimeseriesChunkReader(chunk_size_mb=chunk_size_mb, overlap_size=0, t1=t1, t2=t2)    
+    return TCR.run(timeseries,_kernel)            
+    
 
-#import numpydoc
-#doc=numpydoc.docscrape.FunctionDoc(extract_timeseries2)
-#params=doc["Parameters"]
-#for j in range(len(params)):
-#    print (params[j])
-#    print ("")
-
-#P=extract_timeseries()
-#ret=P.test()
-#print ("Test result: %d" % (ret))
+extract_timeseries.name='mlpython1.extract_timeseries'
+extract_timeseries.version="0.1"        
+def test_extract_timeseries():
+    M,N = 4,10000
+    X=np.random.rand(M,N)
+    writemda32(X,'tmp.mda')
+    ret=extract_timeseries(timeseries="tmp.mda",timeseries_out="tmp2.mda",channels="1,3",t1="-1",t2="-1")
+    assert(ret)
+    A=readmda('tmp.mda')
+    B=readmda('tmp2.mda')
+    assert(B.shape[0]==2)
+    assert(B.shape[1]==N)
+    assert(np.array_equal(A[[0,2],],B))
+    return True 
+extract_timeseries.test=test_extract_timeseries
 
 if len(sys.argv)==1:
     sys.argv.append('test')
 
 PM=ProcessorManager()
-PM.registerProcessor(extract_timeseries())
+PM.registerProcessor(extract_timeseries)
 if not PM.run(sys.argv):
     exit(-1)
