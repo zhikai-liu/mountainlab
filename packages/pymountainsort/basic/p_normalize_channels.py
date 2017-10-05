@@ -7,7 +7,7 @@ sys.path.append(parent_path)
 from mlpy import writemda32,readmda,DiskReadMda,DiskWriteMda
 from common import TimeseriesChunkReader
 
-processor_name='mpyms.normalize_channels'
+processor_name='pyms.normalize_channels'
 processor_version='0.1'
 def normalize_channels(*,timeseries,timeseries_out):
     """

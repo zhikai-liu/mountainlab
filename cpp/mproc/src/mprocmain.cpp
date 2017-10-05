@@ -308,7 +308,7 @@ int exec_run_or_queue(QString arg1, QString arg2, const QMap<QString, QVariant>&
     if (MLP.name != processor_name) {
         info.exit_code = -1;
         info.error = "Unable to find processor: " + processor_name;
-        ;
+        qCWarning(MP) << info.error;
         finalize(arg1, MLP, clp, info);
         return info.exit_code;
     }

@@ -79,6 +79,8 @@ class ProcessorManager:
         params0=npdoc["Parameters"]
         argspec0=inspect.getfullargspec(P.__call__ if inspect.isclass(P) else P)
         defaults0=argspec0.kwonlydefaults;
+        if not defaults0:
+            defaults0={}
         inputs,outputs,parameters = [],[],[]
         for j in range(len(params0)):
             pp=params0[j]
@@ -89,6 +91,8 @@ class ProcessorManager:
             if pname in defaults0:
                 qq["optional"]=True
                 qq["default_value"]=defaults0[pname]
+            else:
+                qq["optional"]=False
             if (ptype=='INPUT'):
                 inputs.append(qq)
             elif (ptype=='OUTPUT'):
@@ -130,14 +134,16 @@ class ProcessorManager:
         valid_params={}
         for j in range(0,len(spec['inputs'])):
             valid_params[spec['inputs'][j]["name"]]=1
-            if not spec['inputs'][j]["name"] in args:
-                print ("Missing input path: {}".format(spec['inputs'][j]["name"]))
-                return False
+            if not spec['inputs'][j]["optional"]:
+                if not spec['inputs'][j]["name"] in args:
+                    print ("Missing input path: {}".format(spec['inputs'][j]["name"]))
+                    return False
         for j in range(0,len(spec['outputs'])):
             valid_params[spec['outputs'][j]["name"]]=1
-            if not spec['outputs'][j]["name"] in args:
-                print ("Missing output path: {}".format(spec['outputs'][j]["name"]))
-                return False
+            if not spec['outputs'][j]["optional"]:
+                if not spec['outputs'][j]["name"] in args:
+                    print ("Missing output path: {}".format(spec['outputs'][j]["name"]))
+                    return False
         for j in range(0,len(spec['parameters'])):
             valid_params[spec['parameters'][j]["name"]]=1
             if not spec['parameters'][j]["optional"]:
