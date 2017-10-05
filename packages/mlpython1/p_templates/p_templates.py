@@ -54,7 +54,7 @@ def extract_clips(*,timeseries,firings,clips_out,clip_size=100):
     return True
 extract_clips.name='mlpython1.extract_clips'
 extract_clips.version="0.1"
-def test_extract_clips(args):
+def test_extract_clips():
     M,T,L,N = 5,100,100,1000
     X=np.random.rand(M,N).astype(np.float32)
     writemda32(X,'tmp.mda')
@@ -127,7 +127,7 @@ def compute_templates(*,timeseries,firings,templates_out,clip_size=100):
     return True
 compute_templates.name='mlpython1.compute_templates'
 compute_templates.version="0.1"
-def test_compute_templates(args):
+def test_compute_templates():
     M,N,K,T,L = 5,1000,6,50,100
     X=np.random.rand(M,N)
     writemda32(X,'tmp.mda')

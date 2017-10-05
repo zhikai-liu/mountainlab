@@ -39,7 +39,7 @@ def concatenate_firings(*,firings_list, firings_out, time_offsets, increment_lab
         print('Mismatch between number of firings files and number of offsets')
         return False
 
-def test_concatenate_firings(args):
+def test_concatenate_firings():
     M,N1,N2=4,2000,30000
     test_offset_str='300000,123456789'
     test_offset=[300000,123456789]

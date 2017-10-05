@@ -38,7 +38,7 @@ def extract_geom(*,geom,channels_array='',geom_out,channels=''):
             
 extract_geom.name='mlpython1.extract_geom'
 extract_geom.version="0.1"
-def test_extract_geom(args):
+def test_extract_geom():
     G=np.array([[1,1],[2,1],[1,2],[2,2]])
     np.savetxt('tmp.geom.csv',G,delimiter=',',fmt='%g')
     extract_geom(geom='tmp.geom.csv',geom_out='tmp.geom2.csv',channels='1,2,4')

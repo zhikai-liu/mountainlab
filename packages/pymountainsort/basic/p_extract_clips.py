@@ -37,7 +37,7 @@ def extract_clips(*,timeseries,firings,clips_out,clip_size=100):
     times=F[1,:]
     L=F.shape[1]
     T=clip_size
-    clips=np.zeros((M,T,L))
+    extract_clips._clips=np.zeros((M,T,L))
     def _kernel(chunk,info):
         inds=np.where((info.t1<=times)&(times<=info.t2))[0]
         times0=times[inds]-info.t1+info.i1
@@ -45,12 +45,12 @@ def extract_clips(*,timeseries,firings,clips_out,clip_size=100):
         clips0=np.zeros((M,clip_size,len(inds)),dtype=np.float32,order='F');
         cpp.extract_clips(clips0,chunk,times0,clip_size)
         
-        clips[:,:,inds]=clips0
+        extract_clips._clips[:,:,inds]=clips0
         return True
     TCR=TimeseriesChunkReader(chunk_size_mb=100, overlap_size=clip_size*2)
     if not TCR.run(timeseries,_kernel):
         return False
-    writemda32(clips,clips_out)
+    writemda32(extract_clips._clips,clips_out)
     return True
 extract_clips.name=processor_name
 extract_clips.version=processor_version

@@ -41,8 +41,8 @@ def compute_templates(*,timeseries,firings,templates_out,clip_size=100):
     times=F[1,:]
     labels=F[2,:].astype(int)
     K=np.max(labels)
-    sums=np.zeros((M,T,K))
-    counts=np.zeros(K)
+    compute_templates._sums=np.zeros((M,T,K))
+    compute_templates._counts=np.zeros(K)
     def _kernel(chunk,info):
         inds=np.where((info.t1<=times)&(times<=info.t2))[0]
         times0=(times[inds]-info.t1+info.i1).astype(np.int32)
@@ -53,16 +53,16 @@ def compute_templates(*,timeseries,firings,templates_out,clip_size=100):
         
         for k in range(1,K+1):
             inds_kk=np.where(labels0==k)[0]
-            sums[:,:,k-1]=sums[:,:,k-1]+np.sum(clips0[:,:,inds_kk],axis=2)
-            counts[k-1]=counts[k-1]+len(inds_kk)
+            compute_templates._sums[:,:,k-1]=compute_templates._sums[:,:,k-1]+np.sum(clips0[:,:,inds_kk],axis=2)
+            compute_templates._counts[k-1]=compute_templates._counts[k-1]+len(inds_kk)
         return True
     TCR=TimeseriesChunkReader(chunk_size_mb=40, overlap_size=clip_size*2)
     if not TCR.run(timeseries,_kernel):
         return False
     templates=np.zeros((M,T,K))
     for k in range(1,K+1):
-        if counts[k-1]:
-            templates[:,:,k-1]=sums[:,:,k-1]/counts[k-1]
+        if compute_templates._counts[k-1]:
+            templates[:,:,k-1]=compute_templates._sums[:,:,k-1]/compute_templates._counts[k-1]
     writemda32(templates,templates_out)
     return True
 compute_templates.name=processor_name
