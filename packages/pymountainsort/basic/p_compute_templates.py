@@ -30,6 +30,11 @@ def compute_templates(*,timeseries,firings,templates_out,clip_size=100):
     clip_size : int
         (Optional) clip size, aka snippet size, number of timepoints in a single template
     """    
+    templates=compute_templates_helper(timeseries=timeseries,firings=firings,clip_size=clip_size)
+    return writemda32(templates,templates_out)
+    
+# Same as compute_templates, except return the templates as an array in memory
+def compute_templates_helper(*,timeseries,firings,clip_size=100):
     clip_size=int(clip_size)
     X=DiskReadMda(timeseries)
     M,N = X.N1(),X.N2()
@@ -58,13 +63,13 @@ def compute_templates(*,timeseries,firings,templates_out,clip_size=100):
         return True
     TCR=TimeseriesChunkReader(chunk_size_mb=40, overlap_size=clip_size*2)
     if not TCR.run(timeseries,_kernel):
-        return False
+        return None
     templates=np.zeros((M,T,K))
     for k in range(1,K+1):
         if compute_templates._counts[k-1]:
             templates[:,:,k-1]=compute_templates._sums[:,:,k-1]/compute_templates._counts[k-1]
-    writemda32(templates,templates_out)
-    return True
+    return templates
+    
 compute_templates.name=processor_name
 compute_templates.version=processor_version
 def test_compute_templates():

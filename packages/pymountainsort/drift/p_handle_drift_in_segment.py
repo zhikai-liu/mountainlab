@@ -1,46 +1,38 @@
 import numpy as np
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+parent_path=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_path)
+sys.path.append(parent_path+'/basic')
 
 import mlpy
+from p_compute_templates import compute_templates_helper
 
 processor_name='pyms.handle_drift_in_segment'
 processor_version='0.1'
 
 def handle_drift_in_segment(*,timeseries,firings,firings_out):
     """
-    Link clusters split due to drift
+    Handle drift in segment. TODO: finish this brief description
     Parameters
     ----------
     timeseries : INPUT
-        Timeseries from which the events are extracted from
+        Path to preprocessed timeseries from which the events are extracted from (MxN)
     firings : INPUT
-        Path of firing mda file to be evaluated for drift-related splitting
+        Path of input firings mda file
     firings_out : OUTPUT
-        A path for the resulting drift-adjusted firings.mda
+        Path of output drift-adjusted firings mda file
 
     """
-    num_pairs = 1000
-    corr_comp_thresh = 0.5
-    half_clipsize=25
-    #TODO: Convert to disk read/write, large file handling
-    #TODO: Possible Geom layer
-    timeseries_tmp=mlpy.readmda(timeseries)
-    num_chan=timeseries_tmp.shape[0]
-    #for idx, firings in enumerate(firings_list):
-    ### Calculate templates for all labels
-    num_clust=np.amax(firings[2,:])
-    templates=np.zeros(num_clust,num_chan,half_clipsize*2)
-    for label in range(num_clust):
-        label_times=firings[1,np.where(firings[2,:]==label)]
-        peak_indices=np.searchsorted(timeseries_tmp,label_times)
-        clips=np.zeros((len(peak_indices),num_chan,half_clipsize))
-        for idx, event in enumerate(peak_indices):
-            clips[idx,:,:]=timeseries[:,event-half_clipsize:event+half_clipsize]
-        template=np.mean(clips,axis=0)
-    ### Determine pairs for comparison based on correlation
-    subflat_templates= templates.reshape(templates.shape[0],templates.shape[1]*templates.shape[2])
+    subcluster_size = 1000 # Size of subclusters for comparison of merge candidate pairs
+    corr_comp_thresh = 0.5 # Minimum correlation in templates to consider as merge candidate
+    clip_size=50
+            
+    # compute the templates
+    templates=compute_templates_helper(timeseries=timeseries,firings=firings,clip_size=clip_size)        
+        
+    ### Determine the merge candidate pairs based on correlation
+    subflat_templates=templates.reshape(templates.shape[0],templates.shape[1]*templates.shape[2])
     pairwise_idxs=list(it.chain.from_iterable(it.combinations(range(templates.shape[0]),2)))
     pairwise_idxs=pairwise_idxs.reshape(-1,2)
     pairwise_corrcoef=np.zeros(pairwise_idxs.shape[0])
@@ -65,7 +57,7 @@ def handle_drift_in_segment(*,timeseries,firings,firings_out):
     #TODO: create now drift linked firings
     #TODO: match across firings
 
-def test_handle_drift_in_segment(args)
+def test_handle_drift_in_segment():
     test_clips=np.reshape(np.array([i for i in range(18)]),(2,3,3))
 
 handle_drift_in_segment.test=test_handle_drift_in_segment
