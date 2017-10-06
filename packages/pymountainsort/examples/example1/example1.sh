@@ -28,7 +28,7 @@ mp-run-process pyms.normalize_channels \
 			--timeseries=filt.mda --timeseries_out=pre.mda
 
 # Sorting (create firings.mda)
-mp-run-process mountainsort.mountainsort3 \
+mp-run-process mountainsortalg.ms3 \
 			--timeseries=pre.mda --firings_out=firings.mda \
 			--detect_threshold=3 --detect_sign=1
 
