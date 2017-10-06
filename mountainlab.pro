@@ -5,7 +5,7 @@ TEMPLATE = subdirs
 # qmake "COMPONENTS = mproc"
 
 isEmpty(COMPONENTS) {
-    COMPONENTS = mda mdaconvert mountainprocess mproc mountainsort prv mountainsort3 mountainsort2 mvcommon mountainview
+    COMPONENTS = mda mdaconvert mountainprocess mproc mountainsort prv mountainsort3 mountainsort2 mvcommon mountainview mountainsortalg
 }
 
 isEmpty(GUI) {
@@ -32,6 +32,7 @@ SUBDIRS += $$ifcomponent(mountainsort,cpp/mountainsort/src/mountainsort.pro)
 SUBDIRS += $$ifcomponent(prv,cpp/prv/src/prv.pro)
 SUBDIRS += $$ifcomponent(mountainsort2,packages/mountainsort2/src/mountainsort2.pro)
 SUBDIRS += $$ifcomponent(mountainsort3,packages/mountainsort3/src/mountainsort3.pro)
+SUBDIRS += $$ifcomponent(mountainsortalg,packages/mountainsortalg/mountainsortalg.pro)
 
 equals(GUI,"on") {
   SUBDIRS += $$ifcomponent(mvcommon,cpp/mvcommon/src/mvcommon.pro)
