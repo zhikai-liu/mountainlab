@@ -1,4 +1,6 @@
 import numpy as np
+from sklearn.decomposition import PCA
+from scipy.spatial.distance import cdist
 import sys
 import os
 parent_path=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -29,6 +31,7 @@ def handle_drift_in_segment(*,timeseries,firings,firings_out):
     subcluster_size = 1000 # Size of subclusters for comparison of merge candidate pairs
     corr_comp_thresh = 0.5 # Minimum correlation in templates to consider as merge candidate
     clip_size=50
+    n_pca_dim=10
             
     ## compute the templates
     templates=compute_templates_helper(timeseries=timeseries,firings=firings,clip_size=clip_size)        
@@ -39,7 +42,7 @@ def handle_drift_in_segment(*,timeseries,firings,firings_out):
     pairwise_idxs=pairwise_idxs.reshape(-1,2) #Reshapes array, from above to readable [[0,1],[0,2],[1,2]]
     pairwise_corrcoef=np.zeros(pairwise_idxs.shape[0]) #Empty array for all pairs correlation measurements
     for row in range(pairwise_idxs.shape[0]): #Calculate the correlation coefficient for each pair of flattened templates
-        pairwise_corrcoef[row]=np.corrcoef(subflat_templates[pairwise_idxs[row,0],:],subflat_templates[pairwise_idxs[row,1],:])[1,0] #
+        pairwise_corrcoef[row]=np.corrcoef(subflat_templates[pairwise_idxs[row,0],:],subflat_templates[pairwise_idxs[row,1],:])[1,0]
     pairs_for_eval=pairwise_idxs[pairwise_corrcoef>=corr_comp_thresh] #Threshold the correlation array, and use to index the pairwise comparison array
     
     ## Loop through the pairs for comparison
@@ -61,16 +64,38 @@ def handle_drift_in_segment(*,timeseries,firings,firings_out):
         ## Extract the clips for the subcluster
         subcluster_clips=extract_clips_helper(timeseries=timeseries,times=subcluster_times,clip_size=clip_size)
         
-        ## Next we want to compute the centroids and project the clips onto the direction of the line connecting the two centroids
-        
+        ## Compute the centroids and project the clips onto the direction of the line connecting the two centroids
+        #First, PCA to extract features of clips (number dim = n_pca_dim);
+        subcluster_clips=np.reshape(subcluster_clips,(subcluster_clips.shape[0],-1)) #Flatten clips for PCA (expects 2d array)
+        clip_features=PCA(n_components=n_pca_dim).fit_transform(subcluster_clips) #Run PCA
+        #Use label data to separate clips into two groups
+        A_indices = np.isin(subcluster_labels, pairs_for_eval[pair_to_test, 0])
+        B_indices = np.isin(subcluster_labels, pairs_for_eval[pair_to_test, 1])
+        clip_features_A=clip_features[A_indices,:]
+        clip_features_B=clip_features[B_indices,:]
+        #Calculate centroid
+        centroidA = numpy.mean(clip_features_A,axis=0)
+        centroidB = numpy.mean(clip_features_B,axis=0)
+        #Project points onto line
+        point_projs = np.zeros(clip_features.shape)
+        for idx, point in enumerate(clip_features):
+            AP = point - centroidA
+            AB = centroidB - point
+            point_projs[idx,:] = centroidA + np.dot(AP,AB)/np.dot(AB,AB) * AB
+        #Calculate distance to make 1D
+        clip_1d_projs=cdist(clip_features[0:1],clip_features)[0]
+
+        ##Histogram points and test cut point
+
+
 def find_temporally_proximal_events(times,labels,subcluster_size):
     FirstEventInPair_idx=np.flatnonzero(np.diff(labels)) #Take diff (subtract neighboring value in array) of LABELS to determine when two neighboring events come from different clusters
     time_differences=times[FirstEventInPair_idx+1]-times[FirstEventInPair_idx] #Calculate time diff between each event pair where the events in the pair come from diff clust
     idx_for_eval=FirstEventInPair_idx[np.argsort(time_differences)[0:subcluster_size]] #Sort based on this time difference
     
-    ##Not sure i understand the following line
-    idx_for_eval = np.unique(np.append(idx_for_eval,idx_for_eval+1)) #Eliminate all duplicate events ie. what happened:(A B A) two valid pairs: (A B),(B A), only pull events (A B A)
-    
+    ##Eliminate all duplicate events. If events with labels A B A are used, and both pair AB and BA are valid, only count B once
+    idx_for_eval = np.unique(np.append(idx_for_eval,idx_for_eval+1))
+
     return idx_for_eval
 
 def test_handle_drift_in_segment():
