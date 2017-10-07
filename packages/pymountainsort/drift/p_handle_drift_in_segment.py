@@ -8,6 +8,8 @@ sys.path.append(parent_path)
 sys.path.append(parent_path+'/basic')
 
 import mlpy
+import synthesis
+import basic
 from p_compute_templates import compute_templates_helper
 from p_extract_clips import extract_clips_helper
 import it
@@ -84,7 +86,8 @@ def handle_drift_in_segment(*,timeseries,firings,firings_out):
             point_projs[idx,:] = centroidA + np.dot(AP,AB)/np.dot(AB,AB) * AB
         #Calculate distance to make 1D
         clip_1d_projs=cdist(clip_features[0:1],clip_features)[0]
-
+        print(clip_1d_projs.shape)
+    print('looped through all pairs')
         ##Histogram points and test cut point
 
 
@@ -99,7 +102,17 @@ def find_temporally_proximal_events(times,labels,subcluster_size):
     return idx_for_eval
 
 def test_handle_drift_in_segment():
-    test_clips=np.reshape(np.array([i for i in range(18)]),(2,3,3))
+    duration=600
+    samplerate=30000
+    waveform_upsamplefac=13
+    synthesis.synthesize_random_waveforms(waveforms_out='waveforms.mda',geometry_out='geom.csv',waveform_upsamplefac=waveform_upsamplefac)
+    synthesis.synthesize_random_firings(firings_out='firings_true.mda',K=20,samplerate=samplerate,duration=duration)
+    synthesis.synthesize_timeseries(firings='firings_true.mda',waveforms='waveforms.mda',timeseries_out='raw.mda',waveform_upsamplefac=waveformupsamplefac,samplerate=samplerate,duration=duration)
+    basic.bandpass_filter(timeseries='raw.mda',timeseries_out='filt.mda',freq_min=300,freq_max=6000,freq_wid=1000,samplerate=samplerate)
+    basic.normalize_channels(timeseries='filt.mda',timeseries_out='test.pre.mda')
+    handle_drift_in_segment(timeseries='test.pre.mda',firings='firings_true.mda',firings_out='test_drift.firings.mda')
+
+    #test_clips=np.reshape(np.array([i for i in range(18)]),(2,3,3))
 
 handle_drift_in_segment.test=test_handle_drift_in_segment
 handle_drift_in_segment.name = processor_name
