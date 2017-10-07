@@ -12,7 +12,7 @@ import synthesis
 import basic
 from p_compute_templates import compute_templates_helper
 from p_extract_clips import extract_clips_helper
-import it
+import itertools as it
 
 processor_name='pyms.handle_drift_in_segment'
 processor_version='0.1'
