@@ -1,22 +1,18 @@
-.. mountainlab documentation master file, created by
-   sphinx-quickstart on Sat Oct  7 07:18:45 2017.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to mountainlab's documentation!
-=======================================
-
-Contents:
+MountainLab Documentation
+=========================
 
 .. toctree::
    :maxdepth: 2
 
+   overview
+
+.. :ref:`overview_of_mountainlab`
 
 
-Indices and tables
-==================
+.. Indices and tables
+.. ==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. * :ref:`genindex`
+.. * :ref:`modindex`
+.. * :ref:`search`
 
