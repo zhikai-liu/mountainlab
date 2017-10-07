@@ -1,5 +1,5 @@
-MountainLab Processor System
-============================
+Processor System
+================
 
 The processor system is the lowest level component of MountainLab and forms the foundation of the entire project. It allows you to:
 
