@@ -76,7 +76,7 @@ def synthesize_random_waveforms(*,waveforms_out,geometry_out='',M=5,T=500,K=20,u
 
     writemda32(WW,waveforms_out)
     if geometry_out:
-        np.savetxt(geometry_out,geometry,delimiter=",",fmt="%g")
+        np.savetxt(geometry_out,geometry.transpose(),delimiter=",",fmt="%g")
     return True
     
 def get_default_neuron_locations(M,K,geometry):
@@ -103,7 +103,7 @@ def get_default_neuron_locations(M,K,geometry):
 def test_synthesize_random_waveforms():
     M,T,K = 5,800,20
     upsamplefac=13
-    synthesize_random_waveforms(M=M,T=T,K=K,upsamplefac=upsamplefac,waveforms_out='tmp.waveforms.mda')
+    synthesize_random_waveforms(M=M,T=T,K=K,upsamplefac=upsamplefac,waveforms_out='tmp.waveforms.mda',geometry_out='tmp.geom.csv')
     waveforms=readmda('tmp.waveforms.mda')
     assert(waveforms.shape==(M,T*upsamplefac,K))
     #import matplotlib.pyplot as plt

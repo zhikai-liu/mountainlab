@@ -1,33 +1,11 @@
 var express = require('express');
 var app = express();
 
-var config=read_json_file(__dirname+'/larinet.user.json');
-if (!config) {
-	console.log ('Missing, empty, or invalid config file');
-	return;
-}
-
-var data_directory=config.data_directory||'';
-if (!('download_base_url' in config)) {
-	config.download_base_url="${base}/raw";
-}
-var download_base_url=config.download_base_url||'';
-var prv_exe=__dirname+'/../../bin/prv';
-var mp_exe=__dirname+'/../../bin/mproc';
-
-if (!data_directory) {
-	console.log ('problem: data_directory is empty.');
-	return;
-}
 
 var larinetserver=require(__dirname+'/larinetserver.js');
-var handler_opts={};
-handler_opts.prv_exe=prv_exe;
-handler_opts.mp_exe=mp_exe;
-handler_opts.data_directory=data_directory;
-handler_opts.download_base_url=download_base_url;
-var larinetserver=require(__dirname+'/larinetserver.js');
-var Handler=new larinetserver.RequestHandler(handler_opts);
+var Handler=new larinetserver.RequestHandler();
+
+var data_directory=larinetserver.handler_opts.data_directory;
 
 app.set('port', (process.env.PORT || 5005));
 
@@ -50,7 +28,6 @@ app.listen(app.get('port'), function() {
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-
 
 function read_text_file(fname) {
 	try {

@@ -3,6 +3,31 @@ var exports = module.exports = {};
 
 var m_job_manager=new JobManager();
 
+var config=read_json_file(__dirname+'/larinet.user.json');
+if (!config) {
+	console.log ('Missing, empty, or invalid config file');
+	return;
+}
+var data_directory=config.data_directory||'';
+if (!('download_base_url' in config)) {
+	config.download_base_url="${base}/raw";
+}
+var download_base_url=config.download_base_url||'';
+var prv_exe=__dirname+'/../../bin/prv';
+var mp_exe=__dirname+'/../../bin/mproc';
+
+if (!data_directory) {
+	console.log ('problem: data_directory is empty.');
+	return;
+}
+
+var handler_opts={};
+handler_opts.prv_exe=prv_exe;
+handler_opts.mp_exe=mp_exe;
+handler_opts.data_directory=data_directory;
+handler_opts.download_base_url=download_base_url;
+exports.handler_opts=handler_opts;
+
 function JobManager() {
 	var that=this;
 
@@ -16,20 +41,21 @@ function JobManager() {
 		/*
 		for (var id in m_queued_jobs) {
 			if (m_queued_jobs[id].elapsedSinceKeepAlive()>60000) {
-				console.log('deleting old job record');
+				console.log ('deleting old job record');
 				removeJob(id);
 			}
 		}
 		*/
 		setTimeout(housekeeping,10000);	
 	}
+	//setTimeout(housekeeping,10000);	
 	function removeJob(process_id) {
 		delete m_queued_jobs[process_id];
 	}
-	setTimeout(housekeeping,10000);	
+	
 }
 
-function QueuedJob(hopts) {
+function QueuedJob() {
 	var that=this;
 
 	this.start=function(processor_name,inputs,outputs,parameters,resources,opts,callback) {start(processor_name,inputs,outputs,parameters,resources,opts,callback);};
@@ -45,6 +71,7 @@ function QueuedJob(hopts) {
 	var m_is_complete=false;
 	var m_ppp=null;
 	var m_output_file_stats={};
+	var hopts=handler_opts;
 
 	var request_fname,response_fname,mpreq;
 	function start(processor_name,inputs,outputs,parameters,resources,opts,callback) {
@@ -147,22 +174,16 @@ function QueuedJob(hopts) {
 		var outputs0=(m_result||{}).outputs||{};
 		var stats0=m_output_file_stats||{};
 		var stats1=compute_output_file_stats(outputs0);
-		console.log('##############################');
-		console.log(JSON.stringify(stats0));
-		console.log(JSON.stringify(stats1));
 		for (var key in stats0) {
 			var stat0=stats0[key]||{};
 			var stat1=stats1[key]||{};
 			if (!stat1.exists) {
-				console.log('----------- does not exist');
 				return false;
 			}
 			if (stat1.size!=stat0.size) {
-				console.log('----------- different size');
 				return false;
 			}
 			if (stat1.last_modified!=stat0.last_modified) {
-				console.log('----------- different mtime');
 				return false;
 			}
 		}
@@ -170,14 +191,15 @@ function QueuedJob(hopts) {
 	}
 }
 
-function larinetserver(req,onclose,callback,hopts) {
+function larinetserver(req,onclose,callback) {
+	var hopts=handler_opts;
 	var action=req.a||'';
 	if (!action) {
 		callback({success:false,error:'Empty action.'});
 		return;
 	}
 
-	console.log(JSON.stringify(req));
+	console.log (JSON.stringify(req));
 
 	if (action=='prv-locate') {
 		prv_locate(req,onclose,function(resp) {
@@ -330,36 +352,30 @@ function larinetserver(req,onclose,callback,hopts) {
 				if (J.isComplete()) {
 					if (!J.result().success) {
 						//complete but not successful -- start over
-						console.log('*********************** complete but not successful');
 						m_job_manager.removeJob(J);
 						do_queue_process(); //start over	
 					}
 					else if (('cache_output' in opts)&&(!opts.cache_output)) {
-						console.log('*********************** Complete but we are not caching output');
 						m_job_manager.removeJob(J);
 						do_queue_process(); //start over		
 					}
 					else if (J.outputFilesStillValid()) {
 						//already complete and the output files are still valid
-						console.log('*********************** complete and output files are still valid');
 						var resp=make_response_for_J(process_id,J);
 						callback(resp);		
 					}
 					else {
 						//complete but the output files are no longer valid
-						console.log('*********************** Complete but the output files are no longer valid');
 						m_job_manager.removeJob(J);
 						do_queue_process(); //start over		
 					}
 				}
 				else {
-					console.log('*********************** not yet complete');
 					var resp=make_response_for_J(process_id,J);
 					callback(resp);		
 				}
 			}
 			else {
-				console.log('*********************** queueing a new job');
 				do_queue_process();
 			}
 		}
@@ -374,12 +390,19 @@ function larinetserver(req,onclose,callback,hopts) {
 					callback(tmp);
 					return;
 				}
-				
 				m_job_manager.addJob(process_id,Jnew);
-				setTimeout(function() {
-					var resp=make_response_for_J(process_id,Jnew);
-					callback(resp);
-				},(query.wait_msec||0));
+				var check_timer=new Date();
+				check_it();
+				function check_it() {
+					var elapsed=(new Date()) -check_timer;
+					if ((elapsed>=opts.wait_msec)||(Jnew.isComplete())) {
+						var resp=make_response_for_J(process_id,Jnew);
+						callback(resp);	
+					}
+					else {
+						setTimeout(check_it,10);
+					}
+				}
 			});	
 		}
 		
@@ -435,7 +458,8 @@ function larinetserver(req,onclose,callback,hopts) {
 		resp.complete=J.isComplete();
 		if (J.isComplete())
 			resp.result=J.result();
-		callback(resp);
+		//callback(resp); //fixed on 10/6/17 by jfm (before we were returning undefined)
+		return resp;
 	}
 
 	function starts_with(str,substr) {
@@ -477,7 +501,8 @@ function larinetserver(req,onclose,callback,hopts) {
 
 exports.larinetserver=larinetserver;
 
-exports.RequestHandler=function(hopts) {
+exports.RequestHandler=function() {
+	var hopts=handler_opts;
 	this.handle_request=function(REQ,RESP) {
 		//parse the url of the request
 		var url_parts = require('url').parse(REQ.url,true);
