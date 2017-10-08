@@ -30,28 +30,33 @@ def handle_drift_in_segment(*,timeseries,firings,firings_out):
         Path of output drift-adjusted firings mda file
 
     """
-    subcluster_size = 1000 # Size of subclusters for comparison of merge candidate pairs
-    corr_comp_thresh = 0.5 # Minimum correlation in templates to consider as merge candidate
+    subcluster_size = 100 # Size of subclusters for comparison of merge candidate pairs
+    corr_comp_thresh = 0.95 # Minimum correlation in templates to consider as merge candidate
     clip_size=50
     n_pca_dim=10
             
     ## compute the templates
-    templates=compute_templates_helper(timeseries=timeseries,firings=firings,clip_size=clip_size)        
-        
+    templates=compute_templates_helper(timeseries=timeseries,firings=firings,clip_size=clip_size)
+    templates=np.swapaxes(templates,0,1)
+    templates=np.swapaxes(templates,2,0) #Makes templates of form Clust x Chan x Clipsize
+    firings=mlpy.readmda(firings)
+    print('templates',templates.shape)
+
     ## Determine the merge candidate pairs based on correlation
-    subflat_templates=templates.reshape(templates.shape[0],templates.shape[1]*templates.shape[2]) #flatten templates from templates from NxMxL (Clust x Chan x Clipsize) to (Clust x flat)
-    pairwise_idxs=list(it.chain.from_iterable(it.combinations(range(templates.shape[0]),2))) #Generates 1D Array of all poss pairwise comparisons of clusters ([0 1 2] --> [0 1 0 2 1 2])
+    subflat_templates=np.reshape(templates,(templates.shape[0],-1)) #flatten templates from templates from M x N x L (Clust x Chan x Clipsize) to (clust x flat)
+    pairwise_idxs=np.array(list(it.chain.from_iterable(it.combinations(range(templates.shape[0]),2)))) #Generates 1D Array of all poss pairwise comparisons of clusters ([0 1 2] --> [0 1 0 2 1 2])
     pairwise_idxs=pairwise_idxs.reshape(-1,2) #Reshapes array, from above to readable [[0,1],[0,2],[1,2]]
     pairwise_corrcoef=np.zeros(pairwise_idxs.shape[0]) #Empty array for all pairs correlation measurements
     for row in range(pairwise_idxs.shape[0]): #Calculate the correlation coefficient for each pair of flattened templates
-        pairwise_corrcoef[row]=np.corrcoef(subflat_templates[pairwise_idxs[row,0],:],subflat_templates[pairwise_idxs[row,1],:])[1,0]
-    pairs_for_eval=pairwise_idxs[pairwise_corrcoef>=corr_comp_thresh] #Threshold the correlation array, and use to index the pairwise comparison array
-    
+        pairwise_corrcoef[row]=np.corrcoef(subflat_templates[:,pairwise_idxs[row,0]],subflat_templates[:,pairwise_idxs[row,1]])[1,0]
+    print('pairwise correlations', pairwise_corrcoef)
+    pairs_for_eval=np.array(pairwise_idxs[pairwise_corrcoef>=corr_comp_thresh]) #Threshold the correlation array, and use to index the pairwise comparison array
+    print('pairs for eval', pairs_for_eval)
     ## Loop through the pairs for comparison
     for pair_to_test in range(pairs_for_eval.shape[0]): #Iterate through pairs that are above correlation comparison threshold
-    
+        print(pair_to_test) 
         ## Extract out the times and labels corresponding to the pair
-        firings_subset=firings[:,np.isin(firings[2,:],pairs_for_eval[pair_to_test,:])] #Generate subfirings of only events from given pair
+        firings_subset=firings[:,np.isin(firings[2,:],pairs_for_eval[pair_to_test,:]+1)] #Generate subfirings of only events from given pair, correct for base 0 vs. 1 difference
         test_labels=firings_subset[2,:] #Labels from the pair of clusters
         test_eventtimes=firings_subset[1,:] #Times from the pair of clusters
         sort_indices=np.argsort(test_eventtimes) # there's no strict guarantee the firing times will be sorted, so adding a sort step for safety
@@ -68,16 +73,21 @@ def handle_drift_in_segment(*,timeseries,firings,firings_out):
         
         ## Compute the centroids and project the clips onto the direction of the line connecting the two centroids
         #First, PCA to extract features of clips (number dim = n_pca_dim);
+        print(subcluster_clips.shape)
+        subcluster_clips=np.swapaxes(subcluster_clips,0,1)
+        subcluster_clips=np.swapaxes(subcluster_clips,2,0) # Convert from (Chan x Clip x Clust) to (Clust x Chan x Clip)
         subcluster_clips=np.reshape(subcluster_clips,(subcluster_clips.shape[0],-1)) #Flatten clips for PCA (expects 2d array)
+        print(subcluster_clips.shape)
         clip_features=PCA(n_components=n_pca_dim).fit_transform(subcluster_clips) #Run PCA
-        #Use label data to separate clips into two groups
-        A_indices = np.isin(subcluster_labels, pairs_for_eval[pair_to_test, 0])
-        B_indices = np.isin(subcluster_labels, pairs_for_eval[pair_to_test, 1])
+        print(clip_features.shape)
+        #Use label data to separate clips into two groups, and adjust for base 0 vs base 1 difference
+        A_indices = np.isin(subcluster_labels, pairs_for_eval[pair_to_test, 0]+1)
+        B_indices = np.isin(subcluster_labels, pairs_for_eval[pair_to_test, 1]+1)
         clip_features_A=clip_features[A_indices,:]
         clip_features_B=clip_features[B_indices,:]
         #Calculate centroid
-        centroidA = numpy.mean(clip_features_A,axis=0)
-        centroidB = numpy.mean(clip_features_B,axis=0)
+        centroidA = np.mean(clip_features_A,axis=0)
+        centroidB = np.mean(clip_features_B,axis=0)
         #Project points onto line
         point_projs = np.zeros(clip_features.shape)
         for idx, point in enumerate(clip_features):
@@ -85,8 +95,9 @@ def handle_drift_in_segment(*,timeseries,firings,firings_out):
             AB = centroidB - point
             point_projs[idx,:] = centroidA + np.dot(AP,AB)/np.dot(AB,AB) * AB
         #Calculate distance to make 1D
-        clip_1d_projs=cdist(clip_features[0:1],clip_features)[0]
+        clip_1d_projs=cdist(point_projs[0:1],point_projs)[0]
         print(clip_1d_projs.shape)
+        print(clip_1d_projs[0:3])
     print('looped through all pairs')
         ##Histogram points and test cut point
 
