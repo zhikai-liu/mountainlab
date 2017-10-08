@@ -7,7 +7,7 @@ sys.path.append(parent_path)
 from mlpy import writemda32,readmda,DiskReadMda,DiskWriteMda
 from common import TimeseriesChunkReader
 
-processor_name='mpyms.extract_timeseries'
+processor_name='pyms.extract_timeseries'
 processor_version='0.1'
 def extract_timeseries(*,timeseries,channels_array='',timeseries_out,
                        channels='',t1=-1,t2=-1,
@@ -78,6 +78,22 @@ def extract_timeseries(*,timeseries,channels_array='',timeseries_out,
     TCR=TimeseriesChunkReader(chunk_size_mb=chunk_size_mb, overlap_size=0, t1=t1, t2=t2)    
     return TCR.run(timeseries,_kernel)            
     
+def get_num_bytes_per_entry_from_dt(dt):
+	if dt == 'uint8':
+		return 1
+	if dt == 'float32':
+		return 4
+	if dt == 'int16':
+		return 2
+	if dt == 'int32':
+		return 4
+	if dt == 'uint16':
+		return 2
+	if dt == 'float64':
+		return 8
+	if dt == 'uint32':
+		return 4
+	return None
 
 extract_timeseries.name=processor_name
 extract_timeseries.version=processor_version  
