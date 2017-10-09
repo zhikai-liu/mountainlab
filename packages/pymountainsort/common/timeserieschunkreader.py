@@ -20,7 +20,7 @@ class TimeseriesChunkReader:
         self._elapsed_reading=0
         self._elapsed_running=0
     def run(self, mdafile_path_or_diskreadmda, func):
-        if (type(mdafile_path_or_diskreadmda)=='str'):
+        if (type(mdafile_path_or_diskreadmda)==str):
             X=DiskReadMda(mdafile_path_or_diskreadmda)
         else:
             X=mdafile_path_or_diskreadmda
