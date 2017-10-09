@@ -33,13 +33,7 @@ def bandpass_filter(*,timeseries,timeseries_out,samplerate=30000,freq_min=300,fr
     freq_wid : double
         (Optional) A parameter that controls the sharpness of the band edge transition
         
-    """
-    
-    samplerate=np.float64(samplerate)    
-    freq_min=np.float64(freq_min)    
-    freq_max=np.float64(freq_max)    
-    freq_wid=np.float64(freq_wid)    
-    
+    """    
     X=DiskReadMda(timeseries)
     M,N = X.N1(),X.N2()    
     _writer=DiskWriteMda(timeseries_out,[M,N],dt=X.dt())

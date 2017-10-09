@@ -31,9 +31,6 @@ def synthesize_timeseries(*,firings='',waveforms='',timeseries_out,noise_level=1
     waveform_upsamplefac : int
         (Optional) The upsampling factor corresponding to the input waveforms. (avoids digitization artifacts)
     """
-    noise_level=np.float64(noise_level)
-    samplerate=np.float64(samplerate)
-    duration=np.float64(duration)
     num_timepoints=np.int64(samplerate*duration)
     waveform_upsamplefac=int(waveform_upsamplefac)
     

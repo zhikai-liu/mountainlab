@@ -27,12 +27,7 @@ def synthesize_random_waveforms(*,waveforms_out,geometry_out='',M=5,T=500,K=20,u
         (Optional) Number of waveforms to synthesize
     upsamplefac : int
         (Optional) used for upsampling the waveforms to avoid discretization artifacts
-    """
-    M=int(M)
-    T=int(T)
-    K=int(K)
-    upsamplefac=int(upsamplefac)
-    
+    """    
     geometry=None
     avg_durations=[200,10,30,200]
     avg_amps=[0.5,10,-1,0]

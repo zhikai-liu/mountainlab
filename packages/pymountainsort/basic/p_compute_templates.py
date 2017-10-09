@@ -35,7 +35,6 @@ def compute_templates(*,timeseries,firings,templates_out,clip_size=100):
     
 # Same as compute_templates, except return the templates as an array in memory
 def compute_templates_helper(*,timeseries,firings,clip_size=100):
-    clip_size=int(clip_size)
     X=DiskReadMda(timeseries)
     M,N = X.N1(),X.N2()
     N=N

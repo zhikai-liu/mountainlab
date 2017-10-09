@@ -4,7 +4,7 @@ import sys,os
 parent_path=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_path)
 
-from mlpy import writemda32,readmda,DiskReadMda,DiskWriteMda
+from mlpy import writemda32,readmda,DiskReadMda,DiskWriteMda,MdaHeader
 from common import TimeseriesChunkReader
 
 processor_name='pyms.extract_timeseries'
@@ -43,9 +43,6 @@ def extract_timeseries(*,timeseries,channels_array='',timeseries_out,
         _channels=channels_array
     else:
         _channels=np.empty(0)
-        
-    t1=int(t1)
-    t2=int(t2)
     
     header0=None
     if (timeseries_dtype):
@@ -101,7 +98,7 @@ def test_extract_timeseries():
     M,N = 4,10000
     X=np.random.rand(M,N)
     writemda32(X,'tmp.mda')
-    ret=extract_timeseries(timeseries="tmp.mda",timeseries_out="tmp2.mda",channels="1,3",t1="-1",t2="-1")
+    ret=extract_timeseries(timeseries="tmp.mda",timeseries_out="tmp2.mda",channels="1,3",t1=-1,t2=-1)
     assert(ret)
     A=readmda('tmp.mda')
     B=readmda('tmp2.mda')

@@ -150,9 +150,24 @@ class ProcessorManager:
                 if not spec['parameters'][j]["name"] in args:
                     print ("Missing required parameter: {}".format(spec['parameters'][j]["name"]))
                     return False
+            pname=spec['parameters'][j]["name"]
+            datatype=spec['parameters'][j]['datatype']
+            if pname in args:
+                args[pname]=self._convert_string_to_datatype(args[pname],datatype)
+                
         for key in args:
             if not key in valid_params:
                 if not key.startswith("_"):
                     print ("Invalid parameter: {}".format(key))
                     return False
         return True
+    def _convert_string_to_datatype(self,val,datatype):
+        if datatype=='integer' or datatype=='int':
+            return int(val)
+        elif datatype=='double' or datatype=='float':
+            return float(val)
+        elif datatype=='string':
+            return val
+        else:
+            print ('Warning: Unrecognized datatype: %s' % (datatype))
+            return val

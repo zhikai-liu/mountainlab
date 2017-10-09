@@ -24,10 +24,7 @@ def synthesize_random_firings(*,firings_out,K=20,samplerate=30000,duration=60):
     duration : double
         (Optional) duration of the simulated acquisition in seconds
     """
-    K=int(K)
     firing_rates=3*np.ones((K))
-    samplerate=np.float(samplerate)
-    duration=np.float(duration)
     refr=10
     
     N=np.int64(duration*samplerate)

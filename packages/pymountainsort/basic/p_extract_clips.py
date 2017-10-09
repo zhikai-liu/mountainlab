@@ -36,7 +36,6 @@ def extract_clips(*,timeseries,firings,clips_out,clip_size=100):
     return writemda32(clips,clips_out)
 
 def extract_clips_helper(*,timeseries,times,clip_size=100):
-    clip_size=int(clip_size)
     X=DiskReadMda(timeseries)
     M,N = X.N1(),X.N2()
     L=times.size
