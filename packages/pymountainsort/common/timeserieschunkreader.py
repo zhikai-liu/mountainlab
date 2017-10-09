@@ -19,8 +19,11 @@ class TimeseriesChunkReader:
         self._t2=t2
         self._elapsed_reading=0
         self._elapsed_running=0
-    def run(self, mdafile_path, func):
-        X=DiskReadMda(mdafile_path)
+    def run(self, mdafile_path_or_diskreadmda, func):
+        if (type(mdafile_path_or_diskreadmda)=='str'):
+            X=DiskReadMda(mdafile_path_or_diskreadmda)
+        else:
+            X=mdafile_path_or_diskreadmda
         M,N = X.N1(),X.N2()
         cs=max([self._chunk_size,int(self._chunk_size_mb*1e6/(M*4)),M])        
         if self._t1<0:

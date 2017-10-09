@@ -4,7 +4,7 @@ import sys,os
 parent_path=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_path)
 
-from mlpy import writemda32,readmda,DiskReadMda,DiskWriteMda,MdaHeader
+from mlpy import writemda32,writemda64,readmda,DiskReadMda,DiskWriteMda,MdaHeader
 from common import TimeseriesChunkReader
 
 processor_name='pyms.extract_timeseries'
@@ -73,7 +73,7 @@ def extract_timeseries(*,timeseries,channels_array='',timeseries_out,
         return _writer.writeChunk(chunk,i1=0,i2=info.t1)
     chunk_size_mb=100
     TCR=TimeseriesChunkReader(chunk_size_mb=chunk_size_mb, overlap_size=0, t1=t1, t2=t2)    
-    return TCR.run(timeseries,_kernel)            
+    return TCR.run(X,_kernel)            
     
 def get_num_bytes_per_entry_from_dt(dt):
 	if dt == 'uint8':
@@ -97,14 +97,16 @@ extract_timeseries.version=processor_version
 def test_extract_timeseries():
     M,N = 4,10000
     X=np.random.rand(M,N)
-    writemda32(X,'tmp.mda')
-    ret=extract_timeseries(timeseries="tmp.mda",timeseries_out="tmp2.mda",channels="1,3",t1=-1,t2=-1)
+    X.astype('float64').transpose().tofile('tmp.dat')
+    ret=extract_timeseries(timeseries="tmp.dat",timeseries_out="tmp2.mda",channels="1,3",t1=-1,t2=-1,timeseries_num_channels=M,timeseries_dtype='float64')
+    writemda64(X,'tmp.mda')
+    #ret=extract_timeseries(timeseries="tmp.mda",timeseries_out="tmp2.mda",channels="1,3",t1=-1,t2=-1)
     assert(ret)
     A=readmda('tmp.mda')
     B=readmda('tmp2.mda')
     assert(B.shape[0]==2)
     assert(B.shape[1]==N)
-    assert(np.array_equal(A[[0,2],],B))
+    assert(np.array_equal(X[[0,2],],B))
     return True 
 extract_timeseries.test=test_extract_timeseries
 
