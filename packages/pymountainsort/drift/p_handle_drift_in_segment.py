@@ -116,9 +116,9 @@ def test_handle_drift_in_segment():
     duration=600
     samplerate=30000
     waveform_upsamplefac=13
-    synthesis.synthesize_random_waveforms(waveforms_out='waveforms.mda',geometry_out='geom.csv',waveform_upsamplefac=waveform_upsamplefac)
+    synthesis.synthesize_random_waveforms(waveforms_out='waveforms.mda',geometry_out='geom.csv',upsamplefac=waveform_upsamplefac)
     synthesis.synthesize_random_firings(firings_out='firings_true.mda',K=20,samplerate=samplerate,duration=duration)
-    synthesis.synthesize_timeseries(firings='firings_true.mda',waveforms='waveforms.mda',timeseries_out='raw.mda',waveform_upsamplefac=waveformupsamplefac,samplerate=samplerate,duration=duration)
+    synthesis.synthesize_timeseries(firings='firings_true.mda',waveforms='waveforms.mda',timeseries_out='raw.mda',waveform_upsamplefac=waveform_upsamplefac,samplerate=samplerate,duration=duration)
     basic.bandpass_filter(timeseries='raw.mda',timeseries_out='filt.mda',freq_min=300,freq_max=6000,freq_wid=1000,samplerate=samplerate)
     basic.normalize_channels(timeseries='filt.mda',timeseries_out='test.pre.mda')
     handle_drift_in_segment(timeseries='test.pre.mda',firings='firings_true.mda',firings_out='test_drift.firings.mda')
