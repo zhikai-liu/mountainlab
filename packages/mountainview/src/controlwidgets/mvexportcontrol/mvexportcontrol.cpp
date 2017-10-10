@@ -58,11 +58,13 @@ MVExportControl::MVExportControl(MVAbstractContext* context, MVMainWindow* mw)
         connect(B, SIGNAL(clicked(bool)), this, SLOT(slot_export_curated_firings()));
         flayout->addWidget(B);
     }
+    /*
     {
         QPushButton* B = new QPushButton("Open PRV manager");
         connect(B, SIGNAL(clicked(bool)), this, SLOT(slot_open_prv_manager()));
         flayout->addWidget(B);
     }
+    */
 
     /*
     {
