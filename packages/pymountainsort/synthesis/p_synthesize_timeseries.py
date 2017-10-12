@@ -8,7 +8,7 @@ from mlpy import readmda,writemda32
 
 processor_name='pyms.synthesize_timeseries'
 processor_version='0.11a'
-def synthesize_timeseries(*,firings='',waveforms='',timeseries_out,noise_level=1,samplerate=30000,duration=60,waveform_upsamplefac=1):
+def synthesize_timeseries(*,firings,waveforms,timeseries_out=None,noise_level=1,samplerate=30000,duration=60,waveform_upsamplefac=1,amplitudes_row=0):
     """
     Synthesize a electrophysiology timeseries from a set of ground-truth firing events and waveforms
 
@@ -20,29 +20,31 @@ def synthesize_timeseries(*,firings='',waveforms='',timeseries_out,noise_level=1
         (Optional) The path of (possibly upsampled) waveforms file in .mda format. Mx(T*waveform_upsample_factor)*K, where M is the number of channels, T is the clip size, and K is the number of units.
     
     timeseries_out : OUTPUT
-        The output path for the new timeseries. MxN, where N=num_timepoints (if num_timepoints>0)
+        The output path for the new timeseries. MxN
 
     noise_level : double
         (Optional) Standard deviation of the simulated background noise added to the timeseries
     samplerate : double
         (Optional) Sample rate for the synthetic dataset in Hz
     duration : double
-        (Optional) Duration of the synthetic dataset in Hz. The number of timepoints will be duration*samplerate
+        (Optional) Duration of the synthetic dataset in seconds. The number of timepoints will be duration*samplerate
     waveform_upsamplefac : int
         (Optional) The upsampling factor corresponding to the input waveforms. (avoids digitization artifacts)
+    amplitudes_row : int
+        (Optional) If positive, this is the row in the firings arrays where the amplitude scale factors are found. Otherwise, use all 1's
     """
     num_timepoints=np.int64(samplerate*duration)
     waveform_upsamplefac=int(waveform_upsamplefac)
     
-    if waveforms:
+    if type(waveforms)==str:
         W=readmda(waveforms)
     else:
-        W=np.zeros((1,100,1))
+        W=waveforms
     
-    if firings:
+    if type(firings)==str:
         F=readmda(firings)
     else:
-        F=np.zeros((3,0))
+        F=firings
         
     times=F[1,:]
     labels=F[2,:].astype('int')
@@ -68,20 +70,30 @@ def synthesize_timeseries(*,firings='',waveforms='',timeseries_out,noise_level=1
     for j in range(times.size):
         t0=times[j]
         k0=labels[j]
+        amp0=1
+        if amplitudes_row>0:
+            amp0=F[amplitudes_row-1,j]
         waveform0=waveform_list[k0-1]
-        frac_offset=int((np.floor(t0)+1-t0)*waveform_upsamplefac)
+        frac_offset=int(np.floor((t0-np.floor(t0))*waveform_upsamplefac))
         tstart=np.int64(np.floor(t0))-Tmid
         if (0<=tstart) and (tstart+T<=N):
-            X[:,tstart:tstart+T]=X[:,tstart:tstart+T]+waveform0[:,frac_offset::waveform_upsamplefac]
+            X[:,tstart:tstart+T]=X[:,tstart:tstart+T]+waveform0[:,frac_offset::waveform_upsamplefac]*amp0
 
-    return writemda32(X,timeseries_out)
+    if timeseries_out:
+        return writemda32(X,timeseries_out)
+    else:
+        return (X)
 
 def test_synthesize_timeseries():
-    N=100000
-    ret=synthesize_timeseries(timeseries_out='tmp.mda',num_timepoints=N)
-    assert(ret)
-    A=readmda('tmp.mda')
-    assert(A.shape==(1,N))
+    #ret=synthesize_timeseries(timeseries_out='tmp.mda',duration=60,samplerate=30000)
+    waveform_upsamplefac=13
+    W=np.random.rand(4,100*waveform_upsamplefac,6)  
+    F=np.zeros((3,0))
+    X=synthesize_timeseries(waveforms=W,firings=F,duration=60,samplerate=30000,amplitudes_row=4)
+    print(X.shape)
+    #import matplotlib.pyplot as pp
+    #pp.imshow(X,extent=[0, 5, 0, .3]);
+    #writemda32(X,'tmp.mda');
     return True
 
 synthesize_timeseries.test=test_synthesize_timeseries

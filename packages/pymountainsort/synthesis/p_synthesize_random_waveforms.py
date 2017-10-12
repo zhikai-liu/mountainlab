@@ -9,7 +9,7 @@ from mlpy import readmda,writemda32
 
 processor_name='pyms.synthesize_random_waveforms'
 processor_version='0.1'
-def synthesize_random_waveforms(*,waveforms_out,geometry_out='',M=5,T=500,K=20,upsamplefac=13):
+def synthesize_random_waveforms(*,waveforms_out=None,geometry_out=None,M=5,T=500,K=20,upsamplefac=13):
     """
     Synthesize random waveforms for use in creating a synthetic timeseries dataset
 
@@ -69,10 +69,13 @@ def synthesize_random_waveforms(*,waveforms_out,geometry_out='',M=5,T=500,K=20,u
     peaks=np.max(np.abs(WW),axis=(0,1))
     WW=WW/np.mean(peaks)*average_peak_amplitude
 
-    writemda32(WW,waveforms_out)
-    if geometry_out:
-        np.savetxt(geometry_out,geometry.transpose(),delimiter=",",fmt="%g")
-    return True
+    if waveforms_out:
+        writemda32(WW,waveforms_out)
+        if geometry_out:
+            np.savetxt(geometry_out,geometry.transpose(),delimiter=",",fmt="%g")
+            return True
+    else:
+        return (WW,geometry)
     
 def get_default_neuron_locations(M,K,geometry):
     num_dims=geometry.shape[0]
@@ -98,9 +101,10 @@ def get_default_neuron_locations(M,K,geometry):
 def test_synthesize_random_waveforms():
     M,T,K = 5,800,20
     upsamplefac=13
-    synthesize_random_waveforms(M=M,T=T,K=K,upsamplefac=upsamplefac,waveforms_out='tmp.waveforms.mda',geometry_out='tmp.geom.csv')
-    waveforms=readmda('tmp.waveforms.mda')
-    assert(waveforms.shape==(M,T*upsamplefac,K))
+    waveforms,geometry = synthesize_random_waveforms(M=M,T=T,K=K,upsamplefac=upsamplefac)
+    print(waveforms.shape)
+    #waveforms=readmda('tmp.waveforms.mda')
+    #assert(waveforms.shape==(M,T*upsamplefac,K))
     #import matplotlib.pyplot as plt
     #for k in range(1,K+1):
     #    plt.figure()
