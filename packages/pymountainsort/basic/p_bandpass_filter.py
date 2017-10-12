@@ -43,7 +43,7 @@ def bandpass_filter(*,timeseries,timeseries_out,samplerate=30000,freq_min=300,fr
         
     def _kernel(chunk,info):
         print('Processing chunk (%g%%)...' % (np.floor(info.t1/N*100)))
-        chunk=chunk.view('float32')
+        chunk=chunk.astype('float32',copy=False)
         cpp.bandpass_filter(chunk,samplerate,freq_min,freq_max,freq_wid)        
         return _writer.writeChunk(chunk[:,info.t1a:info.t2a+1],i1=0,i2=info.t1)
     
