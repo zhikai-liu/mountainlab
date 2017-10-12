@@ -1,5 +1,5 @@
 import numpy as np
-from .synthesize_single_waveform import synthesize_single_waveform
+from synthesize_single_waveform import synthesize_single_waveform
 
 import sys,os
 parent_path=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
