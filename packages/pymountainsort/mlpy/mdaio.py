@@ -14,11 +14,11 @@ class MdaHeader:
 class DiskReadMda:
     def __init__(self,path,header=None):
         self._path=path
-        if (header==None):
-            self._header=_read_header(self._path)
-        else:
+        if header:
             self._header=header
             self._header.header_size=0
+        else:
+            self._header=_read_header(self._path)            
     def dims(self):
         return self._header.dims
     def N1(self):

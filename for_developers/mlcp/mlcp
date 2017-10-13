@@ -5,39 +5,82 @@ var progress=require('request-progress');
 var FormData=require('form-data');
 
 function print_usage() {
+	console.log ('Usage:');
 	console.log ('mlcp /path/to/src.dat s3://bucketname/path/to/dst.dat --ticket=[ticket]')
 	console.log ('mlcp s3://bucketname/path/to/src.dat /path/to/dst.dat --ticket=[ticket]')
+	console.log ('mlcp --list s3://bucketname/path --ticket=[ticket]')
 	return;
 }
 
 var CLP=new CLParams(process.argv);
-
-var src_address=CLP.unnamedParameters[0]||'';
-var dst_address=CLP.unnamedParameters[1]||'';
-
-if ((!src_address)||(!dst_address)) {
-	print_usage();
-	return;
-}
-
 var ticket=CLP.namedParameters['ticket']||'';
 
-if (dst_address.startsWith('s3://')) {
-	do_upload(function() {
-		process.exit(0); //do this because of request-progress waiting for next timeout
-	});
-}
-else if (src_address.startsWith('s3://')) {
-	do_download(function() {
-		process.exit(0); //do this because of request-progress waiting for next timeout
+if ('list' in CLP.namedParameters) {
+	var address=CLP.unnamedParameters[0]||'';
+	if (!address) {
+		print_usage();
+		return;
+	}
+	do_list(address,function() {
 	});
 }
 else {
-	print_usage();
-	return;
+	var src_address=CLP.unnamedParameters[0]||'';
+	var dst_address=CLP.unnamedParameters[1]||'';
+
+	if ((!src_address)||(!dst_address)) {
+		print_usage();
+		return;
+	}
+
+	if (dst_address.startsWith('s3://')) {
+		do_upload(src_address,dst_address,function() {
+			process.exit(0); //do this because of request-progress waiting for next timeout
+		});
+	}
+	else if (src_address.startsWith('s3://')) {
+		do_download(src_address,dst_address,function() {
+			process.exit(0); //do this because of request-progress waiting for next timeout
+		});
+	}
+	else {
+		print_usage();
+		return;
+	}
 }
 
-function do_upload(cb) {
+function do_list(address,cb) {
+	var bucket=get_bucket_from_s3_address(address);
+	var path=get_path_from_s3_address(address);
+
+	var url0='http://localhost:8012/api/list_folder';
+	var req={
+		ticket:ticket,
+		bucket:bucket,
+		path:path
+	}
+
+	http_post_json(url0,req,{},function(tmp) {
+		if (!tmp.success) {
+			console.error('Error in request: '+tmp.error);
+			if (cb) cb();
+			return;
+		}
+		var obj=tmp.object;
+		if (!obj.success) {
+			console.error('Error: '+obj.error);
+			if (cb) cb();
+			return;	
+		}
+		for (var i in obj.files) {
+			var size_str=format_file_size(obj.files[i].size);
+			console.log (obj.files[i].name+' ('+size_str+')');
+		}
+		if (cb) cb();
+	});
+}
+
+function do_upload(src_address,dst_address,cb) {
 	if (!file_exists(src_address)) {
 		console.log ('Source file does not exist: '+src_address);
 		return;
@@ -122,7 +165,7 @@ function do_upload(cb) {
 	}
 }
 
-function do_download(callback) {
+function do_download(src_address,dst_address,callback) {
 	var src_bucket=get_bucket_from_s3_address(src_address);
 	var src_path=get_path_from_s3_address(src_address);
 
@@ -308,3 +351,28 @@ function CLParams(argv) {
 		}
 	}
 };
+
+function format_file_size(size_bytes) {
+	size_bytes=Number(size_bytes);
+	if (size_bytes>10e9) {
+	  return Math.floor(size_bytes/1e9)+' GB';
+	}
+	else if (size_bytes>1e9) {
+	  return Math.floor(size_bytes/1e8)/10+' GB';  
+	}
+	else if (size_bytes>10e6) {
+	  return Math.floor(size_bytes/1e6)+' MB';
+	}
+	else if (size_bytes>1e6) {
+	  return Math.floor(size_bytes/1e5)/10+' MB';  
+	}
+	else if (size_bytes>10e3) {
+	  return Math.floor(size_bytes/1e3)+' KB';
+	}
+	else if (size_bytes>1e3) {
+	  return Math.floor(size_bytes/1e2)/10+' KB';  
+	}
+	else {
+	  return size_bytes+' bytes';
+	}
+}
