@@ -185,60 +185,66 @@ function do_upload(src_address,dst_address,cb) {
 		dst_path:dst_path
 	};
 
+	var timer=new Date();
+	var reqreqs=[];
+
 	create_upload_request(req,function(tmp) {
 		if (!tmp.success) {
 			console.log ('Error making upload request: '+tmp.error);
 			return;
 		}
 
-		var url=tmp.url;
-		var query=tmp.query;
+		if (tmp.parts) {
+			var parts=tmp.parts;
+			var num_parts=parts.length;
+			var part_size=Math.ceil(src_size_bytes/num_parts);
 
-		var form = new FormData();
-		for (var field in query) {
-			form.append(field,query[field]);
-		}
-		console.log ('uploading: '+src_address+' to '+dst_address);
-		form.append('file', require('fs').createReadStream(src_address));
-
-		var timer=new Date();
-		var done=false;
-		var reqreq=form.submit(url, function(err, resp){
-			if (err) {
-				console.error('Error submitting upload: '+err.message);
-				if (cb) cb({success:false,error:err.message}); cb=0;
-			} else {
-				var body='';
-				resp.on('data',function(data) {
-					body+=data.toString('utf-8');
-				});
-				resp.on('error',function(err) {
-					console.log ('Error: '+err.message);
-					if (cb) cb({success:false,error:err.message}); cb=0;
-				});
-				resp.on('end',function() {
-					console.log (body);
-					if (cb) {
-						show_progress();
-						cb({success:true}); cb=0;
+			foreach(parts,{num_parallel:4},function(i,part,partcb) {
+				var range=[i*part_size,(i+1)*part_size-1];
+				if (range[1]>=src_size_bytes) range[1]=src_size_bytes-1;
+				var reqreq0=perform_single_upload(part.url,part.query,src_address,range,function(aa) {
+					if (!aa.success) {
+						if (cb) cb(aa); cb=0;
+						return;
 					}
+					partcb();
 				});
-				//console.log('body: '+JSON.stringify(body));
+				reqreqs.push(reqreq0);
+			},function() {
+				var summary_info={num_parts:num_parts,total_size:src_size_bytes};
+				upload_part_summary_file(tmp.url,tmp.query,summary_info,function(bb) {
+					if (!bb.success) {
+						if (cb) cb(bb); cb=0;
+						return;
+					}
+					if (cb) cb({success:true}); cb=0;
+				});
+			});
+
+			/*
+			for (var i=0; i<num_parts; i++) {
+				var range=[i*part_size,(i+1)*part_size-1];
+				if (range[1]>=src_size_bytes) range[1]=src_size_bytes-1;
+				var reqreq0=perform_single_upload(parts[i].url,parts[i].query,src_address,range,function(aa) {
+					if (!aa.success) {
+						if (cb) cb(aa); cb=0;
+						return;
+					}
+					num_parts_finished++;
+				});
+				reqreqs.push(reqreq0);
 			}
-		});
-		function show_progress() {	
-			if (reqreq.connection) {
-				var uploaded=reqreq.connection._bytesDispatched;
-				var mb_uploaded=Math.floor(uploaded/(1024*1024)*1000)/1000;
-				var pct=Math.floor(uploaded/src_size_bytes*100);
-				var elapsed_sec=(new Date()-timer)/1000;
-				var rate=uploaded/elapsed_sec;
-				rate=Math.floor(rate/(1024*1024)*1000)/1000;
-				console.log ('Uploaded '+mb_uploaded+' MB ('+pct+'%) : '+rate+' MB/sec');
-			}
-			if (cb) setTimeout(show_progress,2000);
+			*/
 		}
-		if (cb) setTimeout(show_progress,500);
+		else {
+			var url=tmp.url;
+			var query=tmp.query;
+			var range=[0,src_size_bytes-1];
+			var reqreq0=perform_single_upload(url,query,src_address,range,function(tmp2) {
+				if (cb) cb(tmp2); cb=0;
+			});
+			reqreqs.push(reqreq0);
+		}
 	});
 
 	function create_upload_request(req,callback) {
@@ -252,6 +258,91 @@ function do_upload(src_address,dst_address,cb) {
 			callback(tmp.object);
 		});
 	}
+
+	function show_progress() {
+		var uploaded=0;
+		for (var ii in reqreqs) {
+			var reqreq=reqreqs[ii];
+			if (reqreq.connection)
+				uploaded+=reqreq.connection._bytesDispatched;
+		}
+		var mb_uploaded=Math.floor(uploaded/(1024*1024)*1000)/1000;
+		var pct=Math.floor(uploaded/src_size_bytes*100);
+		var elapsed_sec=(new Date()-timer)/1000;
+		var rate=uploaded/elapsed_sec;
+		rate=Math.floor(rate/(1024*1024)*1000)/1000;
+		console.log ('Uploaded '+mb_uploaded+' MB ('+pct+'%) : '+rate+' MB/sec');
+		if (cb) setTimeout(show_progress,2000);
+	}
+	if (cb) setTimeout(show_progress,500);
+}
+
+function perform_single_upload(url,query,src_address,range,cb) {
+	size_bytes=range[1]-range[0]+1;
+
+	var form = new FormData();
+	for (var field in query) {
+		form.append(field,query[field]);
+	}
+	console.log ('uploading: '+src_address+' to '+dst_address);
+	form.append('file', require('fs').createReadStream(src_address,{start:range[0],end:range[1]}));
+
+	var done=false;
+	var reqreq=form.submit(url, function(err, resp){
+		if (err) {
+			console.error('Error submitting upload: '+err.message);
+			if (cb) cb({success:false,error:err.message}); cb=0;
+		} else {
+			var body='';
+			resp.on('data',function(data) {
+				body+=data.toString('utf-8');
+			});
+			resp.on('error',function(err) {
+				console.log ('Error: '+err.message);
+				if (cb) cb({success:false,error:err.message}); cb=0;
+			});
+			resp.on('end',function() {
+				if (body.trim()) console.log (body);
+				if (cb) {
+					cb({success:true}); cb=0;
+				}
+			});
+			//console.log('body: '+JSON.stringify(body));
+		}
+	});
+	return reqreq;
+}
+
+function upload_part_summary_file(url,query,summary_info,cb) {
+	var form = new FormData();
+	for (var field in query) {
+		form.append(field,query[field]);
+	}
+	form.append('file', JSON.stringify(summary_info));
+
+	var done=false;
+	console.log ('Uploading part summary file');
+	form.submit(url, function(err, resp){
+		if (err) {
+			console.error('Error submitting summary file upload: '+err.message);
+			if (cb) cb({success:false,error:err.message}); cb=0;
+		} else {
+			var body='';
+			resp.on('data',function(data) {
+				body+=data.toString('utf-8');
+			});
+			resp.on('error',function(err) {
+				console.log ('Error: '+err.message);
+				if (cb) cb({success:false,error:err.message}); cb=0;
+			});
+			resp.on('end',function() {
+				if (body.trim()) console.log (body);
+				if (cb) {
+					cb({success:true}); cb=0;
+				}
+			});
+		}
+	});
 }
 
 function do_download(src_address,dst_address,callback) {
@@ -271,13 +362,18 @@ function do_download(src_address,dst_address,callback) {
 			return;
 		}
 
-		var url=tmp.url;
-		
-
-		download_with_progress(url,dst_address,function(tmp2) {
-			if (callback) callback();
-			return;
-		});
+		if (tmp.parts) {
+			download_parts_with_progress(tmp.parts,dst_address,tmp.size_bytes,function(tmp2) {
+				if (callback) callback();
+				return;
+			});	
+		}
+		else {
+			download_with_progress(tmp.url,dst_address,function(tmp2) {
+				if (callback) callback();
+				return;
+			});
+		}		
 	});
 
 	function create_download_request(req,callback) {
@@ -330,6 +426,87 @@ function download_with_progress(url,dst_path,callback) {
 	    callback({success:true});
 	})
 	.pipe(require('fs').createWriteStream(dst_path));
+}
+
+function download_parts_with_progress(parts,dst_path,src_size_bytes,callback) {
+	mkdir_if_needed(dst_path+'.parts_');
+	remove_parts_files(dst_path+'.parts_');
+	var timer=new Date();
+	var size0=0;
+	var bytes_downloaded=[];
+	for (var aa=0; aa<parts.length; aa++) bytes_downloaded.push(0);
+	var num_parallel=4;
+	foreach(parts,{num_parallel:num_parallel},function(ipart,part,part_cb){
+		if (!callback) return; //signals we are done
+		var dst_path_part=dst_path+'.parts_/part.'+(ipart+1);
+		progress(request(part.url), {throttle: 1000*num_parallel, delay: 1000*(ipart % num_parallel)})
+			.on('progress', function (state) {
+				bytes_downloaded[ipart]=Number(state.size.transferred);
+				var total_bytes_downloaded=0;
+				for (var aa=0; aa<parts.length; aa++) total_bytes_downloaded+=bytes_downloaded[aa];
+				var mb_downloaded=Math.floor(total_bytes_downloaded/(1024*1024)*1000)/1000;
+				var pct=Math.floor(total_bytes_downloaded/src_size_bytes*100);
+				var elapsed_sec=(new Date()-timer)/1000;
+				var rate=total_bytes_downloaded/elapsed_sec;
+				rate=Math.floor(rate/(1024*1024)*1000)/1000;
+				console.log ('Downloaded '+mb_downloaded+' MB ('+pct+'%) : '+rate+' MB/sec');
+			})
+			.on('error', function (err) {
+				console.log ('Error downloading file: '+err.message);
+		    	if (callback) callback({success:false,error:err.message}); callback=0;
+			})
+			.on('end', function () {
+				size0+=file_size_bytes(dst_path_part);
+		    	part_cb();
+			})
+			.pipe(require('fs').createWriteStream(dst_path_part));
+
+	},function() {
+		var elapsed_sec=Math.floor((new Date())-timer)/1000;
+		var rate=size0/elapsed_sec/(1024*1024);
+		console.log ('Downloaded '+Math.floor(size0/(1024*1024)*1000)/1000+' MB in '+elapsed_sec+' sec ('+Math.floor(rate*1000)/1000+' MB/sec)');
+		console.log ('Concatenating...');
+		concatenate_parts(dst_path,function(tmp) {
+			if (!tmp.success) {
+				console.error('Error: '+tmp.error);
+			}
+			remove_parts_files(dst_path+'.parts_');
+			require('fs').rmdirSync(dst_path+'.parts_');
+			if (callback) callback(tmp); callback=0;
+		});
+		
+	});
+}
+
+function concatenate_parts(dst_path,callback) {
+	var fs=require('fs');
+	if (fs.existsSync(dst_path))
+		fs.unlinkSync(dst_path);
+	var parts_dirname=dst_path+'.parts_';
+	var files=[];
+	var i=0;
+	while (fs.existsSync(parts_dirname+'/part.'+(i+1))) {
+		files.push(parts_dirname+'/part.'+(i+1));
+		i++;
+	}
+	var out_stream=require('fs').createWriteStream(dst_path);
+	out_stream.on('error', function (err) {
+    	if (callback) callback({success:false,error:'Error writing to: '+dst_path}); callback=0;
+  	});
+	foreach(files,{num_parallel:1},function(ii,file,cb) {
+		if (!callback) return;
+		var in_stream=require('fs').createReadStream(file);
+		in_stream.on('error',function(err) {
+			if (callback) callback({success:false,error:'Error reading from: '+file}); callback=0;
+		});
+		in_stream.on('end',function() {
+			cb();
+		});
+		in_stream.pipe(out_stream,{end:false});
+	},function() {
+		out_stream.end();
+		if (callback) callback({success:true}); callback=0;
+	});
 }
 
 function get_bucket_from_s3_address(str) {
@@ -463,5 +640,52 @@ function format_file_size(size_bytes) {
 	}
 	else {
 	  return size_bytes+' bytes';
+	}
+}
+
+function foreach(array,opts,step_function,end_function) {
+	var num_parallel=opts.num_parallel||1;
+	var num_running=0;
+	var num_finished=0;
+	var already_called_end=false;
+	var ii=0;
+	next_step();
+	function next_step() {
+		if (num_finished>=array.length) {
+			setTimeout(function() { //important to do it this way so we don't accumulate a call stack
+				if (!already_called_end) { 
+					already_called_end=true;
+					end_function();
+				}
+			},0);
+			return;
+		}
+		while ((ii<array.length)&&(num_running<num_parallel)) {
+			num_running++;
+			ii++;
+			step_function(ii-1,array[ii-1],function() {
+				num_running--;
+				num_finished++;
+				setTimeout(function() { //important to do it this way so we don't accumulate a call stack
+					next_step();
+				},0);
+			});
+		}
+	}
+}
+
+
+function mkdir_if_needed(path) {
+	var fs=require('fs');
+	if (!fs.existsSync(path)){
+    	fs.mkdirSync(path);
+	}
+}
+
+function remove_parts_files(parts_dirname) {
+	var files = require('fs').readdirSync(parts_dirname);
+	for (var i in files) {
+		if (files[i].startsWith('part.'))
+			require('fs').unlinkSync(parts_dirname+'/'+files[i]);
 	}
 }
