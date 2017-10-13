@@ -376,10 +376,10 @@ function http_post_json(url,data,headers,callback) {
 	});
 	function handler(res) {
 		var txt='';
-		res.on('data', (d) => {
+		res.on('data', function(d) {
 			txt+=d
 		});
-		req.on('error', (e) => {
+		req.on('error', function(e) {
 		  if (callback) callback({success:false,error:'Error in post: '+e});
 		  callback=null;
 		});
