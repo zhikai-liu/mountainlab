@@ -4,7 +4,7 @@ var AWS = require('aws-sdk');
 
 var s3 = new AWS.S3({apiVersion: '2006-03-01'});
 var aws_bucket='mlscratch';
-var global_num_parallel=8;
+var global_num_parallel=20;
 var etags_found={};
 
 var timer=new Date();
