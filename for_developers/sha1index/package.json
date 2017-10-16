@@ -1,0 +1,13 @@
+{
+  "name": "sha1index",
+  "version": "0.1.0",
+  "description": "Create an index of sha1 sums of all files in a s3 bucket",
+  "author": "Jeremy Magland",
+  "main": "sha1index.js",
+  "scripts": {
+    "start": "node sha1index.js"
+  },
+  "dependencies": {
+    "aws-sdk": "2.133.0"
+  }
+}
