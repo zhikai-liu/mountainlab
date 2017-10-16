@@ -30,7 +30,8 @@ def handle_drift_in_segment(*,timeseries,firings,firings_out):
         Path of output drift-adjusted firings mda file
 
     """
-    subcluster_size = 100 # Size of subclusters for comparison of merge candidate pairs
+    subcluster_size = 500 # Size of subclusters for comparison of merge candidate pairs
+    bin_factor = 10 # subcluster_size / bin_factor = numbins for hist
     corr_comp_thresh = 0.95 # Minimum correlation in templates to consider as merge candidate
     clip_size=50
     n_pca_dim=10
@@ -49,55 +50,50 @@ def handle_drift_in_segment(*,timeseries,firings,firings_out):
     pairwise_corrcoef=np.zeros(pairwise_idxs.shape[0]) #Empty array for all pairs correlation measurements
     for row in range(pairwise_idxs.shape[0]): #Calculate the correlation coefficient for each pair of flattened templates
         pairwise_corrcoef[row]=np.corrcoef(subflat_templates[:,pairwise_idxs[row,0]],subflat_templates[:,pairwise_idxs[row,1]])[1,0]
-    print('pairwise correlations', pairwise_corrcoef)
     pairs_for_eval=np.array(pairwise_idxs[pairwise_corrcoef>=corr_comp_thresh]) #Threshold the correlation array, and use to index the pairwise comparison array
-    print('pairs for eval', pairs_for_eval)
+
     ## Loop through the pairs for comparison
-    for pair_to_test in range(pairs_for_eval.shape[0]): #Iterate through pairs that are above correlation comparison threshold
-        print(pair_to_test) 
+
+    for pair_to_test in range(pairs_for_eval.shape[0]):  # Iterate through pairs that are above correlation comparison threshold
+
         ## Extract out the times and labels corresponding to the pair
-        firings_subset=firings[:,np.isin(firings[2,:],pairs_for_eval[pair_to_test,:]+1)] #Generate subfirings of only events from given pair, correct for base 0 vs. 1 difference
-        test_labels=firings_subset[2,:] #Labels from the pair of clusters
-        test_eventtimes=firings_subset[1,:] #Times from the pair of clusters
-        sort_indices=np.argsort(test_eventtimes) # there's no strict guarantee the firing times will be sorted, so adding a sort step for safety
-        test_labels=test_labels[sort_indices]
-        test_eventtimes=test_eventtimes[sort_indices]
-        
+        firings_subset = firings[:, np.isin(firings[2, :], pairs_for_eval[pair_to_test, :] + 1)]  # Generate subfirings of only events from given pair, correct for base 0 vs. 1 difference
+        test_labels = firings_subset[2, :]  # Labels from the pair of clusters
+        test_eventtimes = firings_subset[1, :]  # Times from the pair of clusters
+        sort_indices = np.argsort(test_eventtimes)  # there's no strict guarantee the firing times will be sorted, so adding a sort step for safety
+        test_labels = test_labels[sort_indices]
+        test_eventtimes = test_eventtimes[sort_indices]
+
         ## find the subcluster times and labels
-        subcluster_event_indices=find_temporally_proximal_events(test_eventtimes,test_labels,subcluster_size)
-        subcluster_times=test_eventtimes[subcluster_event_indices]
-        subcluster_labels=test_labels[subcluster_event_indices]
-        
+        subcluster_event_indices = find_random_paired_events(test_eventtimes, test_labels, subcluster_size)
+        subcluster_times = test_eventtimes[subcluster_event_indices]
+        subcluster_labels = test_labels[subcluster_event_indices]
+
         ## Extract the clips for the subcluster
         subcluster_clips=extract_clips_helper(timeseries=timeseries,times=subcluster_times,clip_size=clip_size)
-        
+
         ## Compute the centroids and project the clips onto the direction of the line connecting the two centroids
-        #First, PCA to extract features of clips (number dim = n_pca_dim);
-        print(subcluster_clips.shape)
-        subcluster_clips=np.swapaxes(subcluster_clips,0,1)
-        subcluster_clips=np.swapaxes(subcluster_clips,2,0) # Convert from (Chan x Clip x Clust) to (Clust x Chan x Clip)
-        subcluster_clips=np.reshape(subcluster_clips,(subcluster_clips.shape[0],-1)) #Flatten clips for PCA (expects 2d array)
-        print(subcluster_clips.shape)
-        clip_features=PCA(n_components=n_pca_dim).fit_transform(subcluster_clips) #Run PCA
-        print(clip_features.shape)
-        #Use label data to separate clips into two groups, and adjust for base 0 vs base 1 difference
-        A_indices = np.isin(subcluster_labels, pairs_for_eval[pair_to_test, 0]+1)
-        B_indices = np.isin(subcluster_labels, pairs_for_eval[pair_to_test, 1]+1)
-        clip_features_A=clip_features[A_indices,:]
-        clip_features_B=clip_features[B_indices,:]
-        #Calculate centroid
-        centroidA = np.mean(clip_features_A,axis=0)
-        centroidB = np.mean(clip_features_B,axis=0)
-        #Project points onto line
-        point_projs = np.zeros(clip_features.shape)
-        for idx, point in enumerate(clip_features):
-            AP = point - centroidA
-            AB = centroidB - point
-            point_projs[idx,:] = centroidA + np.dot(AP,AB)/np.dot(AB,AB) * AB
-        #Calculate distance to make 1D
-        clip_1d_projs=cdist(point_projs[0:1],point_projs)[0]
-        print(clip_1d_projs.shape)
-        print(clip_1d_projs[0:3])
+
+        # PCA to extract features of clips (number dim = n_pca_dim);
+        subcluster_clips = np.reshape(subcluster_clips,(subcluster_clips.shape[0], -1))  # Flatten clips for PCA (expects 2d array)
+        dimenReduc = PCA(n_components=n_pca_dim, whiten=True)
+        clip_features = dimenReduc.fit_transform(subcluster_clips)
+
+        # Use label data to separate clips into two groups, and adjust for base 0 vs base 1 difference
+        A_indices = np.isin(subcluster_labels, pairs_for_eval[pair_to_test, 0] + 1)
+        B_indices = np.isin(subcluster_labels, pairs_for_eval[pair_to_test, 1] + 1)
+        clip_features_A = clip_features[A_indices, :]
+        clip_features_B = clip_features[B_indices, :]
+
+        # Calculate centroid
+        centroidA = np.mean(clip_features_A, axis=0)
+        centroidB = np.mean(clip_features_B, axis=0)
+
+        # Project points onto line
+        V = centroidA - centroidB
+        V = np.tile(V, (clip_features.shape[0], 1))
+        clip_1d_projs = np.einsum('ij,ij->i', clip_features, V)
+
     print('looped through all pairs')
         ##Histogram points and test cut point
 
@@ -109,6 +105,21 @@ def find_temporally_proximal_events(times,labels,subcluster_size):
     
     ##Eliminate all duplicate events. If events with labels A B A are used, and both pair AB and BA are valid, only count B once
     idx_for_eval = np.unique(np.append(idx_for_eval,idx_for_eval+1))
+
+    return idx_for_eval
+
+def find_random_paired_events(times, labels, subcluster_size):
+    A_labl = np.isin(labels, 1)
+    B_labl = np.isin(labels, 2)
+    A_rands = np.random.randint(0, sum(A_labl), subcluster_size)
+    B_rands = np.random.randint(0, sum(B_labl), subcluster_size)
+    A_idxs = np.nonzero(A_labl)[0]
+    A_idxs = A_idxs[A_rands]
+    B_idxs = np.nonzero(B_labl)[0]
+    B_idxs = B_idxs[B_rands]
+
+    ##Eliminate all duplicate events. If events with labels A B A are used, and both pair AB and BA are valid, only count B once
+    idx_for_eval = np.unique(np.append(A_idxs, B_idxs))
 
     return idx_for_eval
 
