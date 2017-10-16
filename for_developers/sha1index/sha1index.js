@@ -5,6 +5,8 @@ var AWS = require('aws-sdk');
 var s3 = new AWS.S3({apiVersion: '2006-03-01'});
 var aws_bucket='mlscratch';
 
+var timer=new Date();
+
 var sha1_index=null;
 read_sha1_index(function() {
 	sha1_index.sha1_by_etag=sha1_index.sha1_by_etag||{};
@@ -116,6 +118,7 @@ function compute_sha1_for_file(file,callback) {
 function compute_or_retrieve_sha1_for_file(file,callback) {
 	var etag=file.ETag;
 	if (etag in sha1_index.sha1_by_etag) {
+		console.log('Retrieved sha1 for file: '+file.Key);
 		callback(sha1_index.sha1_by_etag[etag]);
 		return;
 	}
@@ -139,7 +142,16 @@ function process_file(file,callback) {
 				sha1_index.info_by_sha1[sha1].etag=file.etag;
 				sha1_index.info_by_sha1[sha1].size=file.Size;
 			}
-			callback({success:true});
+			var elapsed=(new Date())-timer;
+			if (elapsed>1000*20) {
+				timer=new Date();
+				write_sha1_index(function() {
+					callback({success:true});
+				});
+			}
+			else {
+				callback({success:true});
+			}
 		});
 	}
 	else {
