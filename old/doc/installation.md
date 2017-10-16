@@ -33,6 +33,7 @@ cd mountainlab
 git checkout ms3
 ./compile_components.sh
 ```
+(If you get the error 'Could not find qmake configuration file', and you have Anaconda python installed, see the note below for Anaconda users.)
 
 See also nogui_compile.sh to compile only the non-gui components, for example if you are running processing on a non-gui server.
 
@@ -119,4 +120,5 @@ We recommend installing this in your home directory, which does not require admi
 Once installed you will need to prepend the path to qmake to your PATH environment variable. On my system that is `/home/magland/Qt/5.7/gcc_64/bin`.
 You may instead do `sudo ln -s /home/magland/Qt/5.7/gcc_64/bin/qmake /usr/local/bin/qmake`.
 
-Anaconda users may need to un-export anaconda/miniconda path in order to make qt5 from the operating system available rather than the one supplied with anaconda. To do this, edit your ~/.bashrc file, comment out the export command containing anaconda or miniconda path, and open a new terminal. Make sure you are using your OS' installation by running ```which qmake``` 
+Anaconda users may need to un-export anaconda/miniconda path in order to make qt5 from the operating system available rather than the one supplied with anaconda. To do this, edit your ~/.bashrc file, comment out the export command containing anaconda or miniconda path, and open a new terminal. (Alternatively, you can leave anaconda in your path, and just add a link to `/usr/bin/qmake` to a location in your path that appears before the anaconda directory.) Confirm that you are using your OS' installation by running ```which qmake```. 
+
