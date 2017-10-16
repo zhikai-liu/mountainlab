@@ -4,6 +4,7 @@ var AWS = require('aws-sdk');
 
 var s3 = new AWS.S3({apiVersion: '2006-03-01'});
 var aws_bucket='mlscratch';
+var global_num_parallel=8;
 
 var timer=new Date();
 
@@ -83,7 +84,7 @@ function process_directory(dirname,callback) {
 			var tmp2=tmp.split('/');
 			subdirs.push(tmp2[tmp2.length-2]);
 		}
-		foreach(files,{},function(ifile,file,cb1) {
+		foreach(files,{num_parallel:global_num_parallel},function(ifile,file,cb1) {
 			process_file(file,function(tmp) {
 				if (!tmp.success) {
 					console.error(tmp.error);
@@ -91,7 +92,7 @@ function process_directory(dirname,callback) {
 				cb1();
 			});
 		},function() {
-			foreach(subdirs,{},function(isubdir,subdir,cb2) {
+			foreach(subdirs,{num_parallel:global_num_parallel},function(isubdir,subdir,cb2) {
 				process_directory(dirname+'/'+subdir,function() {
 					cb2();
 				});
@@ -102,23 +103,44 @@ function process_directory(dirname,callback) {
 	});
 }
 
+var num_locked_resources=0;
+function lock_resource(callback) {
+	if (num_locked_resources<global_num_parallel) {
+		num_locked_resources++;
+		callback();
+	}
+	else {
+		setTimeout(function() {
+			lock_resource(callback)
+		},100);
+	}
+}
+function unlock_resource() {
+	setTimeout(function() {
+		num_locked_resources--;
+	},1);
+}
+
 function compute_sha1_for_file(file,callback) {
-	console.log ('Computing sha1 for file: '+file.Key);
-	var download_stream=s3.getObject({Bucket:aws_bucket,Key:file.Key}).createReadStream();
-	var hash = require('crypto').createHash('sha1');
-	hash.setEncoding('hex');
-	var bytes_downloaded=0;
-	download_stream.on('end', function() {
-    	hash.end();
-    	callback(hash.read());
+	lock_resource(function() {
+		console.log ('Computing sha1 for file: '+file.Key);
+		var download_stream=s3.getObject({Bucket:aws_bucket,Key:file.Key}).createReadStream();
+		var hash = require('crypto').createHash('sha1');
+		hash.setEncoding('hex');
+		var bytes_downloaded=0;
+		download_stream.on('end', function() {
+	    	hash.end();
+	    	callback(hash.read());
+	    	unlock_resource();
+		});
+		download_stream.pipe(hash);
 	});
-	download_stream.pipe(hash);
 }
 
 function compute_or_retrieve_sha1_for_file(file,callback) {
 	var etag=file.ETag;
 	if (etag in sha1_index.sha1_by_etag) {
-		console.log('Retrieved sha1 for file: '+file.Key);
+		console.log ('Retrieved sha1 for file: '+file.Key);
 		callback(sha1_index.sha1_by_etag[etag]);
 		return;
 	}
@@ -139,7 +161,7 @@ function process_file(file,callback) {
 			if (sha1) {
 				sha1_index.info_by_sha1[sha1]={};
 				sha1_index.info_by_sha1[sha1].path_hint=file.Key;
-				sha1_index.info_by_sha1[sha1].etag=file.etag;
+				sha1_index.info_by_sha1[sha1].etag=file.ETag;
 				sha1_index.info_by_sha1[sha1].size=file.Size;
 			}
 			var elapsed=(new Date())-timer;
