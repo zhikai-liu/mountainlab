@@ -1,22 +1,21 @@
 #!/usr/bin/env nodejs
 
-var request=require('request');
-var progress=require('request-progress');
-var FormData=require('form-data');
+var AWS = require('aws-sdk');
+var aws_bucket='mlscratch';
 
 function print_usage() {
 	console.log ('Usage:');
+	console.log ('mlcp --list s3://bucketname/path --ticket=[ticket]');
 	console.log ('mlcp /path/to/src.dat s3://bucketname/path/to/dst.dat --ticket=[ticket]');
 	console.log ('mlcp s3://bucketname/path/to/src.dat /path/to/dst.dat --ticket=[ticket]');
 	console.log ('mlcp s3://bucketname/path/to/src.dat s3://bucketname/path/to/dst.dat --ticket=[ticket]');
 	console.log ('mlcp --move s3://bucketname/path/to/src.dat s3://bucketname/path/to/dst.dat --ticket=[ticket]');
 	console.log ('mlcp --remove s3://bucketname/path/to/file.dat --ticket=[ticket]');
-	console.log ('mlcp --list s3://bucketname/path --ticket=[ticket]');
 	return;
 }
 
 var server_url='https://mlcps.herokuapp.com';
-//server_url='http://localhost:8012';
+//var server_url='http://localhost:8012';
 
 var CLP=new CLParams(process.argv);
 
@@ -25,151 +24,181 @@ if ('mlcps' in CLP.namedParameters)
 
 var ticket=CLP.namedParameters['ticket']||'';
 
-if ('list' in CLP.namedParameters) {
-	var address=CLP.unnamedParameters[0]||'';
-	if (!address) {
-		print_usage();
-		return;
-	}
-	do_list(address,function() {
-	});
+var settings = require('user-settings').file('.mlcp');
+if (!ticket) {
+	ticket=settings.get('ticket');
 }
-else if ('remove' in CLP.namedParameters) {
-	var address=CLP.unnamedParameters[0]||'';
-	if (!address) {
-		print_usage();
-		return;
-	}
-	do_remove(address,function() {
-	});
+if (!ticket) {
+	print_usage();
+	return;
 }
-else {
-	var src_address=CLP.unnamedParameters[0]||'';
-	var dst_address=CLP.unnamedParameters[1]||'';
+settings.set('ticket',ticket);
 
-	if ((!src_address)||(!dst_address)) {
-		print_usage();
-		return;
-	}
-
-	if ((dst_address.startsWith('s3://'))&&(!src_address.startsWith('s3://'))) {
-		do_upload(src_address,dst_address,function() {
-			process.exit(0); //do this because of request-progress waiting for next timeout
+get_credentials_for_ticket(ticket,function() {
+	if ('list' in CLP.namedParameters) {
+		var address=CLP.unnamedParameters[0]||'';
+		if (!address) {
+			print_usage();
+			return;
+		}
+		do_list(address,function() {
 		});
 	}
-	else if ((src_address.startsWith('s3://'))&&(!dst_address.startsWith('s3://'))) {
-		do_download(src_address,dst_address,function() {
-			process.exit(0); //do this because of request-progress waiting for next timeout
+	else if ('remove' in CLP.namedParameters) {
+		var address=CLP.unnamedParameters[0]||'';
+		if (!address) {
+			print_usage();
+			return;
+		}
+		do_remove(address,function() {
 		});
-	}
-	else if ((src_address.startsWith('s3://'))&&(dst_address.startsWith('s3://'))) {
-		if ('move' in CLP.namedParameters) {
-			do_copy_or_move('move',src_address,dst_address,function() {
-			});
-		}
-		else {
-			do_copy_or_move('copy',src_address,dst_address,function() {
-			});
-		}
 	}
 	else {
-		print_usage();
-		return;
+		var src_address=CLP.unnamedParameters[0]||'';
+		var dst_address=CLP.unnamedParameters[1]||'';
+
+		if ((!src_address)||(!dst_address)) {
+			print_usage();
+			return;
+		}
+
+		if ((starts_with(dst_address,'s3://'))&&(!starts_with(src_address,'s3://'))) {
+			do_upload(src_address,dst_address,function() {
+				process.exit(0); //do this because of request-progress waiting for next timeout
+			});
+		}
+		else if ((starts_with(src_address,'s3://'))&&(!starts_with(dst_address,'s3://'))) {
+			do_download(src_address,dst_address,function() {
+				process.exit(0); //do this because of request-progress waiting for next timeout
+			});
+		}
+		else if ((starts_with(src_address,'s3://'))&&(starts_with(dst_address,'s3://'))) {
+			if ('move' in CLP.namedParameters) {
+				do_copy_or_move('move',src_address,dst_address,function() {
+				});
+			}
+			else {
+				do_copy_or_move('copy',src_address,dst_address,function() {
+				});
+			}
+		}
+		else {
+			print_usage();
+			return;
+		}
 	}
-}
+});
 
-function do_list(address,cb) {
-	var bucket=get_bucket_from_s3_address(address);
-	var path=get_path_from_s3_address(address);
-
-	var url0=server_url+'/api/list';
-	var req={
-		ticket:ticket,
-		bucket:bucket,
-		path:path
-	}
-
-	http_post_json(url0,req,{},function(tmp) {
+function get_credentials_for_ticket(ticket,callback) {
+	var url=server_url+'/api/get_credentials';
+	http_post_json(url,{ticket:ticket},{},function(tmp) {
 		if (!tmp.success) {
-			console.error('Error in request: '+tmp.error);
-			if (cb) cb();
+			console.log ('Error getting credentials: '+tmp.error);
 			return;
 		}
 		var obj=tmp.object;
 		if (!obj.success) {
-			console.error('Error: '+obj.error);
-			if (cb) cb();
-			return;	
+			console.log ('Error in get_credentials: '+obj.error);
+			return;
 		}
-		for (var i in obj.files) {
-			var size_str=format_file_size(obj.files[i].size);
-			console.log (obj.files[i].name+' ('+size_str+')');
+
+		AWS.config.credentials=new AWS.Credentials({
+			accessKeyId:obj.credentials.AccessKeyId,
+			secretAccessKey:obj.credentials.SecretAccessKey,
+			sessionToken:obj.credentials.SessionToken
+		});
+		callback({success:true});
+	});
+	//callback();
+}
+
+function do_list(address,cb) {
+	var s3 = new AWS.S3({apiVersion: '2006-03-01'});
+	var bucket=get_bucket_from_s3_address(address);
+	var path=get_path_from_s3_address(address);
+
+	s3.listObjects({Bucket:bucket,Prefix:path+'/',Delimiter:'/'},function(err,data) {
+		if (err) {
+			console.error('Error listing folder '+path+' in bucket '+bucket+': '+err.code);
+			return;
 		}
-		if (cb) cb();
+		var subdirs=[];
+		for (var i in data.CommonPrefixes) {
+			var tmp=data.CommonPrefixes[i].Prefix;
+			var tmp2=tmp.split('/');
+			subdirs.push(tmp2[tmp2.length-2]);
+		}
+		var files=[];
+		var contents=data.Contents;
+		for (var i in contents) {
+			var C=contents[i];
+			var file0={
+				name:C.Key.slice((path+'/').length),
+				size:C.Size
+			};
+			files.push(file0);
+		}
+		for (var i in subdirs) {
+			console.log (subdirs[i]+'/');
+		}
+		for (var i in files) {
+			var size0=format_file_size(files[i].size);
+			console.log (files[i].name+' ('+size0+')');
+		}
 	});
 }
 
 function do_copy_or_move(str,src_address,dst_address,cb) {
+	var s3 = new AWS.S3({apiVersion: '2006-03-01'});
 	var src_bucket=get_bucket_from_s3_address(src_address);
 	var src_path=get_path_from_s3_address(src_address);
 	var dst_bucket=get_bucket_from_s3_address(dst_address);
 	var dst_path=get_path_from_s3_address(dst_address);
 
-	var url0=server_url+'/api/'+str;
-	var req={
-		ticket:ticket,
-		src_bucket:src_bucket,
-		src_path:src_path,
-		dst_bucket:dst_bucket,
-		dst_path:dst_path
+	if (src_bucket!=dst_bucket) {
+		console.error('Cannot copy between buckets');
+		return;
 	}
-
-	http_post_json(url0,req,{},function(tmp) {
-		if (!tmp.success) {
-			console.error('Error in request: '+tmp.error);
-			if (cb) cb();
+	console.log ('Copying object: '+'/'+src_bucket+'/'+src_path+' to '+'/'+dst_bucket+'/'+dst_path);
+	s3.copyObject({Bucket:dst_bucket,CopySource:'/'+src_bucket+'/'+src_path,Key:dst_path},function(err,data) {
+		if (err) {
+			console.error('Error copying object: '+err.code);
 			return;
 		}
-		var obj=tmp.object;
-		if (!obj.success) {
-			console.error('Error: '+obj.error);
-			if (cb) cb();
-			return;	
+		console.log ('Done.');
+		if (str=='move') {
+			console.log ('Deleting object: /'+src_bucket+'/'+src_path);
+			s3.deleteObject({Bucket:src_bucket,Key:src_path},function(err2,data2) {
+				if (err2) {
+					console.error('Error removing source object: '+err2.code);
+					return;
+				}
+				console.log ('Done');
+				return;
+			});
 		}
-		if (str=='copy') console.log ('Copied.');
-		else if (str=='move') console.log ('Moved.');
-		if (cb) cb();
+		else {
+			return;
+		}
 	});
 }
 
 function do_remove(address,cb) {
+	var s3 = new AWS.S3({apiVersion: '2006-03-01'});
+
 	var bucket=get_bucket_from_s3_address(address);
 	var path=get_path_from_s3_address(address);
-
-	var url0=server_url+'/api/remove';
-	var req={
-		ticket:ticket,
-		bucket:bucket,
-		path:path
-	}
-
-	http_post_json(url0,req,{},function(tmp) {
-		if (!tmp.success) {
-			console.error('Error in request: '+tmp.error);
-			if (cb) cb();
+	s3.deleteObject({Bucket:bucket,Key:path},function(err1,data1) {
+		if (err1) {
+			console.error('Error removing object: '+err1.code);
 			return;
 		}
-		var obj=tmp.object;
-		if (!obj.success) {
-			console.error('Error: '+obj.error);
-			if (cb) cb();
-			return;	
-		}
-		console.log ('Removed.');
 	});
 }
 
 function do_upload(src_address,dst_address,cb) {
+	var s3 = new AWS.S3({apiVersion: '2006-03-01'});
+
 	if (!file_exists(src_address)) {
 		console.log ('Source file does not exist: '+src_address);
 		return;
@@ -178,103 +207,21 @@ function do_upload(src_address,dst_address,cb) {
 	var dst_bucket=get_bucket_from_s3_address(dst_address);
 	var dst_path=get_path_from_s3_address(dst_address);
 
-	var req={
-		ticket:ticket,
-		file_size:src_size_bytes,
-		dst_bucket:dst_bucket,
-		dst_path:dst_path
-	};
-
-	var timer=new Date();
-	var reqreqs=[];
-
-	create_upload_request(req,function(tmp) {
-		if (!tmp.success) {
-			console.log ('Error making upload request: '+tmp.error);
+	var read_stream=require('fs').createReadStream(src_address);
+	var RR=s3.upload({Bucket:dst_bucket,Key:dst_path,Body:read_stream},function(err,data) {
+		if (err) {
+			console.log ('Error in upload: '+err.code);
 			return;
 		}
-
-		if (tmp.parts) {
-			var parts=tmp.parts;
-			var num_parts=parts.length;
-			var part_size=Math.ceil(src_size_bytes/num_parts);
-
-			foreach(parts,{num_parallel:4},function(i,part,partcb) {
-				var range=[i*part_size,(i+1)*part_size-1];
-				if (range[1]>=src_size_bytes) range[1]=src_size_bytes-1;
-				var reqreq0=perform_single_upload(part.url,part.query,src_address,range,function(aa) {
-					if (!aa.success) {
-						if (cb) cb(aa); cb=0;
-						return;
-					}
-					partcb();
-				});
-				reqreqs.push(reqreq0);
-			},function() {
-				var summary_info={num_parts:num_parts,total_size:src_size_bytes};
-				upload_part_summary_file(tmp.url,tmp.query,summary_info,function(bb) {
-					if (!bb.success) {
-						if (cb) cb(bb); cb=0;
-						return;
-					}
-					if (cb) cb({success:true}); cb=0;
-				});
-			});
-
-			/*
-			for (var i=0; i<num_parts; i++) {
-				var range=[i*part_size,(i+1)*part_size-1];
-				if (range[1]>=src_size_bytes) range[1]=src_size_bytes-1;
-				var reqreq0=perform_single_upload(parts[i].url,parts[i].query,src_address,range,function(aa) {
-					if (!aa.success) {
-						if (cb) cb(aa); cb=0;
-						return;
-					}
-					num_parts_finished++;
-				});
-				reqreqs.push(reqreq0);
-			}
-			*/
-		}
-		else {
-			var url=tmp.url;
-			var query=tmp.query;
-			var range=[0,src_size_bytes-1];
-			var reqreq0=perform_single_upload(url,query,src_address,range,function(tmp2) {
-				if (cb) cb(tmp2); cb=0;
-			});
-			reqreqs.push(reqreq0);
-		}
+		if (cb) cb();
 	});
 
-	function create_upload_request(req,callback) {
-		var url0=server_url+'/api/create_upload_request';
-
-		http_post_json(url0,req,{},function(tmp) {
-			if (!tmp.success) {
-				callback(tmp);
-				return;
-			}
-			callback(tmp.object);
-		});
-	}
-
-	function show_progress() {
-		var uploaded=0;
-		for (var ii in reqreqs) {
-			var reqreq=reqreqs[ii];
-			if (reqreq.connection)
-				uploaded+=reqreq.connection._bytesDispatched;
-		}
-		var mb_uploaded=Math.floor(uploaded/(1024*1024)*1000)/1000;
-		var pct=Math.floor(uploaded/src_size_bytes*100);
-		var elapsed_sec=(new Date()-timer)/1000;
-		var rate=uploaded/elapsed_sec;
-		rate=Math.floor(rate/(1024*1024)*1000)/1000;
-		console.log ('Uploaded '+mb_uploaded+' MB ('+pct+'%) : '+rate+' MB/sec');
-		if (cb) setTimeout(show_progress,2000);
-	}
-	if (cb) setTimeout(show_progress,500);
+	RR.on('httpUploadProgress',function(aa) {
+		var size1=format_file_size(aa.loaded);
+		var size2=format_file_size(aa.total);
+		var pct=Math.floor(aa.loaded/aa.total*100);
+		console.log('Uploaded '+size1+' of '+size2+' ('+pct+'%)');
+	});
 }
 
 function perform_single_upload(url,query,src_address,range,cb) {
@@ -346,166 +293,44 @@ function upload_part_summary_file(url,query,summary_info,cb) {
 }
 
 function do_download(src_address,dst_address,callback) {
+	var s3 = new AWS.S3({apiVersion: '2006-03-01'});
+	var downloader = require('s3-download')(s3);
+
 	var src_bucket=get_bucket_from_s3_address(src_address);
 	var src_path=get_path_from_s3_address(src_address);
 
-	var req={
-		ticket:ticket,
-		src_bucket:src_bucket,
-		src_path:src_path
-	};
-
-	create_download_request(req,function(tmp) {
-		if (!tmp.success) {
-			console.log ('Error making download request: '+tmp.error);
-			if (callback) callback();
+	s3.headObject({Bucket:src_bucket,Key:src_path},function(err,data) {
+		if (err) {
+			console.error('Error locating object '+src_path+' in bucket '+src_bucket+': '+err.code);
 			return;
 		}
-
-		if (tmp.parts) {
-			download_parts_with_progress(tmp.parts,dst_address,tmp.size_bytes,function(tmp2) {
-				if (callback) callback();
-				return;
-			});	
+		var size0=Number(data.ContentLength);
+		var sessionParams = {
+		    maxPartSize: 1024*1024*20,//default 20MB 
+		    concurrentStreams: 8,//default 5 
+		    maxRetries: 3,//default 3 
+		    totalObjectSize: size0 //required size of object being downloaded 
 		}
-		else {
-			download_with_progress(tmp.url,dst_address,function(tmp2) {
-				if (callback) callback();
-				return;
-			});
-		}		
-	});
 
-	function create_download_request(req,callback) {
-		var url0=server_url+'/api/create_download_request';
-
-		http_post_json(url0,req,{},function(tmp) {
-			if (!tmp.success) {
-				callback(tmp);
-				return;
-			}
-			callback(tmp.object);
+		var bytes_downloaded=0;
+		var d = downloader.download({Bucket:src_bucket,Key:src_path},sessionParams);
+		d.on('error',function(err){
+		    console.error(err);
 		});
-	}
-}
-
-
-function download_with_progress(url,dst_path,callback) {
-	var timer=new Date();
-	// The options argument is optional so you can omit it 
-	progress(request(url), {
-	    throttle: 1000,                    // Throttle the progress event to 2000ms, defaults to 1000ms 
-	    delay: 500                       // Only start to emit after 1000ms delay, defaults to 0ms 
-	    // lengthHeader: 'x-transfer-length'  // Length header to use, defaults to content-length 
-	})
-	.on('progress', function (state) {
-	    // The state is an object that looks like this: 
-	    // { 
-	    //     percent: 0.5,               // Overall percent (between 0 to 1) 
-	    //     speed: 554732,              // The download speed in bytes/sec 
-	    //     size: { 
-	    //         total: 90044871,        // The total payload size in bytes 
-	    //         transferred: 27610959   // The transferred payload size in bytes 
-	    //     }, 
-	    //     time: { 
-	    //         elapsed: 36.235,        // The total elapsed seconds since the start (3 decimals) 
-	    //         remaining: 81.403       // The remaining seconds to finish (3 decimals) 
-	    //     } 
-	    // } 
-	    console.log (Math.floor(state.size.transferred/(1024*1024)*1000)/1000+' MB ('+Math.floor(state.percent*100)+'%) : '+Math.floor(state.speed/(1024*1024)*1000)/1000+' MB/sec'+' : '+(state.time.remaining||'unknown')+' sec remaining');
-	})
-	.on('error', function (err) {
-		console.log ('Error downloading file: '+err.message);
-	    callback({success:false,error:err.message});
-	})
-	.on('end', function () {
-		var size0=file_size_bytes(dst_path);
-		var elapsed_sec=Math.floor((new Date())-timer)/1000;
-		var rate=size0/elapsed_sec/(1024*1024);
-		console.log ('Downloaded '+Math.floor(size0/(1024*1024)*1000)/1000+' MB in '+elapsed_sec+' sec ('+Math.floor(rate*1000)/1000+' MB/sec)');
-	    callback({success:true});
-	})
-	.pipe(require('fs').createWriteStream(dst_path));
-}
-
-function download_parts_with_progress(parts,dst_path,src_size_bytes,callback) {
-	mkdir_if_needed(dst_path+'.parts_');
-	remove_parts_files(dst_path+'.parts_');
-	var timer=new Date();
-	var size0=0;
-	var bytes_downloaded=[];
-	for (var aa=0; aa<parts.length; aa++) bytes_downloaded.push(0);
-	var num_parallel=4;
-	foreach(parts,{num_parallel:num_parallel},function(ipart,part,part_cb){
-		if (!callback) return; //signals we are done
-		var dst_path_part=dst_path+'.parts_/part.'+(ipart+1);
-		progress(request(part.url), {throttle: 1000*num_parallel, delay: 1000*(ipart % num_parallel)})
-			.on('progress', function (state) {
-				bytes_downloaded[ipart]=Number(state.size.transferred);
-				var total_bytes_downloaded=0;
-				for (var aa=0; aa<parts.length; aa++) total_bytes_downloaded+=bytes_downloaded[aa];
-				var mb_downloaded=Math.floor(total_bytes_downloaded/(1024*1024)*1000)/1000;
-				var pct=Math.floor(total_bytes_downloaded/src_size_bytes*100);
-				var elapsed_sec=(new Date()-timer)/1000;
-				var rate=total_bytes_downloaded/elapsed_sec;
-				rate=Math.floor(rate/(1024*1024)*1000)/1000;
-				console.log ('Downloaded '+mb_downloaded+' MB ('+pct+'%) : '+rate+' MB/sec');
-			})
-			.on('error', function (err) {
-				console.log ('Error downloading file: '+err.message);
-		    	if (callback) callback({success:false,error:err.message}); callback=0;
-			})
-			.on('end', function () {
-				size0+=file_size_bytes(dst_path_part);
-		    	part_cb();
-			})
-			.pipe(require('fs').createWriteStream(dst_path_part));
-
-	},function() {
-		var elapsed_sec=Math.floor((new Date())-timer)/1000;
-		var rate=size0/elapsed_sec/(1024*1024);
-		console.log ('Downloaded '+Math.floor(size0/(1024*1024)*1000)/1000+' MB in '+elapsed_sec+' sec ('+Math.floor(rate*1000)/1000+' MB/sec)');
-		console.log ('Concatenating...');
-		concatenate_parts(dst_path,function(tmp) {
-			if (!tmp.success) {
-				console.error('Error: '+tmp.error);
-			}
-			remove_parts_files(dst_path+'.parts_');
-			require('fs').rmdirSync(dst_path+'.parts_');
-			if (callback) callback(tmp); callback=0;
+		// dat = size_of_part_downloaded 
+		d.on('part',function(dat){
+			bytes_downloaded+=dat;
+			var size1=format_file_size(bytes_downloaded);
+			var size2=format_file_size(size0);
+			var pct=Math.floor(bytes_downloaded/size0*100);
+		    console.log('Downloaded '+size1+' of '+size2+' ('+pct+'%)');
 		});
-		
-	});
-}
-
-function concatenate_parts(dst_path,callback) {
-	var fs=require('fs');
-	if (fs.existsSync(dst_path))
-		fs.unlinkSync(dst_path);
-	var parts_dirname=dst_path+'.parts_';
-	var files=[];
-	var i=0;
-	while (fs.existsSync(parts_dirname+'/part.'+(i+1))) {
-		files.push(parts_dirname+'/part.'+(i+1));
-		i++;
-	}
-	var out_stream=require('fs').createWriteStream(dst_path);
-	out_stream.on('error', function (err) {
-    	if (callback) callback({success:false,error:'Error writing to: '+dst_path}); callback=0;
-  	});
-	foreach(files,{num_parallel:1},function(ii,file,cb) {
-		if (!callback) return;
-		var in_stream=require('fs').createReadStream(file);
-		in_stream.on('error',function(err) {
-			if (callback) callback({success:false,error:'Error reading from: '+file}); callback=0;
+		d.on('downloaded',function(dat){
+		    console.log (dat);
 		});
-		in_stream.on('end',function() {
-			cb();
-		});
-		in_stream.pipe(out_stream,{end:false});
-	},function() {
-		out_stream.end();
-		if (callback) callback({success:true}); callback=0;
+		 
+		var w = require('fs').createWriteStream(dst_address);
+		d.pipe(w);
 	});
 }
 
@@ -516,7 +341,9 @@ function get_bucket_from_s3_address(str) {
 
 function get_path_from_s3_address(str) {
 	var list=str.split('/');
-	return list.slice(3).join('/');
+	//todo: switch to leading /
+	//return list.slice(3).join('/');
+	return '/'+list.slice(3).join('/');
 }
 
 function http_post_json(url,data,headers,callback) {
@@ -677,15 +504,15 @@ function foreach(array,opts,step_function,end_function) {
 
 function mkdir_if_needed(path) {
 	var fs=require('fs');
-	if (!fs.existsSync(path)){
-    	fs.mkdirSync(path);
+	if (!require('fs').existsSync(path)){
+    	require('fs').mkdirSync(path);
 	}
 }
 
-function remove_parts_files(parts_dirname) {
-	var files = require('fs').readdirSync(parts_dirname);
-	for (var i in files) {
-		if (files[i].startsWith('part.'))
-			require('fs').unlinkSync(parts_dirname+'/'+files[i]);
-	}
+function starts_with(str,str2) {
+	return (str.slice(0,str2.length)==str2);
+}
+
+function ends_with(str,str2) {
+	return (str.slice(str.length-str2.length,str2.length)==str2);
 }
