@@ -12,6 +12,7 @@ function print_usage() {
 	console.log ('mlcp --move s3://bucketname/path/to/src.dat s3://bucketname/path/to/dst.dat --ticket=[ticket]');
 	console.log ('mlcp --remove s3://bucketname/path/to/file.dat --ticket=[ticket]');
 	console.log ('mlcp --prv-locate s3://bucketname /path/to/file.prv');
+	console.log ('mlcp --prv-create s3://bucketname/path/to/file.dat /path/to/file.dat.prv');
 
 	return;
 }
@@ -41,12 +42,10 @@ if ('prv-locate' in CLP.namedParameters) {
 	var addr2=CLP.unnamedParameters[1]||'';
 	var prv_addr,bucket_addr;
 	if (starts_with(addr1,'s3://')) {
-		bucket_addr=addr1;
-		prv_addr=addr2;
+		bucket_addr=addr1; prv_addr=addr2;
 	}
 	else {
-		prv_addr=addr1;
-		bucket_addr=addr2;
+		prv_addr=addr1; bucket_addr=addr2;
 	}
 	if (!ends_with(prv_addr,'.prv')) {
 		print_usage();
@@ -78,6 +77,51 @@ if ('prv-locate' in CLP.namedParameters) {
 			return;
 		}
 		console.log (obj.path);
+	});
+	return;
+}
+else if ('prv-create' in CLP.namedParameters) {
+	var addr1=CLP.unnamedParameters[0]||'';
+	var addr2=CLP.unnamedParameters[1]||'';
+	var prv_addr,remote_addr;
+	if (starts_with(addr1,'s3://')) {
+		remote_addr=addr1; prv_addr=addr2;
+	}
+	else {
+		prv_addr=addr1; remote_addr=addr2;
+	}
+	if (!ends_with(prv_addr,'.prv')) {
+		print_usage();
+		return;
+	}
+	if (!starts_with(remote_addr,'s3://')) {
+		print_usage();
+		return;
+	}
+	var bucket=get_bucket_from_s3_address(remote_addr);
+	var remote_path=get_path_from_s3_address(remote_addr);
+	var req={
+		bucket:bucket,
+		path:remote_path
+	};
+	http_post_json(server_url+'/api/prv_stat',req,{},function(tmp) {
+		if (!tmp.success) {
+			console.error('Error making request: '+tmp.error);
+			return;
+		}
+		var obj=tmp.object;
+		if (!obj.success) {
+			console.error('Error: '+obj.error);
+			return;
+		}
+		var prv={
+			original_checksum:obj.sha1,
+			original_fcs:obj.fcs,
+			original_size:obj.size,
+			original_path:remote_addr,
+			prv_version:"0.11"
+		};
+		write_json_object(prv_addr,prv);
 	});
 	return;
 }
@@ -569,4 +613,8 @@ function read_json_object(path) {
 	var fs=require('fs');
 	var txt=fs.readFileSync(path,'utf-8');
 	return JSON.parse(txt);
+}
+
+function write_json_object(path,obj) {
+	require('fs').writeFileSync(path,JSON.stringify(obj,null,4),'utf-8');
 }
