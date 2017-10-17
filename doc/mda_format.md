@@ -73,11 +73,11 @@ mdaconvert is a command-line utility in the repository which allows for conversi
 For example:
 > mdaconvert input.dat output.mda --dtype=uint16 --dims=32x100x44
 
-Type "mcaconvert" from the command line to get more information.
+Type `mdaconvert` from the command line to get more information.
 
 ### Trodes and .mda
 
-Trodes has an extractmda function that reads in the .rec file and produces a .mda for each electrode array.
+[Trodes](http://spikegadgets.com/software/trodes.html) has an `extractmda` function that reads in the .rec file and produces a .mda for each electrode array.
 
 ```bash
 >exportmda -h
