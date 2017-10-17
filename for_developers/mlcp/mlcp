@@ -11,6 +11,8 @@ function print_usage() {
 	console.log ('mlcp s3://bucketname/path/to/src.dat s3://bucketname/path/to/dst.dat --ticket=[ticket]');
 	console.log ('mlcp --move s3://bucketname/path/to/src.dat s3://bucketname/path/to/dst.dat --ticket=[ticket]');
 	console.log ('mlcp --remove s3://bucketname/path/to/file.dat --ticket=[ticket]');
+	console.log ('mlcp --prv-locate s3://bucketname /path/to/file.prv');
+
 	return;
 }
 
@@ -33,6 +35,52 @@ if (!ticket) {
 	return;
 }
 settings.set('ticket',ticket);
+
+if ('prv-locate' in CLP.namedParameters) {
+	var addr1=CLP.unnamedParameters[0]||'';
+	var addr2=CLP.unnamedParameters[1]||'';
+	var prv_addr,bucket_addr;
+	if (starts_with(addr1,'s3://')) {
+		bucket_addr=addr1;
+		prv_addr=addr2;
+	}
+	else {
+		prv_addr=addr1;
+		bucket_addr=addr2;
+	}
+	if (!ends_with(prv_addr,'.prv')) {
+		print_usage();
+		return;
+	}
+	if (!starts_with(bucket_addr,'s3://')) {
+		print_usage();
+		return;
+	}
+	var bucket=get_bucket_from_s3_address(bucket_addr);
+	var prv=read_json_object(prv_addr);
+	var req={
+		bucket:bucket,
+		sha1:prv.original_checksum,
+		size:prv.original_size
+	};
+	http_post_json(server_url+'/api/prv_locate',req,{},function(tmp) {
+		if (!tmp.success) {
+			console.error('Error making request: '+tmp.error);
+			return;
+		}
+		var obj=tmp.object;
+		if (!obj.success) {
+			console.error('Error: '+obj.error);
+			return;
+		}
+		if (!obj.found) {
+			console.log('Not found: '+obj.message);
+			return;
+		}
+		console.log (obj.path);
+	});
+	return;
+}
 
 get_credentials_for_ticket(ticket,function() {
 	if ('list' in CLP.namedParameters) {
@@ -514,5 +562,11 @@ function starts_with(str,str2) {
 }
 
 function ends_with(str,str2) {
-	return (str.slice(str.length-str2.length,str2.length)==str2);
+	return (str.slice(str.length-str2.length,str.length)==str2);
+}
+
+function read_json_object(path) {
+	var fs=require('fs');
+	var txt=fs.readFileSync(path,'utf-8');
+	return JSON.parse(txt);
 }
