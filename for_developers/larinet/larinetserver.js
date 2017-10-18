@@ -395,7 +395,7 @@ function larinetserver(req,onclose,callback) {
 				check_it();
 				function check_it() {
 					var elapsed=(new Date()) -check_timer;
-					if ((elapsed>=opts.wait_msec)||(Jnew.isComplete())) {
+					if ((elapsed>=Number(query.wait_msec))||(Jnew.isComplete())) {
 						var resp=make_response_for_J(process_id,Jnew);
 						callback(resp);	
 					}
