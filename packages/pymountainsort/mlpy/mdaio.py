@@ -2,14 +2,22 @@ import numpy as np
 import struct
 
 class MdaHeader:
-    def __init__(self, dt0, dims0):
+    def __init__(self, dt0, dims0, uses64bitdims=None):
+        try:
+            uses64bitdims
+        except NameError:
+            uses64bitdims=(max(dims0)>2e9)            
+        self.uses64bitdims=uses64bitdims
         self.dt_code=_dt_code_from_dt(dt0)
         self.dt=dt0
         self.num_bytes_per_entry=get_num_bytes_per_entry_from_dt(dt0)
         self.num_dims=len(dims0)
         self.dimprod=np.prod(dims0)
         self.dims=dims0
-        self.header_size=(3+len(dims0))*4
+        if uses64bitdims:
+            self.header_size=3*4+self.num_dims*8
+        else:
+            self.header_size=(3+self.num_dims)*4
 
 class DiskReadMda:
     def __init__(self,path,header=None):
@@ -170,20 +178,30 @@ def _read_header(path):
         dt_code=_read_int32(f)
         num_bytes_per_entry=_read_int32(f)
         num_dims=_read_int32(f)
+        uses64bitdims=False
+        if (num_dims<0):
+            uses64bitdims=True
+            num_dims=-num_dims
         if (num_dims<2) or (num_dims>6):
             print ("Invalid number of dimensions: {}".format(num_dims))
             return None
         dims=[]
         dimprod=1
-        for j in range(0,num_dims):
-            tmp0=_read_int32(f)
-            dimprod=dimprod*tmp0
-            dims.append(tmp0)
+        if uses64bitdims:
+            for j in range(0,num_dims):
+                tmp0=_read_int64(f)
+                dimprod=dimprod*tmp0
+                dims.append(tmp0)
+        else:
+            for j in range(0,num_dims):
+                tmp0=_read_int32(f)
+                dimprod=dimprod*tmp0
+                dims.append(tmp0)
         dt=_dt_from_dt_code(dt_code)
         if dt is None:
             print ("Invalid data type code: {}".format(dt_code))
             return None
-        H=MdaHeader(dt,dims)
+        H=MdaHeader(dt,dims,uses64bitdims)
         f.close()
         return H
     except Exception as e: # catch *all* exceptions
@@ -197,8 +215,12 @@ def _write_header(path,H):
         _write_int32(f,H.dt_code)
         _write_int32(f,H.num_bytes_per_entry)
         _write_int32(f,H.num_dims)
-        for j in range(0,H.num_dims):
-            _write_int32(f,H.dims[j])
+        if H.uses64bitdims:
+            for j in range(0,H.num_dims):
+                _write_int64(f,H.dims[j])
+        else:
+            for j in range(0,H.num_dims):
+                _write_int32(f,H.dims[j])
         f.close()
         return True
     except Exception as e: # catch *all* exceptions
@@ -272,6 +294,9 @@ def _writemda(X,fname,dt):
 
 def _read_int32(f):
     return struct.unpack('<i',f.read(4))[0]
+    
+def _read_int64(f):
+    return struct.unpack('<q',f.read(8))[0]
 
 def _write_int32(f,val):
     f.write(struct.pack('<i',val))
