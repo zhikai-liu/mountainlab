@@ -214,11 +214,12 @@ def _write_header(path,H):
     try:
         _write_int32(f,H.dt_code)
         _write_int32(f,H.num_bytes_per_entry)
-        _write_int32(f,H.num_dims)
         if H.uses64bitdims:
+            _write_int32(f,-H.num_dims)
             for j in range(0,H.num_dims):
                 _write_int64(f,H.dims[j])
         else:
+            _write_int32(f,H.num_dims)
             for j in range(0,H.num_dims):
                 _write_int32(f,H.dims[j])
         f.close()
@@ -300,6 +301,9 @@ def _read_int64(f):
 
 def _write_int32(f,val):
     f.write(struct.pack('<i',val))
+    
+def _write_int64(f,val):
+    f.write(struct.pack('<q',val))
 
 def mdaio_test():
     M=4
