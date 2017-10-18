@@ -8,7 +8,7 @@ from mlpy import writemda32,writemda64,readmda,DiskReadMda,DiskWriteMda,MdaHeade
 from common import TimeseriesChunkReader
 
 processor_name='pyms.extract_timeseries'
-processor_version='0.1'
+processor_version='0.11'
 def extract_timeseries(*,timeseries,channels_array='',timeseries_out,
                        channels='',t1=-1,t2=-1,
                        timeseries_dtype='',timeseries_num_channels=0

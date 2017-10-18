@@ -2,11 +2,8 @@ import numpy as np
 import struct
 
 class MdaHeader:
-    def __init__(self, dt0, dims0, uses64bitdims=None):
-        try:
-            uses64bitdims
-        except NameError:
-            uses64bitdims=(max(dims0)>2e9)            
+    def __init__(self, dt0, dims0):
+        uses64bitdims=(max(dims0)>2e9)            
         self.uses64bitdims=uses64bitdims
         self.dt_code=_dt_code_from_dt(dt0)
         self.dt=dt0
@@ -201,7 +198,10 @@ def _read_header(path):
         if dt is None:
             print ("Invalid data type code: {}".format(dt_code))
             return None
-        H=MdaHeader(dt,dims,uses64bitdims)
+        H=MdaHeader(dt,dims)
+        if (uses64bitdims):
+            H.uses64bitdims=True
+            H.header_size=3*4+H.num_dims*8
         f.close()
         return H
     except Exception as e: # catch *all* exceptions
