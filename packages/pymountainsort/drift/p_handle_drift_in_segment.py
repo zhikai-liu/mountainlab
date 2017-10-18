@@ -8,7 +8,7 @@ sys.path.append(parent_path)
 sys.path.append(parent_path+'/basic')
 
 import mlpy
-import synthesis
+#import synthesis
 import basic
 from p_compute_templates import compute_templates_helper
 from p_extract_clips import extract_clips_helper
@@ -123,6 +123,7 @@ def find_random_paired_events(times, labels, subcluster_size):
 
     return idx_for_eval
 
+"""
 def test_handle_drift_in_segment():
     duration=600
     samplerate=30000
@@ -137,10 +138,11 @@ def test_handle_drift_in_segment():
     #test_clips=np.reshape(np.array([i for i in range(18)]),(2,3,3))
 
 handle_drift_in_segment.test=test_handle_drift_in_segment
+"""
+
 handle_drift_in_segment.name = processor_name
 handle_drift_in_segment.version = processor_version
 handle_drift_in_segment.author = 'J Chung and J Magland'
-handle_drift_in_segment.last_modified = '...'
 
 if __name__ == '__main__':
     print('Running test')
