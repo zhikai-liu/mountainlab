@@ -19,7 +19,8 @@ processor_version='0.1'
 
 def handle_drift_in_segment(*,timeseries,firings,firings_out):
     """
-    Handle drift in segment. TODO: finish this brief description
+    Handle drift in segment.
+
     Parameters
     ----------
     timeseries : INPUT
@@ -28,7 +29,7 @@ def handle_drift_in_segment(*,timeseries,firings,firings_out):
         Path of input firings mda file
     firings_out : OUTPUT
         Path of output drift-adjusted firings mda file
-
+        ...
     """
     subcluster_size = 500 # Size of subclusters for comparison of merge candidate pairs
     bin_factor = 10 # subcluster_size / bin_factor = numbins for hist
