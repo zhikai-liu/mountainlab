@@ -17,7 +17,7 @@ else if (arg1=='spec') {
 			process.exit(-1);
 		}
 		var spec=tmp.spec;
-		console.log(JSON.stringify(spec,null,4));
+		console.log (JSON.stringify(spec,null,4));
 	});
 }
 else {
@@ -31,9 +31,7 @@ else {
 		if (!pp) {
 			throw new Error('Processor not found: '+processor_name);
 		}
-		console.log('A');
 		create_working_directory(function(working_path) {
-			console.log('B '+working_path);
 			fs.mkdirSync(working_path+'/outputs');
 			var docker_options='-v '+working_path+'/outputs:/working/outputs';
 			try {
@@ -212,7 +210,6 @@ function build_docker_images(callback) {
 				var mp_files=find_mp_files_in_package(path1);
 				var specs=[];
 				foreach(mp_files,{},function(ifile,file,cb2) {
-					console.log(file);
 					run_docker_container('mldp_'+package_name,'','/package/'+file+' spec',{},function(aa) {
 						var txt=aa.console_out;
 						var spec0={};
@@ -372,7 +369,6 @@ function system_call(cmd,opts,callback) {
 	if (opts.print_console)
 		console.log ('RUNNING: '+cmd);
 
-	//console.log(cmd);
 	var pp=require('child_process').exec(cmd);
 	pp.stdout.setEncoding('utf8');
 	pp.stderr.setEncoding('utf8');
@@ -391,12 +387,12 @@ function system_call(cmd,opts,callback) {
 	});
 	pp.stdout.on('data',function(data) {
 		if (opts.print_console)
-			console.log(data);
+			console.log (data);
 		console_out+=data;
 	});
 	pp.stderr.on('data',function(data) {
 		if (opts.print_console)
-			console.log(data);
+			console.log (data);
 		console_out+=data;
 	});
 };
