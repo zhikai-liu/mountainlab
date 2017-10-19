@@ -166,6 +166,13 @@ int main(int argc, char* argv[])
 
     QJsonObject config = read_config();
 
+    if ((argc==2)&&(QString(argv[1])=="tmp")) {
+        QJsonObject gen = config.value("general").toObject();
+        QString temporary_path = gen["temporary_path"].toString();
+        qDebug().noquote() << temporary_path;
+        return 0;
+    }
+
     QList<MLConfigPage*> pages;
     pages << new Page_tempdir(&config);
     pages << new Page_prv(&config);
